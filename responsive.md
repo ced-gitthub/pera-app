@@ -1,0 +1,239 @@
+# responsive — 2026-10-08T14:15:49.920Z
+pass 173 / fail 63
+
+- FAIL [layout iphone-390x844] /: no horizontal overflow, nothing clipped off-screen — {"status":200,"scrollW":425,"vw":390,"off":["nav.tabs \"Home\nTxns\nAccounts\nBudgets\nRep\" [10,415]","a.tab \"Settings\" [352,408]","div.stat \"Net\n₱22,266.44\" [289,424]","div.m \"Net\" [304,409]","div.big \"₱22,266.44\" [304,409]"]}
+- FAIL [layout iphone-390x844] /transactions: no horizontal overflow, nothing clipped off-screen — {"status":200,"scrollW":432,"vw":390,"off":["nav.tabs \"Home\nTxns\nAccounts\nBudgets\nRep\" [10,422]","a.tab \"Settings\" [358,415]","table \"🔁\n\t\n2026-10-08 · Transfer BPI\" [37,432]","tbody \"🔁\n\t\n2026-10-08 · Transfer BPI\" [37,432]","tr \"🔁\n\t\n2026-10-08 · Transfer BPI\" [37,432]","td 
+- PASS [layout iphone-390x844] /accounts: no horizontal overflow, nothing clipped off-screen
+- PASS [layout iphone-390x844] /budgets: no horizontal overflow, nothing clipped off-screen
+- FAIL [layout iphone-390x844] /reports: no horizontal overflow, nothing clipped off-screen — {"status":200,"scrollW":454,"vw":390,"off":["nav.tabs \"Home\nTxns\nAccounts\nBudgets\nRep\" [10,444]","a.tab \"Settings\" [377,437]","table \"Month\tIncome\tExpenses\tNet\tTren\" [37,454]","thead \"Month\tIncome\tExpenses\tNet\tTren\" [37,454]","tr \"Month\tIncome\tExpenses\tNet\tTren\" [37,454]","
+- PASS [layout iphone-390x844] /assistant: no horizontal overflow, nothing clipped off-screen
+- PASS [layout iphone-390x844] /settings: no horizontal overflow, nothing clipped off-screen
+- PASS [layout iphone-390x844] /: text/buttons not clipped
+- PASS [layout iphone-390x844] /transactions: text/buttons not clipped
+- PASS [layout iphone-390x844] /accounts: text/buttons not clipped
+- PASS [layout iphone-390x844] /budgets: text/buttons not clipped
+- PASS [layout iphone-390x844] /reports: text/buttons not clipped
+- PASS [layout iphone-390x844] /assistant: text/buttons not clipped
+- PASS [layout iphone-390x844] /settings: text/buttons not clipped
+- PASS [layout iphone-390x844] /: touch targets >= 24px (WCAG 2.2 AA)
+- PASS [layout iphone-390x844] /transactions: touch targets >= 24px (WCAG 2.2 AA)
+- PASS [layout iphone-390x844] /accounts: touch targets >= 24px (WCAG 2.2 AA)
+- PASS [layout iphone-390x844] /budgets: touch targets >= 24px (WCAG 2.2 AA)
+- PASS [layout iphone-390x844] /reports: touch targets >= 24px (WCAG 2.2 AA)
+- PASS [layout iphone-390x844] /assistant: touch targets >= 24px (WCAG 2.2 AA)
+- PASS [layout iphone-390x844] /settings: touch targets >= 24px (WCAG 2.2 AA)
+- FAIL [layout iphone-390x844] /: bottom nav does not cover content — {"tabsTop":846,"lastContentBottom":2240,"hidden":1394}
+- FAIL [layout iphone-390x844] /transactions: bottom nav does not cover content — {"tabsTop":863,"lastContentBottom":2033,"hidden":1170}
+- FAIL [layout iphone-390x844] /accounts: bottom nav does not cover content — {"tabsTop":772,"lastContentBottom":2445,"hidden":1673}
+- FAIL [layout iphone-390x844] /budgets: bottom nav does not cover content — {"tabsTop":772,"lastContentBottom":2049,"hidden":1277}
+- FAIL [layout iphone-390x844] /reports: bottom nav does not cover content — {"tabsTop":911,"lastContentBottom":1707,"hidden":796}
+- FAIL [layout iphone-390x844] /assistant: bottom nav does not cover content — {"tabsTop":772,"lastContentBottom":834,"hidden":62}
+- FAIL [layout iphone-390x844] /settings: bottom nav does not cover content — {"tabsTop":772,"lastContentBottom":2389,"hidden":1617}
+- PASS [layout iphone-390x844] /transactions: date inputs usable
+- PASS [layout iphone-390x844] /accounts: date inputs usable
+- PASS [layout iphone-390x844] /settings: date inputs usable
+- PASS [layout iphone-390x844] /reports: date inputs usable
+- PASS [layout iphone-390x844] /budgets: date inputs usable
+- FAIL [layout iphone-390x844] /login (logged out): no overflow, targets >= 24px — {"off":[],"tiny":["a.underline \"Forgot password?\" 121x17","a.underline \"Register\" 52x17"],"scrollW":390}
+- FAIL [layout iphone-390x844] /register (logged out): no overflow, targets >= 24px — {"off":[],"tiny":["a.underline \"Log in\" 39x17"],"scrollW":390}
+- FAIL [layout iphone-390x844] /forgot (logged out): no overflow, targets >= 24px — {"off":[],"tiny":["a.underline \"Back to log in\" 87x17"],"scrollW":390}
+- FAIL [layout iphone-393x852] /: no horizontal overflow, nothing clipped off-screen — {"status":200,"scrollW":424,"vw":393,"off":["nav.tabs \"Home\nTxns\nAccounts\nBudgets\nRep\" [10,414]","a.tab \"Settings\" [351,407]","div.stat \"Net\n₱22,266.44\" [289,424]","div.m \"Net\" [304,409]","div.big \"₱22,266.44\" [304,409]"]}
+- FAIL [layout iphone-393x852] /transactions: no horizontal overflow, nothing clipped off-screen — {"status":200,"scrollW":432,"vw":393,"off":["nav.tabs \"Home\nTxns\nAccounts\nBudgets\nRep\" [10,422]","a.tab \"Settings\" [358,415]","table \"🔁\n\t\n2026-10-08 · Transfer BPI\" [37,432]","tbody \"🔁\n\t\n2026-10-08 · Transfer BPI\" [37,432]","tr \"🔁\n\t\n2026-10-08 · Transfer BPI\" [37,432]","td 
+- PASS [layout iphone-393x852] /accounts: no horizontal overflow, nothing clipped off-screen
+- PASS [layout iphone-393x852] /budgets: no horizontal overflow, nothing clipped off-screen
+- FAIL [layout iphone-393x852] /reports: no horizontal overflow, nothing clipped off-screen — {"status":200,"scrollW":454,"vw":393,"off":["nav.tabs \"Home\nTxns\nAccounts\nBudgets\nRep\" [10,444]","a.tab \"Settings\" [377,437]","table \"Month\tIncome\tExpenses\tNet\tTren\" [37,454]","thead \"Month\tIncome\tExpenses\tNet\tTren\" [37,454]","tr \"Month\tIncome\tExpenses\tNet\tTren\" [37,454]","
+- PASS [layout iphone-393x852] /assistant: no horizontal overflow, nothing clipped off-screen
+- PASS [layout iphone-393x852] /settings: no horizontal overflow, nothing clipped off-screen
+- PASS [layout iphone-393x852] /: text/buttons not clipped
+- PASS [layout iphone-393x852] /transactions: text/buttons not clipped
+- PASS [layout iphone-393x852] /accounts: text/buttons not clipped
+- PASS [layout iphone-393x852] /budgets: text/buttons not clipped
+- PASS [layout iphone-393x852] /reports: text/buttons not clipped
+- PASS [layout iphone-393x852] /assistant: text/buttons not clipped
+- PASS [layout iphone-393x852] /settings: text/buttons not clipped
+- PASS [layout iphone-393x852] /: touch targets >= 24px (WCAG 2.2 AA)
+- PASS [layout iphone-393x852] /transactions: touch targets >= 24px (WCAG 2.2 AA)
+- PASS [layout iphone-393x852] /accounts: touch targets >= 24px (WCAG 2.2 AA)
+- PASS [layout iphone-393x852] /budgets: touch targets >= 24px (WCAG 2.2 AA)
+- PASS [layout iphone-393x852] /reports: touch targets >= 24px (WCAG 2.2 AA)
+- PASS [layout iphone-393x852] /assistant: touch targets >= 24px (WCAG 2.2 AA)
+- PASS [layout iphone-393x852] /settings: touch targets >= 24px (WCAG 2.2 AA)
+- FAIL [layout iphone-393x852] /: bottom nav does not cover content — {"tabsTop":848,"lastContentBottom":2241,"hidden":1393}
+- FAIL [layout iphone-393x852] /transactions: bottom nav does not cover content — {"tabsTop":865,"lastContentBottom":2033,"hidden":1168}
+- FAIL [layout iphone-393x852] /accounts: bottom nav does not cover content — {"tabsTop":780,"lastContentBottom":2121,"hidden":1341}
+- FAIL [layout iphone-393x852] /budgets: bottom nav does not cover content — {"tabsTop":780,"lastContentBottom":2049,"hidden":1269}
+- FAIL [layout iphone-393x852] /reports: bottom nav does not cover content — {"tabsTop":913,"lastContentBottom":1707,"hidden":794}
+- FAIL [layout iphone-393x852] /assistant: bottom nav does not cover content — {"tabsTop":780,"lastContentBottom":842,"hidden":62}
+- FAIL [layout iphone-393x852] /settings: bottom nav does not cover content — {"tabsTop":780,"lastContentBottom":2389,"hidden":1609}
+- PASS [layout iphone-393x852] /transactions: date inputs usable
+- PASS [layout iphone-393x852] /accounts: date inputs usable
+- PASS [layout iphone-393x852] /settings: date inputs usable
+- PASS [layout iphone-393x852] /reports: date inputs usable
+- PASS [layout iphone-393x852] /budgets: date inputs usable
+- FAIL [layout iphone-393x852] /login (logged out): no overflow, targets >= 24px — {"off":[],"tiny":["a.underline \"Forgot password?\" 121x17","a.underline \"Register\" 52x17"],"scrollW":393}
+- FAIL [layout iphone-393x852] /register (logged out): no overflow, targets >= 24px — {"off":[],"tiny":["a.underline \"Log in\" 39x17"],"scrollW":393}
+- FAIL [layout iphone-393x852] /forgot (logged out): no overflow, targets >= 24px — {"off":[],"tiny":["a.underline \"Back to log in\" 87x17"],"scrollW":393}
+- FAIL [layout iphone-max-430x932] /: no horizontal overflow, nothing clipped off-screen — {"status":200,"scrollW":453,"vw":430,"off":["nav.tabs \"Home\nTxns\nAccounts\nBudgets\nRep\" [10,443]","a.tab \"Settings\" [376,436]","div.stat \"Net\n₱22,266.44\" [309,453]","div.m \"Net\" [324,438]","div.big \"₱22,266.44\" [324,438]"]}
+- FAIL [layout iphone-max-430x932] /transactions: no horizontal overflow, nothing clipped off-screen — {"status":200,"scrollW":432,"vw":430,"off":["table \"🔁\n\t\n2026-10-08 · Transfer BPI\" [37,432]","tbody \"🔁\n\t\n2026-10-08 · Transfer BPI\" [37,432]","tr \"🔁\n\t\n2026-10-08 · Transfer BPI\" [37,432]","td \"Edit\nDuplicate\nDelete\" [307,432]","tr \"📺\n\tNetflix\n2026-10-08 · Subsc\" [37,432]"
+- PASS [layout iphone-max-430x932] /accounts: no horizontal overflow, nothing clipped off-screen
+- PASS [layout iphone-max-430x932] /budgets: no horizontal overflow, nothing clipped off-screen
+- FAIL [layout iphone-max-430x932] /reports: no horizontal overflow, nothing clipped off-screen — {"status":200,"scrollW":454,"vw":430,"off":["nav.tabs \"Home\nTxns\nAccounts\nBudgets\nRep\" [10,444]","a.tab \"Settings\" [377,437]","table \"Month\tIncome\tExpenses\tNet\tTren\" [37,454]","thead \"Month\tIncome\tExpenses\tNet\tTren\" [37,454]","tr \"Month\tIncome\tExpenses\tNet\tTren\" [37,454]","
+- PASS [layout iphone-max-430x932] /assistant: no horizontal overflow, nothing clipped off-screen
+- PASS [layout iphone-max-430x932] /settings: no horizontal overflow, nothing clipped off-screen
+- PASS [layout iphone-max-430x932] /: text/buttons not clipped
+- PASS [layout iphone-max-430x932] /transactions: text/buttons not clipped
+- PASS [layout iphone-max-430x932] /accounts: text/buttons not clipped
+- PASS [layout iphone-max-430x932] /budgets: text/buttons not clipped
+- PASS [layout iphone-max-430x932] /reports: text/buttons not clipped
+- PASS [layout iphone-max-430x932] /assistant: text/buttons not clipped
+- PASS [layout iphone-max-430x932] /settings: text/buttons not clipped
+- PASS [layout iphone-max-430x932] /: touch targets >= 24px (WCAG 2.2 AA)
+- PASS [layout iphone-max-430x932] /transactions: touch targets >= 24px (WCAG 2.2 AA)
+- PASS [layout iphone-max-430x932] /accounts: touch targets >= 24px (WCAG 2.2 AA)
+- PASS [layout iphone-max-430x932] /budgets: touch targets >= 24px (WCAG 2.2 AA)
+- PASS [layout iphone-max-430x932] /reports: touch targets >= 24px (WCAG 2.2 AA)
+- PASS [layout iphone-max-430x932] /assistant: touch targets >= 24px (WCAG 2.2 AA)
+- PASS [layout iphone-max-430x932] /settings: touch targets >= 24px (WCAG 2.2 AA)
+- FAIL [layout iphone-max-430x932] /: bottom nav does not cover content — {"tabsTop":910,"lastContentBottom":2116,"hidden":1206}
+- FAIL [layout iphone-max-430x932] /transactions: bottom nav does not cover content — {"tabsTop":865,"lastContentBottom":1928,"hidden":1063}
+- FAIL [layout iphone-max-430x932] /accounts: bottom nav does not cover content — {"tabsTop":860,"lastContentBottom":1745,"hidden":885}
+- FAIL [layout iphone-max-430x932] /budgets: bottom nav does not cover content — {"tabsTop":860,"lastContentBottom":2028,"hidden":1168}
+- FAIL [layout iphone-max-430x932] /reports: bottom nav does not cover content — {"tabsTop":913,"lastContentBottom":1680,"hidden":767}
+- FAIL [layout iphone-max-430x932] /assistant: bottom nav does not cover content — {"tabsTop":860,"lastContentBottom":922,"hidden":62}
+- FAIL [layout iphone-max-430x932] /settings: bottom nav does not cover content — {"tabsTop":860,"lastContentBottom":2179,"hidden":1319}
+- PASS [layout iphone-max-430x932] /transactions: date inputs usable
+- PASS [layout iphone-max-430x932] /accounts: date inputs usable
+- PASS [layout iphone-max-430x932] /settings: date inputs usable
+- PASS [layout iphone-max-430x932] /reports: date inputs usable
+- PASS [layout iphone-max-430x932] /budgets: date inputs usable
+- FAIL [layout iphone-max-430x932] /login (logged out): no overflow, targets >= 24px — {"off":[],"tiny":["a.underline \"Forgot password?\" 121x17","a.underline \"Register\" 52x17"],"scrollW":430}
+- FAIL [layout iphone-max-430x932] /register (logged out): no overflow, targets >= 24px — {"off":[],"tiny":["a.underline \"Log in\" 39x17"],"scrollW":430}
+- FAIL [layout iphone-max-430x932] /forgot (logged out): no overflow, targets >= 24px — {"off":[],"tiny":["a.underline \"Back to log in\" 87x17"],"scrollW":430}
+- FAIL [layout ipad-768x1024] /: no horizontal overflow, nothing clipped off-screen — {"status":200,"scrollW":844,"vw":768,"off":["main.content \"Good evening, Responsive QA 👋\" [250,844]","section.card \"Good evening, Responsive QA 👋\" [286,808]","p.hi \"Good evening, Responsive QA 👋\" [308,786]","div.m \"Total balance\" [308,786]","div.big \"₱22,266.44\" [308,786]","div.row \"▲ 
+- PASS [layout ipad-768x1024] /transactions: no horizontal overflow, nothing clipped off-screen
+- PASS [layout ipad-768x1024] /accounts: no horizontal overflow, nothing clipped off-screen
+- PASS [layout ipad-768x1024] /budgets: no horizontal overflow, nothing clipped off-screen
+- FAIL [layout ipad-768x1024] /reports: no horizontal overflow, nothing clipped off-screen — {"status":200,"scrollW":781,"vw":768,"off":["main.content \"This month\nLast month\nThis yea\" [250,781]"]}
+- PASS [layout ipad-768x1024] /assistant: no horizontal overflow, nothing clipped off-screen
+- PASS [layout ipad-768x1024] /settings: no horizontal overflow, nothing clipped off-screen
+- PASS [layout ipad-768x1024] /: text/buttons not clipped
+- PASS [layout ipad-768x1024] /transactions: text/buttons not clipped
+- PASS [layout ipad-768x1024] /accounts: text/buttons not clipped
+- PASS [layout ipad-768x1024] /budgets: text/buttons not clipped
+- PASS [layout ipad-768x1024] /reports: text/buttons not clipped
+- PASS [layout ipad-768x1024] /assistant: text/buttons not clipped
+- PASS [layout ipad-768x1024] /settings: text/buttons not clipped
+- PASS [layout ipad-768x1024] /: touch targets >= 24px (WCAG 2.2 AA)
+- PASS [layout ipad-768x1024] /transactions: touch targets >= 24px (WCAG 2.2 AA)
+- PASS [layout ipad-768x1024] /accounts: touch targets >= 24px (WCAG 2.2 AA)
+- PASS [layout ipad-768x1024] /budgets: touch targets >= 24px (WCAG 2.2 AA)
+- PASS [layout ipad-768x1024] /reports: touch targets >= 24px (WCAG 2.2 AA)
+- PASS [layout ipad-768x1024] /assistant: touch targets >= 24px (WCAG 2.2 AA)
+- PASS [layout ipad-768x1024] /settings: touch targets >= 24px (WCAG 2.2 AA)
+- PASS [layout ipad-768x1024] /: bottom nav does not cover content
+- PASS [layout ipad-768x1024] /transactions: bottom nav does not cover content
+- PASS [layout ipad-768x1024] /accounts: bottom nav does not cover content
+- PASS [layout ipad-768x1024] /budgets: bottom nav does not cover content
+- PASS [layout ipad-768x1024] /reports: bottom nav does not cover content
+- PASS [layout ipad-768x1024] /assistant: bottom nav does not cover content
+- PASS [layout ipad-768x1024] /settings: bottom nav does not cover content
+- PASS [layout ipad-768x1024] /transactions: date inputs usable
+- PASS [layout ipad-768x1024] /accounts: date inputs usable
+- PASS [layout ipad-768x1024] /settings: date inputs usable
+- PASS [layout ipad-768x1024] /reports: date inputs usable
+- PASS [layout ipad-768x1024] /budgets: date inputs usable
+- FAIL [layout ipad-768x1024] /login (logged out): no overflow, targets >= 24px — {"off":[],"tiny":["a.underline \"Forgot password?\" 121x17","a.underline \"Register\" 52x17"],"scrollW":768}
+- FAIL [layout ipad-768x1024] /register (logged out): no overflow, targets >= 24px — {"off":[],"tiny":["a.underline \"Log in\" 39x17"],"scrollW":768}
+- FAIL [layout ipad-768x1024] /forgot (logged out): no overflow, targets >= 24px — {"off":[],"tiny":["a.underline \"Back to log in\" 87x17"],"scrollW":768}
+- PASS [layout desktop-1280x800] /: no horizontal overflow, nothing clipped off-screen
+- PASS [layout desktop-1280x800] /transactions: no horizontal overflow, nothing clipped off-screen
+- PASS [layout desktop-1280x800] /accounts: no horizontal overflow, nothing clipped off-screen
+- PASS [layout desktop-1280x800] /budgets: no horizontal overflow, nothing clipped off-screen
+- PASS [layout desktop-1280x800] /reports: no horizontal overflow, nothing clipped off-screen
+- PASS [layout desktop-1280x800] /assistant: no horizontal overflow, nothing clipped off-screen
+- PASS [layout desktop-1280x800] /settings: no horizontal overflow, nothing clipped off-screen
+- PASS [layout desktop-1280x800] /: text/buttons not clipped
+- PASS [layout desktop-1280x800] /transactions: text/buttons not clipped
+- PASS [layout desktop-1280x800] /accounts: text/buttons not clipped
+- PASS [layout desktop-1280x800] /budgets: text/buttons not clipped
+- PASS [layout desktop-1280x800] /reports: text/buttons not clipped
+- PASS [layout desktop-1280x800] /assistant: text/buttons not clipped
+- PASS [layout desktop-1280x800] /settings: text/buttons not clipped
+- PASS [layout desktop-1280x800] /: touch targets >= 24px (WCAG 2.2 AA)
+- PASS [layout desktop-1280x800] /transactions: touch targets >= 24px (WCAG 2.2 AA)
+- PASS [layout desktop-1280x800] /accounts: touch targets >= 24px (WCAG 2.2 AA)
+- PASS [layout desktop-1280x800] /budgets: touch targets >= 24px (WCAG 2.2 AA)
+- PASS [layout desktop-1280x800] /reports: touch targets >= 24px (WCAG 2.2 AA)
+- PASS [layout desktop-1280x800] /assistant: touch targets >= 24px (WCAG 2.2 AA)
+- PASS [layout desktop-1280x800] /settings: touch targets >= 24px (WCAG 2.2 AA)
+- PASS [layout desktop-1280x800] /transactions: date inputs usable
+- PASS [layout desktop-1280x800] /accounts: date inputs usable
+- PASS [layout desktop-1280x800] /settings: date inputs usable
+- PASS [layout desktop-1280x800] /reports: date inputs usable
+- PASS [layout desktop-1280x800] /budgets: date inputs usable
+- FAIL [layout desktop-1280x800] /login (logged out): no overflow, targets >= 24px — {"off":[],"tiny":["a.underline \"Forgot password?\" 121x17","a.underline \"Register\" 52x17"],"scrollW":1280}
+- FAIL [layout desktop-1280x800] /register (logged out): no overflow, targets >= 24px — {"off":[],"tiny":["a.underline \"Log in\" 39x17"],"scrollW":1280}
+- FAIL [layout desktop-1280x800] /forgot (logged out): no overflow, targets >= 24px — {"off":[],"tiny":["a.underline \"Back to log in\" 87x17"],"scrollW":1280}
+- PASS [layout desktop-1440x900] /: no horizontal overflow, nothing clipped off-screen
+- PASS [layout desktop-1440x900] /transactions: no horizontal overflow, nothing clipped off-screen
+- PASS [layout desktop-1440x900] /accounts: no horizontal overflow, nothing clipped off-screen
+- PASS [layout desktop-1440x900] /budgets: no horizontal overflow, nothing clipped off-screen
+- PASS [layout desktop-1440x900] /reports: no horizontal overflow, nothing clipped off-screen
+- PASS [layout desktop-1440x900] /assistant: no horizontal overflow, nothing clipped off-screen
+- PASS [layout desktop-1440x900] /settings: no horizontal overflow, nothing clipped off-screen
+- PASS [layout desktop-1440x900] /: text/buttons not clipped
+- PASS [layout desktop-1440x900] /transactions: text/buttons not clipped
+- PASS [layout desktop-1440x900] /accounts: text/buttons not clipped
+- PASS [layout desktop-1440x900] /budgets: text/buttons not clipped
+- PASS [layout desktop-1440x900] /reports: text/buttons not clipped
+- PASS [layout desktop-1440x900] /assistant: text/buttons not clipped
+- PASS [layout desktop-1440x900] /settings: text/buttons not clipped
+- PASS [layout desktop-1440x900] /: touch targets >= 24px (WCAG 2.2 AA)
+- PASS [layout desktop-1440x900] /transactions: touch targets >= 24px (WCAG 2.2 AA)
+- PASS [layout desktop-1440x900] /accounts: touch targets >= 24px (WCAG 2.2 AA)
+- PASS [layout desktop-1440x900] /budgets: touch targets >= 24px (WCAG 2.2 AA)
+- PASS [layout desktop-1440x900] /reports: touch targets >= 24px (WCAG 2.2 AA)
+- PASS [layout desktop-1440x900] /assistant: touch targets >= 24px (WCAG 2.2 AA)
+- PASS [layout desktop-1440x900] /settings: touch targets >= 24px (WCAG 2.2 AA)
+- PASS [layout desktop-1440x900] /transactions: date inputs usable
+- PASS [layout desktop-1440x900] /accounts: date inputs usable
+- PASS [layout desktop-1440x900] /settings: date inputs usable
+- PASS [layout desktop-1440x900] /reports: date inputs usable
+- PASS [layout desktop-1440x900] /budgets: date inputs usable
+- FAIL [layout desktop-1440x900] /login (logged out): no overflow, targets >= 24px — {"off":[],"tiny":["a.underline \"Forgot password?\" 121x17","a.underline \"Register\" 52x17"],"scrollW":1440}
+- FAIL [layout desktop-1440x900] /register (logged out): no overflow, targets >= 24px — {"off":[],"tiny":["a.underline \"Log in\" 39x17"],"scrollW":1440}
+- FAIL [layout desktop-1440x900] /forgot (logged out): no overflow, targets >= 24px — {"off":[],"tiny":["a.underline \"Back to log in\" 87x17"],"scrollW":1440}
+- PASS [page metadata] /: title, lang, viewport meta, one h1
+- PASS [page metadata] /transactions: title, lang, viewport meta, one h1
+- PASS [page metadata] /accounts: title, lang, viewport meta, one h1
+- PASS [page metadata] /budgets: title, lang, viewport meta, one h1
+- PASS [page metadata] /reports: title, lang, viewport meta, one h1
+- PASS [page metadata] /assistant: title, lang, viewport meta, one h1
+- PASS [page metadata] /settings: title, lang, viewport meta, one h1
+- FAIL [page metadata] viewport-fit=cover set for safe-area insets (needed before PWA work) — width=device-width, initial-scale=1
+- PASS [page metadata] CSS uses env(safe-area-inset-bottom) for the fixed bottom nav
+- PASS [page metadata] inputs are >= 16px (iOS does not zoom on focus)
+- PASS [keyboard] /: Tab shows a visible focus indicator on first 8 stops
+- PASS [keyboard] /transactions: Tab shows a visible focus indicator on first 8 stops
+- PASS [keyboard] /accounts: Tab shows a visible focus indicator on first 8 stops
+- PASS [keyboard] /settings: Tab shows a visible focus indicator on first 8 stops
+- FAIL [keyboard] Quick Add works with keyboard only (type + Enter) — locator.waitFor: Timeout 25000ms exceeded.
+- FAIL [dark mode] light: / text contrast >= 4.5:1 (3:1 large) — ["td.inc 4.37 \"+₱25,000.00\"","b. 4.37 \"+₱25,000.00\""]
+- FAIL [dark mode] light: /transactions text contrast >= 4.5:1 (3:1 large) — ["td.inc 4.37 \"+₱25,000.00\"","b. 4.37 \"+₱25,000.00\""]
+- PASS [dark mode] light: /accounts text contrast >= 4.5:1 (3:1 large)
+- PASS [dark mode] light: /budgets text contrast >= 4.5:1 (3:1 large)
+- PASS [dark mode] light: /reports text contrast >= 4.5:1 (3:1 large)
+- PASS [dark mode] light: /assistant text contrast >= 4.5:1 (3:1 large)
+- PASS [dark mode] light: /settings text contrast >= 4.5:1 (3:1 large)
+- FAIL [dark mode] dark: / text contrast >= 4.5:1 (3:1 large) — ["a.tab 3.5 \"Home\"","p.hi 3.5 \"Good evening, Respon\"","div.m 3.5 \"Total balance\"","span.chip 3.5 \"▲ ₱22,266.44 this mo\"","button.btn 3.5 \"Add\""]
+- FAIL [dark mode] dark: /transactions text contrast >= 4.5:1 (3:1 large) — ["a.tab 3.5 \"Txns\"","button.btn 3.5 \"Add\""]
+- FAIL [dark mode] dark: /accounts text contrast >= 4.5:1 (3:1 large) — ["a.tab 3.5 \"Accounts\"","button.btn 3.5 \"Create\""]
+- FAIL [dark mode] dark: /budgets text contrast >= 4.5:1 (3:1 large) — ["a.tab 3.5 \"Budgets\""]
+- FAIL [dark mode] dark: /reports text contrast >= 4.5:1 (3:1 large) — ["a.tab 3.5 \"Reports\"","a.btn 3.5 \"This month\""]
+- FAIL [dark mode] dark: /assistant text contrast >= 4.5:1 (3:1 large) — ["a.tab 3.5 \"Ask\"","button.btn 3.5 \"Ask\""]
+- FAIL [dark mode] dark: /settings text contrast >= 4.5:1 (3:1 large) — ["a.tab 3.5 \"Settings\"","button.btn 3.5 \"Add\""]
+- PASS [dark mode] dark: page background is actually dark
+- PASS [reduced motion] celebration animation is disabled when the user prefers reduced motion
+- PASS [reduced motion] no running CSS animations/transitions anywhere on the dashboard
+- FAIL [states] slow network: Quick Add shows Working… and disables the button — locator.waitFor: Timeout 30000ms exceeded.
+- FAIL [states] offline: Quick Add fails gracefully with a retry path — locator.waitFor: Timeout 30000ms exceeded.

@@ -1,0 +1,727 @@
+{
+ "iphone-390x844/": {
+  "small": 8,
+  "tiny": [],
+  "clip": [],
+  "off": [
+   "nav.tabs \"Home\nTxns\nAccounts\nBudgets\nRep\" [10,415]",
+   "a.tab \"Settings\" [352,408]",
+   "div.stat \"Net\n₱22,266.44\" [289,424]",
+   "div.m \"Net\" [304,409]",
+   "div.big \"₱22,266.44\" [304,409]"
+  ],
+  "overlap": {
+   "tabsTop": 846,
+   "lastContentBottom": 2240,
+   "hidden": 1394
+  },
+  "dates": [
+   {
+    "w": 174,
+    "inside": true
+   },
+   {
+    "w": 174,
+    "inside": true
+   }
+  ]
+ },
+ "iphone-390x844/transactions": {
+  "small": 4,
+  "tiny": [],
+  "clip": [],
+  "off": [
+   "nav.tabs \"Home\nTxns\nAccounts\nBudgets\nRep\" [10,422]",
+   "a.tab \"Settings\" [358,415]",
+   "table \"🔁\n\t\n2026-10-08 · Transfer BPI\" [37,432]",
+   "tbody \"🔁\n\t\n2026-10-08 · Transfer BPI\" [37,432]",
+   "tr \"🔁\n\t\n2026-10-08 · Transfer BPI\" [37,432]",
+   "td \"Edit\nDuplicate\nDelete\" [307,432]",
+   "span.row \"Edit\nDuplicate\nDelete\" [313,426]",
+   "button.btn \"Duplicate\" [313,426]"
+  ],
+  "overlap": {
+   "tabsTop": 863,
+   "lastContentBottom": 2033,
+   "hidden": 1170
+  },
+  "dates": [
+   {
+    "w": 174,
+    "inside": true
+   },
+   {
+    "w": 174,
+    "inside": true
+   }
+  ]
+ },
+ "iphone-390x844/accounts": {
+  "small": 0,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": {
+   "tabsTop": 772,
+   "lastContentBottom": 2445,
+   "hidden": 1673
+  },
+  "dates": [
+   {
+    "w": 175,
+    "inside": true
+   }
+  ]
+ },
+ "iphone-390x844/budgets": {
+  "small": 0,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": {
+   "tabsTop": 772,
+   "lastContentBottom": 2049,
+   "hidden": 1277
+  },
+  "dates": []
+ },
+ "iphone-390x844/reports": {
+  "small": 0,
+  "tiny": [],
+  "clip": [],
+  "off": [
+   "nav.tabs \"Home\nTxns\nAccounts\nBudgets\nRep\" [10,444]",
+   "a.tab \"Settings\" [377,437]",
+   "table \"Month\tIncome\tExpenses\tNet\tTren\" [37,454]",
+   "thead \"Month\tIncome\tExpenses\tNet\tTren\" [37,454]",
+   "tr \"Month\tIncome\tExpenses\tNet\tTren\" [37,454]",
+   "th \"Net\" [294,396]",
+   "th \"Trend\" [396,454]",
+   "tbody \"01\t₱0.00\t₱0.00\t₱0.00\t\n\n02\t₱0.0\" [37,454]"
+  ],
+  "overlap": {
+   "tabsTop": 911,
+   "lastContentBottom": 1707,
+   "hidden": 796
+  },
+  "dates": [
+   {
+    "w": 174,
+    "inside": true
+   },
+   {
+    "w": 174,
+    "inside": true
+   }
+  ]
+ },
+ "iphone-390x844/assistant": {
+  "small": 0,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": {
+   "tabsTop": 772,
+   "lastContentBottom": 834,
+   "hidden": 62
+  },
+  "dates": []
+ },
+ "iphone-390x844/settings": {
+  "small": 1,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": {
+   "tabsTop": 772,
+   "lastContentBottom": 2389,
+   "hidden": 1617
+  },
+  "dates": [
+   {
+    "w": 175,
+    "inside": true
+   }
+  ]
+ },
+ "iphone-393x852/": {
+  "small": 8,
+  "tiny": [],
+  "clip": [],
+  "off": [
+   "nav.tabs \"Home\nTxns\nAccounts\nBudgets\nRep\" [10,414]",
+   "a.tab \"Settings\" [351,407]",
+   "div.stat \"Net\n₱22,266.44\" [289,424]",
+   "div.m \"Net\" [304,409]",
+   "div.big \"₱22,266.44\" [304,409]"
+  ],
+  "overlap": {
+   "tabsTop": 848,
+   "lastContentBottom": 2241,
+   "hidden": 1393
+  },
+  "dates": [
+   {
+    "w": 174,
+    "inside": true
+   },
+   {
+    "w": 174,
+    "inside": true
+   }
+  ]
+ },
+ "iphone-393x852/transactions": {
+  "small": 4,
+  "tiny": [],
+  "clip": [],
+  "off": [
+   "nav.tabs \"Home\nTxns\nAccounts\nBudgets\nRep\" [10,422]",
+   "a.tab \"Settings\" [358,415]",
+   "table \"🔁\n\t\n2026-10-08 · Transfer BPI\" [37,432]",
+   "tbody \"🔁\n\t\n2026-10-08 · Transfer BPI\" [37,432]",
+   "tr \"🔁\n\t\n2026-10-08 · Transfer BPI\" [37,432]",
+   "td \"Edit\nDuplicate\nDelete\" [307,432]",
+   "span.row \"Edit\nDuplicate\nDelete\" [313,426]",
+   "button.btn \"Duplicate\" [313,426]"
+  ],
+  "overlap": {
+   "tabsTop": 865,
+   "lastContentBottom": 2033,
+   "hidden": 1168
+  },
+  "dates": [
+   {
+    "w": 174,
+    "inside": true
+   },
+   {
+    "w": 174,
+    "inside": true
+   }
+  ]
+ },
+ "iphone-393x852/accounts": {
+  "small": 0,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": {
+   "tabsTop": 780,
+   "lastContentBottom": 2121,
+   "hidden": 1341
+  },
+  "dates": [
+   {
+    "w": 175,
+    "inside": true
+   }
+  ]
+ },
+ "iphone-393x852/budgets": {
+  "small": 0,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": {
+   "tabsTop": 780,
+   "lastContentBottom": 2049,
+   "hidden": 1269
+  },
+  "dates": []
+ },
+ "iphone-393x852/reports": {
+  "small": 0,
+  "tiny": [],
+  "clip": [],
+  "off": [
+   "nav.tabs \"Home\nTxns\nAccounts\nBudgets\nRep\" [10,444]",
+   "a.tab \"Settings\" [377,437]",
+   "table \"Month\tIncome\tExpenses\tNet\tTren\" [37,454]",
+   "thead \"Month\tIncome\tExpenses\tNet\tTren\" [37,454]",
+   "tr \"Month\tIncome\tExpenses\tNet\tTren\" [37,454]",
+   "th \"Net\" [294,396]",
+   "th \"Trend\" [396,454]",
+   "tbody \"01\t₱0.00\t₱0.00\t₱0.00\t\n\n02\t₱0.0\" [37,454]"
+  ],
+  "overlap": {
+   "tabsTop": 913,
+   "lastContentBottom": 1707,
+   "hidden": 794
+  },
+  "dates": [
+   {
+    "w": 174,
+    "inside": true
+   },
+   {
+    "w": 174,
+    "inside": true
+   }
+  ]
+ },
+ "iphone-393x852/assistant": {
+  "small": 0,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": {
+   "tabsTop": 780,
+   "lastContentBottom": 842,
+   "hidden": 62
+  },
+  "dates": []
+ },
+ "iphone-393x852/settings": {
+  "small": 1,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": {
+   "tabsTop": 780,
+   "lastContentBottom": 2389,
+   "hidden": 1609
+  },
+  "dates": [
+   {
+    "w": 175,
+    "inside": true
+   }
+  ]
+ },
+ "iphone-max-430x932/": {
+  "small": 8,
+  "tiny": [],
+  "clip": [],
+  "off": [
+   "nav.tabs \"Home\nTxns\nAccounts\nBudgets\nRep\" [10,443]",
+   "a.tab \"Settings\" [376,436]",
+   "div.stat \"Net\n₱22,266.44\" [309,453]",
+   "div.m \"Net\" [324,438]",
+   "div.big \"₱22,266.44\" [324,438]"
+  ],
+  "overlap": {
+   "tabsTop": 910,
+   "lastContentBottom": 2116,
+   "hidden": 1206
+  },
+  "dates": [
+   {
+    "w": 174,
+    "inside": true
+   },
+   {
+    "w": 174,
+    "inside": true
+   }
+  ]
+ },
+ "iphone-max-430x932/transactions": {
+  "small": 4,
+  "tiny": [],
+  "clip": [],
+  "off": [
+   "table \"🔁\n\t\n2026-10-08 · Transfer BPI\" [37,432]",
+   "tbody \"🔁\n\t\n2026-10-08 · Transfer BPI\" [37,432]",
+   "tr \"🔁\n\t\n2026-10-08 · Transfer BPI\" [37,432]",
+   "td \"Edit\nDuplicate\nDelete\" [307,432]",
+   "tr \"📺\n\tNetflix\n2026-10-08 · Subsc\" [37,432]",
+   "td \"Edit\nDuplicate\nDelete\" [307,432]",
+   "tr \"🚌\n\tTaxi Ride Airport Gcash Ve\" [37,432]",
+   "td \"Edit\nDuplicate\nDelete\" [307,432]"
+  ],
+  "overlap": {
+   "tabsTop": 865,
+   "lastContentBottom": 1928,
+   "hidden": 1063
+  },
+  "dates": [
+   {
+    "w": 174,
+    "inside": true
+   },
+   {
+    "w": 174,
+    "inside": true
+   }
+  ]
+ },
+ "iphone-max-430x932/accounts": {
+  "small": 0,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": {
+   "tabsTop": 860,
+   "lastContentBottom": 1745,
+   "hidden": 885
+  },
+  "dates": [
+   {
+    "w": 175,
+    "inside": true
+   }
+  ]
+ },
+ "iphone-max-430x932/budgets": {
+  "small": 0,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": {
+   "tabsTop": 860,
+   "lastContentBottom": 2028,
+   "hidden": 1168
+  },
+  "dates": []
+ },
+ "iphone-max-430x932/reports": {
+  "small": 0,
+  "tiny": [],
+  "clip": [],
+  "off": [
+   "nav.tabs \"Home\nTxns\nAccounts\nBudgets\nRep\" [10,444]",
+   "a.tab \"Settings\" [377,437]",
+   "table \"Month\tIncome\tExpenses\tNet\tTren\" [37,454]",
+   "thead \"Month\tIncome\tExpenses\tNet\tTren\" [37,454]",
+   "tr \"Month\tIncome\tExpenses\tNet\tTren\" [37,454]",
+   "th \"Trend\" [396,454]",
+   "tbody \"01\t₱0.00\t₱0.00\t₱0.00\t\n\n02\t₱0.0\" [37,454]",
+   "tr \"01\t₱0.00\t₱0.00\t₱0.00\" [37,454]"
+  ],
+  "overlap": {
+   "tabsTop": 913,
+   "lastContentBottom": 1680,
+   "hidden": 767
+  },
+  "dates": [
+   {
+    "w": 174,
+    "inside": true
+   },
+   {
+    "w": 174,
+    "inside": true
+   }
+  ]
+ },
+ "iphone-max-430x932/assistant": {
+  "small": 0,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": {
+   "tabsTop": 860,
+   "lastContentBottom": 922,
+   "hidden": 62
+  },
+  "dates": []
+ },
+ "iphone-max-430x932/settings": {
+  "small": 1,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": {
+   "tabsTop": 860,
+   "lastContentBottom": 2179,
+   "hidden": 1319
+  },
+  "dates": [
+   {
+    "w": 175,
+    "inside": true
+   }
+  ]
+ },
+ "ipad-768x1024/": {
+  "small": 8,
+  "tiny": [],
+  "clip": [],
+  "off": [
+   "main.content \"Good evening, Responsive QA 👋\" [250,844]",
+   "section.card \"Good evening, Responsive QA 👋\" [286,808]",
+   "p.hi \"Good evening, Responsive QA 👋\" [308,786]",
+   "div.m \"Total balance\" [308,786]",
+   "div.big \"₱22,266.44\" [308,786]",
+   "div.row \"▲ ₱22,266.44 this month\n🔥 1-d\" [308,786]",
+   "div.dots \"✓\" [308,786]",
+   "p.m \"Today's logged. Nice work!\" [308,786]"
+  ],
+  "overlap": null,
+  "dates": [
+   {
+    "w": 174,
+    "inside": true
+   },
+   {
+    "w": 174,
+    "inside": true
+   }
+  ]
+ },
+ "ipad-768x1024/transactions": {
+  "small": 4,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": null,
+  "dates": [
+   {
+    "w": 174,
+    "inside": true
+   },
+   {
+    "w": 174,
+    "inside": true
+   }
+  ]
+ },
+ "ipad-768x1024/accounts": {
+  "small": 0,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": null,
+  "dates": [
+   {
+    "w": 175,
+    "inside": true
+   }
+  ]
+ },
+ "ipad-768x1024/budgets": {
+  "small": 0,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": null,
+  "dates": []
+ },
+ "ipad-768x1024/reports": {
+  "small": 0,
+  "tiny": [],
+  "clip": [],
+  "off": [
+   "main.content \"This month\nLast month\nThis yea\" [250,781]"
+  ],
+  "overlap": null,
+  "dates": [
+   {
+    "w": 174,
+    "inside": true
+   },
+   {
+    "w": 174,
+    "inside": true
+   }
+  ]
+ },
+ "ipad-768x1024/assistant": {
+  "small": 0,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": null,
+  "dates": []
+ },
+ "ipad-768x1024/settings": {
+  "small": 1,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": null,
+  "dates": [
+   {
+    "w": 175,
+    "inside": true
+   }
+  ]
+ },
+ "desktop-1280x800/": {
+  "small": 8,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": null,
+  "dates": [
+   {
+    "w": 174,
+    "inside": true
+   },
+   {
+    "w": 174,
+    "inside": true
+   }
+  ]
+ },
+ "desktop-1280x800/transactions": {
+  "small": 4,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": null,
+  "dates": [
+   {
+    "w": 174,
+    "inside": true
+   },
+   {
+    "w": 174,
+    "inside": true
+   }
+  ]
+ },
+ "desktop-1280x800/accounts": {
+  "small": 0,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": null,
+  "dates": [
+   {
+    "w": 175,
+    "inside": true
+   }
+  ]
+ },
+ "desktop-1280x800/budgets": {
+  "small": 0,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": null,
+  "dates": []
+ },
+ "desktop-1280x800/reports": {
+  "small": 0,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": null,
+  "dates": [
+   {
+    "w": 174,
+    "inside": true
+   },
+   {
+    "w": 174,
+    "inside": true
+   }
+  ]
+ },
+ "desktop-1280x800/assistant": {
+  "small": 0,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": null,
+  "dates": []
+ },
+ "desktop-1280x800/settings": {
+  "small": 1,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": null,
+  "dates": [
+   {
+    "w": 175,
+    "inside": true
+   }
+  ]
+ },
+ "desktop-1440x900/": {
+  "small": 8,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": null,
+  "dates": [
+   {
+    "w": 174,
+    "inside": true
+   },
+   {
+    "w": 174,
+    "inside": true
+   }
+  ]
+ },
+ "desktop-1440x900/transactions": {
+  "small": 4,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": null,
+  "dates": [
+   {
+    "w": 174,
+    "inside": true
+   },
+   {
+    "w": 174,
+    "inside": true
+   }
+  ]
+ },
+ "desktop-1440x900/accounts": {
+  "small": 0,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": null,
+  "dates": [
+   {
+    "w": 175,
+    "inside": true
+   }
+  ]
+ },
+ "desktop-1440x900/budgets": {
+  "small": 0,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": null,
+  "dates": []
+ },
+ "desktop-1440x900/reports": {
+  "small": 0,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": null,
+  "dates": [
+   {
+    "w": 174,
+    "inside": true
+   },
+   {
+    "w": 174,
+    "inside": true
+   }
+  ]
+ },
+ "desktop-1440x900/assistant": {
+  "small": 0,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": null,
+  "dates": []
+ },
+ "desktop-1440x900/settings": {
+  "small": 1,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": null,
+  "dates": [
+   {
+    "w": 175,
+    "inside": true
+   }
+  ]
+ }
+}

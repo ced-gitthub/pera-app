@@ -1,0 +1,2362 @@
+{
+ "base": "https://pera-app-beta.vercel.app",
+ "at": "2026-10-08T14:15:49.920Z",
+ "pass": 173,
+ "fail": 63,
+ "user": "pera-qa-1791468675698-c@example.com",
+ "failed": [
+  {
+   "group": "layout iphone-390x844",
+   "name": "/: no horizontal overflow, nothing clipped off-screen",
+   "ok": false,
+   "detail": {
+    "status": 200,
+    "scrollW": 425,
+    "vw": 390,
+    "off": [
+     "nav.tabs \"Home\nTxns\nAccounts\nBudgets\nRep\" [10,415]",
+     "a.tab \"Settings\" [352,408]",
+     "div.stat \"Net\n₱22,266.44\" [289,424]",
+     "div.m \"Net\" [304,409]",
+     "div.big \"₱22,266.44\" [304,409]"
+    ]
+   }
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/transactions: no horizontal overflow, nothing clipped off-screen",
+   "ok": false,
+   "detail": {
+    "status": 200,
+    "scrollW": 432,
+    "vw": 390,
+    "off": [
+     "nav.tabs \"Home\nTxns\nAccounts\nBudgets\nRep\" [10,422]",
+     "a.tab \"Settings\" [358,415]",
+     "table \"🔁\n\t\n2026-10-08 · Transfer BPI\" [37,432]",
+     "tbody \"🔁\n\t\n2026-10-08 · Transfer BPI\" [37,432]",
+     "tr \"🔁\n\t\n2026-10-08 · Transfer BPI\" [37,432]",
+     "td \"Edit\nDuplicate\nDelete\" [307,432]",
+     "span.row \"Edit\nDuplicate\nDelete\" [313,426]",
+     "button.btn \"Duplicate\" [313,426]"
+    ]
+   }
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/reports: no horizontal overflow, nothing clipped off-screen",
+   "ok": false,
+   "detail": {
+    "status": 200,
+    "scrollW": 454,
+    "vw": 390,
+    "off": [
+     "nav.tabs \"Home\nTxns\nAccounts\nBudgets\nRep\" [10,444]",
+     "a.tab \"Settings\" [377,437]",
+     "table \"Month\tIncome\tExpenses\tNet\tTren\" [37,454]",
+     "thead \"Month\tIncome\tExpenses\tNet\tTren\" [37,454]",
+     "tr \"Month\tIncome\tExpenses\tNet\tTren\" [37,454]",
+     "th \"Net\" [294,396]",
+     "th \"Trend\" [396,454]",
+     "tbody \"01\t₱0.00\t₱0.00\t₱0.00\t\n\n02\t₱0.0\" [37,454]"
+    ]
+   }
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/: bottom nav does not cover content",
+   "ok": false,
+   "detail": {
+    "tabsTop": 846,
+    "lastContentBottom": 2240,
+    "hidden": 1394
+   }
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/transactions: bottom nav does not cover content",
+   "ok": false,
+   "detail": {
+    "tabsTop": 863,
+    "lastContentBottom": 2033,
+    "hidden": 1170
+   }
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/accounts: bottom nav does not cover content",
+   "ok": false,
+   "detail": {
+    "tabsTop": 772,
+    "lastContentBottom": 2445,
+    "hidden": 1673
+   }
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/budgets: bottom nav does not cover content",
+   "ok": false,
+   "detail": {
+    "tabsTop": 772,
+    "lastContentBottom": 2049,
+    "hidden": 1277
+   }
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/reports: bottom nav does not cover content",
+   "ok": false,
+   "detail": {
+    "tabsTop": 911,
+    "lastContentBottom": 1707,
+    "hidden": 796
+   }
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/assistant: bottom nav does not cover content",
+   "ok": false,
+   "detail": {
+    "tabsTop": 772,
+    "lastContentBottom": 834,
+    "hidden": 62
+   }
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/settings: bottom nav does not cover content",
+   "ok": false,
+   "detail": {
+    "tabsTop": 772,
+    "lastContentBottom": 2389,
+    "hidden": 1617
+   }
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/login (logged out): no overflow, targets >= 24px",
+   "ok": false,
+   "detail": {
+    "off": [],
+    "tiny": [
+     "a.underline \"Forgot password?\" 121x17",
+     "a.underline \"Register\" 52x17"
+    ],
+    "scrollW": 390
+   }
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/register (logged out): no overflow, targets >= 24px",
+   "ok": false,
+   "detail": {
+    "off": [],
+    "tiny": [
+     "a.underline \"Log in\" 39x17"
+    ],
+    "scrollW": 390
+   }
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/forgot (logged out): no overflow, targets >= 24px",
+   "ok": false,
+   "detail": {
+    "off": [],
+    "tiny": [
+     "a.underline \"Back to log in\" 87x17"
+    ],
+    "scrollW": 390
+   }
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/: no horizontal overflow, nothing clipped off-screen",
+   "ok": false,
+   "detail": {
+    "status": 200,
+    "scrollW": 424,
+    "vw": 393,
+    "off": [
+     "nav.tabs \"Home\nTxns\nAccounts\nBudgets\nRep\" [10,414]",
+     "a.tab \"Settings\" [351,407]",
+     "div.stat \"Net\n₱22,266.44\" [289,424]",
+     "div.m \"Net\" [304,409]",
+     "div.big \"₱22,266.44\" [304,409]"
+    ]
+   }
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/transactions: no horizontal overflow, nothing clipped off-screen",
+   "ok": false,
+   "detail": {
+    "status": 200,
+    "scrollW": 432,
+    "vw": 393,
+    "off": [
+     "nav.tabs \"Home\nTxns\nAccounts\nBudgets\nRep\" [10,422]",
+     "a.tab \"Settings\" [358,415]",
+     "table \"🔁\n\t\n2026-10-08 · Transfer BPI\" [37,432]",
+     "tbody \"🔁\n\t\n2026-10-08 · Transfer BPI\" [37,432]",
+     "tr \"🔁\n\t\n2026-10-08 · Transfer BPI\" [37,432]",
+     "td \"Edit\nDuplicate\nDelete\" [307,432]",
+     "span.row \"Edit\nDuplicate\nDelete\" [313,426]",
+     "button.btn \"Duplicate\" [313,426]"
+    ]
+   }
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/reports: no horizontal overflow, nothing clipped off-screen",
+   "ok": false,
+   "detail": {
+    "status": 200,
+    "scrollW": 454,
+    "vw": 393,
+    "off": [
+     "nav.tabs \"Home\nTxns\nAccounts\nBudgets\nRep\" [10,444]",
+     "a.tab \"Settings\" [377,437]",
+     "table \"Month\tIncome\tExpenses\tNet\tTren\" [37,454]",
+     "thead \"Month\tIncome\tExpenses\tNet\tTren\" [37,454]",
+     "tr \"Month\tIncome\tExpenses\tNet\tTren\" [37,454]",
+     "th \"Net\" [294,396]",
+     "th \"Trend\" [396,454]",
+     "tbody \"01\t₱0.00\t₱0.00\t₱0.00\t\n\n02\t₱0.0\" [37,454]"
+    ]
+   }
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/: bottom nav does not cover content",
+   "ok": false,
+   "detail": {
+    "tabsTop": 848,
+    "lastContentBottom": 2241,
+    "hidden": 1393
+   }
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/transactions: bottom nav does not cover content",
+   "ok": false,
+   "detail": {
+    "tabsTop": 865,
+    "lastContentBottom": 2033,
+    "hidden": 1168
+   }
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/accounts: bottom nav does not cover content",
+   "ok": false,
+   "detail": {
+    "tabsTop": 780,
+    "lastContentBottom": 2121,
+    "hidden": 1341
+   }
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/budgets: bottom nav does not cover content",
+   "ok": false,
+   "detail": {
+    "tabsTop": 780,
+    "lastContentBottom": 2049,
+    "hidden": 1269
+   }
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/reports: bottom nav does not cover content",
+   "ok": false,
+   "detail": {
+    "tabsTop": 913,
+    "lastContentBottom": 1707,
+    "hidden": 794
+   }
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/assistant: bottom nav does not cover content",
+   "ok": false,
+   "detail": {
+    "tabsTop": 780,
+    "lastContentBottom": 842,
+    "hidden": 62
+   }
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/settings: bottom nav does not cover content",
+   "ok": false,
+   "detail": {
+    "tabsTop": 780,
+    "lastContentBottom": 2389,
+    "hidden": 1609
+   }
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/login (logged out): no overflow, targets >= 24px",
+   "ok": false,
+   "detail": {
+    "off": [],
+    "tiny": [
+     "a.underline \"Forgot password?\" 121x17",
+     "a.underline \"Register\" 52x17"
+    ],
+    "scrollW": 393
+   }
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/register (logged out): no overflow, targets >= 24px",
+   "ok": false,
+   "detail": {
+    "off": [],
+    "tiny": [
+     "a.underline \"Log in\" 39x17"
+    ],
+    "scrollW": 393
+   }
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/forgot (logged out): no overflow, targets >= 24px",
+   "ok": false,
+   "detail": {
+    "off": [],
+    "tiny": [
+     "a.underline \"Back to log in\" 87x17"
+    ],
+    "scrollW": 393
+   }
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/: no horizontal overflow, nothing clipped off-screen",
+   "ok": false,
+   "detail": {
+    "status": 200,
+    "scrollW": 453,
+    "vw": 430,
+    "off": [
+     "nav.tabs \"Home\nTxns\nAccounts\nBudgets\nRep\" [10,443]",
+     "a.tab \"Settings\" [376,436]",
+     "div.stat \"Net\n₱22,266.44\" [309,453]",
+     "div.m \"Net\" [324,438]",
+     "div.big \"₱22,266.44\" [324,438]"
+    ]
+   }
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/transactions: no horizontal overflow, nothing clipped off-screen",
+   "ok": false,
+   "detail": {
+    "status": 200,
+    "scrollW": 432,
+    "vw": 430,
+    "off": [
+     "table \"🔁\n\t\n2026-10-08 · Transfer BPI\" [37,432]",
+     "tbody \"🔁\n\t\n2026-10-08 · Transfer BPI\" [37,432]",
+     "tr \"🔁\n\t\n2026-10-08 · Transfer BPI\" [37,432]",
+     "td \"Edit\nDuplicate\nDelete\" [307,432]",
+     "tr \"📺\n\tNetflix\n2026-10-08 · Subsc\" [37,432]",
+     "td \"Edit\nDuplicate\nDelete\" [307,432]",
+     "tr \"🚌\n\tTaxi Ride Airport Gcash Ve\" [37,432]",
+     "td \"Edit\nDuplicate\nDelete\" [307,432]"
+    ]
+   }
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/reports: no horizontal overflow, nothing clipped off-screen",
+   "ok": false,
+   "detail": {
+    "status": 200,
+    "scrollW": 454,
+    "vw": 430,
+    "off": [
+     "nav.tabs \"Home\nTxns\nAccounts\nBudgets\nRep\" [10,444]",
+     "a.tab \"Settings\" [377,437]",
+     "table \"Month\tIncome\tExpenses\tNet\tTren\" [37,454]",
+     "thead \"Month\tIncome\tExpenses\tNet\tTren\" [37,454]",
+     "tr \"Month\tIncome\tExpenses\tNet\tTren\" [37,454]",
+     "th \"Trend\" [396,454]",
+     "tbody \"01\t₱0.00\t₱0.00\t₱0.00\t\n\n02\t₱0.0\" [37,454]",
+     "tr \"01\t₱0.00\t₱0.00\t₱0.00\" [37,454]"
+    ]
+   }
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/: bottom nav does not cover content",
+   "ok": false,
+   "detail": {
+    "tabsTop": 910,
+    "lastContentBottom": 2116,
+    "hidden": 1206
+   }
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/transactions: bottom nav does not cover content",
+   "ok": false,
+   "detail": {
+    "tabsTop": 865,
+    "lastContentBottom": 1928,
+    "hidden": 1063
+   }
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/accounts: bottom nav does not cover content",
+   "ok": false,
+   "detail": {
+    "tabsTop": 860,
+    "lastContentBottom": 1745,
+    "hidden": 885
+   }
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/budgets: bottom nav does not cover content",
+   "ok": false,
+   "detail": {
+    "tabsTop": 860,
+    "lastContentBottom": 2028,
+    "hidden": 1168
+   }
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/reports: bottom nav does not cover content",
+   "ok": false,
+   "detail": {
+    "tabsTop": 913,
+    "lastContentBottom": 1680,
+    "hidden": 767
+   }
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/assistant: bottom nav does not cover content",
+   "ok": false,
+   "detail": {
+    "tabsTop": 860,
+    "lastContentBottom": 922,
+    "hidden": 62
+   }
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/settings: bottom nav does not cover content",
+   "ok": false,
+   "detail": {
+    "tabsTop": 860,
+    "lastContentBottom": 2179,
+    "hidden": 1319
+   }
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/login (logged out): no overflow, targets >= 24px",
+   "ok": false,
+   "detail": {
+    "off": [],
+    "tiny": [
+     "a.underline \"Forgot password?\" 121x17",
+     "a.underline \"Register\" 52x17"
+    ],
+    "scrollW": 430
+   }
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/register (logged out): no overflow, targets >= 24px",
+   "ok": false,
+   "detail": {
+    "off": [],
+    "tiny": [
+     "a.underline \"Log in\" 39x17"
+    ],
+    "scrollW": 430
+   }
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/forgot (logged out): no overflow, targets >= 24px",
+   "ok": false,
+   "detail": {
+    "off": [],
+    "tiny": [
+     "a.underline \"Back to log in\" 87x17"
+    ],
+    "scrollW": 430
+   }
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/: no horizontal overflow, nothing clipped off-screen",
+   "ok": false,
+   "detail": {
+    "status": 200,
+    "scrollW": 844,
+    "vw": 768,
+    "off": [
+     "main.content \"Good evening, Responsive QA 👋\" [250,844]",
+     "section.card \"Good evening, Responsive QA 👋\" [286,808]",
+     "p.hi \"Good evening, Responsive QA 👋\" [308,786]",
+     "div.m \"Total balance\" [308,786]",
+     "div.big \"₱22,266.44\" [308,786]",
+     "div.row \"▲ ₱22,266.44 this month\n🔥 1-d\" [308,786]",
+     "div.dots \"✓\" [308,786]",
+     "p.m \"Today's logged. Nice work!\" [308,786]"
+    ]
+   }
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/reports: no horizontal overflow, nothing clipped off-screen",
+   "ok": false,
+   "detail": {
+    "status": 200,
+    "scrollW": 781,
+    "vw": 768,
+    "off": [
+     "main.content \"This month\nLast month\nThis yea\" [250,781]"
+    ]
+   }
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/login (logged out): no overflow, targets >= 24px",
+   "ok": false,
+   "detail": {
+    "off": [],
+    "tiny": [
+     "a.underline \"Forgot password?\" 121x17",
+     "a.underline \"Register\" 52x17"
+    ],
+    "scrollW": 768
+   }
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/register (logged out): no overflow, targets >= 24px",
+   "ok": false,
+   "detail": {
+    "off": [],
+    "tiny": [
+     "a.underline \"Log in\" 39x17"
+    ],
+    "scrollW": 768
+   }
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/forgot (logged out): no overflow, targets >= 24px",
+   "ok": false,
+   "detail": {
+    "off": [],
+    "tiny": [
+     "a.underline \"Back to log in\" 87x17"
+    ],
+    "scrollW": 768
+   }
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/login (logged out): no overflow, targets >= 24px",
+   "ok": false,
+   "detail": {
+    "off": [],
+    "tiny": [
+     "a.underline \"Forgot password?\" 121x17",
+     "a.underline \"Register\" 52x17"
+    ],
+    "scrollW": 1280
+   }
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/register (logged out): no overflow, targets >= 24px",
+   "ok": false,
+   "detail": {
+    "off": [],
+    "tiny": [
+     "a.underline \"Log in\" 39x17"
+    ],
+    "scrollW": 1280
+   }
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/forgot (logged out): no overflow, targets >= 24px",
+   "ok": false,
+   "detail": {
+    "off": [],
+    "tiny": [
+     "a.underline \"Back to log in\" 87x17"
+    ],
+    "scrollW": 1280
+   }
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/login (logged out): no overflow, targets >= 24px",
+   "ok": false,
+   "detail": {
+    "off": [],
+    "tiny": [
+     "a.underline \"Forgot password?\" 121x17",
+     "a.underline \"Register\" 52x17"
+    ],
+    "scrollW": 1440
+   }
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/register (logged out): no overflow, targets >= 24px",
+   "ok": false,
+   "detail": {
+    "off": [],
+    "tiny": [
+     "a.underline \"Log in\" 39x17"
+    ],
+    "scrollW": 1440
+   }
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/forgot (logged out): no overflow, targets >= 24px",
+   "ok": false,
+   "detail": {
+    "off": [],
+    "tiny": [
+     "a.underline \"Back to log in\" 87x17"
+    ],
+    "scrollW": 1440
+   }
+  },
+  {
+   "group": "page metadata",
+   "name": "viewport-fit=cover set for safe-area insets (needed before PWA work)",
+   "ok": false,
+   "detail": "width=device-width, initial-scale=1"
+  },
+  {
+   "group": "keyboard",
+   "name": "Quick Add works with keyboard only (type + Enter)",
+   "ok": false,
+   "detail": "locator.waitFor: Timeout 25000ms exceeded."
+  },
+  {
+   "group": "dark mode",
+   "name": "light: / text contrast >= 4.5:1 (3:1 large)",
+   "ok": false,
+   "detail": [
+    "td.inc 4.37 \"+₱25,000.00\"",
+    "b. 4.37 \"+₱25,000.00\""
+   ]
+  },
+  {
+   "group": "dark mode",
+   "name": "light: /transactions text contrast >= 4.5:1 (3:1 large)",
+   "ok": false,
+   "detail": [
+    "td.inc 4.37 \"+₱25,000.00\"",
+    "b. 4.37 \"+₱25,000.00\""
+   ]
+  },
+  {
+   "group": "dark mode",
+   "name": "dark: / text contrast >= 4.5:1 (3:1 large)",
+   "ok": false,
+   "detail": [
+    "a.tab 3.5 \"Home\"",
+    "p.hi 3.5 \"Good evening, Respon\"",
+    "div.m 3.5 \"Total balance\"",
+    "span.chip 3.5 \"▲ ₱22,266.44 this mo\"",
+    "button.btn 3.5 \"Add\""
+   ]
+  },
+  {
+   "group": "dark mode",
+   "name": "dark: /transactions text contrast >= 4.5:1 (3:1 large)",
+   "ok": false,
+   "detail": [
+    "a.tab 3.5 \"Txns\"",
+    "button.btn 3.5 \"Add\""
+   ]
+  },
+  {
+   "group": "dark mode",
+   "name": "dark: /accounts text contrast >= 4.5:1 (3:1 large)",
+   "ok": false,
+   "detail": [
+    "a.tab 3.5 \"Accounts\"",
+    "button.btn 3.5 \"Create\""
+   ]
+  },
+  {
+   "group": "dark mode",
+   "name": "dark: /budgets text contrast >= 4.5:1 (3:1 large)",
+   "ok": false,
+   "detail": [
+    "a.tab 3.5 \"Budgets\""
+   ]
+  },
+  {
+   "group": "dark mode",
+   "name": "dark: /reports text contrast >= 4.5:1 (3:1 large)",
+   "ok": false,
+   "detail": [
+    "a.tab 3.5 \"Reports\"",
+    "a.btn 3.5 \"This month\""
+   ]
+  },
+  {
+   "group": "dark mode",
+   "name": "dark: /assistant text contrast >= 4.5:1 (3:1 large)",
+   "ok": false,
+   "detail": [
+    "a.tab 3.5 \"Ask\"",
+    "button.btn 3.5 \"Ask\""
+   ]
+  },
+  {
+   "group": "dark mode",
+   "name": "dark: /settings text contrast >= 4.5:1 (3:1 large)",
+   "ok": false,
+   "detail": [
+    "a.tab 3.5 \"Settings\"",
+    "button.btn 3.5 \"Add\""
+   ]
+  },
+  {
+   "group": "states",
+   "name": "slow network: Quick Add shows Working… and disables the button",
+   "ok": false,
+   "detail": "locator.waitFor: Timeout 30000ms exceeded."
+  },
+  {
+   "group": "states",
+   "name": "offline: Quick Add fails gracefully with a retry path",
+   "ok": false,
+   "detail": "locator.waitFor: Timeout 30000ms exceeded."
+  }
+ ],
+ "results": [
+  {
+   "group": "layout iphone-390x844",
+   "name": "/: no horizontal overflow, nothing clipped off-screen",
+   "ok": false,
+   "detail": {
+    "status": 200,
+    "scrollW": 425,
+    "vw": 390,
+    "off": [
+     "nav.tabs \"Home\nTxns\nAccounts\nBudgets\nRep\" [10,415]",
+     "a.tab \"Settings\" [352,408]",
+     "div.stat \"Net\n₱22,266.44\" [289,424]",
+     "div.m \"Net\" [304,409]",
+     "div.big \"₱22,266.44\" [304,409]"
+    ]
+   }
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/transactions: no horizontal overflow, nothing clipped off-screen",
+   "ok": false,
+   "detail": {
+    "status": 200,
+    "scrollW": 432,
+    "vw": 390,
+    "off": [
+     "nav.tabs \"Home\nTxns\nAccounts\nBudgets\nRep\" [10,422]",
+     "a.tab \"Settings\" [358,415]",
+     "table \"🔁\n\t\n2026-10-08 · Transfer BPI\" [37,432]",
+     "tbody \"🔁\n\t\n2026-10-08 · Transfer BPI\" [37,432]",
+     "tr \"🔁\n\t\n2026-10-08 · Transfer BPI\" [37,432]",
+     "td \"Edit\nDuplicate\nDelete\" [307,432]",
+     "span.row \"Edit\nDuplicate\nDelete\" [313,426]",
+     "button.btn \"Duplicate\" [313,426]"
+    ]
+   }
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/accounts: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/budgets: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/reports: no horizontal overflow, nothing clipped off-screen",
+   "ok": false,
+   "detail": {
+    "status": 200,
+    "scrollW": 454,
+    "vw": 390,
+    "off": [
+     "nav.tabs \"Home\nTxns\nAccounts\nBudgets\nRep\" [10,444]",
+     "a.tab \"Settings\" [377,437]",
+     "table \"Month\tIncome\tExpenses\tNet\tTren\" [37,454]",
+     "thead \"Month\tIncome\tExpenses\tNet\tTren\" [37,454]",
+     "tr \"Month\tIncome\tExpenses\tNet\tTren\" [37,454]",
+     "th \"Net\" [294,396]",
+     "th \"Trend\" [396,454]",
+     "tbody \"01\t₱0.00\t₱0.00\t₱0.00\t\n\n02\t₱0.0\" [37,454]"
+    ]
+   }
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/assistant: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/settings: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/transactions: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/accounts: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/budgets: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/reports: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/assistant: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/settings: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/transactions: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/accounts: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/budgets: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/reports: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/assistant: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/settings: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/: bottom nav does not cover content",
+   "ok": false,
+   "detail": {
+    "tabsTop": 846,
+    "lastContentBottom": 2240,
+    "hidden": 1394
+   }
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/transactions: bottom nav does not cover content",
+   "ok": false,
+   "detail": {
+    "tabsTop": 863,
+    "lastContentBottom": 2033,
+    "hidden": 1170
+   }
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/accounts: bottom nav does not cover content",
+   "ok": false,
+   "detail": {
+    "tabsTop": 772,
+    "lastContentBottom": 2445,
+    "hidden": 1673
+   }
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/budgets: bottom nav does not cover content",
+   "ok": false,
+   "detail": {
+    "tabsTop": 772,
+    "lastContentBottom": 2049,
+    "hidden": 1277
+   }
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/reports: bottom nav does not cover content",
+   "ok": false,
+   "detail": {
+    "tabsTop": 911,
+    "lastContentBottom": 1707,
+    "hidden": 796
+   }
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/assistant: bottom nav does not cover content",
+   "ok": false,
+   "detail": {
+    "tabsTop": 772,
+    "lastContentBottom": 834,
+    "hidden": 62
+   }
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/settings: bottom nav does not cover content",
+   "ok": false,
+   "detail": {
+    "tabsTop": 772,
+    "lastContentBottom": 2389,
+    "hidden": 1617
+   }
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/transactions: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/accounts: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/settings: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/reports: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/budgets: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/login (logged out): no overflow, targets >= 24px",
+   "ok": false,
+   "detail": {
+    "off": [],
+    "tiny": [
+     "a.underline \"Forgot password?\" 121x17",
+     "a.underline \"Register\" 52x17"
+    ],
+    "scrollW": 390
+   }
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/register (logged out): no overflow, targets >= 24px",
+   "ok": false,
+   "detail": {
+    "off": [],
+    "tiny": [
+     "a.underline \"Log in\" 39x17"
+    ],
+    "scrollW": 390
+   }
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/forgot (logged out): no overflow, targets >= 24px",
+   "ok": false,
+   "detail": {
+    "off": [],
+    "tiny": [
+     "a.underline \"Back to log in\" 87x17"
+    ],
+    "scrollW": 390
+   }
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/: no horizontal overflow, nothing clipped off-screen",
+   "ok": false,
+   "detail": {
+    "status": 200,
+    "scrollW": 424,
+    "vw": 393,
+    "off": [
+     "nav.tabs \"Home\nTxns\nAccounts\nBudgets\nRep\" [10,414]",
+     "a.tab \"Settings\" [351,407]",
+     "div.stat \"Net\n₱22,266.44\" [289,424]",
+     "div.m \"Net\" [304,409]",
+     "div.big \"₱22,266.44\" [304,409]"
+    ]
+   }
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/transactions: no horizontal overflow, nothing clipped off-screen",
+   "ok": false,
+   "detail": {
+    "status": 200,
+    "scrollW": 432,
+    "vw": 393,
+    "off": [
+     "nav.tabs \"Home\nTxns\nAccounts\nBudgets\nRep\" [10,422]",
+     "a.tab \"Settings\" [358,415]",
+     "table \"🔁\n\t\n2026-10-08 · Transfer BPI\" [37,432]",
+     "tbody \"🔁\n\t\n2026-10-08 · Transfer BPI\" [37,432]",
+     "tr \"🔁\n\t\n2026-10-08 · Transfer BPI\" [37,432]",
+     "td \"Edit\nDuplicate\nDelete\" [307,432]",
+     "span.row \"Edit\nDuplicate\nDelete\" [313,426]",
+     "button.btn \"Duplicate\" [313,426]"
+    ]
+   }
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/accounts: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/budgets: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/reports: no horizontal overflow, nothing clipped off-screen",
+   "ok": false,
+   "detail": {
+    "status": 200,
+    "scrollW": 454,
+    "vw": 393,
+    "off": [
+     "nav.tabs \"Home\nTxns\nAccounts\nBudgets\nRep\" [10,444]",
+     "a.tab \"Settings\" [377,437]",
+     "table \"Month\tIncome\tExpenses\tNet\tTren\" [37,454]",
+     "thead \"Month\tIncome\tExpenses\tNet\tTren\" [37,454]",
+     "tr \"Month\tIncome\tExpenses\tNet\tTren\" [37,454]",
+     "th \"Net\" [294,396]",
+     "th \"Trend\" [396,454]",
+     "tbody \"01\t₱0.00\t₱0.00\t₱0.00\t\n\n02\t₱0.0\" [37,454]"
+    ]
+   }
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/assistant: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/settings: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/transactions: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/accounts: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/budgets: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/reports: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/assistant: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/settings: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/transactions: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/accounts: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/budgets: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/reports: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/assistant: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/settings: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/: bottom nav does not cover content",
+   "ok": false,
+   "detail": {
+    "tabsTop": 848,
+    "lastContentBottom": 2241,
+    "hidden": 1393
+   }
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/transactions: bottom nav does not cover content",
+   "ok": false,
+   "detail": {
+    "tabsTop": 865,
+    "lastContentBottom": 2033,
+    "hidden": 1168
+   }
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/accounts: bottom nav does not cover content",
+   "ok": false,
+   "detail": {
+    "tabsTop": 780,
+    "lastContentBottom": 2121,
+    "hidden": 1341
+   }
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/budgets: bottom nav does not cover content",
+   "ok": false,
+   "detail": {
+    "tabsTop": 780,
+    "lastContentBottom": 2049,
+    "hidden": 1269
+   }
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/reports: bottom nav does not cover content",
+   "ok": false,
+   "detail": {
+    "tabsTop": 913,
+    "lastContentBottom": 1707,
+    "hidden": 794
+   }
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/assistant: bottom nav does not cover content",
+   "ok": false,
+   "detail": {
+    "tabsTop": 780,
+    "lastContentBottom": 842,
+    "hidden": 62
+   }
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/settings: bottom nav does not cover content",
+   "ok": false,
+   "detail": {
+    "tabsTop": 780,
+    "lastContentBottom": 2389,
+    "hidden": 1609
+   }
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/transactions: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/accounts: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/settings: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/reports: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/budgets: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/login (logged out): no overflow, targets >= 24px",
+   "ok": false,
+   "detail": {
+    "off": [],
+    "tiny": [
+     "a.underline \"Forgot password?\" 121x17",
+     "a.underline \"Register\" 52x17"
+    ],
+    "scrollW": 393
+   }
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/register (logged out): no overflow, targets >= 24px",
+   "ok": false,
+   "detail": {
+    "off": [],
+    "tiny": [
+     "a.underline \"Log in\" 39x17"
+    ],
+    "scrollW": 393
+   }
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/forgot (logged out): no overflow, targets >= 24px",
+   "ok": false,
+   "detail": {
+    "off": [],
+    "tiny": [
+     "a.underline \"Back to log in\" 87x17"
+    ],
+    "scrollW": 393
+   }
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/: no horizontal overflow, nothing clipped off-screen",
+   "ok": false,
+   "detail": {
+    "status": 200,
+    "scrollW": 453,
+    "vw": 430,
+    "off": [
+     "nav.tabs \"Home\nTxns\nAccounts\nBudgets\nRep\" [10,443]",
+     "a.tab \"Settings\" [376,436]",
+     "div.stat \"Net\n₱22,266.44\" [309,453]",
+     "div.m \"Net\" [324,438]",
+     "div.big \"₱22,266.44\" [324,438]"
+    ]
+   }
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/transactions: no horizontal overflow, nothing clipped off-screen",
+   "ok": false,
+   "detail": {
+    "status": 200,
+    "scrollW": 432,
+    "vw": 430,
+    "off": [
+     "table \"🔁\n\t\n2026-10-08 · Transfer BPI\" [37,432]",
+     "tbody \"🔁\n\t\n2026-10-08 · Transfer BPI\" [37,432]",
+     "tr \"🔁\n\t\n2026-10-08 · Transfer BPI\" [37,432]",
+     "td \"Edit\nDuplicate\nDelete\" [307,432]",
+     "tr \"📺\n\tNetflix\n2026-10-08 · Subsc\" [37,432]",
+     "td \"Edit\nDuplicate\nDelete\" [307,432]",
+     "tr \"🚌\n\tTaxi Ride Airport Gcash Ve\" [37,432]",
+     "td \"Edit\nDuplicate\nDelete\" [307,432]"
+    ]
+   }
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/accounts: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/budgets: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/reports: no horizontal overflow, nothing clipped off-screen",
+   "ok": false,
+   "detail": {
+    "status": 200,
+    "scrollW": 454,
+    "vw": 430,
+    "off": [
+     "nav.tabs \"Home\nTxns\nAccounts\nBudgets\nRep\" [10,444]",
+     "a.tab \"Settings\" [377,437]",
+     "table \"Month\tIncome\tExpenses\tNet\tTren\" [37,454]",
+     "thead \"Month\tIncome\tExpenses\tNet\tTren\" [37,454]",
+     "tr \"Month\tIncome\tExpenses\tNet\tTren\" [37,454]",
+     "th \"Trend\" [396,454]",
+     "tbody \"01\t₱0.00\t₱0.00\t₱0.00\t\n\n02\t₱0.0\" [37,454]",
+     "tr \"01\t₱0.00\t₱0.00\t₱0.00\" [37,454]"
+    ]
+   }
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/assistant: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/settings: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/transactions: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/accounts: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/budgets: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/reports: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/assistant: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/settings: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/transactions: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/accounts: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/budgets: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/reports: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/assistant: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/settings: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/: bottom nav does not cover content",
+   "ok": false,
+   "detail": {
+    "tabsTop": 910,
+    "lastContentBottom": 2116,
+    "hidden": 1206
+   }
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/transactions: bottom nav does not cover content",
+   "ok": false,
+   "detail": {
+    "tabsTop": 865,
+    "lastContentBottom": 1928,
+    "hidden": 1063
+   }
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/accounts: bottom nav does not cover content",
+   "ok": false,
+   "detail": {
+    "tabsTop": 860,
+    "lastContentBottom": 1745,
+    "hidden": 885
+   }
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/budgets: bottom nav does not cover content",
+   "ok": false,
+   "detail": {
+    "tabsTop": 860,
+    "lastContentBottom": 2028,
+    "hidden": 1168
+   }
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/reports: bottom nav does not cover content",
+   "ok": false,
+   "detail": {
+    "tabsTop": 913,
+    "lastContentBottom": 1680,
+    "hidden": 767
+   }
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/assistant: bottom nav does not cover content",
+   "ok": false,
+   "detail": {
+    "tabsTop": 860,
+    "lastContentBottom": 922,
+    "hidden": 62
+   }
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/settings: bottom nav does not cover content",
+   "ok": false,
+   "detail": {
+    "tabsTop": 860,
+    "lastContentBottom": 2179,
+    "hidden": 1319
+   }
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/transactions: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/accounts: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/settings: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/reports: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/budgets: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/login (logged out): no overflow, targets >= 24px",
+   "ok": false,
+   "detail": {
+    "off": [],
+    "tiny": [
+     "a.underline \"Forgot password?\" 121x17",
+     "a.underline \"Register\" 52x17"
+    ],
+    "scrollW": 430
+   }
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/register (logged out): no overflow, targets >= 24px",
+   "ok": false,
+   "detail": {
+    "off": [],
+    "tiny": [
+     "a.underline \"Log in\" 39x17"
+    ],
+    "scrollW": 430
+   }
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/forgot (logged out): no overflow, targets >= 24px",
+   "ok": false,
+   "detail": {
+    "off": [],
+    "tiny": [
+     "a.underline \"Back to log in\" 87x17"
+    ],
+    "scrollW": 430
+   }
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/: no horizontal overflow, nothing clipped off-screen",
+   "ok": false,
+   "detail": {
+    "status": 200,
+    "scrollW": 844,
+    "vw": 768,
+    "off": [
+     "main.content \"Good evening, Responsive QA 👋\" [250,844]",
+     "section.card \"Good evening, Responsive QA 👋\" [286,808]",
+     "p.hi \"Good evening, Responsive QA 👋\" [308,786]",
+     "div.m \"Total balance\" [308,786]",
+     "div.big \"₱22,266.44\" [308,786]",
+     "div.row \"▲ ₱22,266.44 this month\n🔥 1-d\" [308,786]",
+     "div.dots \"✓\" [308,786]",
+     "p.m \"Today's logged. Nice work!\" [308,786]"
+    ]
+   }
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/transactions: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/accounts: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/budgets: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/reports: no horizontal overflow, nothing clipped off-screen",
+   "ok": false,
+   "detail": {
+    "status": 200,
+    "scrollW": 781,
+    "vw": 768,
+    "off": [
+     "main.content \"This month\nLast month\nThis yea\" [250,781]"
+    ]
+   }
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/assistant: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/settings: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/transactions: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/accounts: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/budgets: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/reports: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/assistant: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/settings: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/transactions: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/accounts: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/budgets: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/reports: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/assistant: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/settings: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/: bottom nav does not cover content",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/transactions: bottom nav does not cover content",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/accounts: bottom nav does not cover content",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/budgets: bottom nav does not cover content",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/reports: bottom nav does not cover content",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/assistant: bottom nav does not cover content",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/settings: bottom nav does not cover content",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/transactions: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/accounts: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/settings: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/reports: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/budgets: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/login (logged out): no overflow, targets >= 24px",
+   "ok": false,
+   "detail": {
+    "off": [],
+    "tiny": [
+     "a.underline \"Forgot password?\" 121x17",
+     "a.underline \"Register\" 52x17"
+    ],
+    "scrollW": 768
+   }
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/register (logged out): no overflow, targets >= 24px",
+   "ok": false,
+   "detail": {
+    "off": [],
+    "tiny": [
+     "a.underline \"Log in\" 39x17"
+    ],
+    "scrollW": 768
+   }
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/forgot (logged out): no overflow, targets >= 24px",
+   "ok": false,
+   "detail": {
+    "off": [],
+    "tiny": [
+     "a.underline \"Back to log in\" 87x17"
+    ],
+    "scrollW": 768
+   }
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/transactions: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/accounts: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/budgets: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/reports: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/assistant: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/settings: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/transactions: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/accounts: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/budgets: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/reports: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/assistant: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/settings: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/transactions: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/accounts: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/budgets: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/reports: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/assistant: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/settings: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/transactions: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/accounts: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/settings: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/reports: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/budgets: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/login (logged out): no overflow, targets >= 24px",
+   "ok": false,
+   "detail": {
+    "off": [],
+    "tiny": [
+     "a.underline \"Forgot password?\" 121x17",
+     "a.underline \"Register\" 52x17"
+    ],
+    "scrollW": 1280
+   }
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/register (logged out): no overflow, targets >= 24px",
+   "ok": false,
+   "detail": {
+    "off": [],
+    "tiny": [
+     "a.underline \"Log in\" 39x17"
+    ],
+    "scrollW": 1280
+   }
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/forgot (logged out): no overflow, targets >= 24px",
+   "ok": false,
+   "detail": {
+    "off": [],
+    "tiny": [
+     "a.underline \"Back to log in\" 87x17"
+    ],
+    "scrollW": 1280
+   }
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/transactions: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/accounts: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/budgets: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/reports: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/assistant: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/settings: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/transactions: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/accounts: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/budgets: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/reports: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/assistant: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/settings: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/transactions: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/accounts: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/budgets: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/reports: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/assistant: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/settings: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/transactions: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/accounts: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/settings: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/reports: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/budgets: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/login (logged out): no overflow, targets >= 24px",
+   "ok": false,
+   "detail": {
+    "off": [],
+    "tiny": [
+     "a.underline \"Forgot password?\" 121x17",
+     "a.underline \"Register\" 52x17"
+    ],
+    "scrollW": 1440
+   }
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/register (logged out): no overflow, targets >= 24px",
+   "ok": false,
+   "detail": {
+    "off": [],
+    "tiny": [
+     "a.underline \"Log in\" 39x17"
+    ],
+    "scrollW": 1440
+   }
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/forgot (logged out): no overflow, targets >= 24px",
+   "ok": false,
+   "detail": {
+    "off": [],
+    "tiny": [
+     "a.underline \"Back to log in\" 87x17"
+    ],
+    "scrollW": 1440
+   }
+  },
+  {
+   "group": "page metadata",
+   "name": "/: title, lang, viewport meta, one h1",
+   "ok": true
+  },
+  {
+   "group": "page metadata",
+   "name": "/transactions: title, lang, viewport meta, one h1",
+   "ok": true
+  },
+  {
+   "group": "page metadata",
+   "name": "/accounts: title, lang, viewport meta, one h1",
+   "ok": true
+  },
+  {
+   "group": "page metadata",
+   "name": "/budgets: title, lang, viewport meta, one h1",
+   "ok": true
+  },
+  {
+   "group": "page metadata",
+   "name": "/reports: title, lang, viewport meta, one h1",
+   "ok": true
+  },
+  {
+   "group": "page metadata",
+   "name": "/assistant: title, lang, viewport meta, one h1",
+   "ok": true
+  },
+  {
+   "group": "page metadata",
+   "name": "/settings: title, lang, viewport meta, one h1",
+   "ok": true
+  },
+  {
+   "group": "page metadata",
+   "name": "viewport-fit=cover set for safe-area insets (needed before PWA work)",
+   "ok": false,
+   "detail": "width=device-width, initial-scale=1"
+  },
+  {
+   "group": "page metadata",
+   "name": "CSS uses env(safe-area-inset-bottom) for the fixed bottom nav",
+   "ok": true
+  },
+  {
+   "group": "page metadata",
+   "name": "inputs are >= 16px (iOS does not zoom on focus)",
+   "ok": true
+  },
+  {
+   "group": "keyboard",
+   "name": "/: Tab shows a visible focus indicator on first 8 stops",
+   "ok": true
+  },
+  {
+   "group": "keyboard",
+   "name": "/transactions: Tab shows a visible focus indicator on first 8 stops",
+   "ok": true
+  },
+  {
+   "group": "keyboard",
+   "name": "/accounts: Tab shows a visible focus indicator on first 8 stops",
+   "ok": true
+  },
+  {
+   "group": "keyboard",
+   "name": "/settings: Tab shows a visible focus indicator on first 8 stops",
+   "ok": true
+  },
+  {
+   "group": "keyboard",
+   "name": "Quick Add works with keyboard only (type + Enter)",
+   "ok": false,
+   "detail": "locator.waitFor: Timeout 25000ms exceeded."
+  },
+  {
+   "group": "dark mode",
+   "name": "light: / text contrast >= 4.5:1 (3:1 large)",
+   "ok": false,
+   "detail": [
+    "td.inc 4.37 \"+₱25,000.00\"",
+    "b. 4.37 \"+₱25,000.00\""
+   ]
+  },
+  {
+   "group": "dark mode",
+   "name": "light: /transactions text contrast >= 4.5:1 (3:1 large)",
+   "ok": false,
+   "detail": [
+    "td.inc 4.37 \"+₱25,000.00\"",
+    "b. 4.37 \"+₱25,000.00\""
+   ]
+  },
+  {
+   "group": "dark mode",
+   "name": "light: /accounts text contrast >= 4.5:1 (3:1 large)",
+   "ok": true
+  },
+  {
+   "group": "dark mode",
+   "name": "light: /budgets text contrast >= 4.5:1 (3:1 large)",
+   "ok": true
+  },
+  {
+   "group": "dark mode",
+   "name": "light: /reports text contrast >= 4.5:1 (3:1 large)",
+   "ok": true
+  },
+  {
+   "group": "dark mode",
+   "name": "light: /assistant text contrast >= 4.5:1 (3:1 large)",
+   "ok": true
+  },
+  {
+   "group": "dark mode",
+   "name": "light: /settings text contrast >= 4.5:1 (3:1 large)",
+   "ok": true
+  },
+  {
+   "group": "dark mode",
+   "name": "dark: / text contrast >= 4.5:1 (3:1 large)",
+   "ok": false,
+   "detail": [
+    "a.tab 3.5 \"Home\"",
+    "p.hi 3.5 \"Good evening, Respon\"",
+    "div.m 3.5 \"Total balance\"",
+    "span.chip 3.5 \"▲ ₱22,266.44 this mo\"",
+    "button.btn 3.5 \"Add\""
+   ]
+  },
+  {
+   "group": "dark mode",
+   "name": "dark: /transactions text contrast >= 4.5:1 (3:1 large)",
+   "ok": false,
+   "detail": [
+    "a.tab 3.5 \"Txns\"",
+    "button.btn 3.5 \"Add\""
+   ]
+  },
+  {
+   "group": "dark mode",
+   "name": "dark: /accounts text contrast >= 4.5:1 (3:1 large)",
+   "ok": false,
+   "detail": [
+    "a.tab 3.5 \"Accounts\"",
+    "button.btn 3.5 \"Create\""
+   ]
+  },
+  {
+   "group": "dark mode",
+   "name": "dark: /budgets text contrast >= 4.5:1 (3:1 large)",
+   "ok": false,
+   "detail": [
+    "a.tab 3.5 \"Budgets\""
+   ]
+  },
+  {
+   "group": "dark mode",
+   "name": "dark: /reports text contrast >= 4.5:1 (3:1 large)",
+   "ok": false,
+   "detail": [
+    "a.tab 3.5 \"Reports\"",
+    "a.btn 3.5 \"This month\""
+   ]
+  },
+  {
+   "group": "dark mode",
+   "name": "dark: /assistant text contrast >= 4.5:1 (3:1 large)",
+   "ok": false,
+   "detail": [
+    "a.tab 3.5 \"Ask\"",
+    "button.btn 3.5 \"Ask\""
+   ]
+  },
+  {
+   "group": "dark mode",
+   "name": "dark: /settings text contrast >= 4.5:1 (3:1 large)",
+   "ok": false,
+   "detail": [
+    "a.tab 3.5 \"Settings\"",
+    "button.btn 3.5 \"Add\""
+   ]
+  },
+  {
+   "group": "dark mode",
+   "name": "dark: page background is actually dark",
+   "ok": true
+  },
+  {
+   "group": "reduced motion",
+   "name": "celebration animation is disabled when the user prefers reduced motion",
+   "ok": true
+  },
+  {
+   "group": "reduced motion",
+   "name": "no running CSS animations/transitions anywhere on the dashboard",
+   "ok": true
+  },
+  {
+   "group": "states",
+   "name": "slow network: Quick Add shows Working… and disables the button",
+   "ok": false,
+   "detail": "locator.waitFor: Timeout 30000ms exceeded."
+  },
+  {
+   "group": "states",
+   "name": "offline: Quick Add fails gracefully with a retry path",
+   "ok": false,
+   "detail": "locator.waitFor: Timeout 30000ms exceeded."
+  }
+ ]
+}
