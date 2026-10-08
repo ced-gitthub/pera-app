@@ -77,7 +77,7 @@ const count = (h: string, s: string) => h.split(s).length - 1;
   // ---- user B: pagination, budgets, assistant
   await su('b@x.com'); const B_ID = me();
   T('60 items saved in 2 requests', (await add(Array(30).fill('food 1').join(','))).ok && (await add(Array(30).fill('food 1').join(','))).ok && rows().length === 60);
-  h = await page(Txs); T('page 1: 25 rows, 3 pages', count(h, '<tr>') === 25 && h.includes('page 1 of 3') && h.includes('60 total'), count(h, '<tr>') + h.match(/page \d of \d/)?.[0]); h = await page(Txs, { page: '3' }); T('page 3: 10 rows', count(h, '<tr>') === 10);
+  h = await page(Txs); T('page 1: 25 rows, 3 pages', count(h, '<tr class="tx">') === 25 && h.includes('page 1 of 3') && h.includes('60 total'), count(h, '<tr class="tx">') + h.match(/page \d of \d/)?.[0]); h = await page(Txs, { page: '3' }); T('page 3: 10 rows', count(h, '<tr class="tx">') === 10);
   h = await page(Txs, { page: '99' }); T('page beyond end is empty, not an error', h.includes('No matching'));
   h = await page(Txs, { type: 'income' }); T('filter income => none', h.includes('No matching')); T('filter injection ignored', (await page(Txs, { a: 'x,user_id.neq.0', c: "' or 1=1 --", from: 'zzz' })).includes('60 total'));
   T('search filter', (await page(Txs, { q: "100%_'\"" })).includes('No matching'));
