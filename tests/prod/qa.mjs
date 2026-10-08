@@ -253,6 +253,14 @@ G('isolation between users');
   await step("user B cannot act on A's ids via forged server action inputs (edit page of foreign id is 404)", async () => { const r = await q.goto(href); return r.status() === 404 ? true : r.status(); });
   await c2.close(); }
 
+G('security: cross-origin form posts');
+await login(p, EM, PW);
+{ const html = await (await ctx.request.get('/settings')).text(); const at = html.indexOf('placeholder="New category"'), ids = [[...html.slice(0, at).matchAll(/name="\$ACTION_ID_([0-9a-f]+)"/g)].pop()?.[1]].filter(Boolean);
+  await step('server-action ids are discoverable for the CSRF probe', async () => ids.length > 0 ? true : 'none found');
+  const post = (origin, name) => ctx.request.post('/settings', { headers: origin ? { origin } : {}, multipart: Object.fromEntries([...ids.map(i => ['$ACTION_ID_' + i, '']), ['name', name], ['type', 'expense']]), maxRedirects: 0 });
+  await step('a form POST claiming a foreign Origin is rejected and changes nothing', async () => { const r = await post('https://evil.example', 'CSRFEVIL'); await p.goto('/settings'); return !(await body(p)).includes('CSRFEVIL') && r.status() !== 200 ? true : { status: r.status(), created: (await body(p)).includes('CSRFEVIL') }; });
+  await step('control: the same POST with the real Origin is accepted (proves the probe is valid)', async () => { await post(BASE, 'CSRFOK'); await p.goto('/settings'); return (await body(p)).includes('CSRFOK') ? true : 'real-origin post did not work, probe inconclusive'; });
+  await step('cleanup control category', async () => { await act(p, () => p.click('button:has-text("CSRFOK ×")')); return true; }); }
 G('hygiene');
 await step('no uncaught JS errors during the run', async () => jsErrors.length === 0 ? true : jsErrors.slice(0, 5));
 await step('no unexpected browser dialogs (XSS payloads inert)', async () => dialogs.length === 0 ? true : dialogs);
