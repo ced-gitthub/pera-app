@@ -1,8 +1,9 @@
 import { ctx } from '@/lib/data';
-import { updateProfile, createCategory, deleteCategory, importCsv, createRecurring, deleteRecurring } from '@/app/actions';
+import { updateProfile, createCategory, deleteCategory, createRecurring, deleteRecurring } from '@/app/actions';
 import { getProvider } from '@/ai/provider';
 import { manilaToday, formatMinor } from '@/core/money';
 import Migrate from '@/components/Migrate';
+import ImportForm from '@/components/ImportForm';
 import { Flash, type SP } from '@/components/ui';
 export default async function Settings({ searchParams }: { searchParams: SP }) {
   const sp = await searchParams, { sb, user, categories, accounts } = await ctx();
@@ -18,7 +19,7 @@ export default async function Settings({ searchParams }: { searchParams: SP }) {
         <select className="inp" name="frequency"><option>monthly</option><option>daily</option><option>weekly</option><option>yearly</option></select><input className="inp w-20" name="interval" type="number" min={1} max={365} defaultValue={1} aria-label="Every N" /><input className="inp" type="date" name="start" defaultValue={manilaToday()} /><button className="btn p">Add rule</button></form>
       <p className="m mt-1">A rule starting on the 31st runs on the last valid day of shorter months, and always counts from the start date (no drift).</p></div>
     <div className="card"><h2 className="font-semibold mb-2">Import / export</h2><a className="btn" href="/export">Download CSV</a>
-      <form action={importCsv} className="grid gap-2 mt-3"><input type="file" name="file" accept=".csv,text/csv" /><textarea className="inp" name="csv" rows={4} placeholder="…or paste CSV here (date,type,amount,category,description,notes,account,to_account)" /><button className="btn p">Import</button></form>
+      <ImportForm />
       <p className="m mt-1">Re-importing the same file is safe (rows are de-duplicated against earlier imports). Rows you typed by hand are not compared.</p></div>
     <div className="card"><h2 className="font-semibold mb-2">Migrate prototype data</h2><Migrate /></div>
     <div className="card"><h2 className="font-semibold">AI configuration</h2><p>{ai}</p></div></>;

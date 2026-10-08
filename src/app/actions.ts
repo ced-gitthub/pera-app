@@ -12,6 +12,7 @@ import { parseWithFallback, getProvider } from '@/ai/provider';
 import { validateItems, parseOptionalMinor, defaultAccount } from '@/lib/validate';
 import { parseQuestion } from '@/lib/assistant';
 import { safeMessage, authMessage, logErr } from '@/lib/safe';
+import { MAX_CSV_BYTES, MAX_CSV_LABEL } from '@/lib/limits';
 import { commandOf, NOTHING_TO_UNDO } from '@/lib/commands';
 
 function go(path: string, k: 'err' | 'ok', m: string): never { redirect(`${path}${path.includes('?') ? '&' : '?'}${k}=${encodeURIComponent(m.slice(0, 200))}`); }
@@ -206,9 +207,9 @@ function toDbRows(rows: (Row & { import_hash?: string; external_id?: string })[]
   }
   return { out, skipped };
 }
-const MAX_CSV_BYTES = 5_000_000, MAX_CSV_ROWS = 20_000;
+const MAX_CSV_ROWS = 20_000;
 export async function importCsv(fd: FormData) {
-  const { sb, user, accounts, categories } = await ctx(); const f = fd.get('file'); if (f instanceof File && f.size > MAX_CSV_BYTES) go('/settings', 'err', 'That file is too large (max 5 MB). Split it into smaller files.'); const text = f instanceof File && f.size ? await f.text() : str(fd, 'csv'); if (text.length > MAX_CSV_BYTES) go('/settings', 'err', 'That file is too large (max 5 MB). Split it into smaller files.');
+  const { sb, user, accounts, categories } = await ctx(); const f = fd.get('file'); if (f instanceof File && f.size > MAX_CSV_BYTES) go('/settings', 'err', `That file is too large (max ${MAX_CSV_LABEL}). Split it into smaller files.`); const text = f instanceof File && f.size ? await f.text() : str(fd, 'csv'); if (text.length > MAX_CSV_BYTES) go('/settings', 'err', `That file is too large (max ${MAX_CSV_LABEL}). Split it into smaller files.`);
   const parsed = fromCsv(text, new Set(), { income: categories.filter(c => c.type === 'income').map(c => c.name), expense: categories.filter(c => c.type === 'expense').map(c => c.name) });
   if (parsed.ok.length > MAX_CSV_ROWS) go('/settings', 'err', `Too many rows (${parsed.ok.length}). The limit is ${MAX_CSV_ROWS} per file; split it and import in parts.`);
   const accs = await resolveAccounts(sb, user, accounts, parsed.ok.flatMap(r => [r.account, r.to_account])), def = defaultAccount(accounts)?.id ?? [...accs.values()][0];

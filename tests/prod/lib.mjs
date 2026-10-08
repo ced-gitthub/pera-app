@@ -19,14 +19,15 @@ export const ymd = () => manila();
 export const LEAK = /supabase|postgres|pgrst|sql|relation "|violates|stack|at \w+ \(|jwt|42\d\d\d|23\d\d\d|syntax error|undefined|\[object/i;
 export async function launch() { return chromium.launch(); }
 export async function newCtx(browser, vp = { width: 1280, height: 900 }, extra = {}) { const c = await browser.newContext({ viewport: vp, baseURL: BASE, ...extra }); c.setDefaultTimeout(20000); return c; }
-export const flash = async p => (await p.locator('.flash').allInnerTexts()).join(' | ');
+export const flash = async p => { await p.locator('.flash').first().waitFor({ timeout: 7000 }).catch(() => {}); return (await p.locator('.flash').allInnerTexts()).join(' | '); };
 export const body = p => p.locator('body').innerText();
 export async function signup(page, email, password, name = 'QA Tester') {
   await page.goto('/register'); await page.fill('input[name=name]', name); await page.fill('input[name=email]', email); await page.fill('input[name=password]', password);
   await Promise.all([page.waitForURL(u => new URL(u).pathname !== '/register', { timeout: 30000 }), page.click('button:has-text("Create account")')]);
 }
 export async function login(page, email, password) {
-  await page.goto('/login'); await page.fill('input[name=email]', email); await page.fill('input[name=password]', password);
+  await page.goto('/login'); if (new URL(page.url()).pathname !== '/login') { await logout(page); await page.goto('/login'); }
+  await page.fill('input[name=email]', email); await page.fill('input[name=password]', password);
   await Promise.all([page.waitForLoadState('networkidle'), page.click('button:has-text("Log in")')]); await page.waitForTimeout(500);
 }
 export async function logout(page) { await Promise.all([page.waitForURL(/\/login/, { timeout: 20000 }), page.locator('button:has-text("Log out"):visible').first().click()]); }

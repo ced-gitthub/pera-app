@@ -5,6 +5,7 @@ import { fmt } from '@/core/io';
 import { Flash, type SP } from '@/components/ui';
 export default async function Edit({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: SP }) {
   const { id } = await params, sp = await searchParams, { sb, categories, accounts } = await ctx();
+  if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
   const { data: t } = await sb.from('transactions').select('*').eq('id', id).maybeSingle(); if (!t) notFound();
   return <><Flash sp={sp} /><form action={updateTx} className="card grid gap-3 max-w-md"><h1 className="text-xl font-semibold">Edit transaction</h1><input type="hidden" name="id" value={t.id} />
     <label>Amount (₱)<input className="inp w-full" name="amount" defaultValue={fmt(Number(t.amount_minor))} required inputMode="decimal" /></label>
