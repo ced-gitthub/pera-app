@@ -274,6 +274,7 @@ const count = (h: string, s: string) => h.split(s).length - 1;
   for (const r of ['(dash)', 'transactions/(list)', 'accounts', 'budgets', 'reports', 'assistant', 'settings', 'security']) { const L = (await import(`@/app/(app)/${r}/loading`)).default; T(`loading.tsx exists for ${r}`, typeof L === 'function' && renderToStaticMarkup(React.createElement(L)).includes('data-skeleton')); }
   }
   // ---- backup email
+  {
   const G = globalThis as any, sent = (to?: string) => (G.__sent ?? []).filter((m: any) => !to || m.to === to), codeOf = (m: any) => /code is (\d{6})/.exec(m.text)![1];
   G.__D = D; D.backup = []; G.__sent = []; for (const k of ['SMTP_USER', 'SMTP_PASS', 'SUPABASE_SECRET_KEY', 'NEXT_PUBLIC_SITE_URL', 'VERCEL_PROJECT_PRODUCTION_URL']) delete process.env[k];
   const SecPage = (await import('@/app/(app)/security/page')).default, Forgot = (await import('@/app/(auth)/forgot/page')).default;
@@ -331,6 +332,7 @@ const count = (h: string, s: string) => h.split(s).length - 1;
   T('backup remove: recovery with the removed address does nothing', await (async () => { const n = sent().length; const r = await rr('recover@gmail.com'); return r === REPLY && sent().length === n; })());
   T('backup remove: signed-out refused', await (async () => { D.cur = null; const r = await red(() => A.backupRemove()); login('a@x.com'); return r === '/login'; })());
   for (const k of ['SMTP_USER', 'SMTP_PASS', 'SUPABASE_SECRET_KEY']) delete process.env[k];
+  }
   // ---- isolation sanity of the stand-in itself
   login('a@x.com'); T('A still sees exactly its own rows', rows(A_ID).length === rows().length && !rows().some((t: any) => t.user_id !== A_ID));
   console.log(`e2e (app code vs in-memory Supabase stand-in): pass ${pass} fail ${fail}`);
