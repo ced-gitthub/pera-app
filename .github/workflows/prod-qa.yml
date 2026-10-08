@@ -55,13 +55,16 @@ jobs:
           done
       - name: Publish results to branch qa-results
         if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          [ -d "$OUT_DIR" ] || exit 0
-          mkdir -p /tmp/qa && cp -r "$OUT_DIR"/. /tmp/qa/
-          git config user.name github-actions; git config user.email actions@users.noreply.github.com
-          git checkout --orphan qa-results; git rm -rf --quiet . ; cp -r /tmp/qa/. .
+          [ -d "$OUT_DIR" ] || { echo "::warning::no qa-out directory"; exit 0; }
+          rm -rf /tmp/qa && mkdir -p /tmp/qa && cp -r "$OUT_DIR"/. /tmp/qa/ && cd /tmp/qa
           echo "run for ${GITHUB_SHA} at $(date -u +%FT%TZ)" > RUN.txt
-          git add -A; git commit -qm "prod-qa results for ${GITHUB_SHA::7}"; git push -f origin qa-results
+          git init -q -b qa-results . && git config user.name github-actions && git config user.email actions@users.noreply.github.com
+          git add -A && git commit -qm "prod-qa results for ${GITHUB_SHA::7}"
+          git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git push -f origin qa-results 2>&1 | sed "s/${GH_TOKEN}/***/g" || echo "::error title=publish::push failed"
       - name: Fail if any suite failed
         run: |
           [ "${{ steps.qa.outcome }}" = success ] && [ "${{ steps.resp.outcome }}" = success ]
