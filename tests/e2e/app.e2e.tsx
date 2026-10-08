@@ -116,6 +116,7 @@ const count = (h: string, s: string) => h.split(s).length - 1;
   const m2 = await A.migrateLegacy(JSON.stringify(legacy)); T('migration repeat adds 0 (no duplicates)', m2.ok && rows().length === 5 && m2.message.startsWith('0 new'), m2.message); T('migration junk JSON', !(await A.migrateLegacy('{not json')).ok);
   T('migrated unknown category -> Other', D.t.categories.find((c: any) => c.id === rows().find((t: any) => t.amount_minor === 123456).category_id).name === 'Other'); T('unknown account auto-created', D.t.accounts.some((a: any) => a.user_id === me() && a.name === 'Old Bank'));
   // ---- release fixes (user E): undo last, recurring deletion, run_recurring failure, safe errors
+  {
   await su('e@x.com'); const EID = me(); const ids = () => new Set(rows().map((t: any) => t.id)), nTx = () => rows().length;
   await add('lunch 100'); await add('dinner 200'); await add('grocery 300');
   const u0 = await A.runCommand('undo last'); T('undo with nothing deleted: safe message, nothing changed', !u0.ok && /Nothing to undo/.test(u0.message) && nTx() === 3, u0);
@@ -176,6 +177,7 @@ const count = (h: string, s: string) => h.split(s).length - 1;
   T('old password no longer works, new one does', (await red(() => A.signIn(fd({ email: 'e@x.com', password: 'secret1' })))).includes('err=') && (await red(() => A.signIn(fd({ email: 'e@x.com', password: 'newpass1' })))) === '/');
   D.cur = null; T('update without session is refused', (await red(() => A.updatePassword(fd({ password: 'newpass1', confirm: 'newpass1' })))).startsWith('/forgot?err='));
   login('e@x.com');
+  }
   // ---- isolation sanity of the stand-in itself
   login('a@x.com'); T('A still sees exactly its own rows', rows(A_ID).length === rows().length && !rows().some((t: any) => t.user_id !== A_ID));
   console.log(`e2e (app code vs in-memory Supabase stand-in): pass ${pass} fail ${fail}`);
