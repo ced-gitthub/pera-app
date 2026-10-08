@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { ctx } from '@/lib/data';
+import { dbError } from '@/lib/safe';
 import Quick from '@/components/Quick';
 import TxRow, { type R } from '@/components/TxRow';
 import { Flash, type SP } from '@/components/ui';
@@ -12,7 +13,7 @@ export default async function Tx({ searchParams }: { searchParams: SP }) {
   if (sp.from) q = q.gte('transaction_date', sp.from); if (sp.to) q = q.lte('transaction_date', sp.to);
   const s = sp.s ?? 'dd';
   q = s === 'ah' || s === 'al' ? q.order('amount_minor', { ascending: s === 'al' }).order('transaction_date', { ascending: false }) : q.order('transaction_date', { ascending: s === 'da' }).order('created_at', { ascending: s === 'da' });
-  const { data, count, error } = await q.range((page - 1) * SIZE, page * SIZE - 1); if (error) throw new Error(error.message);
+  const { data, count, error } = await q.range((page - 1) * SIZE, page * SIZE - 1); if (error) dbError(error, 'transactions');
   const cn = new Map(categories.map(c => [c.id, c.name])), an = new Map(accounts.map(a => [a.id, a.name])), pages = Math.max(1, Math.ceil((count ?? 0) / SIZE));
   const rows: R[] = (data as any[]).map(x => ({ id: x.id, type: x.type, amount_minor: Number(x.amount_minor), date: x.transaction_date, description: x.description, category: cn.get(x.category_id) ?? '', account: an.get(x.account_id) ?? '', to: an.get(x.transfer_account_id) ?? '' }));
   const link = (p: number) => `/transactions?${new URLSearchParams({ ...(Object.fromEntries(Object.entries(sp).filter(([k, v]) => v && k !== 'page' && k !== 'err' && k !== 'ok')) as Record<string, string>), page: String(p) })}`;

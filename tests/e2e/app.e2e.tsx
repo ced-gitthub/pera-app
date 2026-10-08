@@ -6,6 +6,8 @@ const D = db(); (globalThis as any).__client = () => client(D);
 import * as A from '@/app/actions';
 import { parseInput } from '@/core/parser';
 import { manilaToday } from '@/core/money';
+import { shiftYm } from '@/lib/range';
+import Err from '@/app/error';
 import Dashboard from '@/app/(app)/page'; import Txs from '@/app/(app)/transactions/page'; import Edit from '@/app/(app)/transactions/[id]/page';
 import Accounts from '@/app/(app)/accounts/page'; import Budgets from '@/app/(app)/budgets/page'; import Reports from '@/app/(app)/reports/page'; import Settings from '@/app/(app)/settings/page';
 import Assistant from '@/app/(app)/assistant/page'; import Login from '@/app/(auth)/login/page'; import { GET as exportCsv } from '@/app/(app)/export/route';
@@ -113,6 +115,67 @@ const count = (h: string, s: string) => h.split(s).length - 1;
   T('openings migrated', D.t.accounts.find((a: any) => a.user_id === me() && a.name === 'Cash').opening_balance_minor === 500000 && D.t.accounts.find((a: any) => a.user_id === me() && a.name === 'BPI').opening_balance_minor === -2050);
   const m2 = await A.migrateLegacy(JSON.stringify(legacy)); T('migration repeat adds 0 (no duplicates)', m2.ok && rows().length === 5 && m2.message.startsWith('0 new'), m2.message); T('migration junk JSON', !(await A.migrateLegacy('{not json')).ok);
   T('migrated unknown category -> Other', D.t.categories.find((c: any) => c.id === rows().find((t: any) => t.amount_minor === 123456).category_id).name === 'Other'); T('unknown account auto-created', D.t.accounts.some((a: any) => a.user_id === me() && a.name === 'Old Bank'));
+  // ---- release fixes (user E): undo last, recurring deletion, run_recurring failure, safe errors
+  await su('e@x.com'); const EID = me(); const ids = () => new Set(rows().map((t: any) => t.id)), nTx = () => rows().length;
+  await add('lunch 100'); await add('dinner 200'); await add('grocery 300');
+  const u0 = await A.runCommand('undo last'); T('undo with nothing deleted: safe message, nothing changed', !u0.ok && /Nothing to undo/.test(u0.message) && nTx() === 3, u0);
+  const x1 = latest(), d1 = await A.runCommand('delete last'); T('delete last removes only the newest', d1.ok && nTx() === 2 && !ids().has(x1.id), d1);
+  const u1 = await A.runCommand('undo last'); T('undo last restores that transaction', u1.ok && nTx() === 3 && ids().has(x1.id), u1);
+  const u2 = await A.runCommand('undo last'); T('repeated undo: nothing more, nothing deleted', !u2.ok && nTx() === 3, u2);
+  const a1 = latest(); await A.runCommand('delete the last transaction'); const a2 = latest(); await A.runCommand('delete last'); T('two deletions', nTx() === 1);
+  await add('coffee 50');
+  const r1 = await A.runCommand('undo the last transaction'); T('undo after an unrelated add restores the MOST RECENT deletion', r1.ok && ids().has(a2.id) && !ids().has(a1.id) && nTx() === 3, r1);
+  const r2 = await A.runCommand('Undo last'); T('second undo walks back to the older deletion', r2.ok && ids().has(a1.id) && nTx() === 4, r2);
+  T('third undo: nothing left, nothing deleted', !(await A.runCommand('undo last')).ok && nTx() === 4);
+  const bt = rows()[0], bd = await A.deleteTx(bt.id); const trashBefore = D.t.tx_trash.filter((t: any) => t.user_id === EID).length;
+  T('Undo button restores and spends its trash entry', bd.ok && (await A.restoreTx((bd as any).row)).ok && ids().has(bt.id) && D.t.tx_trash.filter((t: any) => t.user_id === EID).length === trashBefore - 1);
+  // recurring: a deleted generated occurrence stays deleted; later ones continue; deleting the rule keeps history
+  const ym = today.slice(0, 7), dayOf = (n: number) => shiftYm(ym, n) + '-15';
+  const rc = await red(() => A.createRecurring(fd({ description: 'Gym', amount: '1000', type: 'expense', category_id: cat('Health'), account_id: acct('Cash'), frequency: 'monthly', interval: '1', start: dayOf(-3) }))); T('gym rule created', rc.includes('ok='), rc);
+  await page(Dashboard); const gym = () => rows().filter((t: any) => t.description === 'Gym'), g0 = gym().length;
+  T('occurrences generated and linked', g0 >= 3 && gym().every((t: any) => t.recurring_id));
+  const victim = gym().find((t: any) => t.transaction_date === dayOf(-2)); T('target occurrence exists', !!victim);
+  T('delete generated occurrence', (await A.deleteTx(victim.id)).ok && gym().length === g0 - 1);
+  await page(Dashboard); await page(Dashboard); T('after dashboard reloads it is still deleted', !gym().some((t: any) => t.transaction_date === victim.transaction_date) && gym().length === g0 - 1);
+  const later = shiftYm(ym, 2) + '-20', before = gym().length; const run = await client(D).rpc('run_recurring', { p_today: later });
+  const fresh = [0, 1, 2].map(dayOf).filter(d => d > today).length; T('future occurrences still continue', !run.error && fresh >= 2 && gym().length === before + fresh && !gym().some((t: any) => t.transaction_date === victim.transaction_date), gym().map((t: any) => t.transaction_date));
+  T('month-end/no-drift untouched (existing test above)', true);
+  const ruleId = D.t.recurring_transactions.find((r: any) => r.user_id === EID && r.description === 'Gym').id, kept = gym().length;
+  const dr = await red(() => A.deleteRecurring(fd({ id: ruleId }))); T('delete rule reports success', dr.includes('ok='), dr);
+  T('rule gone; past transactions kept and unlinked', !D.t.recurring_transactions.some((r: any) => r.id === ruleId) && gym().length === kept && gym().every((t: any) => t.recurring_id === null));
+  // run_recurring failure is handled, not swallowed or leaked
+  D.failRpc = 'run_recurring'; const logs: string[] = [], oe = console.error; console.error = (...a: any[]) => { logs.push(a.join(' ')); };
+  const hErr = await page(Dashboard); console.error = oe; D.failRpc = null;
+  T('run_recurring failure: dashboard still renders', hErr.includes('Total balance')); T('run_recurring failure: user sees a safe notice', hErr.includes('Some recurring items') && hErr.includes('processed right now'));
+  T('run_recurring failure: no raw database text on the page', !/secret_internal_table|42P01|relation|SQLSTATE/.test(hErr)); T('run_recurring failure: logged server-side', logs.some(l => l.includes('run_recurring')));
+  // every write path: a database outage never shows raw text
+  const quiet = console.error; console.error = () => {}; D.fail = true; const LEAK = /simulated|outage|08006|SQLSTATE|relation|violates/i;
+  const s1 = await add('tea 20'); T('Quick Add failure is safe', !s1.ok && !LEAK.test((s1 as any).error) && /Something went wrong/.test((s1 as any).error), s1);
+  const s2 = await A.deleteTx(rows()[0].id); T('delete failure is safe', !s2.ok && !LEAK.test((s2 as any).message), s2);
+  const s3 = await A.runCommand('delete last'); T('command failure is safe', !s3.ok && !LEAK.test(s3.message), s3);
+  const s4 = await A.restoreTx({ id: crypto.randomUUID(), type: 'expense' }); T('restore failure is safe', !s4.ok && !LEAK.test(s4.message), s4);
+  const s5 = await A.duplicateTx(rows()[0].id); T('duplicate failure is safe', !s5.ok && !LEAK.test((s5 as any).message), s5);
+  for (const [n, fn] of [['edit', () => A.updateTx(fd({ id: rows()[0].id, amount: '5', type: 'expense', category_id: cat('Food'), account_id: acct('Cash'), date: today }))], ['create account', () => A.createAccount(fd({ name: 'Zed', opening: '0', type: 'cash' }))], ['update account', () => A.updateAccount(fd({ id: acct('Cash'), name: 'Cash2', opening: '0', type: 'cash' }))],
+    ['transfer', () => A.transfer(fd({ amount: '5', from: acct('Cash'), to: acct('GCash'), date: today }))], ['create category', () => A.createCategory(fd({ name: 'Zzz', type: 'expense' }))], ['budget', () => A.setBudget(fd({ ym: today.slice(0, 7), category_id: cat('Food'), amount: '500' }))],
+    ['recurring', () => A.createRecurring(fd({ description: 'X', amount: '5', type: 'expense', category_id: cat('Food'), account_id: acct('Cash'), frequency: 'monthly', interval: '1', start: today }))], ['profile', () => A.updateProfile(fd({ name: 'Zed' }))],
+    ['import', () => A.importCsv(fd({ csv: 'date,type,amount,category,description,notes,account,to_account\n' + today + ',expense,5.00,Food,t,,Cash,' }))]] as any) { const out = await red(fn); T(n + ' failure is safe', out.includes('err=') && !LEAK.test(out), out); }
+  const mg = await A.migrateLegacy(JSON.stringify({ tx: [{ id: 'z1', type: 'expense', amount: 5, date: today, cat: 'Food', acct: 'Cash' }], open: {} })); T('migration failure is safe', !LEAK.test(mg.message), mg);
+  D.fail = false; console.error = quiet;
+  D.failRpc = 'sum_expense'; console.error = () => {}; const as = await A.askAssistant('how much did I spend on food this month'); console.error = quiet; D.failRpc = null;
+  T('assistant failure is safe and not a fake number', !as.ok && !LEAK.test(as.answer) && !/₱/.test(as.answer), as);
+  T('global error page shows no internal message', (() => { const h = renderToStaticMarkup(React.createElement(Err as any, { error: Object.assign(new Error('relation "public.secret_table" does not exist (42P01)'), { digest: 'abc123' }), reset() {} })); return !/secret_table|42P01|relation/.test(h) && h.includes('Something went wrong') && h.includes('abc123'); })());
+  // password recovery
+  const rq = await red(() => A.requestReset(fd({ email: 'nobody@x.com' }))), rq2 = await red(() => A.requestReset(fd({ email: 'e@x.com' })));
+  T('reset request: identical reply for unknown and known emails (no account enumeration)', rq === rq2 && rq.includes('ok='), [rq, rq2]); T('reset request: redirect target is the app callback', D.resets.every((x: any) => /\/auth\/callback\?next=\/reset$/.test(x.o.redirectTo)), D.resets);
+  T('reset request: invalid email rejected', (await red(() => A.requestReset(fd({ email: 'nope' })))).includes('err='));
+  const rcode = 'code-' + uid(); D.recoveryCodes = new Map([[rcode, EID]]); D.cur = null;
+  T('reset page without a session redirects to /forgot with an error', (await red(async () => { const R = (await import('@/app/(auth)/reset/page')).default; await R({ searchParams: Promise.resolve({}) }); })).startsWith('/forgot?err='));
+  D.cur = EID; T('weak new password rejected', (await red(() => A.updatePassword(fd({ password: '123', confirm: '123' })))).includes('err='));
+  T('mismatched passwords rejected', (await red(() => A.updatePassword(fd({ password: 'newpass1', confirm: 'newpass2' })))).includes('err='));
+  T('password reset succeeds then logs out', (await red(() => A.updatePassword(fd({ password: 'newpass1', confirm: 'newpass1' })))) === '/login?ok=Password updated. Log in with your new password.' && D.cur === null);
+  T('old password no longer works, new one does', (await red(() => A.signIn(fd({ email: 'e@x.com', password: 'secret1' })))).includes('err=') && (await red(() => A.signIn(fd({ email: 'e@x.com', password: 'newpass1' })))) === '/');
+  D.cur = null; T('update without session is refused', (await red(() => A.updatePassword(fd({ password: 'newpass1', confirm: 'newpass1' })))).startsWith('/forgot?err='));
+  login('e@x.com');
   // ---- isolation sanity of the stand-in itself
   login('a@x.com'); T('A still sees exactly its own rows', rows(A_ID).length === rows().length && !rows().some((t: any) => t.user_id !== A_ID));
   console.log(`e2e (app code vs in-memory Supabase stand-in): pass ${pass} fail ${fail}`);

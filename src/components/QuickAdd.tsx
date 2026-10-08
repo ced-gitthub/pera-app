@@ -5,8 +5,8 @@ import { parseInput, parseSegment, type Parsed, type Item } from '@/core/parser'
 import { formatMinor, manilaToday } from '@/core/money';
 import { saveItems, parseServer, runCommand, restoreTx } from '@/app/actions';
 import { cheer } from '@/lib/vibe';
+import { commandOf } from '@/lib/commands';
 type Cat = { name: string; type: 'income' | 'expense' };
-const CMD = /^(delete|remove|undo)\b.*\b(last|latest|previous)\b|\b(change|set|make|move)\b.*\b(last|latest)\b.*\bto\b/i;
 const EG = ['lunch 150 gcash', 'grocery 800 cash', 'salary 25000 bpi', 'coffee 120'];
 const BITS = Array.from({ length: 16 }, (_, i) => { const a = (i / 16) * Math.PI * 2, r = 70 + (i % 4) * 22; return { x: Math.round(Math.cos(a) * r), y: Math.round(Math.sin(a) * r - 30), r: (i * 47) % 360, c: ['#5b35e8', '#ffc53d', '#0f8a5c', '#d6324a'][i % 4] }; });
 const line = (i: Item) => `${i.type === 'income' ? 'Income' : 'Expense'} — ${i.category} — ${formatMinor(i.amount_minor)}${i.description ? ` (${i.description})` : ''} · ${i.date}`;
@@ -23,13 +23,13 @@ export default function QuickAdd({ accounts, categories, aiEnabled }: { accounts
   async function submit() {
     if (busy || !text.trim()) return; setBusy(true); setMsgs([]); setUndo(null);
     try {
-      if (CMD.test(text.trim())) { const r = await runCommand(text); setMsgs([{ bad: !r.ok, t: r.message }]); if (r.ok) { setUndo(r.deleted ?? null); setText(''); router.refresh(); } return; }
+      if (commandOf(text)) { const r = await runCommand(text); setMsgs([{ bad: !r.ok, t: r.message }]); if (r.ok) { setUndo(r.deleted ?? null); setText(''); router.refresh(); } return; }
       const c = { today: manilaToday(), accounts }; let items = parseInput(text, c);
       if (aiEnabled && items.some(i => i.kind !== 'ok')) { try { items = await parseServer(text, c.today); } catch { /* fall back to deterministic result */ } }
       const ok = items.filter(i => i.kind === 'ok') as Item[], rest = items.filter(i => i.kind === 'ask' || i.kind === 'confirm');
       setMsgs(items.filter(i => i.kind === 'error').map(e => ({ bad: true, t: (e as { message: string }).message })));
       if (rest.length) { setPend(rest); setReady(ok); } else if (ok.length) await save(ok);
-    } catch (e) { setMsgs([{ bad: true, t: 'Not saved: ' + (e as Error).message }]); } finally { setBusy(false); }
+    } catch { setMsgs([{ bad: true, t: 'Not saved: we could not reach the server. Check your connection and try again. Your input is kept.' }]); } finally { setBusy(false); }
   }
   async function resolve(idx: number, p: Parsed) {
     if (p.kind === 'confirm') { setPend(pend.map((x, i) => (i === idx ? p : x))); return; }

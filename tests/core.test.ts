@@ -79,3 +79,32 @@ test('explicit "expense" word and drinks are understood', () => {
   }
   assert.equal((parseInput('drink expense 20', c)[0] as any).kind, 'ok');
 });
+
+test('CSV duplicate detection: exact rules (import hash = date|type|amount|account|to_account|description + occurrence index)', () => {
+  const H = 'date,type,amount,category,description,notes,account,to_account\n';
+  const f = (body: string, have = new Set<string>()) => fromCsv(H + body, have);
+  const hashes = (body: string) => new Set(f(body).ok.map(r => r.import_hash));
+  const base = '2026-10-01,expense,120.00,Food,Jollibee,,Cash,\n2026-10-02,expense,500.00,Groceries,SM,,GCash,\n2026-10-03,income,25000.00,Salary,Pay,,BPI,';
+  const seen = hashes(base);
+  assert.equal(f(base).ok.length, 3); assert.equal(f(base, seen).ok.length, 0, 'repeated import imports nothing'); assert.equal(f(base, seen).dup, 3);
+  assert.equal(f(base.replace('Jollibee', 'Jollibee Ayala'), seen).ok.length, 1, 'changed description = a new row (documented)');
+  assert.equal(f(base.replace('120.00', '120.01'), seen).ok.length, 1, 'changed amount = new row'); assert.equal(f(base.replace('2026-10-01', '2026-10-04'), seen).ok.length, 1, 'changed date = new row');
+  assert.equal(f(base.replace('Cash', 'Maya'), seen).ok.length, 1, 'changed account = new row');
+  assert.equal(f(base.replace('Food', 'Shopping'), seen).ok.length, 0, 'category is NOT part of the key (same date/amount/account/description)');
+  assert.equal(f(base.replace('Jollibee', ' JOLLIBEE '), seen).ok.length, 0, 'description compare ignores case and surrounding spaces');
+  assert.equal(f(base + '\n2026-10-09,expense,10.00,Food,New,,Cash,', seen).ok.length, 1, 'modified copy of a statement: only the new row imports');
+  const two = '2026-10-05,expense,120.00,Food,Lunch,,Cash,\n2026-10-05,expense,120.00,Food,Lunch,,Cash,'; const twoSeen = hashes(two);
+  assert.equal(f(two).ok.length, 2, 'two identical rows in one file are two real purchases'); assert.equal(f(two, twoSeen).ok.length, 0);
+  assert.equal(f(two + '\n2026-10-05,expense,120.00,Food,Lunch,,Cash,', twoSeen).ok.length, 1, 'a third identical row is new');
+  const tr = '2026-10-06,transfer,1000.00,,Move,,Cash,GCash'; assert.equal(f(tr, hashes(tr)).ok.length, 0); assert.equal(f(tr.replace('GCash', 'Maya'), hashes(tr)).ok.length, 1, 'different destination = different transfer');
+  const bad = f(base + '\nnot-a-date,expense,5,Food,x,,Cash,\n2026-10-10,expense,abc,Food,x,,Cash,\n2026-10-10,weird,5,Food,x,,Cash,\n2026-10-10,expense,-5,Food,x,,Cash,'); assert.equal(bad.ok.length, 3); assert.equal(bad.bad.length, 4);
+  // rows typed by hand have no import hash, so they are never compared with imports (intentional: two real lunches must both survive)
+  assert.ok(f(base).ok.every(r => typeof r.import_hash === 'string' && r.import_hash.includes('#')));
+});
+test('CSV: malicious cells are neutralised and large files stay fast', () => {
+  const H = 'date,type,amount,category,description,notes,account,to_account\n';
+  assert.ok(toCsv([{ date: '2026-10-01', type: 'expense', amount_minor: 100, category: 'Food', description: '=HYPERLINK("http://evil","x")', notes: '+cmd|calc', account: '@SUM(A1)', to_account: '' }]).split('\n')[1].split(',').every(c => !/^"[=+\-@]/.test(c)));
+  const rows = Array.from({ length: 20000 }, (_, i) => `2026-10-${String(1 + (i % 28)).padStart(2, '0')},expense,${(i % 997) + 1}.00,Food,item ${i},,Cash,`).join('\n');
+  const t0 = Date.now(), r = fromCsv(H + rows); assert.equal(r.ok.length, 20000); assert.equal(new Set(r.ok.map(x => x.import_hash)).size, 20000); assert.ok(Date.now() - t0 < 3000, 'parsing 20k rows took ' + (Date.now() - t0) + 'ms');
+  assert.equal(fromCsv(H + '"2026-10-01","expense","1,200.50","Food","multi\nline, ""quoted""",,Cash,').ok[0].amount_minor, 120050);
+});

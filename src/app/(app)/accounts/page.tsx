@@ -1,11 +1,12 @@
 import { ctx } from '@/lib/data';
+import { dbError } from '@/lib/safe';
 import { createAccount, updateAccount, deleteAccount, transfer } from '@/app/actions';
 import { formatMinor, manilaToday } from '@/core/money';
 import { minorToInput } from '@/lib/validate';
 import { Flash, type SP } from '@/components/ui';
 const TYPES = ['cash', 'ewallet', 'bank', 'credit_card', 'savings', 'other'];
 export default async function Accounts({ searchParams }: { searchParams: SP }) {
-  const sp = await searchParams, { sb, accounts } = await ctx(), { data, error } = await sb.rpc('account_balances'); if (error) throw new Error(error.message);
+  const sp = await searchParams, { sb, accounts } = await ctx(), { data, error } = await sb.rpc('account_balances'); if (error) dbError(error, 'accounts');
   const bal = new Map((data as any[]).map(x => [x.account_id, Number(x.balance_minor)])), total = [...bal.values()].reduce((a, b) => a + b, 0);
   const T = ({ d }: { d?: string }) => <select className="inp" name="type" defaultValue={d ?? 'cash'}>{TYPES.map(t => <option key={t}>{t}</option>)}</select>;
   return <><Flash sp={sp} /><div className="card"><h1 className="text-xl font-semibold mb-2">Accounts — total {formatMinor(total)}</h1>

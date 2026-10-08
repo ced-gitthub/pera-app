@@ -1,9 +1,9 @@
 // In-memory stand-in for Supabase: mirrors the query API + RLS ownership + the main constraints/functions of the SQL. It tests APP code, NOT the real SQL.
 const crypto = require('crypto');
-const DEF = { transactions: { description: '', notes: '', transfer_account_id: null, category_id: null, import_hash: null, external_id: null, recurring_id: null, request_id: null, request_idx: null }, accounts: { account_type: 'cash', opening_balance_minor: 0 }, recurring_transactions: { run_count: 0, active: true, end_date: null, description: '' }, categories: {}, budgets: {}, profiles: {} };
+const DEF = { transactions: { description: '', notes: '', transfer_account_id: null, category_id: null, import_hash: null, external_id: null, recurring_id: null, request_id: null, request_idx: null }, accounts: { account_type: 'cash', opening_balance_minor: 0 }, recurring_transactions: { run_count: 0, active: true, end_date: null, description: '' }, categories: {}, budgets: {}, profiles: {}, tx_trash: {} };
 const UNIQ = { transactions: [['user_id', 'request_id', 'request_idx'], ['user_id', 'import_hash'], ['user_id', 'external_id'], ['recurring_id', 'transaction_date']], accounts: [['user_id', 'name']], categories: [['user_id', 'name', 'type']], budgets: [['user_id', 'category_id', 'month', 'year']] };
 const MAXM = 99999999999;
-function db() { return { t: { accounts: [], categories: [], transactions: [], budgets: [], recurring_transactions: [], profiles: [] }, users: new Map(), cur: null, seq: 0, fail: false }; }
+function db() { return { t: { accounts: [], categories: [], transactions: [], budgets: [], recurring_transactions: [], profiles: [], tx_trash: [] }, users: new Map(), cur: null, seq: 0, fail: false, failRpc: null, resets: [] }; }
 const E = (message, code) => ({ message, code });
 function check(D, table, r) {
   const own = (tb, id) => D.t[tb].some(x => x.id === id && x.user_id === r.user_id);
@@ -56,10 +56,14 @@ function builder(D, table) {
       }
       for (const m of made) if (!T.includes(m)) T.push(m); return out(made);
     }
-    if (st.op === 'update') { const rows = T.filter(pass); const bad = rows.map(r => { const n = { ...r, ...st.patch }; return check(D, table, n) ?? uniqViolation(D, table, n, r.id); }).find(Boolean); if (bad) return { data: null, error: bad }; rows.forEach(r => Object.assign(r, st.patch, { updated_at: new Date().toISOString() })); return out(rows); }
+    if (st.op === 'update') { const rows = T.filter(pass); const bad = rows.map(r => { const n = { ...r, ...st.patch }; return check(D, table, n) ?? uniqViolation(D, table, n, r.id); }).find(Boolean); if (bad) return { data: null, error: bad }; rows.forEach(r => { Object.assign(r, st.patch, { updated_at: new Date().toISOString() }); }); return out(rows); }
     if (st.op === 'delete') {
       const rows = T.filter(pass), refs = { accounts: [['transactions', 'account_id'], ['transactions', 'transfer_account_id'], ['recurring_transactions', 'account_id']], categories: [['transactions', 'category_id'], ['budgets', 'category_id'], ['recurring_transactions', 'category_id']] }[table] ?? [];
       for (const r of rows) for (const [tb, c] of refs) if (D.t[tb].some(x => x[c] === r.id)) return { data: null, error: E('violates foreign key constraint (in use)', '23503') };
+      if (table === 'transactions') for (const r of rows) { // mirrors 0005: on_tx_delete trigger (trash only)
+        D.t.tx_trash.push(mkRow(D, 'tx_trash', { user_id: r.user_id, tx_id: r.id, row: { ...r }, deleted_at: new Date(1700000000000 + ++D.seq * 1000).toISOString() }));
+      }
+      if (table === 'recurring_transactions') for (const r of rows) { D.t.transactions.forEach(t => { if (t.recurring_id === r.id) t.recurring_id = null; }); } // ON DELETE SET NULL (recurring_id)
       D.t[table] = D.t[table].filter(r => !rows.includes(r)); return out(rows);
     }
   }
@@ -69,6 +73,7 @@ const lastDay = (y, m) => new Date(Date.UTC(y, m, 0)).getUTCDate();
 const addMonths = (s, n) => { const [y, m, d] = s.split('-').map(Number), t = (y * 12 + m - 1 + n), ny = Math.floor(t / 12), nm = t % 12 + 1; return `${ny}-${String(nm).padStart(2, '0')}-${String(Math.min(d, lastDay(ny, nm))).padStart(2, '0')}`; };
 const addDays = (s, n) => new Date(new Date(s + 'T00:00:00Z').getTime() + n * 864e5).toISOString().slice(0, 10);
 function rpc(D, name, a) {
+  if (D.failRpc === name) return { data: null, error: E('relation "public.secret_internal_table" does not exist at character 14 (SQLSTATE 42P01)', '42P01') };
   if (!D.cur) return { data: null, error: E('JWT expired') }; const mine = D.t.transactions.filter(t => t.user_id === D.cur), inR = t => t.transaction_date >= a.p_from && t.transaction_date <= a.p_to;
   if (name === 'period_summary') { const g = {}; for (const t of mine.filter(t => inR(t) && t.type !== 'transfer')) { const k = t.type + '|' + t.category_id; g[k] ??= { type: t.type, category_id: t.category_id, total_minor: 0, n: 0 }; g[k].total_minor += t.amount_minor; g[k].n++; } return { data: Object.values(g), error: null }; }
   if (name === 'account_balances') return { data: D.t.accounts.filter(x => x.user_id === D.cur).map(x => ({ account_id: x.id, balance_minor: x.opening_balance_minor + mine.reduce((s, t) => s + (t.account_id === x.id ? (t.type === 'income' ? t.amount_minor : -t.amount_minor) : 0) + (t.transfer_account_id === x.id ? t.amount_minor : 0), 0) })), error: null };
@@ -82,9 +87,10 @@ function rpc(D, name, a) {
 function client(D) {
   const id = () => D.cur ? { id: D.cur, email: D.users.get(D.cur).email } : null;
   return { from: t => builder(D, t), rpc: (n, a) => Promise.resolve(rpc(D, n, a ?? {})),
-    auth: { getUser: async () => ({ data: { user: id() } }), signOut: async () => { D.cur = null; return {}; },
+    auth: { resetPasswordForEmail: async (email, o) => { D.resets.push({ email, o }); return { error: null }; }, updateUser: async ({ password }) => { if (!D.cur) return { error: { code: 'session_not_found', message: 'Auth session missing!' } }; if (password.length < 6) return { error: { code: 'weak_password', message: 'weak' } }; D.users.get(D.cur).password = password; return { error: null }; }, exchangeCodeForSession: async (code) => { const u = D.recoveryCodes?.get(code); if (!u) return { error: { code: 'flow_state_not_found', message: 'invalid flow state' } }; D.cur = u; D.recoveryCodes.delete(code); return { error: null }; }, verifyOtp: async () => ({ error: { code: 'otp_expired', message: 'expired' } }),
+      getUser: async () => ({ data: { user: id() } }), signOut: async () => { D.cur = null; return {}; },
       signInWithPassword: async ({ email, password }) => { const u = [...D.users.values()].find(x => x.email === email && x.password === password); if (!u) return { error: { message: 'Invalid login credentials' } }; D.cur = u.id; return { error: null }; },
-      signUp: async ({ email, password, options }) => { if (!email || password.length < 6) return { error: { message: 'Password should be at least 6 characters' } }; const u = { id: crypto.randomUUID(), email, password }; D.users.set(u.id, u); D.cur = u.id;
+      signUp: async ({ email, password, options }) => { if (!email || password.length < 6) return { error: { code: 'weak_password', message: 'Password should be at least 6 characters' } }; const u = { id: crypto.randomUUID(), email, password }; D.users.set(u.id, u); D.cur = u.id;
         for (const [n, ty] of [...['Salary', 'Freelance', 'Business', 'Investment', 'Gift', 'Other Income'].map(n => [n, 'income']), ...['Food', 'Groceries', 'Transportation', 'Bills', 'Utilities', 'Rent', 'Shopping', 'Entertainment', 'Health', 'Education', 'Subscriptions', 'Travel', 'Personal', 'Other'].map(n => [n, 'expense'])]) D.t.categories.push(mkRow(D, 'categories', { user_id: u.id, name: n, type: ty }));
         for (const [n, ty] of [['Cash', 'cash'], ['GCash', 'ewallet'], ['Maya', 'ewallet'], ['BPI', 'bank'], ['Credit Card', 'credit_card'], ['Savings', 'savings']]) D.t.accounts.push(mkRow(D, 'accounts', { user_id: u.id, name: n, account_type: ty }));
         D.t.profiles.push(mkRow(D, 'profiles', { id: u.id, email, name: options?.data?.name })); return { data: { session: { ok: 1 }, user: u }, error: null }; } } };

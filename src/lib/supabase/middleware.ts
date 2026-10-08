@@ -8,9 +8,9 @@ export async function updateSession(request: NextRequest) {
       cs.forEach(({ name, value }) => request.cookies.set(name, value)); res = NextResponse.next({ request }); cs.forEach(({ name, value, options }) => res.cookies.set(name, value, options)); } },
   });
   const { data: { user } } = await sb.auth.getUser(); // validates + refreshes the session
-  const isAuthPage = ['/login', '/register'].some(p => request.nextUrl.pathname.startsWith(p));
+  const path = request.nextUrl.pathname, isAuthPage = ['/login', '/register'].some(p => path.startsWith(p)), isPublic = isAuthPage || ['/forgot', '/auth/'].some(p => path.startsWith(p));
   const to = (path: string) => { const u = request.nextUrl.clone(); u.pathname = path; u.search = ''; return NextResponse.redirect(u); };
-  if (!user && !isAuthPage) return to('/login');
+  if (!user && !isPublic) { if (path.startsWith('/reset')) { const u = request.nextUrl.clone(); u.pathname = '/forgot'; u.search = '?err=' + encodeURIComponent('That link is invalid or has expired. Request a new one.'); return NextResponse.redirect(u); } return to('/login'); }
   if (user && isAuthPage) return to('/');
   return res;
 }

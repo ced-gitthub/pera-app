@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { ctx } from '@/lib/data';
+import { dbError } from '@/lib/safe';
 import { periodFor } from '@/lib/range';
 import { manilaToday, formatMinor } from '@/core/money';
 import { totals, byCategory, type Tx } from '@/core/aggregate';
@@ -8,7 +9,7 @@ const P = [['month', 'This month'], ['prev', 'Last month'], ['year', 'This year'
 export default async function Reports({ searchParams }: { searchParams: SP }) {
   const sp = await searchParams, today = manilaToday(), per = periodFor(sp.p ?? 'month', today, sp.from, sp.to), year = Number(per.from.slice(0, 4)), { sb, categories, accounts } = await ctx();
   const ytdTo = today, [s, a, mo, ytd] = await Promise.all([sb.rpc('period_summary', { p_from: per.from, p_to: per.to }), sb.rpc('account_spending', { p_from: per.from, p_to: per.to }), sb.rpc('monthly_summary', { p_year: year }), sb.rpc('period_summary', { p_from: `${today.slice(0, 4)}-01-01`, p_to: ytdTo })]);
-  const bad = s.error ?? a.error ?? mo.error ?? ytd.error; if (bad) throw new Error(bad.message);
+  const bad = s.error ?? a.error ?? mo.error ?? ytd.error; if (bad) dbError(bad, 'reports');
   const cn = new Map(categories.map(c => [c.id, c.name])), an = new Map(accounts.map(x => [x.id, x.name])), mk = (rows: any[]): Tx[] => rows.map(x => ({ type: x.type, amount_minor: Number(x.total_minor), category: cn.get(x.category_id) ?? 'Other', date: per.from }));
   const t = totals(mk(s.data)), y = totals(mk(ytd.data)), cats = byCategory(mk(s.data)), max = Math.max(1, ...(mo.data as any[]).map(r => Number(r.expense_minor)), ...(mo.data as any[]).map(r => Number(r.income_minor)));
   const M = new Map((mo.data as any[]).map(r => [r.month, r])), tot = (k: 'income_minor' | 'expense_minor') => (mo.data as any[]).reduce((n, r) => n + Number(r[k]), 0);

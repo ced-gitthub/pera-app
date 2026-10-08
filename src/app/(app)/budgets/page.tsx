@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { ctx } from '@/lib/data';
+import { dbError } from '@/lib/safe';
 import { setBudget } from '@/app/actions';
 import { isYm, monthRange, shiftYm } from '@/lib/range';
 import { manilaToday, formatMinor } from '@/core/money';
@@ -10,7 +11,7 @@ import { emojiFor } from '@/lib/vibe';
 export default async function Budgets({ searchParams }: { searchParams: SP }) {
   const sp = await searchParams, ym = isYm(sp.ym) ? sp.ym : manilaToday().slice(0, 7), { from, to } = monthRange(ym), [y, m] = ym.split('-').map(Number);
   const { sb, categories } = await ctx(), [bud, sum] = await Promise.all([sb.from('budgets').select('category_id,amount_minor').eq('month', m).eq('year', y), sb.rpc('period_summary', { p_from: from, p_to: to })]);
-  if (bud.error || sum.error) throw new Error((bud.error ?? sum.error)!.message);
+  if (bud.error || sum.error) dbError(bud.error ?? sum.error, 'budgets');
   const budget = new Map((bud.data as any[]).map(b => [b.category_id, Number(b.amount_minor)])), spent = new Map((sum.data as any[]).filter(x => x.type === 'expense').map(x => [x.category_id, Number(x.total_minor)]));
   return <><Flash sp={sp} /><div className="card"><div className="row mb-3"><Link className="btn" href={`/budgets?ym=${shiftYm(ym, -1)}`}>←</Link><h1 className="text-xl font-semibold">Budgets · {ym}</h1><Link className="btn" href={`/budgets?ym=${shiftYm(ym, 1)}`}>→</Link></div>
     {categories.filter(c => c.type === 'expense').map(c => { const b = budget.get(c.id), s = spent.get(c.id) ?? 0, st = b !== undefined ? budgetStatus(b, s) : null;
