@@ -14,5 +14,5 @@ export default function TxRow({ r, actions = true }: { r: R; actions?: boolean }
     <td className={r.type === 'income' ? 'inc' : r.type === 'expense' ? 'exp' : ''} style={{ textAlign: 'right' }}><b>{sign}{formatMinor(r.amount_minor)}</b></td>
     {actions && <td><span className="row"><Link className="btn" href={`/transactions/${r.id}`}>Edit</Link>
       <button className="btn" disabled={busy} onClick={async () => { setBusy(true); const x = await duplicateTx(r.id); setBusy(false); if (x.ok) router.refresh(); else setErr(x.message ?? ''); }}>Duplicate</button>
-      <button className="btn" disabled={busy} onClick={async () => { setBusy(true); const x = await deleteTx(r.id); setBusy(false); if (x.ok) { setGone(x.row); router.refresh(); } else setErr(x.message); }}>Delete</button></span>{err && <div className="flash bad">{err}</div>}</td>}</tr>;
+      <button className="btn" disabled={busy} onClick={async () => { setBusy(true); const x = await deleteTx(r.id); setBusy(false); if (x.ok) setGone(x.row); /* no refresh here: it would unmount this row and its Undo prompt; the list is fresh on the next navigation */ else setErr(x.message); }}>Delete</button></span>{err && <div className="flash bad">{err}</div>}</td>}</tr>;
 }
