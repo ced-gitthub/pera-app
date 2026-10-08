@@ -71,3 +71,11 @@ test('no secrets committed', () => {
   for (const f of walk('.').filter(f => !f.includes('tests/'))) assert.ok(!/sk-[A-Za-z0-9]{20}|service_role|eyJ[A-Za-z0-9_-]{30}/.test(fs.readFileSync(f, 'utf8')), f);
   assert.ok(/NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=\n/.test(fs.readFileSync('.env.example', 'utf8')));
 });
+
+test('explicit "expense" word and drinks are understood', () => {
+  const c = { today: '2026-10-08', accounts: ['Cash', 'GCash'] };
+  for (const [txt, cat, type] of [['drink expense 20', 'Food', 'expense'], ['expense 20 coffee', 'Food', 'expense'], ['juice 35', 'Food', 'expense'], ['expense 500', 'Other', 'expense']] as const) {
+    const [r] = parseInput(txt, c) as any[]; assert.equal(r.type, type, txt); assert.equal(r.category, cat, txt); assert.equal(r.amount_minor, parseAmountMinor(txt.match(/\d+/)![0]), txt);
+  }
+  assert.equal((parseInput('drink expense 20', c)[0] as any).kind, 'ok');
+});
