@@ -1,0 +1,65 @@
+name: prod-qa
+# Real browser QA against the deployed production app + real Supabase. No mocks.
+on:
+  workflow_dispatch:
+  push:
+    paths: ['tests/prod/**', '.github/workflows/prod-qa.yml']
+permissions:
+  contents: write
+concurrency: { group: prod-qa, cancel-in-progress: false }
+env:
+  BASE_URL: https://pera-app-beta.vercel.app
+  OUT_DIR: ${{ github.workspace }}/qa-out
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Wait until production serves this commit
+        run: |
+          want="${GITHUB_SHA::7}"
+          for i in $(seq 1 40); do
+            got=$(curl -s "$BASE_URL/api/health" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{console.log(JSON.parse(s).commit)}catch{console.log('?')}})")
+            echo "prod commit=$got want=$want"
+            [ "$got" = "$want" ] && exit 0
+            sleep 15
+          done
+          echo "::warning title=prod-qa::production did not report commit $want within 10 min; testing whatever is live ($got)"
+      - name: Install Playwright
+        working-directory: tests/prod
+        run: |
+          npm install --no-save --no-package-lock --ignore-scripts playwright@1.49.1
+          npx playwright install --with-deps chromium
+      - name: Functional QA (real browser, real Supabase)
+        id: qa
+        working-directory: tests/prod
+        continue-on-error: true
+        run: node qa.mjs
+      - name: Responsive / mobile / dark / motion QA
+        id: resp
+        working-directory: tests/prod
+        continue-on-error: true
+        run: node responsive.mjs
+      - name: Summarise
+        run: |
+          for s in qa responsive; do
+            f="$OUT_DIR/$s.json"; [ -f "$f" ] || { echo "::error title=$s::no result file (suite crashed)"; continue; }
+            node -e "
+              const r=require('$f'); console.log('::notice title=$s summary::pass '+r.pass+' fail '+r.fail+' commit-url '+r.base);
+              for (const x of r.failed.slice(0,40)) console.log('::error title=$s FAIL::['+x.group+'] '+x.name+' :: '+String(typeof x.detail==='string'?x.detail:JSON.stringify(x.detail)).replace(/[\r\n%]/g,' ').slice(0,300));"
+          done
+      - name: Publish results to branch qa-results
+        if: always()
+        run: |
+          [ -d "$OUT_DIR" ] || exit 0
+          mkdir -p /tmp/qa && cp -r "$OUT_DIR"/. /tmp/qa/
+          git config user.name github-actions; git config user.email actions@users.noreply.github.com
+          git checkout --orphan qa-results; git rm -rf --quiet . ; cp -r /tmp/qa/. .
+          echo "run for ${GITHUB_SHA} at $(date -u +%FT%TZ)" > RUN.txt
+          git add -A; git commit -qm "prod-qa results for ${GITHUB_SHA::7}"; git push -f origin qa-results
+      - name: Fail if any suite failed
+        run: |
+          [ "${{ steps.qa.outcome }}" = success ] && [ "${{ steps.resp.outcome }}" = success ]
