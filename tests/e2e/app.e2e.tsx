@@ -181,4 +181,5 @@ const count = (h: string, s: string) => h.split(s).length - 1;
   // ---- isolation sanity of the stand-in itself
   login('a@x.com'); T('A still sees exactly its own rows', rows(A_ID).length === rows().length && !rows().some((t: any) => t.user_id !== A_ID));
   console.log(`e2e (app code vs in-memory Supabase stand-in): pass ${pass} fail ${fail}`);
+  if (fail) process.exit(1);
 })().catch(e => { console.log('CRASH', e); process.exit(1); });
