@@ -14,10 +14,10 @@ export default async function Dashboard({ searchParams }: { searchParams: SP }) 
   const per = periodFor(sp.p ?? 'month', today, sp.from, sp.to), ym = today.slice(0, 7), mr = monthRange(ym), [yy, mm] = ym.split('-').map(Number);
   const [s, b, r, d, bud, ms, prof] = await Promise.all([sb.rpc('period_summary', { p_from: per.from, p_to: per.to }), sb.rpc('account_balances'),
     sb.from('transactions').select('id,type,amount_minor,transaction_date,description,category_id,account_id,transfer_account_id').order('transaction_date', { ascending: false }).order('created_at', { ascending: false }).limit(8),
-    sb.from('transactions').select('transaction_date').gte('transaction_date', addDays(today, -60)).limit(2000),
+    sb.from('transactions').select('transaction_date').gte('transaction_date', addDays(today, -60)).order('transaction_date', { ascending: false }).limit(2000),
     sb.from('budgets').select('category_id,amount_minor').eq('month', mm).eq('year', yy), sb.rpc('period_summary', { p_from: mr.from, p_to: mr.to }),
     sb.from('profiles').select('name').eq('id', user.id).maybeSingle()]);
-  const bad = s.error ?? b.error ?? r.error; if (bad) throw new Error(bad.message);
+  const bad = s.error ?? b.error ?? r.error ?? bud.error ?? ms.error; if (bad) throw new Error(bad.message);
   const cn = new Map(categories.map(c => [c.id, c.name])), an = new Map(accounts.map(a => [a.id, a.name]));
   const txs: Tx[] = (s.data as any[]).map(x => ({ type: x.type, amount_minor: Number(x.total_minor), category: cn.get(x.category_id) ?? 'Other', date: per.from }));
   const t = totals(txs), cats = byCategory(txs), balance = (b.data as any[]).reduce((n, x) => n + Number(x.balance_minor), 0), max = cats[0]?.[1] ?? 1;

@@ -11,7 +11,7 @@ import { parseWithFallback, getProvider } from '@/ai/provider';
 import { validateItems, parseOptionalMinor, defaultAccount } from '@/lib/validate';
 import { parseQuestion } from '@/lib/assistant';
 
-function go(path: string, k: 'err' | 'ok', m: string): never { redirect(`${path}${path.includes('?') ? '&' : '?'}${k}=${encodeURIComponent(m)}`); }
+function go(path: string, k: 'err' | 'ok', m: string): never { redirect(`${path}${path.includes('?') ? '&' : '?'}${k}=${encodeURIComponent(m.slice(0, 200))}`); }
 const str = (fd: FormData, k: string) => String(fd.get(k) ?? '');
 const done = () => revalidatePath('/', 'layout');
 
@@ -76,7 +76,7 @@ export async function duplicateTx(id: string) {
   const { error } = await sb.from('transactions').insert(r); if (error) return { ok: false, message: error.message }; done(); return { ok: true, message: 'Duplicated' };
 }
 export async function updateTx(fd: FormData) {
-  const id = str(fd, 'id'), back = `/transactions/${id}`, { sb, categories, accounts } = await ctx();
+  const id = str(fd, 'id'), back = `/transactions/${encodeURIComponent(id)}`, { sb, categories, accounts } = await ctx();
   const amt = parseAmountMinor(str(fd, 'amount')), date = str(fd, 'date'), type = str(fd, 'type');
   if (amt === null) go(back, 'err', 'Amount must be 0.01 to 999,999,999.99'); if (!isDate(date)) go(back, 'err', 'Invalid date');
   if (!accounts.some(a => a.id === str(fd, 'account_id'))) go(back, 'err', 'Unknown account');
