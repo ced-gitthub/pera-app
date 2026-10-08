@@ -9,7 +9,11 @@ jobs:
         with: { node-version: 22 }
       - run: npm ci
       - name: Dependency audit (fails on high/critical)
-        run: npm audit --audit-level=high
+        run: |
+          set +e
+          npm audit --audit-level=high > audit.txt 2>&1; c=$?
+          if [ $c -ne 0 ]; then echo "::error title=npm audit::$(head -c 1500 audit.txt | tr '\n' ' ')"; fi
+          exit $c
       - run: npm run typecheck
       - name: Unit tests
         run: |
