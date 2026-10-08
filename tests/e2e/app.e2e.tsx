@@ -333,6 +333,15 @@ const count = (h: string, s: string) => h.split(s).length - 1;
   T('backup remove: signed-out refused', await (async () => { D.cur = null; const r = await red(() => A.backupRemove()); login('a@x.com'); return r === '/login'; })());
   for (const k of ['SMTP_USER', 'SMTP_PASS', 'SUPABASE_SECRET_KEY']) delete process.env[k];
   }
+  // ---- Google sign-in
+  {
+    D.cur = null; D.oauth = [];
+    T('google: starts OAuth with the callback on the site origin, then goes to Supabase/Google', await (async () => { const r = await red(() => A.signInWithGoogle()); return r.startsWith('https://proj.supabase.co/auth/v1/authorize?provider=google') && D.oauth[0].options.redirectTo === 'https://pera.example/auth/callback?next=/&oauth=1'; })());
+    T('google: not enabled -> friendly error on /login', await (async () => { D.oauthFail = true; const r = await red(() => A.signInWithGoogle()); D.oauthFail = false; return r === '/login?err=Google sign-in is not available right now. Use your email instead.'; })());
+    T('google: callback success lands on the dashboard, no email-confirm banner', await (async () => { D.recoveryCodes = new Map([['g1', [...D.users.values()].find((u: any) => u.email === 'a@x.com').id]]); const r = await callback(new NextRequest('https://pera.example/auth/callback?code=g1&next=/&oauth=1')); const l = new URL(r.headers.get('location')!); return l.pathname === '/' && !l.search && D.cur !== null; })());
+    T('google: failed callback returns to /login with a plain message', await (async () => { D.cur = null; const r = await callback(new NextRequest('https://pera.example/auth/callback?code=bad&next=/&oauth=1')); const l = new URL(r.headers.get('location')!); return l.pathname === '/login' && decodeURIComponent(l.search).includes('Google sign-in did not work'); })());
+    for (const [n, P] of [['login', Login], ['register', (await import('@/app/(auth)/register/page')).default]] as [string, any][]) { const h = renderToStaticMarkup(await P({ searchParams: Promise.resolve({}) })); T(`google: ${n} page offers the Google button above the email form`, h.includes('Continue with Google') && h.indexOf('Continue with Google') < h.indexOf('name="email"')); }
+  }
   // ---- isolation sanity of the stand-in itself
   login('a@x.com'); T('A still sees exactly its own rows', rows(A_ID).length === rows().length && !rows().some((t: any) => t.user_id !== A_ID));
   console.log(`e2e (app code vs in-memory Supabase stand-in): pass ${pass} fail ${fail}`);

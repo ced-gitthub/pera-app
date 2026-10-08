@@ -32,6 +32,12 @@ const errCode = (e: unknown) => (e as { code?: string } | null)?.code ?? '';
 const code6 = (fd: FormData) => str(fd, 'code').replace(/\s/g, '');
 async function authed() { const sb = await supabaseServer(), { data: { user } } = await sb.auth.getUser(); if (!user) redirect('/login'); return { sb, user }; }
 async function needsSecondStep(sb: Awaited<ReturnType<typeof supabaseServer>>) { const { data } = await sb.auth.mfa.getAuthenticatorAssuranceLevel(); return data?.nextLevel === 'aal2' && data.currentLevel !== 'aal2'; }
+// Google sign-in: Supabase sends the user to Google, then back to /auth/callback (PKCE). Google has already verified the address, so no confirmation email is needed.
+export async function signInWithGoogle() {
+  const sb = await supabaseServer(); let url = '';
+  try { const { data, error } = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${await siteUrl()}/auth/callback?next=/&oauth=1` } }); if (error) logErr('signInWithGoogle', error); else url = data.url ?? ''; } catch (e) { logErr('signInWithGoogle', e); }
+  if (!url) go('/login', 'err', 'Google sign-in is not available right now. Use your email instead.'); redirect(url);
+}
 export async function signIn(fd: FormData) {
   const email = str(fd, 'email').trim(), sb = await supabaseServer(); const { error } = await sb.auth.signInWithPassword({ email, password: str(fd, 'password') });
   if (error) { if (errCode(error) === 'email_not_confirmed') go(verifyUrl(email), 'err', authMessage(error, 'signIn')); go('/login', 'err', authMessage(error, 'signIn')); }
