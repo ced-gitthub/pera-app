@@ -1,4 +1,4 @@
-// Token-gated integration test against the REAL Supabase project (migrations + RLS). Needs QA_TOKEN (>=16 chars) set in Vercel; delete that variable when done and this route 404s.
+// Real-Supabase integration + RLS suite. Run by tests/prod/rls.mjs from GitHub Actions (it used to be a token-gated route; the route was removed so no test endpoint exists in production).
 // Creates two throwaway users (pera-qa-*@example.com) using only the publishable key; their data is cleaned up, the auth users remain (delete them in Supabase > Authentication > Users).
 import { createClient } from '@supabase/supabase-js';
 export const dynamic = 'force-dynamic'; export const maxDuration = 60;

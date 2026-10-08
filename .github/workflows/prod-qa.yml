@@ -1,19 +1,24 @@
 name: prod-qa
-# Real browser QA against the deployed production app + real Supabase. No mocks.
+# Real browser / real database QA against the deployed production app + real Supabase. No mocks.
 on:
   workflow_dispatch:
   push:
-    paths: ['tests/prod/**', '.github/workflows/prod-qa.yml']
+    paths: ['tests/prod/**', '.github/workflows/prod-qa.yml', 'src/**', 'supabase/**', 'package.json', 'package-lock.json', 'next.config.mjs']
 permissions:
   contents: write
-concurrency: { group: prod-qa, cancel-in-progress: false }
 env:
   BASE_URL: https://pera-app-beta.vercel.app
+  SUPABASE_URL: https://vxhgkkzbmrhxayzryake.supabase.co
+  SUPABASE_PUBLISHABLE_KEY: sb_publishable_YGZgbXB3xS6tP2ssvT8pCA_c3i4hRL2   # public by design (ships to every browser)
   OUT_DIR: ${{ github.workspace }}/qa-out
 jobs:
   qa:
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [qa, responsive, db, rls]
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -21,39 +26,33 @@ jobs:
       - name: Wait until production serves this commit
         run: |
           want="${GITHUB_SHA::7}"
-          for i in $(seq 1 40); do
+          for i in $(seq 1 50); do
             got=$(curl -s "$BASE_URL/api/health" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{console.log(JSON.parse(s).commit)}catch{console.log('?')}})")
             echo "prod commit=$got want=$want"
             [ "$got" = "$want" ] && exit 0
             sleep 15
           done
-          echo "::warning title=prod-qa::production did not report commit $want within 10 min; testing whatever is live ($got)"
+          echo "::warning title=prod-qa::production did not report commit $want in time; testing whatever is live ($got)"
+      - run: npm ci
       - name: Install Playwright
         working-directory: tests/prod
         run: |
           npm install --no-save --no-package-lock --ignore-scripts playwright@1.49.1
-          npx playwright install --with-deps chromium
-      - name: Functional QA (real browser, real Supabase)
-        id: qa
+          [ "${{ matrix.suite }}" = qa ] || [ "${{ matrix.suite }}" = responsive ] && npx playwright install --with-deps chromium || true
+      - name: Run ${{ matrix.suite }}
+        id: run
         working-directory: tests/prod
         continue-on-error: true
-        timeout-minutes: 15
-        run: node qa.mjs
-      - name: Responsive / mobile / dark / motion QA
-        id: resp
-        working-directory: tests/prod
-        continue-on-error: true
-        timeout-minutes: 15
-        run: node responsive.mjs
+        timeout-minutes: 25
+        run: node --experimental-strip-types ${{ matrix.suite == 'db' && 'db.mjs' || matrix.suite == 'rls' && 'rls.mjs' || format('{0}.mjs', matrix.suite) }}
       - name: Summarise
         run: |
-          for s in qa responsive; do
-            f="$OUT_DIR/$s.json"; [ -f "$f" ] || { echo "::error title=$s::no final result file (suite crashed or timed out); see $s.partial.md on qa-results"; continue; }
-            node -e "
-              const r=require('$f'); console.log('::notice title=$s summary::pass '+r.pass+' fail '+r.fail+' commit-url '+r.base);
-              for (const x of r.failed.slice(0,40)) console.log('::error title=$s FAIL::['+x.group+'] '+x.name+' :: '+String(typeof x.detail==='string'?x.detail:JSON.stringify(x.detail)).replace(/[\r\n%]/g,' ').slice(0,300));"
-          done
-      - name: Publish results to branch qa-results
+          s="${{ matrix.suite }}"; f="$OUT_DIR/$( [ $s = db ] && echo db || echo $s ).json"
+          [ -f "$f" ] || { echo "::error title=$s::no final result file (crashed or timed out); see $s.partial.md on branch qa-$s"; exit 0; }
+          node -e "
+            const r=require('$f'); console.log('::notice title=$s summary::pass '+r.pass+' fail '+r.fail);
+            for (const x of r.failed.slice(0,40)) console.log('::error title=$s FAIL::['+x.group+'] '+x.name+' :: '+String(typeof x.detail==='string'?x.detail:JSON.stringify(x.detail)).replace(/[\r\n%]/g,' ').slice(0,300));"
+      - name: Publish results to branch qa-${{ matrix.suite }}
         if: always()
         env:
           GH_TOKEN: ${{ github.token }}
@@ -61,10 +60,9 @@ jobs:
           [ -d "$OUT_DIR" ] || { echo "::warning::no qa-out directory"; exit 0; }
           rm -rf /tmp/qa && mkdir -p /tmp/qa && cp -r "$OUT_DIR"/. /tmp/qa/ && cd /tmp/qa
           echo "run for ${GITHUB_SHA} at $(date -u +%FT%TZ)" > RUN.txt
-          git init -q -b qa-results . && git config user.name github-actions && git config user.email actions@users.noreply.github.com
-          git add -A && git commit -qm "prod-qa results for ${GITHUB_SHA::7}"
+          git init -q -b qa-${{ matrix.suite }} . && git config user.name github-actions && git config user.email actions@users.noreply.github.com
+          git add -A && git commit -qm "prod-qa ${{ matrix.suite }} results for ${GITHUB_SHA::7}"
           git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          git push -f origin qa-results 2>&1 | sed "s/${GH_TOKEN}/***/g" || echo "::error title=publish::push failed"
-      - name: Fail if any suite failed
-        run: |
-          [ "${{ steps.qa.outcome }}" = success ] && [ "${{ steps.resp.outcome }}" = success ]
+          git push -f origin qa-${{ matrix.suite }} 2>&1 | sed "s/${GH_TOKEN}/***/g" || echo "::error title=publish::push failed"
+      - name: Fail if the suite failed
+        run: '[ "${{ steps.run.outcome }}" = success ]'

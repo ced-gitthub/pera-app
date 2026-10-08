@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 export async function updateSession(request: NextRequest) {
-  if (/^\/api\/(health|qa)(\/|$)/.test(request.nextUrl.pathname)) return NextResponse.next(); // diagnostics are public/token-gated, no session needed
+  if (/^\/api\/health(\/|$)/.test(request.nextUrl.pathname)) return NextResponse.next(); // public health check, no session needed
   let res = NextResponse.next({ request });
   const sb = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!, {
     cookies: { getAll: () => request.cookies.getAll(), setAll: (cs: { name: string; value: string; options: any }[]) => {
