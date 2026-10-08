@@ -12,7 +12,23 @@ env:
   SUPABASE_PUBLISHABLE_KEY: sb_publishable_YGZgbXB3xS6tP2ssvT8pCA_c3i4hRL2   # public by design (ships to every browser)
   OUT_DIR: ${{ github.workspace }}/qa-out
 jobs:
+  preflight:
+    # The suites create throwaway users, which only works while Supabase "Confirm email" is OFF. Once you turn it ON for real users, skip them instead of failing every push.
+    runs-on: ubuntu-latest
+    outputs:
+      skip: ${{ steps.p.outputs.skip }}
+    steps:
+      - id: p
+        run: |
+          auto=$(curl -s "$SUPABASE_URL/auth/v1/settings" -H "apikey: $SUPABASE_PUBLISHABLE_KEY" | jq -r '.mailer_autoconfirm')
+          echo "mailer_autoconfirm=$auto"
+          if [ "$auto" = "false" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "::notice title=prod-qa skipped::Supabase 'Confirm email' is ON, so the suites that create test users were skipped (expected once real users are onboarded). Turn it off temporarily to run them."
+          else echo "skip=false" >> "$GITHUB_OUTPUT"; fi
   qa:
+    needs: preflight
+    if: needs.preflight.outputs.skip != 'true'
     strategy:
       fail-fast: false
       matrix:
