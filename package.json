@@ -29,5 +29,8 @@
   "typescript": "^5.6.0",
   "tsx": "^4.19.0",
   "esbuild": "^0.25.0"
+ },
+ "overrides": {
+  "postcss": "^8.5.29"
  }
 }
