@@ -10,7 +10,13 @@ jobs:
       - run: npm install
       - run: npm run typecheck
       - run: npm test
-      - run: npm run test:app
+      - name: App tests (server actions + pages vs in-memory Supabase stand-in)
+        run: |
+          set +e
+          npm run test:app > e2e.log 2>&1; code=$?
+          if [ $code -ne 0 ]; then msg=$(grep -vE '^\s*$' e2e.log | tail -c 7000 | sed ':a;N;$!ba;s/%/%25/g;s/\r//g;s/\n/%0A/g'); echo "::error title=test:app output::$msg"; fi
+          tail -3 e2e.log
+          exit $code
       - run: npm run build
         env:
           NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
