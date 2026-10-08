@@ -98,7 +98,7 @@ G('two-step verification is enforced by the database (migration 0006)');
 G('loading skeletons');
 const S = await newCtx(browser), q = await S.newPage(); globalThis.__page = q;
 await login(q, A, PW2).catch(() => {}); // A's sessions were all ended above; log in again
-const ROUTES = ['/', '/transactions', '/accounts', '/budgets', '/reports', '/assistant', '/settings', '/security'];
+const ROUTES = ['/', '/transactions', '/accounts', '/budgets', '/reports', '/settings', '/security']; // /assistant has no data to wait for, so it renders at once
 await step('every page streams its skeleton first, then the real content (full page load)', async () => { const bad = []; for (const r of ROUTES) { const res = await S.request.get(r); const h = await res.text(); const i = h.indexOf('data-skeleton'); if (res.status() !== 200 || i < 0 || !/aria-busy="true"/.test(h) || !/role="status"/.test(h)) bad.push(r + ':' + res.status() + ':' + i); } return bad.length ? bad : true; });
 await step('the app shell (nav) is in the same first response as the skeleton', async () => { const h = await (await S.request.get('/transactions')).text(); return h.indexOf('aria-label="Main"') > -1 && h.indexOf('aria-label="Main"') < h.indexOf('data-skeleton') ? true : [h.indexOf('aria-label="Main"'), h.indexOf('data-skeleton')]; });
 await step('navigating with slow data: the sidebar stays and a skeleton fills the page immediately', async () => {

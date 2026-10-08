@@ -13,14 +13,17 @@ let shot = 0;
 async function diag() { const pg = globalThis.__page; if (!pg) return ''; try { const url = pg.url().replace(BASE, ''); const f = (await pg.locator('.flash').allInnerTexts().catch(() => [])).join('|'); const t = (await pg.locator('body').innerText({ timeout: 3000 }).catch(() => '')).replace(/\s+/g, ' ').slice(0, 160); fs.mkdirSync(OUT + '/fails', { recursive: true }); const n = ++shot; await pg.screenshot({ path: `${OUT}/fails/${String(n).padStart(3, '0')}.jpg`, type: 'jpeg', quality: 40, timeout: 5000 }).catch(() => {}); return ` @${url} #${n} flash="${f}" body="${t}"`; } catch { return ''; } }
 export const step = async (name, fn) => { try { const r = await fn(); if (r === true || r === undefined) T(name, true); else T(name, false, (typeof r === 'string' ? r : JSON.stringify(r)) + await diag()); } catch (e) { T(name, false, String(e.message || e).split('\n')[0] + await diag()); } };
 // act: click something that triggers a Next server action, then wait for that action's response and the resulting navigation to settle.
-export async function act(page, click, { ms = 500 } = {}) { const resp = page.waitForResponse(r => r.request().method() === 'POST' && !!r.request().headers()['next-action'], { timeout: 60000 }); await click(); await resp; await page.waitForLoadState('networkidle'); await page.waitForTimeout(ms); }
+export async function act(page, click, { ms = 500 } = {}) { const resp = page.waitForResponse(r => r.request().method() === 'POST', { timeout: 60000 }); await click(); await resp; await page.waitForLoadState('networkidle'); await page.waitForTimeout(ms); }
 export const manila = (offsetDays = 0) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila' }).format(new Date(Date.now() + offsetDays * 864e5));
 export const ymd = () => manila();
 export const LEAK = /supabase|postgres|pgrst|sql|relation "|violates|stack|at \w+ \(|jwt|42\d\d\d|23\d\d\d|syntax error|undefined|\[object/i;
 export async function launch() { return chromium.launch(); }
-export async function newCtx(browser, vp = { width: 1280, height: 900 }, extra = {}) { const c = await browser.newContext({ viewport: vp, baseURL: BASE, ...extra }); c.setDefaultTimeout(20000); return c; }
+// Pages now stream a loading skeleton first. Every navigation helper waits until the skeleton is gone, so tests read the real page (the skeleton itself is asserted in security.mjs).
+export const settle = pg => pg.waitForFunction(() => !document.querySelector('[data-skeleton]'), null, { timeout: 25000 }).catch(() => {});
+export function patch(pg) { for (const m of ['goto', 'reload', 'waitForURL', 'waitForLoadState', 'goBack', 'goForward']) { const orig = pg[m].bind(pg); pg[m] = async (...a) => { const r = await orig(...a); await settle(pg); return r; }; } return pg; }
+export async function newCtx(browser, vp = { width: 1280, height: 900 }, extra = {}) { const c = await browser.newContext({ viewport: vp, baseURL: BASE, ...extra }); c.setDefaultTimeout(20000); const np = c.newPage.bind(c); c.newPage = async () => patch(await np()); return c; }
 export const flash = async p => { await p.locator('.flash').first().waitFor({ timeout: 7000 }).catch(() => {}); return (await p.locator('.flash').allInnerTexts()).join(' | '); };
-export const body = p => p.locator('body').innerText();
+export const body = async p => { await settle(p); return p.locator('body').innerText(); };
 export async function signup(page, email, password, name = 'QA Tester') {
   await page.goto('/register'); await page.fill('input[name=name]', name); await page.fill('input[name=email]', email); await page.fill('input[name=password]', password);
   await Promise.all([page.waitForURL(u => new URL(u).pathname !== '/register', { timeout: 30000 }), page.click('button:has-text("Create account")')]);
