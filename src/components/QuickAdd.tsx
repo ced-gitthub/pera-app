@@ -16,7 +16,7 @@ export default function QuickAdd({ accounts, categories, aiEnabled }: { accounts
   const req = useRef({ id: '', key: '' }), router = useRouter();
   async function save(items: Item[]) {
     const key = JSON.stringify(items); if (req.current.key !== key) req.current = { id: crypto.randomUUID(), key }; // same payload on retry => same id => server ignores duplicates
-    const r = await saveItems(req.current.id, items);
+    const r = await saveItems(req.current.id, items).catch(() => ({ ok: false as const, error: 'Not saved: we could not reach the server. Check your connection' }));
     if (r.ok) { setMsgs([{ ok: true, t: cheer(items.length, items[0].category) }, ...items.map(i => ({ t: line(i) }))]); setText(''); setPend([]); setReady([]); req.current = { id: '', key: '' }; router.refresh(); }
     else { setReady(items); setMsgs([{ bad: true, t: `${r.error}. Your input is kept; press "Retry save".` }]); }
   }
