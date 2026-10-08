@@ -1,0 +1,151 @@
+{
+ "base": "https://pera-app-beta.vercel.app",
+ "at": "2026-10-08T17:07:01.233Z",
+ "pass": 14,
+ "fail": 0,
+ "stats": [
+  {
+   "i": 1,
+   "flash": true,
+   "mainLen": 2472
+  },
+  {
+   "i": 2,
+   "flash": true,
+   "mainLen": 2472
+  },
+  {
+   "i": 3,
+   "flash": true,
+   "mainLen": 2472
+  },
+  {
+   "i": 4,
+   "flash": true,
+   "mainLen": 2472
+  },
+  {
+   "i": 5,
+   "flash": true,
+   "mainLen": 2472
+  },
+  {
+   "i": 6,
+   "flash": true,
+   "mainLen": 2472
+  },
+  {
+   "i": 7,
+   "flash": true,
+   "mainLen": 2472
+  },
+  {
+   "i": 8,
+   "flash": true,
+   "mainLen": 2472
+  },
+  {
+   "i": 9,
+   "flash": true,
+   "mainLen": 2472
+  },
+  {
+   "i": 10,
+   "flash": true,
+   "mainLen": 2472
+  },
+  {
+   "i": 11,
+   "flash": true,
+   "mainLen": 2472
+  },
+  {
+   "i": 12,
+   "flash": true,
+   "mainLen": 2472
+  },
+  {
+   "i": 13,
+   "flash": true,
+   "mainLen": 2472
+  },
+  {
+   "i": 14,
+   "flash": true,
+   "mainLen": 2472
+  }
+ ],
+ "failed": [],
+ "results": [
+  {
+   "group": "repeat change-password success path",
+   "name": "change password #1: page content is present after the redirect",
+   "ok": true
+  },
+  {
+   "group": "repeat change-password success path",
+   "name": "change password #2: page content is present after the redirect",
+   "ok": true
+  },
+  {
+   "group": "repeat change-password success path",
+   "name": "change password #3: page content is present after the redirect",
+   "ok": true
+  },
+  {
+   "group": "repeat change-password success path",
+   "name": "change password #4: page content is present after the redirect",
+   "ok": true
+  },
+  {
+   "group": "repeat change-password success path",
+   "name": "change password #5: page content is present after the redirect",
+   "ok": true
+  },
+  {
+   "group": "repeat change-password success path",
+   "name": "change password #6: page content is present after the redirect",
+   "ok": true
+  },
+  {
+   "group": "repeat change-password success path",
+   "name": "change password #7: page content is present after the redirect",
+   "ok": true
+  },
+  {
+   "group": "repeat change-password success path",
+   "name": "change password #8: page content is present after the redirect",
+   "ok": true
+  },
+  {
+   "group": "repeat change-password success path",
+   "name": "change password #9: page content is present after the redirect",
+   "ok": true
+  },
+  {
+   "group": "repeat change-password success path",
+   "name": "change password #10: page content is present after the redirect",
+   "ok": true
+  },
+  {
+   "group": "repeat change-password success path",
+   "name": "change password #11: page content is present after the redirect",
+   "ok": true
+  },
+  {
+   "group": "repeat change-password success path",
+   "name": "change password #12: page content is present after the redirect",
+   "ok": true
+  },
+  {
+   "group": "repeat change-password success path",
+   "name": "change password #13: page content is present after the redirect",
+   "ok": true
+  },
+  {
+   "group": "repeat change-password success path",
+   "name": "change password #14: page content is present after the redirect",
+   "ok": true
+  }
+ ]
+}
