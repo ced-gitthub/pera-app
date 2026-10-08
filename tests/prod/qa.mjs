@@ -141,7 +141,7 @@ await step('delete without undo removes it permanently from the list', async () 
 
 // ---------------------------------------------------------------- ACCOUNTS
 G('accounts');
-const acctRow = async name => { const forms = p.locator('form:has(input[name=id])'); const idx = await forms.evaluateAll((fs, n) => fs.findIndex(f => f.querySelector('input[name=name]').value === n), name); return idx < 0 ? p.locator('form:has(input[name=zzz-none])') : forms.nth(idx); };
+const acctRow = async name => { const rows = p.locator('form:has(input[name=id])'), n = await rows.count(); for (let k = 0; k < n; k++) if ((await rows.nth(k).locator('input[name=name]').inputValue()) === name) return rows.nth(k); return p.locator('form:has(input[name=zzz-none])'); };
 await step('create account with opening balance', async () => { await p.goto('/accounts'); const f = p.locator('form:has(button:has-text("Create"))'); await f.locator('input[name=name]').fill('QA Savings'); await f.locator('select[name=type]').selectOption('savings'); await f.locator('input[name=opening]').fill('1000'); await act(p, () => f.locator('button:has-text("Create")').click()); return (await (await acctRow('QA Savings')).count()) === 1 && /1,000\.00/.test(await (await acctRow('QA Savings')).innerText()) ? true : await flash(p); });
 await step('negative opening balance accepted and shown', async () => { const f = p.locator('form:has(button:has-text("Create"))'); await f.locator('input[name=name]').fill('QA Debt'); await f.locator('input[name=opening]').fill('-500'); await act(p, () => f.locator('button:has-text("Create")').click()); const t = await (await acctRow('QA Debt')).innerText().catch(() => ''); return /-₱?500\.00|-500\.00/.test(t) ? true : t || await flash(p); });
 await step('duplicate account name rejected safely', async () => { const f = p.locator('form:has(button:has-text("Create"))'); await f.locator('input[name=name]').fill('QA Savings'); await act(p, () => f.locator('button:has-text("Create")').click()); const fl = await flash(p); return fl && !LEAK.test(fl) ? true : fl; });
@@ -253,14 +253,17 @@ G('isolation between users');
   await step("user B cannot act on A's ids via forged server action inputs (edit page of foreign id is 404)", async () => { const r = await q.goto(href); return r.status() === 404 ? true : r.status(); });
   await c2.close(); }
 
-G('security: cross-origin form posts');
+G('security: cross-origin server actions');
 await login(p, EM, PW);
-{ const html = await (await ctx.request.get('/settings')).text(); const at = html.indexOf('placeholder="New category"'), ids = [[...html.slice(0, at).matchAll(/name="\$ACTION_ID_([0-9a-f]+)"/g)].pop()?.[1]].filter(Boolean);
-  await step('server-action ids are discoverable for the CSRF probe', async () => ids.length > 0 ? true : 'none found');
-  const post = (origin, name) => ctx.request.post('/settings', { headers: origin ? { origin } : {}, multipart: Object.fromEntries([...ids.map(i => ['$ACTION_ID_' + i, '']), ['name', name], ['type', 'expense']]), maxRedirects: 0 });
-  await step('a form POST claiming a foreign Origin is rejected and changes nothing', async () => { const r = await post('https://evil.example', 'CSRFEVIL'); await p.goto('/settings'); return !(await body(p)).includes('CSRFEVIL') && r.status() !== 200 ? true : { status: r.status(), created: (await body(p)).includes('CSRFEVIL') }; });
-  await step('control: the same POST with the real Origin is accepted (proves the probe is valid)', async () => { await post(BASE, 'CSRFOK'); await p.goto('/settings'); return (await body(p)).includes('CSRFOK') ? true : 'real-origin post did not work, probe inconclusive'; });
-  await step('cleanup control category', async () => { await act(p, () => p.click('button:has-text("CSRFOK ×")')); return true; }); }
+{ let cap = null; const onReq = r => { if (r.method() === 'POST' && r.headers()['next-action']) cap = { url: r.url(), headers: r.headers(), body: r.postDataBuffer() }; };
+  p.on('request', onReq); await p.goto('/settings'); await p.fill('form:has(input[name=name][placeholder=Name]) input[name=name]', 'ORIGINALNM'); await act(p, () => p.click('form:has(input[name=name][placeholder=Name]) button')); p.off('request', onReq);
+  await step('captured a real server-action request from the browser (probe is valid)', async () => cap && cap.body ? true : 'nothing captured');
+  const replay = async (origin, name) => { const hdr = { ...cap.headers }; for (const k of ['host', 'content-length', 'cookie', 'origin', 'referer']) delete hdr[k]; hdr.origin = origin; const body = Buffer.from(cap.body.toString('latin1').replace('ORIGINALNM', name), 'latin1'); return ctx.request.post(cap.url, { headers: hdr, data: body, maxRedirects: 0 }); };
+  const profileName = async () => { await p.goto('/settings'); return p.locator('form:has(input[name=name][placeholder=Name]) input[name=name]').inputValue(); };
+  if (cap?.body) {
+    await step('replay with a foreign Origin is rejected and changes nothing', async () => { const r = await replay('https://evil.example', 'EVILNAMEX'); const v = await profileName(); return v === 'ORIGINALNM' ? true : { status: r.status(), nameNow: v }; });
+    await step('replay with Origin: null is rejected and changes nothing', async () => { const r = await replay('null', 'NULLNAMEX'); const v = await profileName(); return v === 'ORIGINALNM' ? true : { status: r.status(), nameNow: v }; });
+    await step('control: replay with the real Origin is accepted (proves the check is what blocked the others)', async () => { const r = await replay(BASE, 'CONTROLNM'); const v = await profileName(); return v === 'CONTROLNM' ? true : { status: r.status(), nameNow: v }; }); } }
 G('hygiene');
 await step('no uncaught JS errors during the run', async () => jsErrors.length === 0 ? true : jsErrors.slice(0, 5));
 await step('no unexpected browser dialogs (XSS payloads inert)', async () => dialogs.length === 0 ? true : dialogs);

@@ -107,7 +107,7 @@ export async function restoreTx(row: Record<string, unknown>): Promise<{ ok: boo
 }
 export async function deleteTx(id: string) {
   try { const { sb } = await ctx(true); const { data, error } = await sb.from('transactions').delete().eq('id', id).select('*');
-    if (error || !data?.length) return { ok: false as const, message: 'Not deleted: ' + (error ? safeMessage(error, 'deleteTx') : 'it no longer exists') }; done(); return { ok: true as const, row: data[0] };
+    if (error || !data?.length) return { ok: false as const, message: 'Not deleted: ' + (error ? safeMessage(error, 'deleteTx') : 'it no longer exists') }; /* no revalidate here: it would refresh the list and unmount the row's Undo prompt; pages are dynamic, so the next navigation is fresh */ return { ok: true as const, row: data[0] };
   } catch (e) { return { ok: false as const, message: 'Not deleted: ' + safeMessage(e, 'deleteTx') }; }
 }
 export async function duplicateTx(id: string) {
