@@ -6,7 +6,8 @@ export const OUT = process.env.OUT_DIR || 'qa-out';
 fs.mkdirSync(OUT, { recursive: true });
 export const R = []; let group = '';
 export const G = g => { group = g; console.log('\n== ' + g); };
-export const T = (name, ok, detail) => { R.push({ group, name, ok: !!ok, detail: ok ? undefined : detail }); console.log(`${ok ? 'PASS' : 'FAIL'} [${group}] ${name}${ok ? '' : ' :: ' + String(typeof detail === 'string' ? detail : JSON.stringify(detail)).slice(0, 400)}`); };
+const flushNow = () => { try { fs.writeFileSync(`${OUT}/${process.env.SUITE || 'qa'}.partial.md`, R.map(r => `${r.ok ? 'PASS' : 'FAIL'} [${r.group}] ${r.name}${r.ok ? '' : ' — ' + String(typeof r.detail === 'string' ? r.detail : JSON.stringify(r.detail)).slice(0, 300)}`).join('\n')); } catch {} };
+export const T = (name, ok, detail) => { R.push({ group, name, ok: !!ok, detail: ok ? undefined : detail }); flushNow(); console.log(`${ok ? 'PASS' : 'FAIL'} [${group}] ${name}${ok ? '' : ' :: ' + String(typeof detail === 'string' ? detail : JSON.stringify(detail)).slice(0, 400)}`); };
 // step: return true to pass; anything else (false/string/object) fails with that as the detail; a throw fails with its message.
 export const step = async (name, fn) => { try { const r = await fn(); T(name, r === true || r === undefined, r); } catch (e) { T(name, false, String(e.message || e).split('\n')[0]); } };
 export const manila = (offsetDays = 0) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila' }).format(new Date(Date.now() + offsetDays * 864e5));

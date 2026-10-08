@@ -37,16 +37,18 @@ jobs:
         id: qa
         working-directory: tests/prod
         continue-on-error: true
+        timeout-minutes: 15
         run: node qa.mjs
       - name: Responsive / mobile / dark / motion QA
         id: resp
         working-directory: tests/prod
         continue-on-error: true
+        timeout-minutes: 15
         run: node responsive.mjs
       - name: Summarise
         run: |
           for s in qa responsive; do
-            f="$OUT_DIR/$s.json"; [ -f "$f" ] || { echo "::error title=$s::no result file (suite crashed)"; continue; }
+            f="$OUT_DIR/$s.json"; [ -f "$f" ] || { echo "::error title=$s::no final result file (suite crashed or timed out); see $s.partial.md on qa-results"; continue; }
             node -e "
               const r=require('$f'); console.log('::notice title=$s summary::pass '+r.pass+' fail '+r.fail+' commit-url '+r.base);
               for (const x of r.failed.slice(0,40)) console.log('::error title=$s FAIL::['+x.group+'] '+x.name+' :: '+String(typeof x.detail==='string'?x.detail:JSON.stringify(x.detail)).replace(/[\r\n%]/g,' ').slice(0,300));"
