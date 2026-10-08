@@ -83,7 +83,7 @@ const count = (h: string, s: string) => h.split(s).length - 1;
   T('search filter', (await page(Txs, { q: "100%_'\"" })).includes('No matching'));
   await red(() => A.setBudget(fd({ ym: today.slice(0, 7), category_id: cat('Food'), amount: '8000' }))); await add('food 4940'); h = await page(Budgets);
   T('budget 62.5% / ₱3,000.00 remaining', h.includes('62.5%') && h.includes('₱3,000.00 remaining'), h.match(/₱[\d,.]+ spent[^<]*/)?.[0]);
-  await add('food 3000'); h = await page(Budgets); T('budget 100% / ₱0.00', h.includes('100%') && h.includes('₱0.00 remaining') && h.includes('near limit'));
+  await add('food 3000'); h = await page(Budgets); T('budget 100% / ₱0.00', h.includes('100%') && h.includes('₱0.00 remaining') && h.includes('close to the limit'));
   await add('food 1000'); h = await page(Budgets); T('budget 112.5% / -₱1,000.00', h.includes('112.5%') && h.includes('-₱1,000.00 remaining') && h.includes('over budget'));
   T('future month renders', (await page(Budgets, { ym: '2027-03' })).includes('Budgets · 2027-03')); T('bad ym falls back', (await page(Budgets, { ym: "x'" })).includes('Budgets · ' + today.slice(0, 7)));
   T('invalid budget rejected', (await red(() => A.setBudget(fd({ ym: today.slice(0, 7), category_id: cat('Food'), amount: 'abc' })))).includes('err=')); T('budget remove', (await red(() => A.setBudget(fd({ ym: today.slice(0, 7), category_id: cat('Food'), amount: '' })))).includes('ok=') && !(await page(Budgets)).includes('112.5%'));
@@ -117,7 +117,7 @@ const count = (h: string, s: string) => h.split(s).length - 1;
   T('migrated unknown category -> Other', D.t.categories.find((c: any) => c.id === rows().find((t: any) => t.amount_minor === 123456).category_id).name === 'Other'); T('unknown account auto-created', D.t.accounts.some((a: any) => a.user_id === me() && a.name === 'Old Bank'));
   // ---- release fixes (user E): undo last, recurring deletion, run_recurring failure, safe errors
   {
-  await su('e@x.com'); const EID = me(); const ids = () => new Set(rows().map((t: any) => t.id)), nTx = () => rows().length;
+  await su('r@x.com'); const EID = me(); const ids = () => new Set(rows().map((t: any) => t.id)), nTx = () => rows().length;
   await add('lunch 100'); await add('dinner 200'); await add('grocery 300');
   const u0 = await A.runCommand('undo last'); T('undo with nothing deleted: safe message, nothing changed', !u0.ok && /Nothing to undo/.test(u0.message) && nTx() === 3, u0);
   const x1 = latest(), d1 = await A.runCommand('delete last'); T('delete last removes only the newest', d1.ok && nTx() === 2 && !ids().has(x1.id), d1);
@@ -166,7 +166,7 @@ const count = (h: string, s: string) => h.split(s).length - 1;
   T('assistant failure is safe and not a fake number', !as.ok && !LEAK.test(as.answer) && !/₱/.test(as.answer), as);
   T('global error page shows no internal message', (() => { const h = renderToStaticMarkup(React.createElement(Err as any, { error: Object.assign(new Error('relation "public.secret_table" does not exist (42P01)'), { digest: 'abc123' }), reset() {} })); return !/secret_table|42P01|relation/.test(h) && h.includes('Something went wrong') && h.includes('abc123'); })());
   // password recovery
-  const rq = await red(() => A.requestReset(fd({ email: 'nobody@x.com' }))), rq2 = await red(() => A.requestReset(fd({ email: 'e@x.com' })));
+  const rq = await red(() => A.requestReset(fd({ email: 'nobody@x.com' }))), rq2 = await red(() => A.requestReset(fd({ email: 'r@x.com' })));
   T('reset request: identical reply for unknown and known emails (no account enumeration)', rq === rq2 && rq.includes('ok='), [rq, rq2]); T('reset request: redirect target is the app callback', D.resets.every((x: any) => /\/auth\/callback\?next=\/reset$/.test(x.o.redirectTo)), D.resets);
   T('reset request: invalid email rejected', (await red(() => A.requestReset(fd({ email: 'nope' })))).includes('err='));
   const rcode = 'code-' + uid(); D.recoveryCodes = new Map([[rcode, EID]]); D.cur = null;
@@ -174,9 +174,9 @@ const count = (h: string, s: string) => h.split(s).length - 1;
   D.cur = EID; T('weak new password rejected', (await red(() => A.updatePassword(fd({ password: '123', confirm: '123' })))).includes('err='));
   T('mismatched passwords rejected', (await red(() => A.updatePassword(fd({ password: 'newpass1', confirm: 'newpass2' })))).includes('err='));
   T('password reset succeeds then logs out', (await red(() => A.updatePassword(fd({ password: 'newpass1', confirm: 'newpass1' })))) === '/login?ok=Password updated. Log in with your new password.' && D.cur === null);
-  T('old password no longer works, new one does', (await red(() => A.signIn(fd({ email: 'e@x.com', password: 'secret1' })))).includes('err=') && (await red(() => A.signIn(fd({ email: 'e@x.com', password: 'newpass1' })))) === '/');
+  T('old password no longer works, new one does', (await red(() => A.signIn(fd({ email: 'r@x.com', password: 'secret1' })))).includes('err=') && (await red(() => A.signIn(fd({ email: 'r@x.com', password: 'newpass1' })))) === '/');
   D.cur = null; T('update without session is refused', (await red(() => A.updatePassword(fd({ password: 'newpass1', confirm: 'newpass1' })))).startsWith('/forgot?err='));
-  login('e@x.com');
+  login('r@x.com');
   }
   // ---- isolation sanity of the stand-in itself
   login('a@x.com'); T('A still sees exactly its own rows', rows(A_ID).length === rows().length && !rows().some((t: any) => t.user_id !== A_ID));
