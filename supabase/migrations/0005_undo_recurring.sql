@@ -1,7 +1,7 @@
 -- 0005: real "undo last" + deleting a recurring rule keeps its history.
 
 -- 1) Deleted transactions are kept for 30 days so "undo last" can restore them.
---    No foreign key on user_id on purpose: this insert must never block deleting a user's data.
+--    No foreign key on user_id on purpose: this insert must never block deleting a user's data (the trigger skips users that are being deleted).
 create table public.tx_trash (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null,
@@ -16,8 +16,11 @@ create policy tx_trash_owner on public.tx_trash for all to authenticated using (
 
 create or replace function public.on_tx_delete() returns trigger language plpgsql security definer set search_path = public as $$
 begin
-  insert into public.tx_trash (user_id, tx_id, row) values (old.user_id, old.id, to_jsonb(old));
-  delete from public.tx_trash where user_id = old.user_id and deleted_at < now() - interval '30 days';
+  -- When an account itself is being deleted (cascade), keep nothing: no orphaned financial data.
+  if exists (select 1 from auth.users where id = old.user_id) then
+    insert into public.tx_trash (user_id, tx_id, row) values (old.user_id, old.id, to_jsonb(old));
+    delete from public.tx_trash where user_id = old.user_id and deleted_at < now() - interval '30 days';
+  end if;
   return old;
 end $$;
 create trigger tx_after_delete after delete on public.transactions for each row execute function public.on_tx_delete();
