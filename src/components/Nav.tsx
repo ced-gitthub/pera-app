@@ -15,7 +15,7 @@ const L: [string, string, string][] = [['/', 'Home', 'Dashboard'], ['/transactio
 const Ic = ({ d }: { d: string }) => <svg viewBox="0 0 24 24" aria-hidden="true"><path d={d} /></svg>;
 export function Brand() { return <div className="brand"><span className="logo">₱</span>Pera</div>; }
 export default function Nav() {
-  const p = usePathname(), on = (h: string) => (h === '/' ? p === '/' : p === h || p.startsWith(h + '/'));
+  const p = usePathname(), on = (h: string) => (h === '/' ? p === '/' : p === h || p.startsWith(h + '/') || (h === '/settings' && p === '/security'));
   return <>
     <header className="top"><Brand /><form action={signOut}><button className="linkbtn">Log out</button></form></header>
     <aside className="side"><Brand /><nav aria-label="Main" style={{ display: 'grid', gap: 4 }}>{L.map(([h, , n]) => <Link key={h} href={h} className="nl" aria-current={on(h) ? 'page' : undefined}><Ic d={I[h]} />{n}</Link>)}</nav><form action={signOut}><button className="linkbtn">Log out</button></form></aside>

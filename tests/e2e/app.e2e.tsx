@@ -1,9 +1,16 @@
 import './setup';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
+import { createHash } from 'node:crypto';
+import { NextRequest } from 'next/server';
 const { db, client } = require('./mocks/fake-supabase.cjs');
 const D = db(); (globalThis as any).__client = () => client(D);
+// Breached-password lookups never touch the network in tests: this stands in for api.pwnedpasswords.com.
+const PWNED_SET = new Set<string>(); let pwnedDown = false;
+(globalThis as any).fetch = async (url: string) => { if (pwnedDown) throw new Error('offline'); const pre = String(url).split('/range/')[1]; return new Response([...PWNED_SET].filter(h => h.startsWith(pre)).map(h => h.slice(5) + ':42').join('\r\n'), { status: 200 }); };
 import * as A from '@/app/actions';
+import { updateSession } from '@/lib/supabase/middleware';
+import { GET as callback } from '@/app/auth/callback/route';
 import { parseInput } from '@/core/parser';
 import { manilaToday } from '@/core/money';
 import { shiftYm } from '@/lib/range';
@@ -18,7 +25,7 @@ const html = async (el: any) => renderToStaticMarkup(await expand(await el));
 const page = (P: any, sp: any = {}, params?: any) => html(P({ searchParams: Promise.resolve(sp), params: Promise.resolve(params) }));
 const red = async (fn: () => any) => { try { await fn(); return '(no redirect)'; } catch (e: any) { if (e.url) return decodeURIComponent(e.url) as string; throw e; } };
 const fd = (o: Record<string, string>) => { const f = new FormData(); for (const k in o) f.set(k, o[k]); return f; };
-const su = (e: string) => red(() => A.signUp(fd({ email: e, password: 'secret1' })));
+const su = (e: string) => red(() => A.signUp(fd({ email: e, password: 'secret12' })));
 const today = manilaToday(), uid = () => crypto.randomUUID(), me = () => D.cur as string;
 const rows = (u = me()) => D.t.transactions.filter((t: any) => t.user_id === u);
 const acct = (n: string) => D.t.accounts.find((a: any) => a.user_id === me() && a.name === n).id, cat = (n: string, ty?: string) => D.t.categories.find((c: any) => c.user_id === me() && c.name === n && (!ty || c.type === ty)).id;
@@ -28,12 +35,12 @@ const login = (email: string) => { D.cur = [...D.users.values()].find((u: any) =
 const count = (h: string, s: string) => h.split(s).length - 1;
 (async () => {
   // ---- auth
-  T('register -> dashboard', (await red(() => A.signUp(fd({ email: 'a@x.com', password: 'secret1', name: 'Ced' })))) === '/');
+  T('register -> dashboard', (await red(() => A.signUp(fd({ email: 'a@x.com', password: 'secret12', name: 'Ced' })))) === '/');
   T('seeded defaults', D.t.accounts.filter((a: any) => a.user_id === me()).length === 6 && D.t.categories.filter((c: any) => c.user_id === me()).length === 20);
   await red(() => A.signOut()); T('signed out', D.cur === null); T('dashboard when logged out -> /login', (await red(() => page(Dashboard))) === '/login');
   T('bad password', (await red(() => A.signIn(fd({ email: 'a@x.com', password: 'nope' })))).startsWith('/login?err=Wrong'));
   T('short password rejected', (await red(() => A.signUp(fd({ email: 'z@x.com', password: '123' })))).startsWith('/register?err='));
-  T('login ok', (await red(() => A.signIn(fd({ email: 'a@x.com', password: 'secret1' })))) === '/'); const A_ID = me();
+  T('login ok', (await red(() => A.signIn(fd({ email: 'a@x.com', password: 'secret12' })))) === '/'); const A_ID = me();
   T('login page renders', (await page(Login)).includes('Log in'));
   // ---- spec dataset
   const r1 = await add('salary 25000, freelance 7500, gift 2000, food 1250, groceries 2500, transport 850, electricity 2000, shopping 3250, entertainment 900'); T('dataset saved', r1.ok && (r1 as any).n === 9, r1);
@@ -174,9 +181,97 @@ const count = (h: string, s: string) => h.split(s).length - 1;
   D.cur = EID; T('weak new password rejected', (await red(() => A.updatePassword(fd({ password: '123', confirm: '123' })))).includes('err='));
   T('mismatched passwords rejected', (await red(() => A.updatePassword(fd({ password: 'newpass1', confirm: 'newpass2' })))).includes('err='));
   T('password reset succeeds then logs out', (await red(() => A.updatePassword(fd({ password: 'newpass1', confirm: 'newpass1' })))) === '/login?ok=Password updated. Log in with your new password.' && D.cur === null);
-  T('old password no longer works, new one does', (await red(() => A.signIn(fd({ email: 'r@x.com', password: 'secret1' })))).includes('err=') && (await red(() => A.signIn(fd({ email: 'r@x.com', password: 'newpass1' })))) === '/');
+  T('old password no longer works, new one does', (await red(() => A.signIn(fd({ email: 'r@x.com', password: 'secret12' })))).includes('err=') && (await red(() => A.signIn(fd({ email: 'r@x.com', password: 'newpass1' })))) === '/');
   D.cur = null; T('update without session is refused', (await red(() => A.updatePassword(fd({ password: 'newpass1', confirm: 'newpass1' })))).startsWith('/forgot?err='));
   login('r@x.com');
+  }
+
+  // ---- email verification, password rules, two-step verification, security page, middleware gate, skeletons
+  {
+  const sha = (x: string) => createHash('sha1').update(x).digest('hex').toUpperCase(); PWNED_SET.add(sha('password123'));
+  const pg = async (mod: string, sp: any = {}) => html((await import(mod)).default({ searchParams: Promise.resolve(sp) }));
+  D.cur = null;
+  T('sign-up: invalid email rejected', (await red(() => A.signUp(fd({ email: 'bad', password: 'secret12' })))).startsWith('/register?err=Enter a valid email'));
+  T('sign-up: short password rejected', (await red(() => A.signUp(fd({ email: 's1@x.com', password: 'short1' })))).startsWith('/register?err=Use a password of 8 to 72'));
+  T('sign-up: repeated-character password rejected', (await red(() => A.signUp(fd({ email: 's1@x.com', password: 'aaaaaaaa' })))).startsWith('/register?err=That password is too easy'));
+  T('sign-up: breached password rejected', (await red(() => A.signUp(fd({ email: 's2@x.com', password: 'password123' })))).includes('data breach') && ![...D.users.values()].some((u: any) => u.email === 's2@x.com'));
+  pwnedDown = true; T('sign-up: breach check fails open when the service is down', (await red(() => A.signUp(fd({ email: 's3@x.com', password: 'password123' })))) === '/'); pwnedDown = false; D.cur = null;
+  // email confirmation switched on in Supabase: no session until the link is opened
+  D.confirmEmail = true;
+  const pend = await red(() => A.signUp(fd({ email: 'v@x.com', password: 'secret12', name: 'V' })));
+  T('confirm-email: sign-up goes to /verify with the address and creates no session', pend === '/verify?email=v@x.com' && D.cur === null, [pend, D.cur]);
+  T('confirm-email: link returns to /auth/callback with the welcome flag', D.lastSignUp.emailRedirectTo === 'https://pera.example/auth/callback?next=/&welcome=1', D.lastSignUp);
+  T('confirm-email: unconfirmed log-in is sent to /verify, not a dead end', (await red(() => A.signIn(fd({ email: 'v@x.com', password: 'secret12' })))).startsWith('/verify?email=v@x.com&err=Confirm your email first'));
+  T('confirm-email: wrong password on an unconfirmed account gives the normal message', (await red(() => A.signIn(fd({ email: 'v@x.com', password: 'wrongwrong' })))).startsWith('/login?err=Wrong email or password'));
+  const rs1 = await red(() => A.resendVerification(fd({ email: 'v@x.com' }))), rs2 = await red(() => A.resendVerification(fd({ email: 'nobody@x.com' })));
+  T('resend: same reply for known and unknown addresses', rs1.includes('ok=If that address is waiting') && rs2.includes('ok=If that address is waiting'), [rs1, rs2]);
+  T('resend: asks Supabase to send with the callback link', D.resends.length === 2 && D.resends.every((r: any) => r.options.emailRedirectTo === 'https://pera.example/auth/callback?next=/&welcome=1'));
+  T('resend: invalid address rejected', (await red(() => A.resendVerification(fd({ email: 'nope' })))).startsWith('/verify?err=Enter a valid email'));
+  D.rateLimit = true; T('resend: rate limit gives a plain message', (await red(() => A.resendVerification(fd({ email: 'v@x.com' })))).includes('err=Too many emails')); D.rateLimit = false;
+  T('callback: confirmed-email link signs in and shows a welcome', await (async () => { D.recoveryCodes = new Map([['c1', [...D.users.values()].find((u: any) => u.email === 'v@x.com').id]]); const r = await callback(new NextRequest('https://pera.example/auth/callback?code=c1&next=/&welcome=1')); return decodeURIComponent(r.headers.get('location')!) === 'https://pera.example/?ok=Email confirmed. Welcome to Pera.' && D.cur !== null; })());
+  T('callback: bad confirmation link lands on /verify with a way forward', decodeURIComponent((await callback(new NextRequest('https://pera.example/auth/callback?code=nope&next=/&welcome=1'))).headers.get('location')!).includes('/verify?err=That link did not work'));
+  T('callback: bad reset link lands on /forgot', (await callback(new NextRequest('https://pera.example/auth/callback?code=nope&next=/reset'))).headers.get('location')!.includes('/forgot?err='));
+  T('callback: unsupported token type is refused', (await callback(new NextRequest('https://pera.example/auth/callback?token_hash=abc&type=magiclink'))).headers.get('location')!.includes('err='));
+  T('callback: open-redirect via next is ignored', await (async () => { D.recoveryCodes = new Map([['c2', D.cur]]); const r = await callback(new NextRequest('https://pera.example/auth/callback?code=c2&next=https://evil.test')); return new URL(r.headers.get('location')!).host === 'pera.example'; })());
+  D.confirmEmail = false; D.cur = null; const vu = [...D.users.values()].find((u: any) => u.email === 'v@x.com'); vu.confirmed = true;
+  T('after confirming, log-in works', (await red(() => A.signIn(fd({ email: 'v@x.com', password: 'secret12' })))) === '/');
+  // pages
+  let h = await pg('@/app/(auth)/verify/page', { email: 'v@x.com' }); T('/verify shows the address and a resend button', h.includes('Check your email') && h.includes('v@x.com') && h.includes('Resend email'));
+  h = await pg('@/app/(auth)/verify/page', { email: 'a<b>@x.co' }); T('/verify escapes the address', !h.includes('<b>@x.co') && h.includes('&lt;b&gt;'));
+  h = await pg('@/app/(auth)/verify/page', { email: 'junk' }); T('/verify without a valid address offers to send a new link', h.includes('Send a new link') && !h.includes('Check your email'));
+  h = await pg('@/app/(auth)/verify/page', { err: 'x' }); T('/verify shows errors', h.includes('flash bad'));
+  // two-step verification
+  D.cur = null; await red(() => A.signUp(fd({ email: 'm@x.com', password: 'secret12' }))); const MID = me();
+  const st: any = await A.mfaStart(); T('2FA setup returns a QR image and a typed key', st.ok && st.qr.startsWith('data:image/svg+xml') && st.secret.length >= 16, st);
+  T('2FA setup: wrong code rejected, still off', (await A.mfaConfirm(st.factorId, '000000')).ok === false && !D.factors.some((f: any) => f.status === 'verified'));
+  T('2FA setup: non-numeric code rejected', ((await A.mfaConfirm(st.factorId, 'abcdef')).error ?? '').includes('6-digit'));
+  const again: any = await A.mfaStart(); T('2FA setup: restarting drops the abandoned attempt', again.ok && D.factors.filter((f: any) => f.user === MID).length === 1);
+  T('2FA setup: right code (spaces allowed) turns it on', (await A.mfaConfirm(again.factorId, '123 456')).ok === true && D.factors.some((f: any) => f.status === 'verified'));
+  T('2FA setup refuses to start twice', (await A.mfaStart()).ok === false);
+  D.cur = null; D.aal2.delete(MID);
+  T('log-in with 2FA on goes to /2fa, not the dashboard', (await red(() => A.signIn(fd({ email: 'm@x.com', password: 'secret12' })))) === '/2fa');
+  T('/2fa: wrong code stays on the page', (await red(() => A.verifyMfa(fd({ code: '111111', next: '/' })))).startsWith('/2fa?err=That code is not right') && !D.aal2.has(MID));
+  T('/2fa: malformed code rejected', (await red(() => A.verifyMfa(fd({ code: '12', next: '/' })))).includes('err=Enter the 6-digit'));
+  T('/2fa: keeps ?next= on errors', (await red(() => A.verifyMfa(fd({ code: '111111', next: '/reset' })))).startsWith('/2fa?next=/reset&err='));
+  h = await pg('@/app/(auth)/2fa/page', {}).catch(() => 'REDIRECT'); T('/2fa page renders the code form for a password-only session', h.includes('Enter your code') && h.includes('one-time-code') && h.includes('name="code"'), h.slice(0, 200));
+  T('/2fa: right code finishes log-in', (await red(() => A.verifyMfa(fd({ code: '123456', next: '/' })))) === '/' && D.aal2.has(MID));
+  T('/2fa: next is whitelisted (no open redirect)', await (async () => { D.aal2.delete(MID); const a = await red(() => A.verifyMfa(fd({ code: '123456', next: 'https://evil.test' }))); D.aal2.delete(MID); const b = await red(() => A.verifyMfa(fd({ code: '123456', next: '/reset' }))); return a === '/' && b === '/reset'; })());
+  T('/2fa page bounces a fully signed-in user away', (await red(async () => { await (await import('@/app/(auth)/2fa/page')).default({ searchParams: Promise.resolve({}) }); })) === '/');
+  // middleware gate
+  const mw = async (path: string) => { const r = await updateSession(new NextRequest('https://pera.example' + path)); return decodeURIComponent((r.headers.get('location') ?? 'pass').replace('https://pera.example', '')); };
+  D.aal2.delete(MID);
+  const exp: [string, string][] = [['/', '/2fa'], ['/transactions', '/2fa'], ['/settings', '/2fa'], ['/login', '/2fa'], ['/register', '/2fa'], ['/reset', '/2fa?next=/reset'], ['/security', '/2fa?next=/security'], ['/2fa', 'pass'], ['/forgot', 'pass'], ['/auth/callback', 'pass'], ['/api/health', 'pass']];
+  for (const [path, want] of exp) { const got = await mw(path); T(`gate: password-only session at ${path} -> ${want}`, got === want, got); }
+  D.aal2.add(MID); for (const [path, want] of [['/', 'pass'], ['/transactions', 'pass'], ['/2fa', '/'], ['/login', '/']]) { const got = await mw(path); T(`gate: code-verified session at ${path} -> ${want}`, got === want, got); }
+  login('a@x.com'); D.aal2.delete(D.cur); for (const [path, want] of [['/', 'pass'], ['/transactions', 'pass'], ['/login', '/']]) { const got = await mw(path); T(`gate: user without 2FA at ${path} -> ${want}`, got === want, got); }
+  D.cur = null; for (const [path, want] of [['/', '/login'], ['/transactions', '/login'], ['/security', '/login'], ['/2fa', '/login'], ['/verify', 'pass'], ['/login', 'pass'], ['/forgot', 'pass'], ['/reset', '/forgot?err=That link is invalid or has expired. Request a new one.']]) { const got = await mw(path); T(`gate: logged out at ${path} -> ${want}`, got === want, got); }
+  // security page
+  login('m@x.com'); D.aal2.add(MID);
+  h = await pg('@/app/(app)/security/page'); T('security page (2FA on): status, turn-off form, password form, devices', h.includes('Two-step verification') && h.includes('badge on">On') && h.includes('Turn off') && h.includes('Change password') && h.includes('Log out other devices') && h.includes('Log out everywhere') && h.includes('Email confirmed'), h.slice(0, 300));
+  T('security page: does not leak the secret/key when 2FA is on', !/JBSWY3DP/.test(h));
+  T('disable 2FA: wrong code refused and stays on', (await red(() => A.disableMfa(fd({ code: '000000' })))).startsWith('/security?err=That code is not right') && D.factors.some((f: any) => f.status === 'verified'));
+  T('disable 2FA: right code turns it off', (await red(() => A.disableMfa(fd({ code: '123456' })))) === '/security?ok=Two-step verification is off.' && !D.factors.some((f: any) => f.user === MID));
+  h = await pg('@/app/(app)/security/page'); T('security page (2FA off): setup button + off badge', h.includes('Set up two-step verification') && h.includes('badge off">Off'));
+  h = await pg('@/app/(app)/settings/page'); T('settings links to the security page', h.includes('href="/security"'));
+  // change password
+  login('a@x.com'); D.signouts.length = 0;
+  const cp = (o: Record<string, string>) => red(() => A.changePassword(fd({ current: 'secret12', password: 'brandnew99', confirm: 'brandnew99', ...o })));
+  T('change password: wrong current password refused', (await cp({ current: 'wrongwrong' })).startsWith('/security?err=Your current password is not right'));
+  T('change password: mismatch refused', (await cp({ confirm: 'brandnew98' })).includes('err=The two new passwords do not match'));
+  T('change password: same as current refused', (await cp({ password: 'secret12', confirm: 'secret12' })).includes('err=Choose a password different'));
+  T('change password: too short refused', (await cp({ password: 'short1', confirm: 'short1' })).includes('err=Use a password of 8'));
+  T('change password: breached refused', (await cp({ password: 'password123', confirm: 'password123' })).includes('data breach'));
+  T('change password: success logs out other devices and keeps this one', (await cp({})).startsWith('/security?ok=Password changed') && D.signouts.includes('others') && D.cur !== null);
+  T('change password: new works, old does not', await (async () => { D.cur = null; const o = await red(() => A.signIn(fd({ email: 'a@x.com', password: 'secret12' }))); const n = await red(() => A.signIn(fd({ email: 'a@x.com', password: 'brandnew99' }))); return o.includes('err=') && n === '/'; })());
+  await cp({ current: 'brandnew99', password: 'secret12', confirm: 'secret12' });
+  T('log out other devices keeps this session', (await red(() => A.signOutOthers())).startsWith('/security?ok=') && D.cur !== null && D.signouts.at(-1) === 'others');
+  T('log out everywhere ends this session too', (await red(() => A.signOutEverywhere())) === '/login?ok=Logged out of every device.' && D.cur === null && D.signouts.at(-1) === 'global');
+  T('security actions refuse without a session', (await red(() => A.changePassword(fd({ current: 'x', password: 'brandnew99', confirm: 'brandnew99' })))) === '/login' && (await red(() => A.signOutOthers())) === '/login' && (await A.mfaStart() as any).ok === false && (await A.mfaConfirm('x', '123456')).ok === false);
+  login('a@x.com');
+  // loading skeletons
+  const sk = await import('@/components/Skeleton');
+  for (const [n, C] of Object.entries(sk) as [string, any][]) { const k = renderToStaticMarkup(React.createElement(C)); T(`skeleton ${n}: busy region with an accessible label and no real data`, k.includes('data-skeleton') && k.includes('aria-busy="true"') && k.includes('role="status"') && /class="sr">Loading/.test(k) && !/₱\d|Total balance/.test(k), k.slice(0, 120)); }
+  for (const r of ['', 'transactions', 'accounts', 'budgets', 'reports', 'assistant', 'settings', 'security', 'transactions/[id]']) { const L = (await import(`@/app/(app)/${r ? r + '/' : ''}loading`)).default; T(`loading.tsx exists for /${r}`, typeof L === 'function' && renderToStaticMarkup(React.createElement(L)).includes('data-skeleton')); }
   }
   // ---- isolation sanity of the stand-in itself
   login('a@x.com'); T('A still sees exactly its own rows', rows(A_ID).length === rows().length && !rows().some((t: any) => t.user_id !== A_ID));

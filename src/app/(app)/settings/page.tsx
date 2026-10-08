@@ -4,6 +4,7 @@ import { getProvider } from '@/ai/provider';
 import { manilaToday, formatMinor } from '@/core/money';
 import Migrate from '@/components/Migrate';
 import ImportForm from '@/components/ImportForm';
+import Link from 'next/link';
 import { Flash, type SP } from '@/components/ui';
 export default async function Settings({ searchParams }: { searchParams: SP }) {
   const sp = await searchParams, { sb, user, categories, accounts } = await ctx();
@@ -11,6 +12,7 @@ export default async function Settings({ searchParams }: { searchParams: SP }) {
   const cn = new Map(categories.map(c => [c.id, c.name])), ai = process.env.AI_PROVIDER ? (getProvider(process.env) ? `Configured: ${process.env.AI_PROVIDER}` : `AI_PROVIDER="${process.env.AI_PROVIDER}" is set but no provider with that name is registered in src/ai/provider.ts`) : 'Not configured (optional)';
   return <><Flash sp={sp} />
     <div className="card"><h2 className="font-semibold">Profile & currency</h2><p className="m">{user.email} · Currency: PHP (₱), fixed in this version</p><form action={updateProfile} className="row"><input className="inp" name="name" defaultValue={prof?.name ?? ''} placeholder="Name" maxLength={60} /><button className="btn">Save</button></form></div>
+    <div className="card"><h2 className="font-semibold">Security</h2><p className="m" style={{ marginBottom: 12 }}>Two-step verification, password and logged-in devices.</p><Link className="btn" href="/security">Open security</Link></div>
     <div className="card"><h2 className="font-semibold mb-2">Categories</h2>{(['income', 'expense'] as const).map(t => <div key={t} className="mb-2"><b>{t}:</b> {categories.filter(c => c.type === t).map(c => <form key={c.id} action={deleteCategory} className="inline"><input type="hidden" name="id" value={c.id} /> <button className="btn mr-1" title="Delete (only if unused)">{c.name} ×</button></form>)}</div>)}
       <form action={createCategory} className="row"><input className="inp" name="name" placeholder="New category" required maxLength={40} /><select className="inp" name="type"><option>expense</option><option>income</option></select><button className="btn p">Add</button></form></div>
     <div className="card"><h2 className="font-semibold mb-2">Recurring</h2>{(rec ?? []).map((r: any) => <form key={r.id} action={deleteRecurring} className="row"><input type="hidden" name="id" value={r.id} /><span>{r.description || cn.get(r.category_id)} {formatMinor(Number(r.amount_minor))} {r.type} · every {r.interval_count} {r.frequency} · next {r.next_run_date}{r.active ? '' : ' (finished)'}</span><button className="btn">Delete</button></form>)}

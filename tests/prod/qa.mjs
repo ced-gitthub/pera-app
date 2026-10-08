@@ -56,7 +56,7 @@ G('auth: password recovery');
 // password change with a real session (the same server action a recovery link ends in)
 await step('reset page with a live session: mismatch + weak rejected, success changes password', async () => {
   await login(p, EM, PW); await p.goto('/reset'); const NP = PW + 'x';
-  await p.fill('input[name=password]', 'abcdef'); await p.fill('input[name=confirm]', 'abcdeg'); await act(p, () => p.click('button:has-text("Save new password")'));
+  await p.fill('input[name=password]', 'abcdefgh'); await p.fill('input[name=confirm]', 'abcdefgi'); await act(p, () => p.click('button:has-text("Save new password")'));
   const f1 = await flash(p); if (!f1) return 'no error for mismatch';
   await p.goto('/reset'); await p.fill('input[name=password]', NP); await p.fill('input[name=confirm]', NP); await Promise.all([p.waitForURL(/\/login/, { timeout: 30000 }), p.click('button:has-text("Save new password")')]);
   await login(p, EM, PW); if (new URL(p.url()).pathname !== '/login') return 'old password still works';

@@ -7,7 +7,7 @@
   "build": "next build",
   "start": "next start",
   "typecheck": "tsc --noEmit",
-  "test": "node --experimental-strip-types --test tests/core.test.ts tests/app.test.ts",
+  "test": "node --experimental-strip-types --test tests/core.test.ts tests/app.test.ts tests/auth.test.ts",
   "test:app": "tsx --tsconfig tests/e2e/tsconfig.json tests/e2e/app.e2e.tsx",
   "test:browser": "node tests/browser/build.cjs && python3 tests/browser/quickadd.py",
   "test:prod": "echo 'Production suites run in GitHub Actions: .github/workflows/prod-qa.yml'"

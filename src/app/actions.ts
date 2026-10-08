@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import { supabaseServer } from '@/lib/supabase/server';
+import { supabaseProbe } from '@/lib/supabase/probe';
+import { passwordProblem, isPwned, isEmail, safeNext, PWNED } from '@/lib/password';
 import { ctx } from '@/lib/data';
 import { manilaToday, parseAmountMinor, isDate, formatMinor } from '@/core/money';
 import { categoryFor, type Parsed } from '@/core/parser';
@@ -20,29 +22,86 @@ const str = (fd: FormData, k: string) => String(fd.get(k) ?? '');
 const done = () => revalidatePath('/', 'layout');
 
 // ---- auth
+const siteUrl = async () => { const h = await headers(); return (process.env.NEXT_PUBLIC_SITE_URL || h.get('origin') || `https://${h.get('x-forwarded-host') ?? h.get('host') ?? 'localhost:3000'}`).replace(/\/$/, ''); };
+const verifyUrl = (email: string) => '/verify' + (isEmail(email) ? `?email=${encodeURIComponent(email)}` : '');
+const errCode = (e: unknown) => (e as { code?: string } | null)?.code ?? '';
+const code6 = (fd: FormData) => str(fd, 'code').replace(/\s/g, '');
+async function authed() { const sb = await supabaseServer(), { data: { user } } = await sb.auth.getUser(); if (!user) redirect('/login'); return { sb, user }; }
+async function needsSecondStep(sb: Awaited<ReturnType<typeof supabaseServer>>) { const { data } = await sb.auth.mfa.getAuthenticatorAssuranceLevel(); return data?.nextLevel === 'aal2' && data.currentLevel !== 'aal2'; }
 export async function signIn(fd: FormData) {
-  const sb = await supabaseServer(); const { error } = await sb.auth.signInWithPassword({ email: str(fd, 'email'), password: str(fd, 'password') });
-  if (error) go('/login', 'err', authMessage(error, 'signIn')); redirect('/');
+  const email = str(fd, 'email').trim(), sb = await supabaseServer(); const { error } = await sb.auth.signInWithPassword({ email, password: str(fd, 'password') });
+  if (error) { if (errCode(error) === 'email_not_confirmed') go(verifyUrl(email), 'err', authMessage(error, 'signIn')); go('/login', 'err', authMessage(error, 'signIn')); }
+  if (await needsSecondStep(sb)) redirect('/2fa'); redirect('/');
 }
 export async function signUp(fd: FormData) {
-  const sb = await supabaseServer(); const { data, error } = await sb.auth.signUp({ email: str(fd, 'email'), password: str(fd, 'password'), options: { data: { name: str(fd, 'name').slice(0, 60) } } });
-  if (error) go('/register', 'err', authMessage(error, 'signUp')); if (!data.session) go('/login', 'ok', 'Account created. Confirm your email, then sign in.'); redirect('/');
+  const email = str(fd, 'email').trim(), password = str(fd, 'password');
+  if (!isEmail(email)) go('/register', 'err', 'Enter a valid email address.');
+  const bad = passwordProblem(password); if (bad) go('/register', 'err', bad); if (await isPwned(password)) go('/register', 'err', PWNED);
+  const sb = await supabaseServer(); const { data, error } = await sb.auth.signUp({ email, password, options: { data: { name: str(fd, 'name').slice(0, 60) }, emailRedirectTo: `${await siteUrl()}/auth/callback?next=/&welcome=1` } });
+  if (error) go('/register', 'err', authMessage(error, 'signUp')); if (!data.session) redirect(verifyUrl(email)); redirect('/');
+}
+// Sends the confirmation link again. The reply never reveals whether an address has an account.
+export async function resendVerification(fd: FormData) {
+  const email = str(fd, 'email').trim(); if (!isEmail(email)) go('/verify', 'err', 'Enter a valid email address.');
+  const sb = await supabaseServer(); const { error } = await sb.auth.resend({ type: 'signup', email, options: { emailRedirectTo: `${await siteUrl()}/auth/callback?next=/&welcome=1` } });
+  if (error && /rate_limit/.test(errCode(error))) go(verifyUrl(email), 'err', authMessage(error, 'resendVerification')); if (error) logErr('resendVerification', error);
+  go(verifyUrl(email), 'ok', 'If that address is waiting for confirmation, a new link is on its way. Check your inbox and spam folder.');
 }
 // ---- password recovery (the reply never reveals whether an email has an account)
 export async function requestReset(fd: FormData) {
-  const email = str(fd, 'email').trim().slice(0, 254); if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) go('/forgot', 'err', 'Enter a valid email address.');
-  const h = await headers(), site = process.env.NEXT_PUBLIC_SITE_URL || h.get('origin') || `https://${h.get('x-forwarded-host') ?? h.get('host') ?? 'localhost:3000'}`;
-  const sb = await supabaseServer(); const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: `${site.replace(/\/$/, '')}/auth/callback?next=/reset` });
-  if (error && /rate_limit/.test((error as { code?: string }).code ?? '')) go('/forgot', 'err', authMessage(error, 'requestReset')); if (error) logErr('requestReset', error);
+  const email = str(fd, 'email').trim(); if (!isEmail(email)) go('/forgot', 'err', 'Enter a valid email address.');
+  const sb = await supabaseServer(); const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: `${await siteUrl()}/auth/callback?next=/reset` });
+  if (error && /rate_limit/.test(errCode(error))) go('/forgot', 'err', authMessage(error, 'requestReset')); if (error) logErr('requestReset', error);
   go('/forgot', 'ok', 'If an account exists for that email, a reset link is on its way. Check your inbox and spam folder.');
 }
 export async function updatePassword(fd: FormData) {
   const sb = await supabaseServer(), { data: { user } } = await sb.auth.getUser(); if (!user) go('/forgot', 'err', 'That link is invalid or has expired. Request a new one.');
-  const p = str(fd, 'password'), c = str(fd, 'confirm'); if (p.length < 6 || p.length > 72) go('/reset', 'err', 'Use a password of 6 to 72 characters.'); if (p !== c) go('/reset', 'err', 'The two passwords do not match.');
+  const p = str(fd, 'password'), c = str(fd, 'confirm'), bad = passwordProblem(p); if (bad) go('/reset', 'err', bad); if (p !== c) go('/reset', 'err', 'The two passwords do not match.'); if (await isPwned(p)) go('/reset', 'err', PWNED);
   const { error } = await sb.auth.updateUser({ password: p }); if (error) go('/reset', 'err', authMessage(error, 'updatePassword'));
   await sb.auth.signOut(); go('/login', 'ok', 'Password updated. Log in with your new password.');
 }
 export async function signOut() { const sb = await supabaseServer(); await sb.auth.signOut(); redirect('/login'); }
+
+// ---- security page: change password, log out other devices, two-step verification (authenticator app)
+export async function changePassword(fd: FormData) {
+  const { sb, user } = await authed(), cur = str(fd, 'current'), p = str(fd, 'password'), c = str(fd, 'confirm'), bad = passwordProblem(p);
+  if (bad) go('/security', 'err', bad); if (p !== c) go('/security', 'err', 'The two new passwords do not match.'); if (p === cur) go('/security', 'err', 'Choose a password different from your current one.');
+  const { error: wrong } = await supabaseProbe().auth.signInWithPassword({ email: user.email ?? '', password: cur }); if (wrong) go('/security', 'err', errCode(wrong) === 'invalid_credentials' || /invalid login/i.test(String((wrong as Error).message)) ? 'Your current password is not right.' : authMessage(wrong, 'changePassword'));
+  if (await isPwned(p)) go('/security', 'err', PWNED);
+  const { error } = await sb.auth.updateUser({ password: p }); if (error) go('/security', 'err', authMessage(error, 'changePassword'));
+  await sb.auth.signOut({ scope: 'others' }); go('/security', 'ok', 'Password changed. Every other device was logged out.');
+}
+export async function signOutOthers() { const { sb } = await authed(); await sb.auth.signOut({ scope: 'others' }); go('/security', 'ok', 'Every other device was logged out.'); }
+export async function signOutEverywhere() { const sb = await supabaseServer(); await sb.auth.signOut({ scope: 'global' }); go('/login', 'ok', 'Logged out of every device.'); }
+// Second step after the password. Only reachable with a password session; the middleware blocks everything else until this succeeds.
+export async function verifyMfa(fd: FormData) {
+  const next = safeNext(str(fd, 'next')), back = '/2fa' + (next === '/' ? '' : `?next=${encodeURIComponent(next)}`), { sb } = await authed(), code = code6(fd);
+  if (!/^\d{6}$/.test(code)) go(back, 'err', 'Enter the 6-digit code from your authenticator app.');
+  const { data: f } = await sb.auth.mfa.listFactors(), factor = f?.totp?.[0]; if (!factor) redirect(next);
+  const { error } = await sb.auth.mfa.challengeAndVerify({ factorId: factor.id, code }); if (error) go(back, 'err', authMessage(error, 'verifyMfa'));
+  redirect(next);
+}
+type Enroll = { ok: true; factorId: string; qr: string; secret: string } | { ok: false; error: string };
+export async function mfaStart(): Promise<Enroll> {
+  const sb = await supabaseServer(), { data: { user } } = await sb.auth.getUser(); if (!user) return { ok: false, error: 'Session expired. Please sign in again.' };
+  const { data: l } = await sb.auth.mfa.listFactors(); if (l?.totp?.length) return { ok: false, error: 'Two-step verification is already on.' };
+  for (const f of l?.all ?? []) if (f.status === 'unverified') await sb.auth.mfa.unenroll({ factorId: f.id }); // drop abandoned setups
+  const { data, error } = await sb.auth.mfa.enroll({ factorType: 'totp', issuer: 'Pera', friendlyName: `Pera ${Date.now()}` });
+  if (error || !data) return { ok: false, error: authMessage(error, 'mfaStart') }; return { ok: true, factorId: data.id, qr: data.totp.qr_code, secret: data.totp.secret };
+}
+export async function mfaConfirm(factorId: string, code: string): Promise<{ ok: boolean; error?: string }> {
+  const sb = await supabaseServer(), { data: { user } } = await sb.auth.getUser(); if (!user) return { ok: false, error: 'Session expired. Please sign in again.' };
+  const c = String(code).replace(/\s/g, ''); if (!/^\d{6}$/.test(c)) return { ok: false, error: 'Enter the 6-digit code from your authenticator app.' };
+  const { error } = await sb.auth.mfa.challengeAndVerify({ factorId: String(factorId), code: c }); if (error) return { ok: false, error: authMessage(error, 'mfaConfirm') };
+  revalidatePath('/security'); return { ok: true };
+}
+export async function disableMfa(fd: FormData) {
+  const { sb } = await authed(), code = code6(fd); if (!/^\d{6}$/.test(code)) go('/security', 'err', 'Enter the 6-digit code from your authenticator app.');
+  const { data: f } = await sb.auth.mfa.listFactors(), factor = f?.totp?.[0]; if (!factor) go('/security', 'ok', 'Two-step verification is already off.');
+  const { error } = await sb.auth.mfa.challengeAndVerify({ factorId: factor.id, code }); if (error) go('/security', 'err', authMessage(error, 'disableMfa'));
+  const { error: e2 } = await sb.auth.mfa.unenroll({ factorId: factor.id }); if (e2) go('/security', 'err', authMessage(e2, 'disableMfa'));
+  go('/security', 'ok', 'Two-step verification is off.');
+}
 
 // ---- quick add (writes only after server-side validation; success is reported only after the rows are re-counted)
 type Saved = { ok: true; n: number } | { ok: false; error: string };

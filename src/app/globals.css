@@ -75,4 +75,17 @@ tr:last-child td{border-bottom:0}tbody tr:hover{background:color-mix(in srgb,var
  .scrollx{overflow-x:auto;-webkit-overflow-scrolling:touch}
 }
 .scrollx{overflow-x:auto}
+/* auth + security */
+.auth .card h1{font-size:21px;font-weight:800}.sub{color:var(--mute);font-size:14px}.em{overflow-wrap:anywhere}
+.otp{text-align:center;font-size:26px;font-weight:700;letter-spacing:.4em;text-indent:.4em;min-height:56px;width:100%}
+.qr{background:#fff;border-radius:16px;padding:12px;width:max-content;max-width:100%;border:1px solid var(--line)}.qr img{display:block;width:184px;height:184px;max-width:100%}
+.key{display:block;padding:10px 12px;border-radius:12px;background:var(--ube-soft);font:600 15px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.06em;overflow-wrap:anywhere;user-select:all;margin-top:6px}
+.steps{display:grid;gap:18px;padding-left:22px}.steps li::marker{font-weight:800;color:var(--ube)}
+.badge{display:inline-flex;align-items:center;border-radius:999px;padding:3px 12px;font-weight:700;font-size:13px;margin-left:6px}.badge.on{background:var(--inc-soft);color:var(--inc)}.badge.off{background:var(--ube-soft);color:var(--mute)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+/* loading skeletons */
+.sk{display:block;border-radius:12px;background:linear-gradient(100deg,var(--ube-soft) 30%,color-mix(in srgb,var(--ube-soft) 35%,var(--surface)) 50%,var(--ube-soft) 70%);background-size:220% 100%;animation:shimmer 1.5s ease-in-out infinite}
+.sk.w{background:linear-gradient(100deg,rgba(255,255,255,.2) 30%,rgba(255,255,255,.34) 50%,rgba(255,255,255,.2) 70%);background-size:220% 100%}
+.flex-none{flex:none}.skrow{display:flex;gap:12px;align-items:center;margin-bottom:14px}.skgrow{flex:1;min-width:0;display:grid;gap:8px}.skbetween{display:flex;justify-content:space-between;align-items:center;gap:12px}
+@keyframes shimmer{from{background-position:120% 0}to{background-position:-120% 0}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
