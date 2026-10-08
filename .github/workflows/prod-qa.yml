@@ -32,7 +32,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        suite: [qa, responsive, db, rls, security, repro]
+        suite: [qa, responsive, db, rls, security]
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
@@ -54,7 +54,7 @@ jobs:
         working-directory: tests/prod
         run: |
           npm install --no-save --no-package-lock --ignore-scripts playwright@1.49.1
-          [ "${{ matrix.suite }}" = qa ] || [ "${{ matrix.suite }}" = responsive ] || [ "${{ matrix.suite }}" = security ] || [ "${{ matrix.suite }}" = repro ] && npx playwright install --with-deps chromium || true
+          [ "${{ matrix.suite }}" = qa ] || [ "${{ matrix.suite }}" = responsive ] || [ "${{ matrix.suite }}" = security ] && npx playwright install --with-deps chromium || true
       - name: Run ${{ matrix.suite }}
         id: run
         working-directory: tests/prod

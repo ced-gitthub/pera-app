@@ -16,7 +16,7 @@ Everything below was executed, not assumed. Numbers are from the latest runs of 
 | Real browser, security (`tests/prod/security.mjs`) | `prod-qa` → Chromium → live app → live Supabase | Email-link handling, password rules (length, repeats, breached), security page (change password, log out other/all devices), two-step verification with real authenticator codes (setup, login gate, turn-off), database-level 2FA enforcement, loading skeletons (streamed first, nav stays, reduced motion), mobile fit |
 | Real browser, responsive (`tests/prod/responsive.mjs`) | same | 6 viewports (390×844, 393×852, 430×932, 768×1024, 1280×800, 1440×900) × every route: overflow, clipping, tap targets, bottom-nav overlap, dark/light contrast, reduced motion, keyboard focus, offline/slow states |
 
-Latest full run (commit d5957f8, against production): functional browser 158/158, responsive 236/236, real-database regressions 15/15, real-database RLS/constraints 39/39; `ci` green.
+Latest full run (app code at commit 93dc765, against production): functional browser 158/158, responsive 236/236, security 62/62, real-database regressions 15/15, real-database RLS/constraints 39/39; `ci` green (typecheck, unit, 237 app checks, build, `npm audit`). Later commits only touch tests, workflow and docs.
 
 Throwaway QA users are `pera-qa-<timestamp>-*@example.com`. Their rows are removed by the suites; the auth users remain (see "Housekeeping").
 
