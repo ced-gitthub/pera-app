@@ -15,6 +15,8 @@ Everything below was executed, not assumed. Numbers are from the latest runs of 
 | Real browser, functional (`tests/prod/qa.mjs`) | `prod-qa` → Chromium → live Vercel app → live Supabase | Auth, recovery, dashboard, commands, transactions, accounts, budgets, reports, settings, recurring, CSV, assistant, cross-user isolation |
 | Real browser, responsive (`tests/prod/responsive.mjs`) | same | 6 viewports (390×844, 393×852, 430×932, 768×1024, 1280×800, 1440×900) × every route: overflow, clipping, tap targets, bottom-nav overlap, dark/light contrast, reduced motion, keyboard focus, offline/slow states |
 
+Latest full run (commit d5957f8, against production): functional browser 158/158, responsive 236/236, real-database regressions 15/15, real-database RLS/constraints 39/39; `ci` green.
+
 Throwaway QA users are `pera-qa-<timestamp>-*@example.com`. Their rows are removed by the suites; the auth users remain (see "Housekeeping").
 
 ## Architecture
