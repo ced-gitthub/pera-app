@@ -22,10 +22,10 @@ export default async function Dashboard({ searchParams }: { searchParams: SP }) 
     <div className="row mb-3">{P.map(([k, n]) => <Link key={k} href={`/?p=${k}`} className={`btn ${(sp.p ?? 'month') === k ? 'p' : ''}`}>{n}</Link>)}
       <form className="row"><input type="hidden" name="p" value="custom" /><input className="inp" type="date" name="from" defaultValue={sp.from} /><input className="inp" type="date" name="to" defaultValue={sp.to} /><button className="btn">Custom</button></form></div>
     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-      <div className="card"><div className="m">Current balance</div><div className="text-2xl font-semibold">{formatMinor(balance)}</div></div>
-      <div className="card"><div className="m">Income · {per.label}</div><div className="text-2xl font-semibold inc">{formatMinor(t.income)}</div></div>
-      <div className="card"><div className="m">Expenses</div><div className="text-2xl font-semibold exp">{formatMinor(t.expense)}</div></div>
-      <div className="card"><div className="m">Net</div><div className="text-2xl font-semibold">{formatMinor(t.net)}</div></div></div>
+      <div className="card stat"><div className="m">Current balance</div><div className="big text-2xl font-semibold">{formatMinor(balance)}</div></div>
+      <div className="card stat"><div className="m">Income · {per.label}</div><div className="big text-2xl font-semibold inc">{formatMinor(t.income)}</div></div>
+      <div className="card stat"><div className="m">Expenses</div><div className="big text-2xl font-semibold exp">{formatMinor(t.expense)}</div></div>
+      <div className="card stat"><div className="m">Net</div><div className="big text-2xl font-semibold">{formatMinor(t.net)}</div></div></div>
     <div className="card"><h2 className="font-semibold mb-2">Spending by category</h2>{cats.length ? cats.map(([n, v]) => <div key={n} className="mb-2"><div className="row justify-between"><span>{n}</span><b>{formatMinor(v)}</b></div><div className="bar"><i style={{ width: `${Math.round((v * 100) / max)}%` }} /></div></div>) : <p className="m">No expenses in this period.</p>}</div>
     <div className="card"><h2 className="font-semibold mb-2">Recent transactions</h2><table><tbody>{rows.map(x => <TxRow key={x.id} r={x} actions={false} />)}</tbody></table>{!rows.length && <p className="m">Nothing yet — type something above.</p>}</div></>;
 }

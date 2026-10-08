@@ -36,12 +36,12 @@ export default function QuickAdd({ accounts, categories, aiEnabled }: { accounts
   }
   const c = () => ({ today: manilaToday(), accounts });
   return (
-    <section className="card" style={{ borderColor: '#0b6e6a', borderWidth: 2 }} aria-label="Quick add">
+    <section className="card hero" aria-label="Quick add">
       <h1 className="text-2xl font-semibold mb-2">Tell me what happened</h1>
       <div className="row"><input className="inp flex-1 text-xl" value={text} onChange={e => setText(e.target.value)} onKeyDown={e => e.key === 'Enter' && submit()} placeholder="food 120, grocery 29 · income 12000 · coffee 150 at Starbucks" aria-label="Transaction" maxLength={500} />
         <button className="btn p" onClick={submit} disabled={busy}>{busy ? 'Working…' : 'Add'}</button></div>
       {msgs.map((m, i) => <p key={i} className={m.bad ? 'flash bad mt-2' : 'mt-1'} role={m.bad ? 'alert' : undefined}>{m.t}</p>)}
-      {pend.map((p, i) => <div key={i} className="mt-2 p-2 border rounded">
+      {pend.map((p, i) => <div key={i} className="mt-3 p-3 rounded-xl" style={{ background: "var(--bg)", border: "1px solid var(--line)" }}>
         {p.kind === 'ask' && <><p>Not sure what “{p.label}” {formatMinor(p.amount_minor)} means. Received it or spent it?</p><div className="row">
           <button className="btn" onClick={() => resolve(i, parseSegment(p.raw, c(), 'income'))}>Received</button><button className="btn" onClick={() => resolve(i, parseSegment(p.raw, c(), 'expense'))}>Spent</button></div></>}
         {p.kind === 'confirm' && <><p>{p.type === 'income' ? 'Income' : 'Expense'} {formatMinor(p.amount_minor)} — confirm the category</p><div className="row">
