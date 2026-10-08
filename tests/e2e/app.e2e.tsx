@@ -273,6 +273,64 @@ const count = (h: string, s: string) => h.split(s).length - 1;
   for (const [n, C] of Object.entries(sk) as [string, any][]) { const k = renderToStaticMarkup(React.createElement(C)); T(`skeleton ${n}: busy region with an accessible label and no real data`, k.includes('data-skeleton') && k.includes('aria-busy="true"') && k.includes('role="status"') && /class="sr">Loading/.test(k) && !/₱\d|Total balance/.test(k), k.slice(0, 120)); }
   for (const r of ['(dash)', 'transactions/(list)', 'accounts', 'budgets', 'reports', 'assistant', 'settings', 'security']) { const L = (await import(`@/app/(app)/${r}/loading`)).default; T(`loading.tsx exists for ${r}`, typeof L === 'function' && renderToStaticMarkup(React.createElement(L)).includes('data-skeleton')); }
   }
+  // ---- backup email
+  const G = globalThis as any, sent = (to?: string) => (G.__sent ?? []).filter((m: any) => !to || m.to === to), codeOf = (m: any) => /code is (\d{6})/.exec(m.text)![1];
+  G.__D = D; D.backup = []; G.__sent = []; for (const k of ['SMTP_USER', 'SMTP_PASS', 'SUPABASE_SECRET_KEY', 'NEXT_PUBLIC_SITE_URL', 'VERCEL_PROJECT_PRODUCTION_URL']) delete process.env[k];
+  const SecPage = (await import('@/app/(app)/security/page')).default, Forgot = (await import('@/app/(auth)/forgot/page')).default;
+  const html = async (P: any, sp: any = {}) => renderToStaticMarkup(await P({ searchParams: Promise.resolve(sp) }));
+  login('a@x.com'); D.aal2.add?.(D.cur);
+  T('backup: hidden on security + forgot pages when not configured', !(await html(SecPage)).includes('Backup email') && !(await html(Forgot)).includes('Can’t open that inbox'));
+  T('backup: actions refuse when not configured', (await red(() => A.backupStart(fd({ email: 'r@gmail.com', current: 'secret12' })))).includes('err=Backup email is not available') && (await red(() => A.requestResetViaBackup(fd({ email: 'r@gmail.com' })))).startsWith('/forgot?err=Backup email is not available') && sent().length === 0);
+  process.env.SUPABASE_SECRET_KEY = 'sb_secret_test'; T('backup: still off with only the secret key (no SMTP)', !(await html(SecPage)).includes('Backup email'));
+  process.env.SMTP_USER = 'pera@gmail.com'; process.env.SMTP_PASS = 'app-pass';
+  T('backup: card appears once configured', (await html(SecPage)).includes('Backup email') && (await html(Forgot)).includes('Can’t open that inbox'));
+  const bs = (o: Record<string, string> = {}) => red(() => A.backupStart(fd({ email: 'Recover@Gmail.com', current: 'secret12', ...o })));
+  T('backup start: wrong password refused, nothing sent', (await bs({ current: 'nope-nope' })).includes('err=Your current password is not right') && sent().length === 0 && D.backup.length === 0);
+  T('backup start: bad address refused', (await bs({ email: 'nope' })).includes('err=Enter a valid email'));
+  T('backup start: login email refused', (await bs({ email: 'A@x.com' })).includes('err=Use a different address'));
+  T('backup start: signed-out refused', await (async () => { const c = D.cur; D.cur = null; const r = await bs(); D.cur = c; return r === '/login'; })());
+  T('backup start: emails a code, stores only its hash', (await bs()).includes('ok=We sent a 6-digit code to recover@gmail.com') && sent('recover@gmail.com').length === 1 && D.backup.length === 1 && !JSON.stringify(D.backup).includes(codeOf(sent()[0])) && D.backup[0].email === 'recover@gmail.com' && !D.backup[0].verified_at);
+  T('backup pending: security page offers code entry', (await html(SecPage)).includes('Use a different address'));
+  const bc = (code: string) => red(() => A.backupConfirm(fd({ code })));
+  T('backup confirm: malformed code refused', (await bc('12ab')).includes('err=Enter the 6-digit code'));
+  const good = codeOf(sent()[0]), bad = good === '000000' ? '111111' : '000000';
+  T('backup confirm: wrong code counted', (await bc(bad)).includes('err=That code is not right') && D.backup[0].code_attempts === 1);
+  for (let i = 0; i < 4; i++) await bc(bad);
+  T('backup confirm: locked after 5 wrong tries, even the right code is refused', (await bc(good)).includes('err=Too many wrong codes') && !D.backup[0].verified_at);
+  T('backup start: new code resets the lock', (await bs()).includes('ok=') && sent('recover@gmail.com').length === 2 && D.backup[0].code_attempts === 0);
+  const g2 = codeOf(sent()[1]); D.backup[0].code_expires_at = new Date(Date.now() - 1000).toISOString();
+  T('backup confirm: expired code refused', (await bc(g2)).includes('err=That code expired'));
+  await bs(); const g3 = codeOf(sent()[2]); const before = sent('a@x.com').length;
+  T('backup confirm: right code verifies and primary is notified', (await bc(g3)) === '/security?ok=Backup email saved.' && !!D.backup[0].verified_at && !D.backup[0].code_hash && sent('a@x.com').length === before + 1 && /backup email was added/i.test(sent('a@x.com').at(-1).subject));
+  T('backup verified: page shows masked address and remove', await (async () => { const h = await html(SecPage); return h.includes('r••••••@gmail.com') && !h.includes('recover@gmail.com') && h.includes('Remove backup email'); })());
+  T('backup confirm: nothing pending afterwards', (await bc(g3)).includes('err=Ask for a new code first'));
+  // an address can back up only one account
+  login('b@x.com'); D.aal2.add?.(D.cur); const bShared = await bs({ email: 'recover@gmail.com' }); const bCode = codeOf(sent('recover@gmail.com').at(-1));
+  T('backup: a taken address cannot be confirmed by a second account', bShared.includes('ok=') && (await bc(bCode)).includes("err=That address can't be used") && D.backup.filter((r: any) => r.email === 'recover@gmail.com' && r.verified_at).length === 1 && !D.backup.find((r: any) => r.user_id === me()).email);
+  // rate limit: 5 codes per hour per account, and removing/re-adding does not reset it
+  let lim = ''; for (let i = 0; i < 4; i++) { lim = await bs({ email: `r${i}@gmail.com` }); if (i === 1) await red(() => A.backupRemove()); }
+  T('backup start: fifth code in an hour refused, even after remove', (await bs({ email: 'r9@gmail.com' })).includes('err=Too many codes') && sent().filter((m: any) => /^r\d@gmail/.test(m.to)).length === 4 && lim.includes('ok='));
+  T('backup: failed mail delivery reports an error', await (async () => { G.__mailFail = true; D.backup = D.backup.filter((r: any) => r.user_id !== me()); const r = await bs({ email: 'q@gmail.com' }); G.__mailFail = false; return r.includes('err=We could not send that email'); })());
+  // recovery through the backup address
+  login('a@x.com'); const rr = (e: string) => red(() => A.requestResetViaBackup(fd({ email: e }))), REPLY = '/forgot?ok=If that backup email is on file, a reset link is on its way. Check your inbox and spam folder.';
+  const m0 = sent().length; const r1 = await rr('RECOVER@gmail.com'), mails = sent().slice(m0), link = mails.find((m: any) => m.to === 'recover@gmail.com');
+  T('recover: generic reply, link mailed to backup, heads-up to primary', r1 === REPLY && !!link && mails.some((m: any) => m.to === 'a@x.com' && /reset requested/i.test(m.subject)) && !!D.backup.find((r: any) => r.email === 'recover@gmail.com').last_recovery_at);
+  T('recover: link points at the callback on the pinned origin (request origin fallback)', /https:\/\/pera\.example\/auth\/callback\?token_hash=hash-[^&\s]+&type=recovery&next=\/reset/.test(link.text));
+  const m1 = sent().length; T('recover: second request within a minute sends nothing (same reply)', (await rr('recover@gmail.com')) === REPLY && sent().length === m1);
+  D.backup.find((r: any) => r.email === 'recover@gmail.com').last_recovery_at = new Date(Date.now() - 61_000).toISOString();
+  process.env.NEXT_PUBLIC_SITE_URL = 'https://app.pera.test/'; await rr('recover@gmail.com'); T('recover: NEXT_PUBLIC_SITE_URL pins the link origin', sent().at(-2).text.includes('https://app.pera.test/auth/callback?token_hash=') || sent().slice(-2).some((m: any) => m.text.includes('https://app.pera.test/auth/callback?token_hash=')));
+  delete process.env.NEXT_PUBLIC_SITE_URL;
+  D.backup.find((r: any) => r.email === 'recover@gmail.com').last_recovery_at = null; process.env.VERCEL_PROJECT_PRODUCTION_URL = 'pera-app-beta.vercel.app'; await rr('recover@gmail.com'); T('recover: Vercel production URL pins the link origin', sent().slice(-2).some((m: any) => m.text.includes('https://pera-app-beta.vercel.app/auth/callback?token_hash='))); delete process.env.VERCEL_PROJECT_PRODUCTION_URL;
+  const m2 = sent().length; T('recover: unknown address gets the identical reply and no mail', (await rr('stranger@gmail.com')) === REPLY && sent().length === m2);
+  T('recover: unverified (pending) address gets nothing', await (async () => { D.backup.push({ user_id: 'zzz', email: 'pending@gmail.com', verified_at: null, code_hash: 'x', code_expires_at: null, code_attempts: 0, sends_in_hour: 1, sends_window_start: null, last_recovery_at: null }); const r = await rr('pending@gmail.com'); D.backup = D.backup.filter((x: any) => x.user_id !== 'zzz'); return r === REPLY && sent().length === m2; })());
+  T('recover: invalid address refused', (await rr('nope')).startsWith('/forgot?err=Enter a valid email'));
+  T('recover: store outage still gives the generic reply', await (async () => { D.adminFail = true; const r = await rr('recover@gmail.com'); D.adminFail = false; return r === REPLY; })());
+  T('recover: emailed link signs in and lands on /reset (once only)', await (async () => { const tok = /token_hash=([^&]+)&/.exec(link.text)![1]; D.cur = null; const r = await callback(new NextRequest(`https://pera.example/auth/callback?token_hash=${tok}&type=recovery&next=/reset`)); const loc = r.headers.get('location')!; const again = await callback(new NextRequest(`https://pera.example/auth/callback?token_hash=${tok}&type=recovery&next=/reset`)); return new URL(loc).pathname === '/reset' && D.cur !== null && again.headers.get('location')!.includes('/forgot?err='); })());
+  login('a@x.com');
+  T('backup remove: deletes and notifies primary', await (async () => { const n = sent('a@x.com').length; const r = await red(() => A.backupRemove()); return r === '/security?ok=Backup email removed.' && !D.backup.find((x: any) => x.user_id === me()).email && sent('a@x.com').length === n + 1; })());
+  T('backup remove: recovery with the removed address does nothing', await (async () => { const n = sent().length; const r = await rr('recover@gmail.com'); return r === REPLY && sent().length === n; })());
+  T('backup remove: signed-out refused', await (async () => { D.cur = null; const r = await red(() => A.backupRemove()); login('a@x.com'); return r === '/login'; })());
+  for (const k of ['SMTP_USER', 'SMTP_PASS', 'SUPABASE_SECRET_KEY']) delete process.env[k];
   // ---- isolation sanity of the stand-in itself
   login('a@x.com'); T('A still sees exactly its own rows', rows(A_ID).length === rows().length && !rows().some((t: any) => t.user_id !== A_ID));
   console.log(`e2e (app code vs in-memory Supabase stand-in): pass ${pass} fail ${fail}`);
