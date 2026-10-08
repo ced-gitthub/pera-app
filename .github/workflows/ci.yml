@@ -11,7 +11,13 @@ jobs:
       - name: Dependency audit (fails on high/critical)
         run: npm audit --audit-level=high
       - run: npm run typecheck
-      - run: npm test
+      - name: Unit tests
+        run: |
+          set +e
+          npm test > unit.log 2>&1; code=$?
+          if [ $code -ne 0 ]; then msg=$(grep -vE '^\s*$' unit.log | tail -c 7000 | sed ':a;N;$!ba;s/%/%25/g;s/\r//g;s/\n/%0A/g'); echo "::error title=unit tests::$msg"; fi
+          tail -12 unit.log
+          exit $code
       - name: App tests (server actions + pages vs in-memory Supabase stand-in)
         run: |
           set +e

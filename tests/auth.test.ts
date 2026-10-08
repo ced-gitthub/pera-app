@@ -7,7 +7,7 @@ const range = (lines: Record<string, number>, seen?: string[]) => (async (url: s
 test('password policy', () => {
   assert.equal(passwordProblem('longenough1'), null); assert.equal(passwordProblem('12345678'), null);
   for (const bad of ['', 'short', '1234567', 'a'.repeat(73), '😀'.repeat(19), 'aaaaaaaa', '        ']) assert.ok(passwordProblem(bad), JSON.stringify(bad));
-  assert.equal(passwordProblem('a'.repeat(72)), null); assert.equal(passwordProblem('😀'.repeat(18)), null); // 72 bytes exactly
+  assert.equal(passwordProblem('ab'.repeat(36)), null); assert.equal(passwordProblem('😀😃'.repeat(9)), null); // 72 bytes exactly
 });
 test('breached-password check uses k-anonymity and fails open', async () => {
   const seen: string[] = [], f = range({ [sha('password123')]: 90000 }, seen);
