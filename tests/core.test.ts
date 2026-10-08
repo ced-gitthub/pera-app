@@ -67,7 +67,7 @@ test('AI: optional, validated, never trusted', async () => {
   assert.equal((await parseWithFallback('John 500', ctx, v.categories, null))[0].kind, 'ask');
 });
 test('no secrets committed', () => {
-  const walk = (d: string): string[] => fs.readdirSync(d, { withFileTypes: true }).flatMap(f => f.isDirectory() ? walk(`${d}/${f.name}`) : [`${d}/${f.name}`]);
+  const walk = (d: string): string[] => fs.readdirSync(d, { withFileTypes: true }).filter(f => !['node_modules', '.git', '.next'].includes(f.name)).flatMap(f => f.isDirectory() ? walk(`${d}/${f.name}`) : [`${d}/${f.name}`]);
   for (const f of walk('.').filter(f => !f.includes('tests/'))) assert.ok(!/sk-[A-Za-z0-9]{20}|service_role|eyJ[A-Za-z0-9_-]{30}/.test(fs.readFileSync(f, 'utf8')), f);
   assert.ok(/NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=\n/.test(fs.readFileSync('.env.example', 'utf8')));
 });
