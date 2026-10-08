@@ -1,61 +1,86 @@
 # Pera — free-tier money tracker (Next.js + Supabase)
 
-Type "food 120, grocery 29" and it becomes transactions. Money is stored as integer centavos. Runs at $0/month: Supabase Free + Vercel Hobby + GitHub Free. **No AI key is needed.**
+Type "food 120, grocery 29" and it becomes transactions. Money is stored as integer centavos (PHP ₱, Asia/Manila dates). Runs at $0/month: Supabase Free + Vercel Hobby + GitHub Free. **No AI key is needed.**
 
-> **Status honesty.** Executed and passing in the author's sandbox: core/app logic tests (14 groups), the real server actions and pages run against an *in-memory stand-in* for Supabase (94 checks), and the real `QuickAdd` component in headless Chromium (24 checks). **Never executed:** `npm install`, `next build`, the SQL migrations, real Supabase Auth/RLS (`test:rls`), and Vercel deployment. The stand-in mirrors the SQL's behaviour but does not prove it. Run `npm run test:rls` against your Supabase project before trusting it with real data.
+Production: https://pera-app-beta.vercel.app · Repo: `ced-gitthub/pera-app` · Supabase project `vxhgkkzbmrhxayzryake` (ap-southeast-2) · Vercel project `pera-app` (region `syd1`).
 
-## Prerequisites
-Node.js 20.9+ (22 recommended), Git, a free [Supabase](https://supabase.com) account, optionally a free GitHub and Vercel account.
+## What is verified, and how
+Everything below was executed, not assumed. Numbers are from the latest runs of the GitHub Actions workflows (`ci`, `prod-qa`); see "QA coverage".
 
-## Install
-```
-npm install
-cp .env.example .env.local
-```
-## Supabase setup
-1. New project (free plan; no card). Wait for it to finish provisioning.
-2. **SQL Editor:** run `supabase/migrations/0001_init.sql`, `0002_app.sql`, `0003_hardening.sql`, `0004_indexes.sql` (in that order, once each). Verify with `select count(*) from information_schema.columns where table_name='transactions' and column_name='request_id'` (must be 1).
-3. **Authentication > Providers > Email:** keep enabled. For personal use you may switch "Confirm email" off so sign-up logs you straight in (required for `npm run test:rls`).
-4. **Project Settings > API:** copy the Project URL and the *publishable* key into `.env.local`:
-```
-NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
-```
-Never put a Supabase secret or service-role key anywhere in this project. The app only needs the publishable key; Row Level Security is the security boundary.
-(If your dashboard still shows the legacy "anon" key, it also works in the same variable.)
-5. Authentication > URL Configuration: add `http://localhost:3000` (and your Vercel URL later) to the allowed redirect URLs.
+| Layer | Where it runs | What it proves |
+|---|---|---|
+| Typecheck, unit/logic tests, app tests, production build | `ci` (every push) | Parser, money, CSV, aggregates, safe-error layer; real server actions + pages against an in-memory Supabase stand-in; `next build`; `npm audit --audit-level=high` |
+| Real database suite (`tests/prod/rls-suite.ts`) | `prod-qa` → real Supabase | 39 checks: RLS cross-user isolation, composite ownership FKs, constraints, idempotent saves, transfers, recurring, aggregates, anonymous access |
+| Real database regressions (`tests/prod/db.mjs`) | `prod-qa` → real Supabase | 15 checks: undo storage (`tx_trash`), recurring occurrence deletion never resurrects, rule deletion keeps history, month-end/leap-day no-drift |
+| Real browser, functional (`tests/prod/qa.mjs`) | `prod-qa` → Chromium → live Vercel app → live Supabase | Auth, recovery, dashboard, commands, transactions, accounts, budgets, reports, settings, recurring, CSV, assistant, cross-user isolation |
+| Real browser, responsive (`tests/prod/responsive.mjs`) | same | 6 viewports (390×844, 393×852, 430×932, 768×1024, 1280×800, 1440×900) × every route: overflow, clipping, tap targets, bottom-nav overlap, dark/light contrast, reduced motion, keyboard focus, offline/slow states |
 
-## Run / test
-```
-npm run dev          # http://localhost:3000  -> Register -> Dashboard
-npm run typecheck    # TypeScript over the whole app
-npm test             # core + app logic, no network needed
-npm run test:app     # real server actions + pages vs an in-memory Supabase stand-in (needs devDependencies)
-npm run test:browser # real QuickAdd in Chromium (pip install playwright && playwright install chromium)
-npm run test:rls     # REAL Supabase: cross-user isolation, idempotency, transfers, recurring (needs .env.local, both migrations, Confirm email OFF)
-npm run build        # production build
-```
-Old prototype data: open the app in the *same browser* you used for the prototype, then Settings > "Migrate prototype data". It is verified against the original totals and is safe to repeat.
-
-## Deploy (GitHub -> Vercel -> Supabase)
-1. `git init && git add . && git commit -m init`; create an empty GitHub repo; push. (`.env.local` is git-ignored; never commit keys.)
-2. vercel.com > Add New > Project > import the repo (Hobby plan, framework auto-detected as Next.js).
-3. Settings > Environment Variables: add `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. Deploy.
-4. Add the Vercel URL to Supabase redirect URLs (step 5 above).
-
-## Optional AI
-Off by default. Simple inputs never use AI. To add a provider: implement `AIProvider` (`src/ai/provider.ts`) for any free provider, return it from `getProvider(env)`, and put its key in `.env.local` as server-only `AI_API_KEY` (never `NEXT_PUBLIC_`). AI output is validated (`validateAction`) and always needs your confirmation; it never touches the database directly. Assistant numbers always come from SQL.
+Throwaway QA users are `pera-qa-<timestamp>-*@example.com`. Their rows are removed by the suites; the auth users remain (see "Housekeeping").
 
 ## Architecture
-`src/core` pure money/parser/aggregate/CSV/migration (tested) · `src/lib` validation, periods, assistant intent · `src/app/actions.ts` server actions (re-validate, write as the logged-in user under RLS, confirm writes by re-counting) · `src/app/(app)/*` pages (server components; all totals from SQL functions) · `supabase/migrations` schema, RLS, aggregates, recurring.
+- `src/core` — pure money/parser/aggregate/CSV/migration code (unit-tested).
+- `src/lib` — validation, periods, assistant intent, `safe.ts` (error layer), `commands.ts` (delete/undo/change phrases), `limits.ts`.
+- `src/app/actions.ts` — server actions. Each re-validates input, writes as the logged-in user under RLS, and confirms writes by re-counting.
+- `src/app/(app)/*` — server-rendered pages; totals come from SECURITY INVOKER SQL functions (`period_summary`, `account_balances`, `monthly_summary`, …).
+- `src/app/(auth)/*`, `src/app/auth/callback` — login, register, forgot/reset password (PKCE), middleware refreshes the session.
+- `supabase/migrations` — schema, RLS, aggregates, recurring engine, undo storage (apply in order in the Supabase SQL Editor).
+- `tests/prod` + `.github/workflows/prod-qa.yml` — the production QA suites above.
 
-## Rules worth knowing
-- Every transaction belongs to an account; entries without one go to "Cash" (or your first account).
-- Recurring monthly/yearly rules are always computed from the start date and clamp to the month's last day (Jan 31 -> Feb 28/29 -> Mar 31 -> Apr 30). They run when the dashboard loads and are idempotent.
-- CSV re-import is de-duplicated against earlier imports only.
+Security boundary = Postgres RLS (`user_id = (select auth.uid())`) plus composite foreign keys so a row can only reference the same user's accounts/categories. The app ships only the **publishable** key. Never put a Supabase secret/service-role key in this project.
 
-## Vercel checklist (all must be true)
-- Environment Variables: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` for Production, Preview and Development. They are inlined at build time: **redeploy after changing them**.
-- Framework Preset: Next.js. Root Directory: the folder that contains `package.json` (repo root).
-- Settings > Deployment Protection: the app has its own login + RLS, so set Vercel Authentication to *Preview deployments only* or off, otherwise the public cannot open the site.
-- Diagnostics: `GET /api/health` (public, shows env/key kind/RLS probe). Optional `QA_TOKEN` env enables `GET /api/qa?token=...`, a real-database RLS/QA run; delete the variable afterwards.
+## Behaviour worth knowing
+- **Undo.** `delete last` removes the newest transaction and offers an Undo button. `undo last` / `undo the last transaction` restores the most recently deleted one (never deletes). Deleted rows are archived by a database trigger in `tx_trash` for 30 days (per user, RLS-protected). Nothing deleted → "Nothing to undo…". Repeated `undo last` walks back through deletions, newest first. Account deletion keeps no trash.
+- **Recurring.** Rules run when the dashboard loads, are idempotent, and walk a forward-only cursor, so deleting a generated occurrence never recreates it, future occurrences continue, and month-end/leap-day dates never drift (Jan 31 → Feb 28/29 → Mar 31). Deleting a rule keeps all past transactions (they are unlinked). If recurring processing fails the dashboard shows a safe notice and logs the cause server-side.
+- **Errors.** Users only ever see safe messages. Unexpected errors are logged server-side as `[pera] where: …` with secrets redacted and shown as "Something went wrong" (+ a reference id on the error page).
+- **Passwords.** Forgot password → email link → `/auth/callback` (PKCE) → `/reset`. The reply never reveals whether an email has an account. Invalid/expired links land on `/forgot` with a clear message.
+- **Cache.** Every non-static response is `Cache-Control: private, no-store`; security headers (HSTS, nosniff, frame deny, referrer/permissions policy, CSP frame-ancestors/base-uri/form-action/object-src) are set in `next.config.mjs`.
+- **Health.** `GET /api/health` is public and returns only `{ ok, commit }` (probe cached 30 s). Full diagnostics need `?token=<QA_TOKEN>` if you set that optional variable. There is no test endpoint in production.
+
+## CSV import / export — exact duplicate rules
+- Export writes `date,type,amount,category,description,notes,account,to_account`; cells starting with `= + - @` (or tab/CR) are prefixed with `'` so spreadsheets do not run them as formulas (the importer strips that guard).
+- Each imported row gets an `import_hash` = hash of **date + type + amount + category + description + account (+ to_account) + notes**, plus an occurrence index (`#1`, `#2`…) for identical rows inside the same file. The database has a unique index on `(user_id, import_hash)`.
+- Consequences (all tested against the live app): re-importing the same file adds **0**; a row whose **description (or any hashed field) changed** is a **new** row; two truly identical rows in one file are **both** imported (they may be genuine separate purchases) and re-import adds none; adding rows to a statement copy imports only the new ones; transfers dedupe the same way; same-account transfers, bad dates, non-positive/oversize amounts and unknown formats are skipped and counted.
+- **Rows you typed by hand are never compared with imports.** This is intentional (a hand entry and a statement line of the same amount may be two different purchases). If you import a statement that overlaps hand-typed entries, review/delete duplicates in Transactions.
+- Limits: 900 KB (≈9,000 rows) per file, 20,000 rows hard cap — enforced in the form before upload (server actions accept ~1 MB bodies, Vercel Hobby ~4.5 MB). Split larger statements.
+
+## Environment variables
+| Name | Where | Required |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Vercel (Production/Preview/Development) + `.env.local` | yes |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (`sb_publishable_…` or legacy anon) | same | yes |
+| `AI_PROVIDER`, `AI_API_KEY` | server-only | optional, off by default |
+| `QA_TOKEN` | Vercel | optional (full `/api/health` details) |
+
+They are inlined at build time: **redeploy after changing them.**
+
+## Deployment flow
+1. Push to `main` (GitHub). `ci` runs: `npm ci` → audit → typecheck → tests → app tests → build.
+2. Vercel builds and deploys `main` to production automatically (`vercel.json` pins region `syd1`).
+3. `prod-qa` runs on pushes touching app/test/migration files (or manually): waits until `/api/health` reports the pushed commit, then runs the four suites against production and publishes results to branches `qa-qa`, `qa-responsive`, `qa-db`, `qa-rls` (markdown + JSON + failure screenshots + layout screenshots).
+4. Database changes: add a numbered file in `supabase/migrations`, run it once in the Supabase SQL Editor, and add a regression check to `tests/prod`.
+
+Supabase one-time setup: run migrations `0001`…`0005` in order; Authentication → Email: keep enabled (turn "Confirm email" off for single-user personal use so sign-up logs in); Authentication → URL Configuration: Site URL = the production URL, Redirect URLs include `<production URL>/auth/callback` (needed for password-reset emails). Vercel: Deployment Protection must allow public access to production (the app has its own login).
+
+## Local development (optional — nothing here is required to deploy)
+```
+npm ci && cp .env.example .env.local   # fill the two Supabase variables
+npm run dev        # http://localhost:3000
+npm run typecheck && npm test && npm run test:app && npm run build
+```
+`npm run test:browser` (real QuickAdd component, mocked server actions) needs `pip install playwright`.
+
+Old prototype data: open the app in the browser you used for the prototype → Settings → "Migrate prototype data" (verified against the original totals; safe to repeat).
+
+## Known limitations (intentional or accepted)
+- Email delivery uses Supabase's built-in SMTP (a few emails/hour, and only to project team members unless you configure custom SMTP). Password-reset email delivery therefore cannot be QA'd end-to-end against throwaway addresses; the action, link handling and invalid/expired-link paths are tested.
+- Leaked-password protection (HaveIBeenPwned) is a Supabase Pro feature and is off on the free plan (advisor WARN).
+- Supabase performance advisor INFO: composite FKs rely on single-column indexes (`tx_account_idx`, …). Fine at personal scale; revisit if a single user holds hundreds of thousands of rows.
+- No offline mode / PWA yet (planned next). `viewport-fit=cover` and safe-area CSS are already in place for it.
+- Hand-typed entries are not compared with imports (see CSV section). Currency is fixed to PHP in this version.
+- Vercel runtime logs are not readable by the automation; server-side errors are visible in the Vercel dashboard (Logs) as `[pera] …`.
+
+## Housekeeping
+QA users accumulate under Authentication → Users. Delete them with the SQL Editor: `delete from auth.users where email like 'pera-qa-%@example.com';` (cascades their data; the undo trigger skips users being deleted).
+
+## Optional AI
+Off by default. Simple inputs never use AI. To add a provider: implement `AIProvider` (`src/ai/provider.ts`), return it from `getProvider(env)`, and put its key in server-only `AI_API_KEY`. AI output is validated (`validateAction`) and always needs your confirmation; it never touches the database directly. Assistant numbers always come from SQL, and the assistant is read-only.
