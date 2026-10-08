@@ -15,7 +15,7 @@ import { parseInput } from '@/core/parser';
 import { manilaToday } from '@/core/money';
 import { shiftYm } from '@/lib/range';
 import Err from '@/app/error';
-import Dashboard from '@/app/(app)/page'; import Txs from '@/app/(app)/transactions/page'; import Edit from '@/app/(app)/transactions/[id]/page';
+import Dashboard from '@/app/(app)/(dash)/page'; import Txs from '@/app/(app)/transactions/(list)/page'; import Edit from '@/app/(app)/transactions/[id]/page';
 import Accounts from '@/app/(app)/accounts/page'; import Budgets from '@/app/(app)/budgets/page'; import Reports from '@/app/(app)/reports/page'; import Settings from '@/app/(app)/settings/page';
 import Assistant from '@/app/(app)/assistant/page'; import Login from '@/app/(auth)/login/page'; import { GET as exportCsv } from '@/app/(app)/export/route';
 let pass = 0, fail = 0; const T = (n: string, c: any, d?: any) => { c ? pass++ : (fail++, console.log('FAIL', n, d ?? '')); };
@@ -271,7 +271,7 @@ const count = (h: string, s: string) => h.split(s).length - 1;
   // loading skeletons
   const sk = await import('@/components/Skeleton');
   for (const [n, C] of Object.entries(sk) as [string, any][]) { const k = renderToStaticMarkup(React.createElement(C)); T(`skeleton ${n}: busy region with an accessible label and no real data`, k.includes('data-skeleton') && k.includes('aria-busy="true"') && k.includes('role="status"') && /class="sr">Loading/.test(k) && !/₱\d|Total balance/.test(k), k.slice(0, 120)); }
-  for (const r of ['', 'transactions', 'accounts', 'budgets', 'reports', 'assistant', 'settings', 'security', 'transactions/[id]']) { const L = (await import(`@/app/(app)/${r ? r + '/' : ''}loading`)).default; T(`loading.tsx exists for /${r}`, typeof L === 'function' && renderToStaticMarkup(React.createElement(L)).includes('data-skeleton')); }
+  for (const r of ['(dash)', 'transactions/(list)', 'accounts', 'budgets', 'reports', 'assistant', 'settings', 'security']) { const L = (await import(`@/app/(app)/${r}/loading`)).default; T(`loading.tsx exists for ${r}`, typeof L === 'function' && renderToStaticMarkup(React.createElement(L)).includes('data-skeleton')); }
   }
   // ---- isolation sanity of the stand-in itself
   login('a@x.com'); T('A still sees exactly its own rows', rows(A_ID).length === rows().length && !rows().some((t: any) => t.user_id !== A_ID));
