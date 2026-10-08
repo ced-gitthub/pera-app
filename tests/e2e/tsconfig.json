@@ -1,0 +1,2 @@
+{"compilerOptions":{"jsx":"react-jsx","module":"commonjs","target":"es2022","esModuleInterop":true,"allowImportingTsExtensions":true,
+ "paths":{"@/*":["../../src/*"],"next/navigation":["./mocks/next-navigation.tsx"],"next/cache":["./mocks/next-cache.ts"],"next/headers":["./mocks/next-headers.ts"],"next/link":["./mocks/next-link.tsx"],"@supabase/ssr":["./mocks/supabase-ssr.ts"]}}}
