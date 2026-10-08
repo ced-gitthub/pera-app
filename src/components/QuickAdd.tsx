@@ -1,20 +1,23 @@
 'use client';
-import { useRef, useState } from 'react';
+import { useRef, useState, type CSSProperties } from 'react';
 import { useRouter } from 'next/navigation';
 import { parseInput, parseSegment, type Parsed, type Item } from '@/core/parser';
 import { formatMinor, manilaToday } from '@/core/money';
 import { saveItems, parseServer, runCommand, restoreTx } from '@/app/actions';
+import { cheer } from '@/lib/vibe';
 type Cat = { name: string; type: 'income' | 'expense' };
 const CMD = /^(delete|remove|undo)\b.*\b(last|latest|previous)\b|\b(change|set|make|move)\b.*\b(last|latest)\b.*\bto\b/i;
+const EG = ['lunch 150 gcash', 'grocery 800 cash', 'salary 25000 bpi', 'coffee 120'];
+const BITS = Array.from({ length: 16 }, (_, i) => { const a = (i / 16) * Math.PI * 2, r = 70 + (i % 4) * 22; return { x: Math.round(Math.cos(a) * r), y: Math.round(Math.sin(a) * r - 30), r: (i * 47) % 360, c: ['#5b35e8', '#ffc53d', '#0f8a5c', '#d6324a'][i % 4] }; });
 const line = (i: Item) => `${i.type === 'income' ? 'Income' : 'Expense'} — ${i.category} — ${formatMinor(i.amount_minor)}${i.description ? ` (${i.description})` : ''} · ${i.date}`;
 export default function QuickAdd({ accounts, categories, aiEnabled }: { accounts: string[]; categories: Cat[]; aiEnabled: boolean }) {
   const [text, setText] = useState(''), [busy, setBusy] = useState(false), [pend, setPend] = useState<Parsed[]>([]), [ready, setReady] = useState<Item[]>([]);
-  const [msgs, setMsgs] = useState<{ bad?: boolean; t: string }[]>([]), [undo, setUndo] = useState<Record<string, unknown> | null>(null), [pick, setPick] = useState<Record<number, string>>({});
+  const [msgs, setMsgs] = useState<{ bad?: boolean; ok?: boolean; t: string }[]>([]), [undo, setUndo] = useState<Record<string, unknown> | null>(null), [pick, setPick] = useState<Record<number, string>>({});
   const req = useRef({ id: '', key: '' }), router = useRouter();
   async function save(items: Item[]) {
     const key = JSON.stringify(items); if (req.current.key !== key) req.current = { id: crypto.randomUUID(), key }; // same payload on retry => same id => server ignores duplicates
     const r = await saveItems(req.current.id, items);
-    if (r.ok) { setMsgs([{ t: `Added ${items.length} transaction${items.length > 1 ? 's' : ''}:` }, ...items.map(i => ({ t: line(i) }))]); setText(''); setPend([]); setReady([]); req.current = { id: '', key: '' }; router.refresh(); }
+    if (r.ok) { setMsgs([{ ok: true, t: cheer(items.length, items[0].category) }, ...items.map(i => ({ t: line(i) }))]); setText(''); setPend([]); setReady([]); req.current = { id: '', key: '' }; router.refresh(); }
     else { setReady(items); setMsgs([{ bad: true, t: `${r.error}. Your input is kept; press "Retry save".` }]); }
   }
   async function submit() {
@@ -36,11 +39,12 @@ export default function QuickAdd({ accounts, categories, aiEnabled }: { accounts
   }
   const c = () => ({ today: manilaToday(), accounts });
   return (
-    <section className="card hero" aria-label="Quick add">
-      <h1 className="text-2xl font-semibold mb-2">Tell me what happened</h1>
-      <div className="row"><input className="inp flex-1 text-xl" value={text} onChange={e => setText(e.target.value)} onKeyDown={e => e.key === 'Enter' && submit()} placeholder="food 120, grocery 29 · income 12000 · coffee 150 at Starbucks" aria-label="Transaction" maxLength={500} />
+    <section className="card log" aria-label="Quick add">
+      <h1 className="text-2xl font-semibold mb-2">What did you spend or earn?</h1>
+      <div className="row"><input className="inp flex-1 text-xl" value={text} onChange={e => setText(e.target.value)} onKeyDown={e => e.key === 'Enter' && submit()} placeholder="Try: lunch 150 gcash" aria-label="Transaction" maxLength={500} />
         <button className="btn p" onClick={submit} disabled={busy}>{busy ? 'Working…' : 'Add'}</button></div>
-      {msgs.map((m, i) => <p key={i} className={m.bad ? 'flash bad mt-2' : 'mt-1'} role={m.bad ? 'alert' : undefined}>{m.t}</p>)}
+      {msgs.map((m, i) => m.ok ? <div key={i} className="cheer" role="status">🎉 {m.t}<div className="conf" aria-hidden="true">{BITS.map((b, k) => <i key={k} style={{ background: b.c, '--x': `${b.x}px`, '--y': `${b.y}px`, '--r': `${b.r}deg` } as CSSProperties} />)}</div></div> : <p key={i} className={m.bad ? 'flash bad mt-2' : 'm mt-1'} role={m.bad ? 'alert' : undefined}>{m.t}</p>)}
+      {!text && !pend.length && !busy && <div className="eg" aria-label="Examples">{EG.map(e => <button key={e} type="button" onClick={() => setText(e)}>{e}</button>)}</div>}
       {pend.map((p, i) => <div key={i} className="mt-3 p-3 rounded-xl" style={{ background: "var(--bg)", border: "1px solid var(--line)" }}>
         {p.kind === 'ask' && <><p>Not sure what “{p.label}” {formatMinor(p.amount_minor)} means. Received it or spent it?</p><div className="row">
           <button className="btn" onClick={() => resolve(i, parseSegment(p.raw, c(), 'income'))}>Received</button><button className="btn" onClick={() => resolve(i, parseSegment(p.raw, c(), 'expense'))}>Spent</button></div></>}
