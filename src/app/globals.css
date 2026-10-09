@@ -95,3 +95,29 @@ details.card summary{cursor:pointer;font-weight:700;min-height:44px;display:flex
 .gbtn:hover{background:#f7f8f8}
 .or{display:flex;align-items:center;gap:10px;margin:14px 0;color:var(--muted,#8a8f98);font-size:.8rem}
 .or::before,.or::after{content:"";flex:1;height:1px;background:currentColor;opacity:.25}
+
+/* tabs: title row, blocks, edit mode, customize */
+.tabhead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:6px 0 12px}
+.tabhead h1{font-size:24px;font-weight:800}
+.blocks{display:flex;flex-wrap:wrap;column-gap:12px}
+.blk{flex:1 1 100%;min-width:0}
+.blk.b-spendable,.blk.b-savings{flex:1 1 calc(50% - 6px)}
+.stat.tile{margin-bottom:16px}.stat.tile .big{font-size:clamp(18px,5vw,28px);font-weight:800;overflow-wrap:anywhere}
+@media(max-width:480px){.blk.b-spendable,.blk.b-savings{flex:1 1 100%}.stat.tile{display:block}}
+.tabroot:not(.editing) .edit-only{display:none!important}
+.tabroot.editing .view-only{display:none!important}
+.arow{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);min-width:0}.arow>span{min-width:0;overflow-wrap:anywhere}
+.acct{border-bottom:1px solid var(--line)}.acct .arow{border-bottom:0}.card>.arow:last-child,.card>.acct:last-of-type{border-bottom:0}
+.alias{font-weight:700;color:var(--ube)}
+.off-short .alias{display:none}.off-noacct .noacct{display:none}
+.tabroot[data-hn="5"] .hist tr:nth-child(n+6),.tabroot[data-hn="6"] .hist tr:nth-child(n+7),.tabroot[data-hn="10"] .hist tr:nth-child(n+11){display:none}
+.cust{border:2px solid var(--ube)}
+.cl{list-style:none;margin:0 0 14px;padding:0;display:grid;gap:6px}
+.cl li{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;min-height:48px;padding:4px 0;border-bottom:1px solid var(--line)}
+.sw{display:flex;align-items:center;gap:10px;font-weight:700;cursor:pointer;min-height:44px;min-width:0}.sw input,.chk input{width:22px;height:22px;accent-color:var(--ube);flex:none}
+.mv{display:flex;gap:6px}.mv .btn,.pm{min-width:44px;padding:0 10px}
+.fld{display:grid;gap:4px;font-size:13px;font-weight:700;color:var(--mute);min-width:0}
+.chk{display:flex;align-items:center;gap:8px;min-height:44px;font-weight:600}
+.money{display:flex;gap:6px;align-items:center}.money .inp{width:140px}
+.editf{display:grid;gap:10px;padding:12px 0}.editf.card{padding:20px}
+.curbal{font-size:18px;min-height:46px;display:flex;align-items:center}

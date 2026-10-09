@@ -1,9 +1,9 @@
 // In-memory stand-in for Supabase: mirrors the query API + RLS ownership + the main constraints/functions of the SQL. It tests APP code, NOT the real SQL.
 const crypto = require('crypto');
-const DEF = { transactions: { description: '', notes: '', transfer_account_id: null, category_id: null, import_hash: null, external_id: null, recurring_id: null, request_id: null, request_idx: null }, accounts: { account_type: 'cash', opening_balance_minor: 0 }, recurring_transactions: { run_count: 0, active: true, end_date: null, description: '' }, categories: {}, budgets: {}, profiles: {}, tx_trash: {} };
+const DEF = { transactions: { description: '', notes: '', transfer_account_id: null, category_id: null, import_hash: null, external_id: null, recurring_id: null, request_id: null, request_idx: null }, accounts: { account_type: 'cash', opening_balance_minor: 0, short_name: null, counts_as_savings: false, show_on_home: true, sort_order: 0 }, categories: { sort_order: 0 }, recurring_transactions: { run_count: 0, active: true, end_date: null, description: '' }, budgets: {}, profiles: {}, tx_trash: {} };
 const UNIQ = { transactions: [['user_id', 'request_id', 'request_idx'], ['user_id', 'import_hash'], ['user_id', 'external_id'], ['recurring_id', 'transaction_date']], accounts: [['user_id', 'name']], categories: [['user_id', 'name', 'type']], budgets: [['user_id', 'category_id', 'month', 'year']] };
 const MAXM = 99999999999;
-function db() { return { t: { accounts: [], categories: [], transactions: [], budgets: [], recurring_transactions: [], profiles: [], tx_trash: [] }, users: new Map(), cur: null, seq: 0, fail: false, failRpc: null, resets: [], resends: [], signouts: [], factors: [], aal2: new Set(), confirmEmail: false, rateLimit: false }; }
+function db() { return { t: { accounts: [], categories: [], transactions: [], budgets: [], recurring_transactions: [], profiles: [], tx_trash: [], user_settings: [] }, users: new Map(), cur: null, seq: 0, fail: false, failRpc: null, resets: [], resends: [], signouts: [], factors: [], aal2: new Set(), confirmEmail: false, rateLimit: false }; }
 const E = (message, code) => ({ message, code });
 function check(D, table, r) {
   const own = (tb, id) => D.t[tb].some(x => x.id === id && x.user_id === r.user_id);
@@ -16,6 +16,8 @@ function check(D, table, r) {
     for (const [k, tb] of [['account_id', 'accounts'], ['transfer_account_id', 'accounts'], ['category_id', 'categories']]) if (r[k] && !own(tb, r[k])) return E('foreign key violation on ' + k, '23503');
   }
   if (table === 'accounts' && (!(r.name?.length >= 1 && r.name.length <= 40) || Math.abs(r.opening_balance_minor) > MAXM)) return E('accounts check violated', '23514');
+  if (table === 'accounts' && r.short_name && D.t.accounts.some(x => x.id !== r.id && x.user_id === r.user_id && (x.short_name ?? '').toLowerCase() === r.short_name.toLowerCase())) return E('duplicate key value violates unique constraint "accounts_short_uq"', '23505');
+  if (table === 'accounts' && r.short_name != null && !(r.short_name.length >= 1 && r.short_name.length <= 12)) return E('accounts short_name check violated', '23514');
   if (table === 'budgets' && !(r.amount_minor >= 0 && r.amount_minor <= MAXM && r.month >= 1 && r.month <= 12)) return E('budgets check violated', '23514');
   return null;
 }
@@ -39,7 +41,7 @@ function builder(D, table) {
     if (D.fail && st.op !== 'select') return { data: null, error: E('simulated outage', '08006') };
     if (!D.cur) return { data: null, error: E('JWT expired', 'PGRST301') };
     const T = D.t[table], ok = k => k === D.cur, mine = r => r[ownerKey(table)] === D.cur, pass = r => mine(r) && st.f.every(f => f(r));
-    const out = rows => ({ data: st.ret ? rows.map(r => ({ ...r })) : null, error: null });
+    const out = rows => ({ data: st.ret ? (st.one ? ({ ...rows[0] } ?? null) : rows.map(r => ({ ...r }))) : null, error: null });
     if (st.op === 'select') {
       let rows = T.filter(pass); for (const [k, d] of [...st.ord].reverse()) rows.sort((a, b) => (a[k] < b[k] ? -d : a[k] > b[k] ? d : 0)); const count = rows.length;
       if (st.rng) rows = rows.slice(st.rng[0], st.rng[1] + 1); if (st.lim != null) rows = rows.slice(0, st.lim);
@@ -79,6 +81,7 @@ function rpc(D, name, a) {
   if (name === 'account_balances') return { data: D.t.accounts.filter(x => x.user_id === D.cur).map(x => ({ account_id: x.id, balance_minor: x.opening_balance_minor + mine.reduce((s, t) => s + (t.account_id === x.id ? (t.type === 'income' ? t.amount_minor : -t.amount_minor) : 0) + (t.transfer_account_id === x.id ? t.amount_minor : 0), 0) })), error: null };
   if (name === 'monthly_summary') { const o = {}; for (const t of mine.filter(t => t.type !== 'transfer' && t.transaction_date.startsWith(String(a.p_year)))) { const m = +t.transaction_date.slice(5, 7); o[m] ??= { month: m, income_minor: 0, expense_minor: 0 }; o[m][t.type + '_minor'] += t.amount_minor; } return { data: Object.values(o), error: null }; }
   if (name === 'account_spending') { const o = {}; for (const t of mine.filter(t => t.type === 'expense' && inR(t))) o[t.account_id] = (o[t.account_id] ?? 0) + t.amount_minor; return { data: Object.entries(o).map(([account_id, total_minor]) => ({ account_id, total_minor })), error: null }; }
+  if (name === 'no_account_summary') { const r = mine.filter(t => !t.account_id); return { data: [{ balance_minor: r.reduce((n, t) => n + (t.type === 'income' ? t.amount_minor : t.type === 'expense' ? -t.amount_minor : 0), 0), n: r.length }], error: null }; }
   if (name === 'sum_expense') return { data: mine.filter(t => t.type === 'expense' && inR(t) && (!a.p_category || t.category_id === a.p_category) && (!a.p_account || t.account_id === a.p_account)).reduce((s, t) => s + t.amount_minor, 0), error: null };
   if (name === 'run_recurring') { let n = 0; const occ = (r, k) => ({ daily: () => addDays(r.start_date, k * r.interval_count), weekly: () => addDays(r.start_date, 7 * k * r.interval_count), monthly: () => addMonths(r.start_date, k * r.interval_count), yearly: () => addMonths(r.start_date, 12 * k * r.interval_count) })[r.frequency]();
     for (const r of D.t.recurring_transactions.filter(x => x.user_id === D.cur && x.active && x.next_run_date <= a.p_today)) { let k = r.run_count, d = occ(r, k); while (d <= a.p_today && (!r.end_date || d <= r.end_date)) { const row = mkRow(D, 'transactions', { user_id: r.user_id, account_id: r.account_id, category_id: r.category_id, type: r.type, amount_minor: r.amount_minor, description: r.description, transaction_date: d, recurring_id: r.id }); if (!uniqViolation(D, 'transactions', row)) { D.t.transactions.push(row); n++; } k++; d = occ(r, k); } r.run_count = k; r.next_run_date = d; r.active = !r.end_date || d <= r.end_date; } return { data: n, error: null }; }
@@ -98,8 +101,8 @@ function client(D) {
       signInWithOAuth: async ({ provider, options }) => { if (D.oauthFail) return { data: { url: null }, error: { message: 'Unsupported provider' } }; (D.oauth ??= []).push({ provider, options }); return { data: { url: 'https://proj.supabase.co/auth/v1/authorize?provider=' + provider + '&redirect_to=' + encodeURIComponent(options.redirectTo) }, error: null }; },
       signInWithPassword: async ({ email, password }) => { const u = [...D.users.values()].find(x => x.email === email && x.password === password); if (!u) return { error: { message: 'Invalid login credentials' } }; if (u.confirmed === false) return { error: { code: 'email_not_confirmed', message: 'Email not confirmed' } }; if (D.cur !== u.id) D.aal2.delete(u.id); D.cur = u.id; return { error: null }; },
       signUp: async ({ email, password, options }) => { if (!email || password.length < 6) return { error: { code: 'weak_password', message: 'Password should be at least 6 characters' } }; const u = { id: crypto.randomUUID(), email, password, confirmed: !D.confirmEmail }; D.users.set(u.id, u); if (!D.confirmEmail) D.cur = u.id; D.lastSignUp = options;
-        for (const [n, ty] of [...['Salary', 'Freelance', 'Business', 'Investment', 'Gift', 'Other Income'].map(n => [n, 'income']), ...['Food', 'Groceries', 'Transportation', 'Bills', 'Utilities', 'Rent', 'Shopping', 'Entertainment', 'Health', 'Education', 'Subscriptions', 'Travel', 'Personal', 'Other'].map(n => [n, 'expense'])]) D.t.categories.push(mkRow(D, 'categories', { user_id: u.id, name: n, type: ty }));
-        for (const [n, ty] of [['Cash', 'cash'], ['GCash', 'ewallet'], ['Maya', 'ewallet'], ['BPI', 'bank'], ['Credit Card', 'credit_card'], ['Savings', 'savings']]) D.t.accounts.push(mkRow(D, 'accounts', { user_id: u.id, name: n, account_type: ty }));
+        for (const [n, ty] of [...['Salary', 'Freelance', 'Business', 'Investment', 'Gift', 'Other Income'].map(n => [n, 'income']), ...['Food', 'Groceries', 'Transportation', 'Bills', 'Utilities', 'Rent', 'Shopping', 'Entertainment', 'Health', 'Education', 'Subscriptions', 'Travel', 'Personal', 'Other'].map(n => [n, 'expense'])]) D.t.categories.push(mkRow(D, 'categories', { user_id: u.id, name: n, type: ty, sort_order: (D.t.categories.filter(x => x.user_id === u.id && x.type === ty).length + 1) * 10 }));
+        for (const [n, ty] of [['Cash', 'cash'], ['GCash', 'ewallet'], ['Maya', 'ewallet'], ['BPI', 'bank'], ['Credit Card', 'credit_card'], ['Savings', 'savings']]) D.t.accounts.push(mkRow(D, 'accounts', { user_id: u.id, name: n, account_type: ty, counts_as_savings: n === 'Savings', sort_order: (D.t.accounts.filter(x => x.user_id === u.id).length + 1) * 10 }));
         D.t.profiles.push(mkRow(D, 'profiles', { id: u.id, email, name: options?.data?.name })); return { data: { session: D.confirmEmail ? null : { ok: 1 }, user: u }, error: null }; } } };
 }
 module.exports = { db, client };

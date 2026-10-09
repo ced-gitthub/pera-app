@@ -58,3 +58,33 @@ test('redact strips emails, JWTs and long tokens before logging', () => {
   const r = redact(`user a.b+c@mail.example.com token ${jwt} key sb_secret_abcDEF123 blob ${'A'.repeat(60)}`);
   assert.ok(!/@mail|eyJhbGci|sb_secret_abc|AAAAAAAAAA/.test(r), r);
 });
+
+import { normalizeLayout, normalizeTab, defaultLayout, defaultTab, move, toggle, visible, isDefaultTab, BLOCKS } from '../src/lib/layout.ts';
+import { homeNumbers } from '../src/lib/balances.ts';
+test('layout: defaults, bad input, unknown ids, new blocks, reorder', () => {
+  const d = defaultLayout(); assert.deepEqual(visible(d.home), ['accounts', 'spendable', 'savings', 'history']); assert.equal(d.home.n, 6); assert.deepEqual(visible(d.reports), ['period', 'categories', 'byaccount', 'monthly']); assert.equal(d.home.on.period, false); assert.equal(d.home.on.categories, false); assert.equal(d.home.on.budgets, false);
+  for (const junk of [null, undefined, 5, 'x', [], { home: 5 }, { home: { order: 'a', on: [] } }, { home: { order: [1, {}, null], on: { accounts: 'yes' }, n: 7 } }]) assert.deepEqual(normalizeLayout(junk), d, JSON.stringify(junk));
+  const l = normalizeTab('home', { order: ['history', 'zzz', 'accounts', 'history'], on: { savings: false, zzz: true }, n: 20 });
+  assert.deepEqual(l.order, ['history', 'accounts', 'spendable', 'savings', 'period', 'categories', 'budgets']); assert.equal(l.on.savings, false); assert.equal(l.on.accounts, true); assert.equal('zzz' in l.on, false); assert.equal(l.n, 20);
+  assert.deepEqual(visible(l), ['history', 'accounts', 'spendable']);
+  assert.equal(normalizeTab('home', { n: 6 }).n, 6); assert.equal(normalizeTab('home', { n: 5 }).n, 5); assert.equal(normalizeTab('home', { n: 8 }).n, 6);
+  assert.deepEqual(move(d.home, 'accounts', 1).order.slice(0, 2), ['spendable', 'accounts']); assert.equal(move(d.home, 'accounts', -1), d.home); assert.equal(move(d.home, 'nope', 1), d.home);
+  assert.equal(toggle(d.home, 'savings').on.savings, false); assert.equal(toggle(d.home, 'nope'), d.home);
+  assert.equal(isDefaultTab('home', d.home), true); assert.equal(isDefaultTab('home', toggle(d.home, 'savings')), false);
+  assert.deepEqual(normalizeTab('accounts', { order: ['noacct', 'short'] }).order, ['short', 'noacct'], 'display options are not reorderable');
+  assert.ok(JSON.stringify(normalizeLayout(defaultLayout())).length < 2000);
+  const old = { home: { order: ['accounts', 'history'], on: { accounts: true, history: false } } }; const n = normalizeLayout(old); assert.equal(n.home.on.history, false); assert.equal(n.home.order.length, BLOCKS.home.length, 'blocks added after saving appear at the end'); assert.equal(n.home.on.spendable, true);
+  assert.deepEqual(normalizeTab('home', defaultTab('home')), d.home);
+});
+test('home numbers: integer centavos, savings excluded, nothing depends on layout', () => {
+  const accts = [{ id: 'a', counts_as_savings: false }, { id: 'b', counts_as_savings: true }, { id: 'c', counts_as_savings: false }], bal: Record<string, number> = { a: 150050, b: 1000010, c: -30 };
+  const n = homeNumbers(accts, id => bal[id], 7); assert.deepEqual(n, { total: 150050 + 1000010 - 30 + 7, savings: 1000010, spendable: 150050 - 30 + 7 }); assert.equal(n.total, n.spendable + n.savings);
+  assert.deepEqual(homeNumbers([], () => 0, 0), { total: 0, savings: 0, spendable: 0 });
+  let s = 0; const many = Array.from({ length: 1000 }, (_, i) => ({ id: String(i), counts_as_savings: i % 3 === 0 })); for (let i = 0; i < 1000; i++) s += 10; assert.equal(homeNumbers(many, () => 10, 0).total, s);
+});
+test('validation: transfers and fees', () => {
+  const a2 = [{ id: 'a1', name: 'GCash' }, { id: 'a2', name: 'Maya' }, { id: 'a3', name: 'Cash' }], fee = { id: 'c9', name: 'Transfer Fee', type: 'expense' as const }, vv = { categories: [...cats, fee], accounts: a2 };
+  const t = { type: 'transfer', amount_minor: 30000, date: '2026-10-05', account: 'maya', to_account: 'GCash', category: 'ignored' }; const r = validateItems([t, { type: 'expense', amount_minor: 1500, category: 'Transfer Fee', date: '2026-10-05', account: 'Maya' }], vv);
+  assert.ok(r.ok && r.rows[0].type === 'transfer' && r.rows[0].account_id === 'a2' && r.rows[0].transfer_account_id === 'a1' && r.rows[0].category_id === null && r.rows[1].category_id === 'c9' && r.rows[1].account_id === 'a2');
+  for (const bad of [{ ...t, to_account: 'maya' }, { ...t, to_account: undefined }, { ...t, account: undefined }, { ...t, to_account: 'Nobody' }, { ...t, amount_minor: 0 }, { ...t, amount_minor: 1.5 }, { ...t, date: '2026-13-01' }]) assert.equal(validateItems([bad], vv).ok, false, JSON.stringify(bad));
+});

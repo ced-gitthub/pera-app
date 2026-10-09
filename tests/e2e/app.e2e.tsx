@@ -19,8 +19,13 @@ import Dashboard from '@/app/(app)/(dash)/page'; import Txs from '@/app/(app)/tr
 import Accounts from '@/app/(app)/accounts/page'; import Budgets from '@/app/(app)/budgets/page'; import Reports from '@/app/(app)/reports/page'; import Settings from '@/app/(app)/settings/page';
 import Assistant from '@/app/(app)/assistant/page'; import Login from '@/app/(auth)/login/page'; import { GET as exportCsv } from '@/app/(app)/export/route';
 let pass = 0, fail = 0; const T = (n: string, c: any, d?: any) => { c ? pass++ : (fail++, console.log('FAIL', n, d ?? '')); };
-async function expand(n: any): Promise<any> { if (Array.isArray(n)) return Promise.all(n.map(expand)); if (!n || typeof n !== 'object' || !n.type) return n;
-  if (typeof n.type === 'function' && n.type.constructor.name === 'AsyncFunction') return expand(await n.type(n.props)); if (n.props?.children !== undefined) return { ...n, props: { ...n.props, children: await expand(n.props.children) } }; return n; }
+// Stand-in for the React server renderer: resolves async server components, including ones passed through props (e.g. `before={<Quick />}` into a client component).
+async function expand(n: any): Promise<any> {
+  if (Array.isArray(n)) return Promise.all(n.map(expand)); if (!n || typeof n !== 'object') return n;
+  if (!n.$$typeof) { if (Object.getPrototypeOf(n) !== Object.prototype) return n; const o: any = {}; for (const k in n) o[k] = await expand(n[k]); return o; }
+  if (typeof n.type === 'function' && n.type.constructor.name === 'AsyncFunction') return expand(await n.type(n.props));
+  const props: any = { ...n.props }; for (const k in props) if (props[k] && typeof props[k] === 'object') props[k] = await expand(props[k]); return { ...n, props };
+}
 const html = async (el: any) => renderToStaticMarkup(await expand(await el));
 const page = (P: any, sp: any = {}, params?: any) => html(P({ searchParams: Promise.resolve(sp), params: Promise.resolve(params) }));
 const red = async (fn: () => any) => { try { await fn(); return '(no redirect)'; } catch (e: any) { if (e.url) return decodeURIComponent(e.url) as string; throw e; } };
@@ -44,7 +49,8 @@ const count = (h: string, s: string) => h.split(s).length - 1;
   T('login page renders', (await page(Login)).includes('Log in'));
   // ---- spec dataset
   const r1 = await add('salary 25000, freelance 7500, gift 2000, food 1250, groceries 2500, transport 850, electricity 2000, shopping 3250, entertainment 900'); T('dataset saved', r1.ok && (r1 as any).n === 9, r1);
-  let h = await page(Dashboard); T('dashboard 34,500 / 10,750 / 23,750', ['₱34,500.00', '₱10,750.00', '₱23,750.00'].every(s => h.includes(s)), h.match(/₱[\d,.]+/g)?.slice(0, 6));
+  let h = await page(Dashboard); T('home: total 23,750 and spendable 23,750; Income/Expenses/Net are off by default', h.includes('Total balance') && count(h, '₱23,750.00') >= 3 && !h.includes('>Income<') && !h.includes('Where your money went'), h.match(/₱[\d,.]+/g)?.slice(0, 6));
+  h = await page(Reports); T('reports: 34,500 / 10,750 / 23,750', ['₱34,500.00', '₱10,750.00', '₱23,750.00'].every(s => h.includes(s)));
   T('dashboard category bars', h.includes('Shopping') && h.includes('₱3,250.00')); h = await page(Reports); T('reports totals + YTD', h.includes('₱34,500.00') && h.includes('Year to date') && h.includes('₱23,750.00'));
   // ---- idempotency / failure honesty
   const id1 = uid(), its = parseInput('food 120, grocery 29, transport 80', { today, accounts: names() }).filter(i => i.kind === 'ok'), before = rows().length;
@@ -60,12 +66,12 @@ const count = (h: string, s: string) => h.split(s).length - 1;
   T('edit page renders', (await page(Edit, {}, { id: food.id })).includes('Edit transaction'));
   T('edit ok', (await edit({ amount: '1,300.50', category_id: cat('Groceries'), account_id: acct('GCash'), description: 'edited', notes: 'n' })) === '/transactions?ok=Saved');
   const e = rows().find((t: any) => t.id === food.id); T('edit persisted', e.amount_minor === 130050 && e.account_id === acct('GCash') && e.description === 'edited' && e.category_id === cat('Groceries'));
-  h = await page(Dashboard); T('dashboard after edit (10,800.50 / 23,699.50)', h.includes('₱10,800.50') && h.includes('₱23,699.50'));
+  h = await page(Reports); T('reports after edit (10,800.50 / 23,699.50)', h.includes('₱10,800.50') && h.includes('₱23,699.50'));
   for (const [n, o] of [['category/type mismatch', { category_id: cat('Salary') }], ['bad amount', { amount: '12abc' }], ['negative', { amount: '-5' }], ['zero', { amount: '0' }], ['bad date', { date: '2026-13-40' }], ['foreign account', { account_id: 'nope' }]] as any) T('edit rejects ' + n, (await edit(o)).includes('err='));
-  T('edit income flips totals', (await edit({ type: 'income', category_id: cat('Gift', 'income'), amount: '1250' })) === '/transactions?ok=Saved' && (await page(Dashboard)).includes('₱35,750.00'));
-  await edit({ type: 'expense', category_id: cat('Food'), account_id: acct('Cash') }); h = await page(Dashboard); T('restored to 34,500 / 10,750', h.includes('₱34,500.00') && h.includes('₱10,750.00') && h.includes('₱23,750.00'));
-  const del = await A.deleteTx(food.id); T('delete ok', del.ok && !rows().some((t: any) => t.id === food.id)); h = await page(Dashboard); T('delete updates totals', h.includes('₱9,500.00') && h.includes('₱25,000.00'));
-  T('undo restores', (await A.restoreTx((del as any).row)).ok && (await page(Dashboard)).includes('₱10,750.00')); T('undo twice is harmless', (await A.restoreTx((del as any).row)).ok && rows().filter((t: any) => t.id === food.id).length === 1);
+  T('edit income flips totals', (await edit({ type: 'income', category_id: cat('Gift', 'income'), amount: '1250' })) === '/transactions?ok=Saved' && (await page(Reports)).includes('₱35,750.00'));
+  await edit({ type: 'expense', category_id: cat('Food'), account_id: acct('Cash') }); h = await page(Reports); T('restored to 34,500 / 10,750', h.includes('₱34,500.00') && h.includes('₱10,750.00') && h.includes('₱23,750.00'));
+  const del = await A.deleteTx(food.id); T('delete ok', del.ok && !rows().some((t: any) => t.id === food.id)); h = await page(Reports); T('delete updates totals', h.includes('₱9,500.00') && h.includes('₱25,000.00'));
+  T('undo restores', (await A.restoreTx((del as any).row)).ok && (await page(Reports)).includes('₱10,750.00')); T('undo twice is harmless', (await A.restoreTx((del as any).row)).ok && rows().filter((t: any) => t.id === food.id).length === 1);
   const n0 = rows().length; await A.duplicateTx(food.id); T('duplicate', rows().length === n0 + 1); const dup = rows().find((t: any) => t.id !== food.id && t.amount_minor === 125000); await A.deleteTx(dup.id);
   // ---- commands
   const latest = () => [...rows()].sort((a: any, b: any) => (a.created_at < b.created_at ? 1 : -1))[0];
@@ -92,7 +98,7 @@ const count = (h: string, s: string) => h.split(s).length - 1;
   T('budget 62.5% / ₱3,000.00 remaining', h.includes('62.5%') && h.includes('₱3,000.00 remaining'), h.match(/₱[\d,.]+ spent[^<]*/)?.[0]);
   await add('food 3000'); h = await page(Budgets); T('budget 100% / ₱0.00', h.includes('100%') && h.includes('₱0.00 remaining') && h.includes('close to the limit'));
   await add('food 1000'); h = await page(Budgets); T('budget 112.5% / -₱1,000.00', h.includes('112.5%') && h.includes('-₱1,000.00 remaining') && h.includes('over budget'));
-  T('future month renders', (await page(Budgets, { ym: '2027-03' })).includes('Budgets · 2027-03')); T('bad ym falls back', (await page(Budgets, { ym: "x'" })).includes('Budgets · ' + today.slice(0, 7)));
+  T('future month renders', (await page(Budgets, { ym: '2027-03' })).includes('>2027-03<')); T('bad ym falls back', (await page(Budgets, { ym: "x'" })).includes('>' + today.slice(0, 7) + '<'));
   T('invalid budget rejected', (await red(() => A.setBudget(fd({ ym: today.slice(0, 7), category_id: cat('Food'), amount: 'abc' })))).includes('err=')); T('budget remove', (await red(() => A.setBudget(fd({ ym: today.slice(0, 7), category_id: cat('Food'), amount: '' })))).includes('ok=') && !(await page(Budgets)).includes('112.5%'));
   await add('coffee 85 from gcash'); const ask = async (q: string) => (await A.askAssistant(q)).answer;
   T('ask total', (await ask('How much did I spend this month?')).includes('₱9,085.00')); T('ask food', (await ask('How much did I spend on food?')).includes('₱9,085.00')); T('ask GCash', (await ask('How much did I spend through GCash?')).includes('₱85.00'));
@@ -104,7 +110,7 @@ const count = (h: string, s: string) => h.split(s).length - 1;
   await su('c@x.com'); const C_ID = me();
   await red(() => A.updateAccount(fd({ id: acct('GCash'), name: 'GCash', type: 'ewallet', opening: '10000' }))); await red(() => A.updateAccount(fd({ id: acct('Cash'), name: 'Cash', type: 'cash', opening: '5000' })));
   T('transfer ok', (await red(() => A.transfer(fd({ from: acct('GCash'), to: acct('Cash'), amount: '2000', date: today })))).includes('ok=')); h = await page(Accounts);
-  T('GCash 8,000 / Cash 7,000 / total 15,000', ['₱8,000.00', '₱7,000.00', 'total ₱15,000.00'].every(s => h.includes(s)), h.match(/total ₱[\d,.]+/)?.[0]);
+  T('GCash 8,000 / Cash 7,000 / total 15,000', ['₱8,000.00', '₱7,000.00', 'Total', '₱15,000.00'].every(s => h.includes(s)), h.match(/₱[\d,.]+/g));
   h = await page(Dashboard); T('transfer is not income/expense; balance 15,000', h.includes('₱15,000.00') && count(h, '₱0.00') >= 3);
   T('same-account transfer refused', (await red(() => A.transfer(fd({ from: acct('Cash'), to: acct('Cash'), amount: '5', date: today })))).includes('err='));
   T('delete account in use refused', (await red(() => A.deleteAccount(fd({ id: acct('GCash') })))).includes('err=')); T('delete unused account', (await red(() => A.deleteAccount(fd({ id: acct('Maya') })))).includes('ok='));
@@ -341,6 +347,104 @@ const count = (h: string, s: string) => h.split(s).length - 1;
     T('google: callback success lands on the dashboard, no email-confirm banner', await (async () => { D.recoveryCodes = new Map([['g1', [...D.users.values()].find((u: any) => u.email === 'a@x.com').id]]); const r = await callback(new NextRequest('https://pera.example/auth/callback?code=g1&next=/&oauth=1')); const l = new URL(r.headers.get('location')!); return l.pathname === '/' && !l.search && D.cur !== null; })());
     T('google: failed callback returns to /login with a plain message', await (async () => { D.cur = null; const r = await callback(new NextRequest('https://pera.example/auth/callback?code=bad&next=/&oauth=1')); const l = new URL(r.headers.get('location')!); return l.pathname === '/login' && decodeURIComponent(l.search).includes('Google sign-in did not work'); })());
     for (const [n, P] of [['login', Login], ['register', (await import('@/app/(auth)/register/page')).default]] as [string, any][]) { const h = renderToStaticMarkup(await P({ searchParams: Promise.resolve({}) })); T(`google: ${n} page offers the Google button above the email form`, h.includes('Continue with Google') && h.indexOf('Continue with Google') < h.indexOf('name="email"')); }
+  }
+  // ---- Home / layout / accounts / fees / card payments (user F, then G for isolation)
+  {
+    await red(() => A.signUp(fd({ email: 'f@x.com', password: 'secret12', name: 'Fay' }))); const F_ID = me();
+    const myAccts = () => D.t.accounts.filter((a: any) => a.user_id === me()), bal = (n: string) => { const a = myAccts().find((x: any) => x.name === n); return a.opening_balance_minor + rows().reduce((s: number, t: any) => s + (t.account_id === a.id ? (t.type === 'income' ? t.amount_minor : -t.amount_minor) : 0) + (t.transfer_account_id === a.id ? t.amount_minor : 0), 0); };
+    const aliases = () => Object.fromEntries(myAccts().filter((a: any) => a.short_name).map((a: any) => [a.short_name.toLowerCase(), a.name])), balances = () => Object.fromEntries(myAccts().map((a: any) => [a.name, bal(a.name)]));
+    const addF = async (text: string) => { const items = parseInput(text, { today, accounts: names(), aliases: aliases(), balances: balances() }); const bad = items.filter(i => i.kind !== 'ok'); if (bad.length) return { ok: false as const, error: JSON.stringify(bad) }; return A.saveItems(uid(), items.filter(i => i.kind === 'ok')); };
+    T('new users: Savings is flagged, others are not; accounts are ordered', myAccts().filter((a: any) => a.counts_as_savings).map((a: any) => a.name).join() === 'Savings' && myAccts().every((a: any) => a.show_on_home) && new Set(myAccts().map((a: any) => a.sort_order)).size === 6);
+    // accounts: create with short name + flags
+    const mk = (o: Record<string, string>) => red(() => A.createAccount(fd({ name: 'Maya Credit Card', type: 'credit_card', opening: '-5000', short: 'cc', home: 'on', ...o })));
+    T('create account with short name, negative starting balance and flags', (await mk({})) === '/accounts?ok=Account created' && (() => { const a = myAccts().find((x: any) => x.name === 'Maya Credit Card'); return a.short_name === 'cc' && a.opening_balance_minor === -500000 && a.show_on_home === true && a.counts_as_savings === false && a.sort_order > 60; })());
+    T('short name must be unique (case-insensitive) across accounts', (await mk({ name: 'Other Card', short: 'CC' })).includes('already the short name') && !myAccts().some((a: any) => a.name === 'Other Card'));
+    T('short name may not equal another account name', (await mk({ name: 'X2', short: 'gcash' })).includes('is the name of another account'));
+    T('short name format is checked', (await mk({ name: 'X3', short: 'a/b' })).includes('1 to 12 letters'));
+    const ccId = acct('Maya Credit Card');
+    // only changed fields are written
+    { const up = (o: Record<string, string>) => red(() => A.updateAccount(fd({ id: ccId, name: 'Maya Credit Card', type: 'credit_card', opening: '-5000', short: 'cc', home: 'on', ...o })));
+      T('save with nothing changed => "No changes"', (await up({})) === '/accounts?ok=No changes');
+      const before = { ...myAccts().find((x: any) => x.id === ccId) }; await up({ short: 'mcc' }); const after = myAccts().find((x: any) => x.id === ccId);
+      T('changing one field changes only that field', after.short_name === 'mcc' && after.name === before.name && after.opening_balance_minor === before.opening_balance_minor && after.show_on_home === before.show_on_home && after.counts_as_savings === before.counts_as_savings && after.updated_at !== before.updated_at);
+      await up({ short: 'cc' }); T('clearing + checkbox flags work', (await up({ savings: 'on', home: '' })) === '/accounts?ok=Account saved' && (() => { const a = myAccts().find((x: any) => x.id === ccId); return a.counts_as_savings === true && a.show_on_home === false; })()); await up({ home: 'on' }); }
+    // quick add: matching, transfers, fees
+    const n0 = rows().length;
+    T('"lunch 120 maya credit card" picks Maya Credit Card, not Maya', (await addF('lunch 120 maya credit card')).ok && rows().at(-1).account_id === ccId && rows().at(-1).amount_minor === 12000);
+    T('"transfer 300 from maya to gcash. 15 fee" => transfer + separate fee expense from the sender', await (async () => { const r = await addF('transfer 300 from maya to gcash. 15 fee'); const t = rows().slice(-2); return r.ok && (r as any).n === 2 && t[0].type === 'transfer' && t[0].amount_minor === 30000 && t[0].account_id === acct('Maya') && t[0].transfer_account_id === acct('GCash') && t[1].type === 'expense' && t[1].amount_minor === 1500 && t[1].account_id === acct('Maya') && D.t.categories.find((c: any) => c.id === t[1].category_id).name === 'Transfer Fee' && t[1].description === ''; })(), JSON.stringify(rows().slice(-2)));
+    T('the fee category was created before "Other", still editable', (() => { const cs = D.t.categories.filter((c: any) => c.user_id === me() && c.type === 'expense').sort((a: any, b: any) => a.sort_order - b.sort_order); return cs.at(-1).name === 'Other' && cs.at(-2).name === 'Transfer Fee'; })());
+    T('"atm fee 18 maya" => ATM Fee, no description', await (async () => { await addF('atm fee 18 maya'); const t = rows().at(-1); return D.t.categories.find((c: any) => c.id === t.category_id).name === 'ATM Fee' && t.amount_minor === 1800 && t.account_id === acct('Maya') && t.description === ''; })());
+    T('"late fee 500 cc" => Late Fee on the card (by its short name)', await (async () => { await addF('late fee 500 cc'); const t = rows().at(-1); return D.t.categories.find((c: any) => c.id === t.category_id).name === 'Late Fee' && t.account_id === ccId && t.amount_minor === 50000; })());
+    T('fee categories are created once', (await addF('atm fee 20 gcash')).ok && D.t.categories.filter((c: any) => c.user_id === me() && c.name === 'ATM Fee').length === 1 && D.t.categories.filter((c: any) => c.user_id === me() && c.type === 'expense').sort((a: any, b: any) => a.sort_order - b.sort_order).at(-1).name === 'Other');
+    T('a made-up fee name is NOT auto-created', !(await A.saveItems(uid(), [{ type: 'expense', amount_minor: 100, category: 'Hacker Fee', date: today, account: 'Cash' }])).ok && !D.t.categories.some((c: any) => c.name === 'Hacker Fee'));
+    T('a fee must be > 0', parseInput('transfer 300 from maya to gcash. 0 fee', { today, accounts: names(), aliases: aliases() })[0].kind === 'error');
+    T('transfers need two different accounts server-side', !(await A.saveItems(uid(), [{ type: 'transfer', amount_minor: 100, date: today, account: 'Maya', to_account: 'Maya' }])).ok && !(await A.saveItems(uid(), [{ type: 'transfer', amount_minor: 100, date: today, account: 'Maya' }])).ok);
+    // pay card
+    { const owed = -bal('Maya Credit Card'); T('card owes money (opening -5,000 + 120 + 500 late fee)', owed === 500000 + 12000 + 50000, owed);
+      const r = await addF('pay cc from maya'); const t = rows().at(-1); T('"pay cc from maya" pays the full amount owed', r.ok && t.type === 'transfer' && t.amount_minor === owed && t.account_id === acct('Maya') && t.transfer_account_id === ccId && bal('Maya Credit Card') === 0);
+      T('"pay cc" with nothing owed is explained, not saved', parseInput('pay cc from maya', { today, accounts: names(), aliases: aliases(), balances: balances() })[0].kind === 'error');
+      T('"pay cc 5467 from maya" is a Maya -> card transfer of 5,467', await (async () => { await addF('pay cc 5467 from maya'); const t = rows().at(-1); return t.type === 'transfer' && t.amount_minor === 546700 && t.transfer_account_id === ccId; })()); }
+    T('entries saved by one call: nothing duplicated', rows().length > n0);
+    // Home: balances, spendable, savings, hide
+    const savId = acct('Savings'); await addF('salary 50000 savings'); await addF('salary 1000 cash');
+    const totalBal = myAccts().reduce((s: number, a: any) => s + bal(a.name), 0), savBal = bal('Savings') + (myAccts().find((a: any) => a.name === 'Maya Credit Card').counts_as_savings ? bal('Maya Credit Card') : 0);
+    h = await page(Dashboard); const fm = (m: number) => (m < 0 ? '-' : '') + '₱' + Math.trunc(Math.abs(m) / 100).toLocaleString('en-US') + '.' + String(Math.abs(m) % 100).padStart(2, '0');
+    T('home: Accounts card lists every account with its balance', ['Cash', 'GCash', 'Maya', 'BPI', 'Savings', 'Maya Credit Card'].every(n => h.includes(`<span>${n}</span>`)) && h.includes(fm(bal('Savings'))));
+    T('home: Spendable excludes savings-flagged accounts; Savings tile shows them', h.includes('Spendable balance') && h.includes('Savings (not included)') && h.includes(fm(totalBal - savBal)) && h.includes(fm(savBal)), [fm(totalBal - savBal), fm(savBal)]);
+    { const maya = acct('Maya'); const up = (o: any) => red(() => A.updateAccount(fd({ id: maya, name: 'Maya', type: 'ewallet', opening: '', short: '', ...o })));
+      const before = h; await up({}); await up({ home: '' }); h = await page(Dashboard);
+      T('hiding an account on Home hides only its row, never the totals', !h.includes('<span>Maya</span>') && h.includes(fm(totalBal - savBal)) && h.includes(fm(savBal)) && h.includes('Total balance'));
+      T('hidden-on-Home account is still listed on the Accounts tab', (await page(Accounts)).includes('hidden on Home'));
+      await up({ home: 'on' }); }
+    T('"No account" row only appears when such entries exist', !h.includes('No account') && await (async () => { D.t.transactions.push({ id: uid(), user_id: me(), type: 'expense', amount_minor: 2500, account_id: null, category_id: cat('Food'), transaction_date: today, description: 'x', notes: '', created_at: new Date().toISOString(), updated_at: new Date().toISOString(), request_id: null, request_idx: null, transfer_account_id: null, import_hash: null, external_id: null, recurring_id: null }); const hh = await page(Dashboard); return hh.includes('No account') && hh.includes(fm(totalBal - savBal - 2500)); })());
+    // card payments display
+    h = await page(Dashboard); T('transfer into a card account is shown as "Paid <card>" with from → to', h.includes('Paid Maya Credit Card') && h.includes('Card payment') && h.includes('Maya → Maya Credit Card'));
+    T('other transfers stay "Transfer"', h.includes('Transfer · Maya → GCash') && !h.includes('Paid GCash'));
+    // layout
+    { const L = async () => { const r = D.t.user_settings.find((x: any) => x.user_id === me()); return r?.layout; };
+      T('no settings row => defaults: History on, Income/Expenses/Net off', h.includes('>History<') && !h.includes('Where your money went') && !h.includes('>Expenses<'));
+      T('saveLayout stores only the tab asked for, normalised', (await A.saveLayout('home', { order: ['history', 'bogus', 'accounts'], on: { savings: false, bogus: true }, n: 10 })).ok && (await L()).home.order.join() === 'history,accounts,spendable,savings,period,categories,budgets' && (await L()).home.on.savings === false && (await L()).home.n === 10 && !('reports' in (await L())) === false);
+      h = await page(Dashboard); T('home follows the layout: Savings hidden, History first, 10 rows', !h.includes('Savings (not included)') && h.includes('Spendable balance') && h.indexOf('>History<') < h.indexOf('>Accounts<') && h.includes('data-hn="10"'));
+      T('hiding a block never changes the numbers', h.includes(fm(totalBal - savBal - 2500)) && h.includes('Total balance'));
+      T('bad layout input is ignored, not trusted', !(await A.saveLayout('nope', {})).ok && (await A.saveLayout('home', 'junk')).ok && (await L()).home.order.length === 7 && (await L()).home.n === 6);
+      await A.saveLayout('home', { order: ['history'], on: { period: true, categories: true } }); h = await page(Dashboard); T('Income/Expenses/Net and Spending by category can be switched on for Home', h.includes('>Income<') && h.includes('>Expenses<') && h.includes('Where your money went'));
+      await A.saveLayout('home', { order: [], on: Object.fromEntries(['accounts', 'spendable', 'savings', 'history', 'period', 'categories', 'budgets'].map(k => [k, false])) }); h = await page(Dashboard); T('all Home blocks hidden => hint with a Customize button', h.includes('Everything on Home is hidden') && h.includes('>Customize<'));
+      await A.saveLayout('home', null as any); T('reset restores the default layout', (await L()).home.on.accounts === true && (await L()).home.on.period === false && (await L()).home.n === 6 && (await L()).home.order[0] === 'accounts');
+      await A.saveLayout('reports', { on: { monthly: false } }); h = await page(Reports); T('reports follows the layout (Monthly table off)', !h.includes('by month') && h.includes('Spending by category') && h.includes('Income'));
+      await A.saveLayout('transactions', { order: ['sort', 'search'], on: { amount: false, date: false } }); h = await page(Txs); T('transactions: filters hidden in Customize are not shown', !h.includes('Minimum amount') && !h.includes('From date') && h.includes('Search description') && h.indexOf('aria-label="Sort"') < h.indexOf('Search description'));
+      T('a hidden filter is not applied either', (await page(Txs, { min: '999999' })).includes('No matching') === false);
+      await A.saveLayout('transactions', null as any); h = await page(Txs, { min: '1000', max: '1000' }); T('amount range filter finds the 1,000 salary only', h.includes('Salary') && !h.includes('Lunch') && h.includes('1 total'), h.match(/\d+ total/)?.[0]);
+      await A.saveLayout('accounts', { on: { short: false } }); h = await page(Accounts); T('accounts: short names can be hidden', h.includes('off-short') && !h.includes('off-noacct'));
+      // second user's layout is separate; RLS stands in for "cannot read another user's row"
+      await A.saveLayout('home', { on: { accounts: false }, n: 20 });
+      await red(() => A.signUp(fd({ email: 'g@x.com', password: 'secret12', name: 'Gus' }))); const G_ID = me();
+      h = await page(Dashboard); T('user G starts with the defaults, not F\'s layout', h.includes('<span>Cash</span>') && h.includes('data-hn="6"'));
+      await A.saveLayout('home', { on: { savings: false } });
+      T('each user has their own row', D.t.user_settings.filter((x: any) => x.user_id === G_ID).length === 1 && D.t.user_settings.filter((x: any) => x.user_id === F_ID).length === 1);
+      T('RLS: G cannot read F\'s settings row', (await (await import('@/lib/data')).ctx().then(c => c.sb.from('user_settings').select('layout').eq('user_id', F_ID))).data.length === 0);
+      T('RLS: G cannot write F\'s settings row', await (async () => { const c = await (await import('@/lib/data')).ctx(); const r = await c.sb.from('user_settings').upsert({ user_id: F_ID, layout: {} }, { onConflict: 'user_id' }); return !!r.error; })());
+      login('f@x.com'); h = await page(Dashboard); T('F still has F\'s layout (Accounts hidden, 20 rows)', !h.includes('<span>Cash</span>') && h.includes('data-hn="20"') && h.includes('Savings (not included)')); }
+    // budgets edit mode, categories, ordering
+    { const b0 = D.t.budgets.length, foodId = cat('Food'); const sv = (o: Record<string, string>) => red(() => A.saveBudgetRow(fd({ ym: today.slice(0, 7), category_id: foodId, name: 'Food', amount: '', ...o })));
+      T('budget row: nothing changed => "No changes"', (await sv({})).endsWith('ok=No changes'));
+      T('budget row: sets an amount only', (await sv({ amount: '3000' })).endsWith('ok=Saved') && D.t.budgets.length === b0 + 1 && D.t.categories.find((c: any) => c.id === foodId).name === 'Food');
+      T('budget row: renames only the name when only it changed', (await sv({ amount: '3000', name: 'Food & Drinks' })).endsWith('ok=Saved') && D.t.categories.find((c: any) => c.id === foodId).name === 'Food & Drinks' && D.t.budgets.length === b0 + 1);
+      T('budget row: a duplicate name is refused', (await sv({ amount: '3000', name: 'Groceries' })).includes('err=')); await sv({ amount: '3000', name: 'Food' });
+      h = await page(Budgets); T('budgets page: edit controls exist but are edit-only', h.includes('edit-only') && h.includes('aria-label="Edit Food"') && h.includes('>Edit<'));
+      const order = () => D.t.categories.filter((c: any) => c.user_id === me() && c.type === 'expense').sort((a: any, b: any) => a.sort_order - b.sort_order).map((c: any) => c.name);
+      const o0 = order(), i = o0.indexOf('Groceries'); await red(() => A.moveCategory(cat('Groceries'), 'up')); T('move category up swaps neighbours', order()[i - 1] === 'Groceries' && order()[i] === o0[i - 1] && order().length === o0.length);
+      await red(() => A.moveCategory(cat('Groceries'), 'down')); T('move down restores', order().join() === o0.join());
+      T('Other stays last after adding a category', (await red(() => A.createCategory(fd({ name: 'Pets', type: 'expense', back: '/budgets' })))) === '/budgets?ok=Category added' && order().at(-1) === 'Other' && order().at(-2) === 'Pets');
+      T('a fee category in use cannot be deleted', (await red(() => A.deleteCategory(fd({ id: cat('Transfer Fee'), back: '/budgets' })))).includes('err=Cannot delete'));
+      await addF('cash out fee 25 gcash'); const co = rows().at(-1); T('Cash-out Fee was created on first use', D.t.categories.find((c: any) => c.id === co.category_id).name === 'Cash-out Fee' && co.account_id === acct('GCash'), co);
+      await A.deleteTx(co.id); T('an unused fee category can be edited away in Budgets', (await red(() => A.deleteCategory(fd({ id: co.category_id, back: '/budgets' })))) === '/budgets?ok=Category deleted'); }
+    // accounts order
+    { const order = () => myAccts().sort((a: any, b: any) => a.sort_order - b.sort_order).map((a: any) => a.name), o0 = order(); await red(() => A.moveAccount(acct('BPI'), 'up')); T('move account up', order().indexOf('BPI') === o0.indexOf('BPI') - 1); await red(() => A.moveAccount(acct('BPI'), 'down')); T('move account down restores', order().join() === o0.join());
+      T('first account cannot move up (no change)', (await red(() => A.moveAccount(myAccts().sort((a: any, b: any) => a.sort_order - b.sort_order)[0].id, 'up'))) === '/accounts?ok=Moved' && order().join() === o0.join()); }
+    h = await page(Accounts); T('accounts page: view rows, edit forms, Starting balance + current balance + ± button + short name + flags', ['Starting balance', 'Current balance', '±', 'Counts as savings', 'Show on Home', 'Short name', 'edit-only', 'view-only'].every(s => h.includes(s)));
+    h = await page(Txs); T('transactions: row actions are edit-only', h.includes('edit-only') && h.includes('>Edit<') && h.includes('>Customize<'));
+    await addF('dinner 400 bpi'); h = await page(Accounts); T('negative balances use the expense colour', h.includes('<span class="exp">-₱400.00</span>'));
+    login('a@x.com');
   }
   // ---- isolation sanity of the stand-in itself
   login('a@x.com'); T('A still sees exactly its own rows', rows(A_ID).length === rows().length && !rows().some((t: any) => t.user_id !== A_ID));

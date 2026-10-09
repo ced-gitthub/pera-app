@@ -108,3 +108,31 @@ test('CSV: malicious cells are neutralised and large files stay fast', () => {
   const t0 = Date.now(), r = fromCsv(H + rows); assert.equal(r.ok.length, 20000); assert.equal(new Set(r.ok.map(x => x.import_hash)).size, 20000); assert.ok(Date.now() - t0 < 3000, 'parsing 20k rows took ' + (Date.now() - t0) + 'ms');
   assert.equal(fromCsv(H + '"2026-10-01","expense","1,200.50","Food","multi\nline, ""quoted""",,Cash,').ok[0].amount_minor, 120050);
 });
+
+test('quick add: longest account first, short names, transfers, fees, dates', () => {
+  const accounts = ['Cash', 'GCash', 'Maya', 'Maya Credit Card', 'BPI', 'Savings'], c = { today: '2026-10-09', accounts, aliases: { cc: 'Maya Credit Card' }, balances: { 'Maya Credit Card': -546700, Maya: 1000000 } };
+  const g = (s: string) => parseInput(s, c).map(p => p.kind === 'error' ? 'error' : p.kind === 'ask' ? 'ask' : [p.type, p.amount_minor, p.category, p.description, p.date, p.account, p.to_account ?? ''].join('|'));
+  // accounts: longest name first, with or without from/in/with/via/using, and by short name
+  assert.deepEqual(g('lunch 120 maya credit card'), ['expense|12000|Food|Lunch|2026-10-09|Maya Credit Card|']); assert.deepEqual(g('lunch 120 maya'), ['expense|12000|Food|Lunch|2026-10-09|Maya|']);
+  assert.deepEqual(g('lunch 120 from maya credit card'), g('lunch 120 maya credit card')); assert.deepEqual(g('lunch 120 using cc'), g('lunch 120 maya credit card')); assert.equal((parseInput('food 50 cash', c)[0] as any).account, 'Cash'); assert.equal((parseInput('food 50 gcash', c)[0] as any).account, 'GCash');
+  // transfers and fees
+  const tf = '2026-10-09|Maya|GCash'; assert.deepEqual(g('transfer 300 from maya to gcash'), [`transfer|30000|||${tf}`]);
+  for (const s of ['transfer 300 from maya to gcash. 15 fee', 'transfer 300 from maya to gcash fee 15', 'transfer 300 from maya to gcash with 15 instapay fee', 'transfer 300 from maya to gcash 15 pesonet fee'])
+    assert.deepEqual(g(s), [`transfer|30000|||${tf}`, 'expense|1500|Transfer Fee||2026-10-09|Maya|'], s);
+  assert.equal(g('transfer 300 from maya to gcash. 0 fee')[0], 'error'); assert.equal(g('transfer 300 from maya to maya')[0], 'error'); assert.equal(g('transfer 300 to gcash')[0], 'error');
+  assert.deepEqual(g('pay cc 5467 from maya'), ['transfer|546700|||2026-10-09|Maya|Maya Credit Card']); assert.deepEqual(g('pay cc from maya'), ['transfer|546700|||2026-10-09|Maya|Maya Credit Card']);
+  assert.equal(g('pay cc 500')[0], 'error'); assert.equal(parseInput('pay cc from maya', { ...c, balances: {} })[0].kind, 'error'); assert.equal(g('paid cc 300 lunch')[0].startsWith('expense|30000|Food'), true);
+  // standalone fee categories
+  const fee = (s: string) => { const x = g(s)[0].split('|'); return [x[2], x[3], x[5]].join('|'); };
+  const F: [string, string][] = [['atm fee 18 maya', 'ATM Fee||Maya'], ['late fee 500 cc', 'Late Fee||Maya Credit Card'], ['cash in fee 10 gcash', 'Cash-in Fee||GCash'], ['cash out fee 25 gcash', 'Cash-out Fee||GCash'], ['withdrawal fee 25', 'Cash-out Fee||'], ['annual fee 1200 cc', 'Annual Fee||Maya Credit Card'], ['membership fee 99', 'Annual Fee||'], ['yearly fee 99', 'Annual Fee||'],
+    ['service fee 50', 'Service Fee||'], ['delivery fee 49', 'Service Fee||'], ['booking fee 30', 'Service Fee||'], ['fee 20', 'Service Fee||'], ['maintenance fee 100 bpi', 'Maintenance Fee||BPI'], ['overdraft fee 300', 'Overdraft Fee||'], ['forex fee 100 cc', 'Foreign Exchange Fee||Maya Credit Card'], ['currency fee 10', 'Foreign Exchange Fee||'],
+    ['instapay fee 15', 'Transfer Fee||'], ['pesonet fee 25', 'Transfer Fee||'], ['bank fee 10', 'Transfer Fee||'], ['remittance fee 80', 'Transfer Fee||'], ['overdue fee 80', 'Late Fee||'], ['penalty fee 80', 'Late Fee||']];
+  for (const [s, e] of F) assert.equal(fee(s), e, s);
+  // dates: only real words; numbers are never dates
+  const d = (s: string) => (parseInput(s, c)[0] as any).date;
+  for (const s of ['lunch 120 1/2', 'lunch 120 10/04', 'lunch 5000', '1/2 lunch 120', 'lunch 120 10/04/2026']) { assert.equal(d(s), '2026-10-09', s); assert.equal((parseInput(s, c)[0] as any).amount_minor, s.includes('5000') ? 500000 : 12000, s); }
+  assert.equal(d('grocery 800 oct 5'), '2026-10-05'); assert.equal(d('5 oct grocery 800'), '2026-10-05'); assert.equal(d('dec 25 gift 1500'), '2026-12-25'); assert.equal(d('lunch 100 yesterday'), '2026-10-08'); assert.equal(d('lunch 100 tomorrow'), '2026-10-10'); assert.equal((parseInput('lunch oct 5 2000', c)[0] as any).amount_minor, 200000);
+  assert.equal(parseInput('lunch 100 feb 30', c)[0].kind, 'error'); assert.equal((parseInput('spent 20 may', c)[0] as any).amount_minor, 2000);
+  // unchanged behaviour
+  assert.equal(parseInput('food 120', c)[0].kind, 'ok'); assert.equal(parseInput('SM 500', c)[0].kind, 'ask');
+});
