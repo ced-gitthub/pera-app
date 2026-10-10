@@ -10,7 +10,7 @@ const browser = await launch();
 const seed = await newCtx(browser); const sp = await seed.newPage();
 await signup(sp, EM, PW, 'Responsive QA');
 for (const t of ['lunch 150 gcash', 'salary 25000 bpi', 'grocery 800 cash', 'a very long description for a taxi ride to the airport 1234.56 gcash', 'netflix 549']) await add(sp, t);
-await sp.goto('/budgets'); { const f = sp.locator('form:has(b:has-text("Food"))').first(); await f.locator('input[name=amount]').fill('200'); await Promise.all([sp.waitForLoadState('networkidle'), f.locator('button:has-text("Save")').click()]); }
+await sp.goto('/budgets'); await sp.locator('button[aria-pressed="false"]:has-text("Edit")').first().click(); { const f = sp.locator('form[aria-label="Edit Food"]'); await f.locator('input[name=amount]').fill('200'); await Promise.all([sp.waitForLoadState('networkidle'), f.locator('button:has-text("Save")').click()]); }
 await sp.goto('/accounts'); { const f = sp.locator('form:has(button:has-text("Transfer"))'); await f.locator('input[name=amount]').fill('50'); const to = await f.locator('select[name=to] option').nth(1).getAttribute('value'); await f.locator('select[name=to]').selectOption(to); await Promise.all([sp.waitForLoadState('networkidle'), f.locator('button:has-text("Transfer")').click()]); }
 const state = await seed.storageState(); await seed.close();
 

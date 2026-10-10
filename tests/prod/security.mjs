@@ -117,7 +117,7 @@ await step('skeleton animation stops for people who prefer reduced motion', asyn
     await login(m, A, PW2); await m.goto('/'); await m.waitForSelector('text=Total balance'); await m.waitForTimeout(2500);
     await m.route('**/*', async route => { const h = route.request().headers(); if (h['rsc'] === '1' && !h['next-router-prefetch']) await new Promise(r => setTimeout(r, 3500)); await route.continue(); });
     await m.locator('nav.tabs a[href="/reports"]').click(); await m.locator('[data-skeleton]').first().waitFor({ state: 'visible', timeout: 2500 });
-    const tabs = await m.locator('nav.tabs').isVisible(), ov = await overflow(m); await m.waitForSelector('text=Category breakdown', { timeout: 15000 }); await m.unroute('**/*'); return tabs && ov <= 0 ? true : { tabs, ov }; });
+    const tabs = await m.locator('nav.tabs').isVisible(), ov = await overflow(m); await m.waitForSelector('text=Spending by category', { timeout: 15000 }); await m.unroute('**/*'); return tabs && ov <= 0 ? true : { tabs, ov }; });
   for (const r of ['/security', '/verify?email=someone@example.com', '/verify', '/login', '/register', '/forgot']) await step(`mobile 390px: ${r} fits the screen`, async () => { await m.goto(r.startsWith('/security') ? r : r); await m.waitForTimeout(400); const ov = await overflow(m); return ov <= 0 ? true : ov; });
   await step('mobile 390px: the 2FA setup (QR + key) fits the screen', async () => { await m.goto('/security'); await m.click('button:has-text("Set up two-step verification")'); await m.locator('code.key').waitFor({ timeout: 15000 }); const ov = await overflow(m); const qr = await m.locator('.qr').boundingBox(); await m.reload(); return ov <= 0 && qr && qr.width >= 150 ? true : { ov, qr }; });
   await Mb.close(); }
