@@ -11,14 +11,24 @@ Free-tier PHP money tracker. Next.js 15 + TypeScript + Tailwind 4, Supabase (pro
 - Don't ask the user to run anything locally. Do it, or say exactly what is blocked.
 
 ## Team (use subagents; keep the main thread short)
-- `explorer` (Haiku): find code, read CI/test results, check deploy status. Use first for any lookup.
-- `builder` (Sonnet): implement + write tests.
-- `judge` (Opus): independent review. REQUIRED before shipping anything that touches migrations, RLS, money math, auth, or deploy config. Optional otherwise. If it rejects, fix and re-submit.
+| Agent | Model | Use for |
+|---|---|---|
+| `explorer` | Haiku | Find code, trace flows, answer "where is X". Always first for lookups. |
+| `planner` | Sonnet | Plan before coding anything bigger than one file. |
+| `builder` | Sonnet | Implement + unit/e2e tests. |
+| `tester` | Sonnet | Live tests in `tests/prod` (read skill `pera-live-qa`). |
+| `migrator` | Sonnet | Schema changes (read skill `pera-migration`). |
+| `ci-watcher` | Haiku | Wait for deploy/CI/prod-qa and return pass counts. Never poll in the main thread. |
+| `judge` | Opus | Independent review. REQUIRED before shipping migrations, RLS, money math, auth or deploy config. If it rejects, fix and re-submit. |
+
+Slash commands: `/plan`, `/migrate`, `/qa`, `/review`, `/ship`, `/status`.
+Hooks (`.claude/hooks`): `guard.mjs` blocks secret-looking writes, edits to committed migrations, and destructive SQL (drop table/column, truncate, delete/update without where); `tests.sh` blocks finishing while unit tests fail; `status.sh` prints repo/CI state at session start.
+Prefer available process skills (test-driven-development, systematic-debugging, verification-before-completion) over improvising.
 
 ## Workflow
-1. Explore (explorer). 2. Build + tests (builder). 3. Judge if risky. 4. `/ship`.
-Local checks: `npm test` (unit). Typecheck/build/e2e run in CI (`ci`). Live checks: `prod-qa` workflow; results are published to branches `qa-qa`, `qa-rls`, `qa-responsive`, `qa-security`, `qa-db` (runner logs are not readable).
-Pushing to `main` deploys to Vercel (100/day limit). Batch changes; use `[skip ci]` in the message for docs/config-only commits.
+1. `/plan` (planner). 2. Build (builder; migrator for schema; tester for live steps). 3. judge if risky. 4. `/ship` (ci-watcher reports results).
+Local checks: `npm test` (unit). Typecheck/build/e2e run in CI (`ci`). Live checks: `prod-qa`; results are published to branches `qa-qa`, `qa-rls`, `qa-responsive`, `qa-security`, `qa-db` (runner logs are not readable; fetch those branches with a forced `+refs/heads/...` refspec).
+Pushing to `main` deploys to Vercel (100/day limit). Batch changes; put `[skip ci]` in the message for docs/config-only commits.
 
 ## Tests
 Any behaviour change needs: a unit/e2e test, and a live step in `tests/prod/` for user-visible features. The UI uses per-tab Edit mode: controls are hidden until Edit is pressed, so live tests must click Edit first.

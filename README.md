@@ -97,3 +97,6 @@ QA users accumulate under Authentication → Users. Delete them with the SQL Edi
 
 ## Optional AI
 Off by default. Simple inputs never use AI. To add a provider: implement `AIProvider` (`src/ai/provider.ts`), return it from `getProvider(env)`, and put its key in server-only `AI_API_KEY`. AI output is validated (`validateAction`) and always needs your confirmation; it never touches the database directly. Assistant numbers always come from SQL, and the assistant is read-only.
+
+## Working with Claude Code
+`CLAUDE.md` holds the rules; `.claude/` holds the agents (explorer, planner, builder, tester, migrator, ci-watcher, judge), slash commands (`/plan /migrate /qa /review /ship /status`), skills, hooks and permissions; `.mcp.json` connects Supabase (scoped to this project) and Vercel.
