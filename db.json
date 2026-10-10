@@ -1,0 +1,88 @@
+{
+ "base": "https://pera-app-beta.vercel.app",
+ "at": "2026-10-10T18:40:35.650Z",
+ "pass": 15,
+ "fail": 0,
+ "users": [
+  "pera-qa-1791657621567-dba@example.com",
+  "pera-qa-1791657621567-dbb@example.com"
+ ],
+ "failed": [],
+ "results": [
+  {
+   "group": "undo storage (tx_trash) — real database",
+   "name": "deleting a transaction archives a full copy in tx_trash (DB trigger)",
+   "ok": true
+  },
+  {
+   "group": "undo storage (tx_trash) — real database",
+   "name": "the archived row can be restored with the same id and amount",
+   "ok": true
+  },
+  {
+   "group": "undo storage (tx_trash) — real database",
+   "name": "another user cannot read or modify my trash",
+   "ok": true
+  },
+  {
+   "group": "undo storage (tx_trash) — real database",
+   "name": "anonymous cannot read tx_trash or execute the trigger function",
+   "ok": true
+  },
+  {
+   "group": "undo storage (tx_trash) — real database",
+   "name": "another user's delete trigger never writes into my trash",
+   "ok": true
+  },
+  {
+   "group": "recurring deletion — real database",
+   "name": "monthly rule starting 2 months ago generates exactly 3 occurrences",
+   "ok": true
+  },
+  {
+   "group": "recurring deletion — real database",
+   "name": "running again is idempotent (no duplicates)",
+   "ok": true
+  },
+  {
+   "group": "recurring deletion — real database",
+   "name": "deleting a generated occurrence does NOT bring it back on the next run",
+   "ok": true
+  },
+  {
+   "group": "recurring deletion — real database",
+   "name": "the deleted occurrence is archived and restorable, and a later run does not duplicate it",
+   "ok": true
+  },
+  {
+   "group": "recurring deletion — real database",
+   "name": "future occurrences continue: a later \"today\" adds the next month only",
+   "ok": true
+  },
+  {
+   "group": "recurring deletion — real database",
+   "name": "deleting the rule succeeds and preserves every past transaction",
+   "ok": true
+  },
+  {
+   "group": "recurring deletion — real database",
+   "name": "a deleted rule's old occurrence can still be deleted and restored",
+   "ok": true
+  },
+  {
+   "group": "recurring deletion — real database",
+   "name": "month-end rule (Jan 31 start) keeps no-drift dates",
+   "ok": true
+  },
+  {
+   "group": "recurring deletion — real database",
+   "name": "leap-day yearly rule: Feb 29 -> Feb 28 in non-leap years, back to Feb 29 in 2028",
+   "ok": true
+  },
+  {
+   "group": "recurring deletion — real database",
+   "name": "another user's run_recurring never touches my rules",
+   "ok": true
+  }
+ ]
+}
