@@ -1,0 +1,242 @@
+{
+ "base": "https://pera-app-beta.vercel.app",
+ "at": "2026-10-10T18:40:53.305Z",
+ "pass": 46,
+ "fail": 0,
+ "extra": {
+  "note": "Two auth users named pera-qa-1791657622351-a/b@example.com remain; delete them in Supabase > Authentication > Users."
+ },
+ "failed": [],
+ "results": [
+  {
+   "group": "RLS + constraints + aggregates (real Supabase)",
+   "name": "signup trigger seeded defaults (6 accounts, 20 categories: 6 income + 14 expense)",
+   "ok": true
+  },
+  {
+   "group": "RLS + constraints + aggregates (real Supabase)",
+   "name": "insert the spec dataset (9 rows)",
+   "ok": true
+  },
+  {
+   "group": "RLS + constraints + aggregates (real Supabase)",
+   "name": "period_summary: income 3,450,000 / expenses 1,075,000 / net 2,375,000 minor units",
+   "ok": true
+  },
+  {
+   "group": "RLS + constraints + aggregates (real Supabase)",
+   "name": "account_balances: BPI 3,250,000 / GCash -450,000 / Cash -425,000; total 2,375,000",
+   "ok": true
+  },
+  {
+   "group": "RLS + constraints + aggregates (real Supabase)",
+   "name": "account_spending + monthly_summary(2020) + sum_expense",
+   "ok": true
+  },
+  {
+   "group": "RLS + constraints + aggregates (real Supabase)",
+   "name": "transfer GCash->Cash 2,000: moves balances, total unchanged, not income/expense",
+   "ok": true
+  },
+  {
+   "group": "RLS + constraints + aggregates (real Supabase)",
+   "name": "constraint: amount 0 rejected",
+   "ok": true
+  },
+  {
+   "group": "RLS + constraints + aggregates (real Supabase)",
+   "name": "constraint: amount -5 rejected",
+   "ok": true
+  },
+  {
+   "group": "RLS + constraints + aggregates (real Supabase)",
+   "name": "constraint: amount 1000000000000 rejected",
+   "ok": true
+  },
+  {
+   "group": "RLS + constraints + aggregates (real Supabase)",
+   "name": "constraint: transfer to same account rejected",
+   "ok": true
+  },
+  {
+   "group": "RLS + constraints + aggregates (real Supabase)",
+   "name": "constraint: expense without category rejected",
+   "ok": true
+  },
+  {
+   "group": "RLS + constraints + aggregates (real Supabase)",
+   "name": "constraint: description over 120 chars rejected",
+   "ok": true
+  },
+  {
+   "group": "RLS + constraints + aggregates (real Supabase)",
+   "name": "constraint: duplicate account name rejected; account in use cannot be deleted",
+   "ok": true
+  },
+  {
+   "group": "RLS + constraints + aggregates (real Supabase)",
+   "name": "idempotency: same request submitted 3x => exactly 2 rows",
+   "ok": true
+  },
+  {
+   "group": "RLS + constraints + aggregates (real Supabase)",
+   "name": "dedupe: import_hash and external_id upserts insert once",
+   "ok": true
+  },
+  {
+   "group": "RLS + constraints + aggregates (real Supabase)",
+   "name": "budgets: insert ok, duplicate (category,month,year) rejected, negative rejected",
+   "ok": true
+  },
+  {
+   "group": "RLS + constraints + aggregates (real Supabase)",
+   "name": "recurring monthly from Jan 31: Jan31, Feb28, Mar31, Apr30; re-run adds nothing",
+   "ok": true
+  },
+  {
+   "group": "RLS + constraints + aggregates (real Supabase)",
+   "name": "recurring weekly every 2 weeks (to end_date) and yearly from Feb 29",
+   "ok": true
+  },
+  {
+   "group": "RLS + constraints + aggregates (real Supabase)",
+   "name": "RLS: user B cannot read user A's transactions",
+   "ok": true
+  },
+  {
+   "group": "RLS + constraints + aggregates (real Supabase)",
+   "name": "RLS: user B cannot read user A's accounts",
+   "ok": true
+  },
+  {
+   "group": "RLS + constraints + aggregates (real Supabase)",
+   "name": "RLS: user B cannot read user A's categories",
+   "ok": true
+  },
+  {
+   "group": "RLS + constraints + aggregates (real Supabase)",
+   "name": "RLS: user B cannot read user A's budgets",
+   "ok": true
+  },
+  {
+   "group": "RLS + constraints + aggregates (real Supabase)",
+   "name": "RLS: user B cannot read user A's recurring_transactions",
+   "ok": true
+  },
+  {
+   "group": "RLS + constraints + aggregates (real Supabase)",
+   "name": "RLS: B's unfiltered reads return only B's own rows",
+   "ok": true
+  },
+  {
+   "group": "RLS + constraints + aggregates (real Supabase)",
+   "name": "RLS: B cannot UPDATE A's transaction (and A's row is unchanged)",
+   "ok": true
+  },
+  {
+   "group": "RLS + constraints + aggregates (real Supabase)",
+   "name": "RLS: B cannot DELETE A's transaction (and it still exists)",
+   "ok": true
+  },
+  {
+   "group": "RLS + constraints + aggregates (real Supabase)",
+   "name": "RLS: B cannot INSERT rows owned by A (tx, account, category, budget, recurring)",
+   "ok": true
+  },
+  {
+   "group": "RLS + constraints + aggregates (real Supabase)",
+   "name": "ownership: B cannot link B's rows to A's account/category (composite FKs)",
+   "ok": true
+  },
+  {
+   "group": "RLS + constraints + aggregates (real Supabase)",
+   "name": "RLS: B's aggregate functions never include A's data",
+   "ok": true
+  },
+  {
+   "group": "RLS + constraints + aggregates (real Supabase)",
+   "name": "RLS: B cannot read or change A's profile; A can edit own",
+   "ok": true
+  },
+  {
+   "group": "RLS + constraints + aggregates (real Supabase)",
+   "name": "user_settings: A saves own layout; B cannot read, change or insert A's row; anonymous sees nothing",
+   "ok": true
+  },
+  {
+   "group": "RLS + constraints + aggregates (real Supabase)",
+   "name": "user_settings: B has a separate row; unfiltered reads return only B's own",
+   "ok": true
+  },
+  {
+   "group": "RLS + constraints + aggregates (real Supabase)",
+   "name": "user_settings: layout must be a JSON object under 20 KB",
+   "ok": true
+  },
+  {
+   "group": "RLS + constraints + aggregates (real Supabase)",
+   "name": "new users: Savings is flagged \"counts as savings\", the rest are not; all show on Home; manual order is set",
+   "ok": true
+  },
+  {
+   "group": "RLS + constraints + aggregates (real Supabase)",
+   "name": "new users: categories are ordered with \"Other\" and \"Other Income\" last",
+   "ok": true
+  },
+  {
+   "group": "RLS + constraints + aggregates (real Supabase)",
+   "name": "account short names: unique per user ignoring case, 1-12 characters, can be cleared",
+   "ok": true
+  },
+  {
+   "group": "RLS + constraints + aggregates (real Supabase)",
+   "name": "no_account_summary: works for a signed-in user (one row), blocked for anonymous",
+   "ok": true
+  },
+  {
+   "group": "RLS + constraints + aggregates (real Supabase)",
+   "name": "anonymous (no login) cannot read transactions",
+   "ok": true
+  },
+  {
+   "group": "RLS + constraints + aggregates (real Supabase)",
+   "name": "anonymous (no login) cannot read accounts",
+   "ok": true
+  },
+  {
+   "group": "RLS + constraints + aggregates (real Supabase)",
+   "name": "anonymous (no login) cannot read categories",
+   "ok": true
+  },
+  {
+   "group": "RLS + constraints + aggregates (real Supabase)",
+   "name": "anonymous (no login) cannot read budgets",
+   "ok": true
+  },
+  {
+   "group": "RLS + constraints + aggregates (real Supabase)",
+   "name": "anonymous (no login) cannot read recurring_transactions",
+   "ok": true
+  },
+  {
+   "group": "RLS + constraints + aggregates (real Supabase)",
+   "name": "anonymous (no login) cannot read profiles",
+   "ok": true
+  },
+  {
+   "group": "RLS + constraints + aggregates (real Supabase)",
+   "name": "anonymous cannot insert or call aggregate functions with data",
+   "ok": true
+  },
+  {
+   "group": "RLS + constraints + aggregates (real Supabase)",
+   "name": "after sign-out the same client can no longer read",
+   "ok": true
+  },
+  {
+   "group": "RLS + constraints + aggregates (real Supabase)",
+   "name": "cleanup: test rows removed",
+   "ok": true
+  }
+ ]
+}
