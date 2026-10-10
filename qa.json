@@ -1,0 +1,918 @@
+{
+ "base": "https://pera-app-beta.vercel.app",
+ "at": "2026-10-10T18:49:44.471Z",
+ "pass": 181,
+ "fail": 0,
+ "users": [
+  "pera-qa-1791657644036-a@example.com",
+  "pera-qa-1791657644036-b@example.com"
+ ],
+ "failed": [],
+ "results": [
+  {
+   "group": "auth: logged-out",
+   "name": "logged out / -> redirected away from app",
+   "ok": true
+  },
+  {
+   "group": "auth: logged-out",
+   "name": "logged out /transactions -> redirected away from app",
+   "ok": true
+  },
+  {
+   "group": "auth: logged-out",
+   "name": "logged out /accounts -> redirected away from app",
+   "ok": true
+  },
+  {
+   "group": "auth: logged-out",
+   "name": "logged out /budgets -> redirected away from app",
+   "ok": true
+  },
+  {
+   "group": "auth: logged-out",
+   "name": "logged out /reports -> redirected away from app",
+   "ok": true
+  },
+  {
+   "group": "auth: logged-out",
+   "name": "logged out /assistant -> redirected away from app",
+   "ok": true
+  },
+  {
+   "group": "auth: logged-out",
+   "name": "logged out /settings -> redirected away from app",
+   "ok": true
+  },
+  {
+   "group": "auth: logged-out",
+   "name": "logged out /export -> redirected away from app",
+   "ok": true
+  },
+  {
+   "group": "auth: logged-out",
+   "name": "logged out /transactions/00000000-0000-0000-0000-000000000000 -> redirected away from app",
+   "ok": true
+  },
+  {
+   "group": "auth: logged-out",
+   "name": "logged out /reset -> redirected away from app",
+   "ok": true
+  },
+  {
+   "group": "auth: logged-out",
+   "name": "/api/health is public and healthy",
+   "ok": true
+  },
+  {
+   "group": "auth: logged-out",
+   "name": "/api/health leaks no secrets",
+   "ok": true
+  },
+  {
+   "group": "auth: logged-out",
+   "name": "no test endpoint exists in production (/api/qa returns no data)",
+   "ok": true
+  },
+  {
+   "group": "auth: logged-out",
+   "name": "/api/health shows only ok+commit publicly",
+   "ok": true
+  },
+  {
+   "group": "auth: logged-out",
+   "name": "security headers present",
+   "ok": true
+  },
+  {
+   "group": "auth: logged-out",
+   "name": "financial pages are not cacheable (no-store)",
+   "ok": true
+  },
+  {
+   "group": "auth: logged-out",
+   "name": "x-powered-by hidden",
+   "ok": true
+  },
+  {
+   "group": "auth: logged-out",
+   "name": "unknown route (logged out) is gated to login, not an error",
+   "ok": true
+  },
+  {
+   "group": "auth: register / login / logout",
+   "name": "register: invalid email blocked",
+   "ok": true
+  },
+  {
+   "group": "auth: register / login / logout",
+   "name": "register: short password blocked",
+   "ok": true
+  },
+  {
+   "group": "auth: register / login / logout",
+   "name": "register: valid account auto-logs in to dashboard",
+   "ok": true
+  },
+  {
+   "group": "auth: register / login / logout",
+   "name": "register: duplicate email gives a safe message, no leak",
+   "ok": true
+  },
+  {
+   "group": "auth: register / login / logout",
+   "name": "session persists across refresh",
+   "ok": true
+  },
+  {
+   "group": "auth: register / login / logout",
+   "name": "logout lands on /login and dashboard is protected",
+   "ok": true
+  },
+  {
+   "group": "auth: register / login / logout",
+   "name": "login: wrong password -> safe error, stays on /login",
+   "ok": true
+  },
+  {
+   "group": "auth: register / login / logout",
+   "name": "login: unknown email gives the same safe error (no account enumeration)",
+   "ok": true
+  },
+  {
+   "group": "auth: register / login / logout",
+   "name": "login: invalid email format blocked client-side",
+   "ok": true
+  },
+  {
+   "group": "auth: register / login / logout",
+   "name": "google: login and register offer the button; click heads to Supabase/Google with our callback",
+   "ok": true
+  },
+  {
+   "group": "auth: register / login / logout",
+   "name": "login: correct credentials -> dashboard",
+   "ok": true
+  },
+  {
+   "group": "auth: register / login / logout",
+   "name": "invalid/expired session cookie -> redirected to /login, no crash",
+   "ok": true
+  },
+  {
+   "group": "auth: password recovery",
+   "name": "login page links to Forgot password",
+   "ok": true
+  },
+  {
+   "group": "auth: password recovery",
+   "name": "forgot: unknown email -> generic confirmation (no enumeration, no leak)",
+   "ok": true
+  },
+  {
+   "group": "auth: password recovery",
+   "name": "forgot: invalid email blocked",
+   "ok": true
+  },
+  {
+   "group": "auth: password recovery",
+   "name": "invalid reset link (bad code) -> /forgot with a clear message",
+   "ok": true
+  },
+  {
+   "group": "auth: password recovery",
+   "name": "expired token_hash link -> /forgot with a clear message",
+   "ok": true
+  },
+  {
+   "group": "auth: password recovery",
+   "name": "callback rejects open-redirect next=",
+   "ok": true
+  },
+  {
+   "group": "auth: password recovery",
+   "name": "/reset without a session -> /forgot",
+   "ok": true
+  },
+  {
+   "group": "auth: password recovery",
+   "name": "reset page with a live session: mismatch + weak rejected, success changes password",
+   "ok": true
+  },
+  {
+   "group": "dashboard",
+   "name": "first login: empty state (no transactions, first-budget prompt, zero streak)",
+   "ok": true
+  },
+  {
+   "group": "dashboard",
+   "name": "first login: default accounts and categories seeded",
+   "ok": true
+  },
+  {
+   "group": "dashboard",
+   "name": "command \"undo last\" with nothing deleted -> friendly message, nothing changes",
+   "ok": true
+  },
+  {
+   "group": "dashboard",
+   "name": "command \"delete last\" with no transactions -> safe message",
+   "ok": true
+  },
+  {
+   "group": "dashboard",
+   "name": "Quick Add: expense with account (lunch 150 gcash)",
+   "ok": true
+  },
+  {
+   "group": "dashboard",
+   "name": "Quick Add: income (salary 25000 bpi)",
+   "ok": true
+  },
+  {
+   "group": "dashboard",
+   "name": "Quick Add: multiple entries in one line",
+   "ok": true
+  },
+  {
+   "group": "dashboard",
+   "name": "Quick Add: date phrase \"yesterday\"",
+   "ok": true
+  },
+  {
+   "group": "dashboard",
+   "name": "Quick Add: unknown label asks income/expense, resolved by \"Spent\"",
+   "ok": true
+  },
+  {
+   "group": "dashboard",
+   "name": "Quick Add: uncertain category asks for confirmation, then saves",
+   "ok": true
+  },
+  {
+   "group": "dashboard",
+   "name": "Quick Add: garbage input -> clear error, nothing saved",
+   "ok": true
+  },
+  {
+   "group": "dashboard",
+   "name": "Quick Add: duplicate submit (double Enter + double click) saves once",
+   "ok": true
+  },
+  {
+   "group": "dashboard",
+   "name": "Quick Add: failed save keeps input, offers retry, retry saves exactly once",
+   "ok": true
+  },
+  {
+   "group": "dashboard",
+   "name": "dashboard: total balance equals Accounts total",
+   "ok": true
+  },
+  {
+   "group": "dashboard",
+   "name": "dashboard: recent list, streak shows today logged",
+   "ok": true
+  },
+  {
+   "group": "dashboard",
+   "name": "dashboard: period filters (month/prev/year/prevyear/custom) all render",
+   "ok": true
+  },
+  {
+   "group": "dashboard",
+   "name": "dashboard: an odd period link still renders Home",
+   "ok": true
+  },
+  {
+   "group": "dashboard: commands (delete/undo)",
+   "name": "\"delete last\" removes the newest entry and offers Undo",
+   "ok": true
+  },
+  {
+   "group": "dashboard: commands (delete/undo)",
+   "name": "\"undo last\" restores it (does not delete another)",
+   "ok": true
+  },
+  {
+   "group": "dashboard: commands (delete/undo)",
+   "name": "\"undo last\" again -> Nothing to undo, count unchanged",
+   "ok": true
+  },
+  {
+   "group": "dashboard: commands (delete/undo)",
+   "name": "\"undo the last transaction\" literal phrase works",
+   "ok": true
+  },
+  {
+   "group": "dashboard: commands (delete/undo)",
+   "name": "delete two, unrelated add, then undo restores the most recently deleted",
+   "ok": true
+  },
+  {
+   "group": "transactions",
+   "name": "CSV import (30 rows) succeeds",
+   "ok": true
+  },
+  {
+   "group": "transactions",
+   "name": "CSV re-import of the same text adds nothing",
+   "ok": true
+  },
+  {
+   "group": "transactions",
+   "name": "CSV re-import as a file adds nothing",
+   "ok": true
+  },
+  {
+   "group": "transactions",
+   "name": "pagination: >25 rows -> page 1 of 2, Next works",
+   "ok": true
+  },
+  {
+   "group": "transactions",
+   "name": "search by description",
+   "ok": true
+  },
+  {
+   "group": "transactions",
+   "name": "search is injection-safe (% _ , ( ) quotes)",
+   "ok": true
+  },
+  {
+   "group": "transactions",
+   "name": "filter by type (income only / expense only / transfer)",
+   "ok": true
+  },
+  {
+   "group": "transactions",
+   "name": "filter by category and by account",
+   "ok": true
+  },
+  {
+   "group": "transactions",
+   "name": "filter by date range",
+   "ok": true
+  },
+  {
+   "group": "transactions",
+   "name": "sorting: newest, oldest, highest, lowest",
+   "ok": true
+  },
+  {
+   "group": "transactions",
+   "name": "garbage filter params are ignored safely",
+   "ok": true
+  },
+  {
+   "group": "transactions",
+   "name": "page beyond last page is empty but safe",
+   "ok": true
+  },
+  {
+   "group": "transactions: edit / convert / duplicate / delete",
+   "name": "edit expense: amount + description",
+   "ok": true
+  },
+  {
+   "group": "transactions: edit / convert / duplicate / delete",
+   "name": "convert expense -> income with matching category",
+   "ok": true
+  },
+  {
+   "group": "transactions: edit / convert / duplicate / delete",
+   "name": "convert with mismatched category is rejected with a clear message",
+   "ok": true
+  },
+  {
+   "group": "transactions: edit / convert / duplicate / delete",
+   "name": "edit rejects invalid amounts (abc, 0, -5, 1e9999)",
+   "ok": true
+  },
+  {
+   "group": "transactions: edit / convert / duplicate / delete",
+   "name": "nonexistent transaction -> 404 page, no leak",
+   "ok": true
+  },
+  {
+   "group": "transactions: edit / convert / duplicate / delete",
+   "name": "malformed transaction id -> safe (404 or friendly), not a 500 with details",
+   "ok": true
+  },
+  {
+   "group": "transactions: edit / convert / duplicate / delete",
+   "name": "duplicate adds one copy",
+   "ok": true
+  },
+  {
+   "group": "transactions: edit / convert / duplicate / delete",
+   "name": "delete shows Undo; Undo restores; refresh keeps it",
+   "ok": true
+  },
+  {
+   "group": "transactions: edit / convert / duplicate / delete",
+   "name": "delete without undo removes it permanently from the list",
+   "ok": true
+  },
+  {
+   "group": "accounts",
+   "name": "create account with opening balance",
+   "ok": true
+  },
+  {
+   "group": "accounts",
+   "name": "negative opening balance accepted and shown",
+   "ok": true
+  },
+  {
+   "group": "accounts",
+   "name": "duplicate account name rejected safely",
+   "ok": true
+  },
+  {
+   "group": "accounts",
+   "name": "invalid opening balance rejected",
+   "ok": true
+  },
+  {
+   "group": "accounts",
+   "name": "rename account",
+   "ok": true
+  },
+  {
+   "group": "accounts",
+   "name": "delete unused account",
+   "ok": true
+  },
+  {
+   "group": "accounts",
+   "name": "delete an account that has transactions -> blocked with a safe message",
+   "ok": true
+  },
+  {
+   "group": "accounts",
+   "name": "transfer moves balance, total unchanged, not counted as spending",
+   "ok": true
+  },
+  {
+   "group": "accounts",
+   "name": "same-account transfer rejected",
+   "ok": true
+  },
+  {
+   "group": "accounts",
+   "name": "invalid transfer amounts rejected (0, -1, abc)",
+   "ok": true
+  },
+  {
+   "group": "accounts",
+   "name": "transfer appears in Transactions and can be edited",
+   "ok": true
+  },
+  {
+   "group": "budgets",
+   "name": "budgets: a category without a budget says so",
+   "ok": true
+  },
+  {
+   "group": "budgets",
+   "name": "create budget (Transportation 1000) -> shows 0%-ish usage text",
+   "ok": true
+  },
+  {
+   "group": "budgets",
+   "name": "update budget amount",
+   "ok": true
+  },
+  {
+   "group": "budgets",
+   "name": "budget >=80% shows \"close to the limit\"",
+   "ok": true
+  },
+  {
+   "group": "budgets",
+   "name": "budget exactly 100% shows 100% and not \"over budget\"",
+   "ok": true
+  },
+  {
+   "group": "budgets",
+   "name": "budget over 100% shows \"over budget\" with the right percent",
+   "ok": true
+  },
+  {
+   "group": "budgets",
+   "name": "invalid budget amounts rejected (abc, -5)",
+   "ok": true
+  },
+  {
+   "group": "budgets",
+   "name": "budgets page shows progress bars once a budget exists",
+   "ok": true
+  },
+  {
+   "group": "budgets",
+   "name": "month navigation (previous / next / invalid ym)",
+   "ok": true
+  },
+  {
+   "group": "budgets",
+   "name": "remove budget (empty amount)",
+   "ok": true
+  },
+  {
+   "group": "reports",
+   "name": "reports p=month renders without error",
+   "ok": true
+  },
+  {
+   "group": "reports",
+   "name": "reports p=prev renders without error",
+   "ok": true
+  },
+  {
+   "group": "reports",
+   "name": "reports p=year renders without error",
+   "ok": true
+  },
+  {
+   "group": "reports",
+   "name": "reports p=prevyear renders without error",
+   "ok": true
+  },
+  {
+   "group": "reports",
+   "name": "reports: category totals + account totals + monthly table",
+   "ok": true
+  },
+  {
+   "group": "reports",
+   "name": "reports: Net equals Income minus Expenses",
+   "ok": true
+  },
+  {
+   "group": "reports",
+   "name": "reports: empty period shows empty state",
+   "ok": true
+  },
+  {
+   "group": "reports",
+   "name": "reports: refresh consistency",
+   "ok": true
+  },
+  {
+   "group": "reports",
+   "name": "reports: garbage custom range handled",
+   "ok": true
+  },
+  {
+   "group": "settings",
+   "name": "profile name saves and greets on dashboard",
+   "ok": true
+  },
+  {
+   "group": "settings",
+   "name": "create category",
+   "ok": true
+  },
+  {
+   "group": "settings",
+   "name": "duplicate category rejected safely",
+   "ok": true
+  },
+  {
+   "group": "settings",
+   "name": "delete unused category",
+   "ok": true
+  },
+  {
+   "group": "settings",
+   "name": "delete a used category is blocked safely",
+   "ok": true
+  },
+  {
+   "group": "recurring",
+   "name": "create monthly rule starting 2 months ago -> 3 occurrences appear on dashboard load",
+   "ok": true
+  },
+  {
+   "group": "recurring",
+   "name": "reloading the dashboard does not duplicate occurrences",
+   "ok": true
+  },
+  {
+   "group": "recurring",
+   "name": "deleting a generated occurrence keeps it deleted after dashboard reload (no resurrection)",
+   "ok": true
+  },
+  {
+   "group": "recurring",
+   "name": "future occurrences still continue (rule still active, next date in the future)",
+   "ok": true
+  },
+  {
+   "group": "recurring",
+   "name": "undo restores the deleted occurrence (and it is not duplicated by a later load)",
+   "ok": true
+  },
+  {
+   "group": "recurring",
+   "name": "deleting the rule preserves past transactions",
+   "ok": true
+  },
+  {
+   "group": "recurring",
+   "name": "bad rule inputs rejected (amount 0, interval 0)",
+   "ok": true
+  },
+  {
+   "group": "csv export / import hardening",
+   "name": "export: CSV content-type, attachment, no-store, header row",
+   "ok": true
+  },
+  {
+   "group": "csv export / import hardening",
+   "name": "export: round-trip row count matches transactions total",
+   "ok": true
+  },
+  {
+   "group": "csv export / import hardening",
+   "name": "malicious CSV: handled safely, bad rows skipped, summary shown, no leak",
+   "ok": true
+  },
+  {
+   "group": "csv export / import hardening",
+   "name": "malicious CSV: HTML/JS is rendered as text (no dialog, no injected elements)",
+   "ok": true
+  },
+  {
+   "group": "csv export / import hardening",
+   "name": "export neutralises spreadsheet formulas (=,+,-,@ prefixed with an apostrophe)",
+   "ok": true
+  },
+  {
+   "group": "csv export / import hardening",
+   "name": "invalid CSV (no header / binary-ish / empty) -> friendly message",
+   "ok": true
+  },
+  {
+   "group": "csv export / import hardening",
+   "name": "oversize CSV (>900 KB) is refused in the form with a clear message (no upload, no error page)",
+   "ok": true
+  },
+  {
+   "group": "csv export / import hardening",
+   "name": "oversize CSV pasted as text is also refused cleanly",
+   "ok": true
+  },
+  {
+   "group": "csv export / import hardening",
+   "name": "  (large import took 3s)",
+   "ok": true
+  },
+  {
+   "group": "csv export / import hardening",
+   "name": "large import (2,000 rows) completes within the serverless time limit",
+   "ok": true
+  },
+  {
+   "group": "csv export / import hardening",
+   "name": "large import repeated adds nothing",
+   "ok": true
+  },
+  {
+   "group": "csv duplicate semantics (documented behaviour)",
+   "name": "changed description on same row is treated as a NEW row (hash includes description)",
+   "ok": true
+  },
+  {
+   "group": "csv duplicate semantics (documented behaviour)",
+   "name": "same row with only the category changed is skipped (category is not part of the key)",
+   "ok": true
+  },
+  {
+   "group": "csv duplicate semantics (documented behaviour)",
+   "name": "identical rows inside one file are both imported (legit duplicates), re-import adds none",
+   "ok": true
+  },
+  {
+   "group": "csv duplicate semantics (documented behaviour)",
+   "name": "a hand-typed identical entry is NOT compared with imports (documented limitation)",
+   "ok": true
+  },
+  {
+   "group": "csv duplicate semantics (documented behaviour)",
+   "name": "modified statement copy: only the genuinely new rows are added",
+   "ok": true
+  },
+  {
+   "group": "csv duplicate semantics (documented behaviour)",
+   "name": "transfers import and re-import idempotently; same-account transfer row skipped",
+   "ok": true
+  },
+  {
+   "group": "prototype migration UI",
+   "name": "migration with no prototype data shows a friendly note",
+   "ok": true
+  },
+  {
+   "group": "prototype migration UI",
+   "name": "migration with data imports, verifies, and is repeatable",
+   "ok": true
+  },
+  {
+   "group": "prototype migration UI",
+   "name": "migration with junk data fails safely",
+   "ok": true
+  },
+  {
+   "group": "assistant",
+   "name": "assistant: supported question (spent on food this month)",
+   "ok": true
+  },
+  {
+   "group": "assistant",
+   "name": "assistant: income, savings, top category, biggest expenses, comparison, per-account",
+   "ok": true
+  },
+  {
+   "group": "assistant",
+   "name": "assistant: unsupported question handled gracefully",
+   "ok": true
+  },
+  {
+   "group": "assistant",
+   "name": "assistant: very long / empty / special input handled",
+   "ok": true
+  },
+  {
+   "group": "assistant",
+   "name": "assistant: prompt injection stays read-only (no data changed)",
+   "ok": true
+  },
+  {
+   "group": "isolation between users",
+   "name": "user B cannot open user A's transaction by id",
+   "ok": true
+  },
+  {
+   "group": "isolation between users",
+   "name": "user B's export and lists contain none of A's data",
+   "ok": true
+  },
+  {
+   "group": "isolation between users",
+   "name": "user B's accounts are their own seeded defaults (no QA Savings)",
+   "ok": true
+  },
+  {
+   "group": "isolation between users",
+   "name": "user B cannot act on A's ids via forged server action inputs (edit page of foreign id is 404)",
+   "ok": true
+  },
+  {
+   "group": "accounts: options, fees, card payments",
+   "name": "edit mode per tab: controls hidden until Edit; Customize only where it applies",
+   "ok": true
+  },
+  {
+   "group": "accounts: options, fees, card payments",
+   "name": "create \"Maya Credit Card\" with short name cc",
+   "ok": true
+  },
+  {
+   "group": "accounts: options, fees, card payments",
+   "name": "short name must be unique across accounts",
+   "ok": true
+  },
+  {
+   "group": "accounts: options, fees, card payments",
+   "name": "Accounts > Edit shows \"Starting balance\", the current balance, and a working ± button",
+   "ok": true
+  },
+  {
+   "group": "accounts: options, fees, card payments",
+   "name": "\"transfer 300 from maya to gcash. 15 fee\" => a transfer plus a Transfer Fee expense; total drops by exactly the fee",
+   "ok": true
+  },
+  {
+   "group": "accounts: options, fees, card payments",
+   "name": "\"atm fee 18 maya\" => ATM Fee, empty description",
+   "ok": true
+  },
+  {
+   "group": "accounts: options, fees, card payments",
+   "name": "\"late fee 500 cc\" => Late Fee on Maya Credit Card (by its short name)",
+   "ok": true
+  },
+  {
+   "group": "accounts: options, fees, card payments",
+   "name": "\"lunch 120 maya credit card\" picks Maya Credit Card, not Maya",
+   "ok": true
+  },
+  {
+   "group": "accounts: options, fees, card payments",
+   "name": "fee categories were created before \"Other\"",
+   "ok": true
+  },
+  {
+   "group": "accounts: options, fees, card payments",
+   "name": "a fee category in use cannot be deleted",
+   "ok": true
+  },
+  {
+   "group": "accounts: options, fees, card payments",
+   "name": "\"pay cc from maya\" pays the full amount owed, shown as \"Paid Maya Credit Card\" / Card payment",
+   "ok": true
+  },
+  {
+   "group": "accounts: options, fees, card payments",
+   "name": "\"pay cc 5467 from maya\" is a transfer for exactly 5,467.00 (the number is not read as a date)",
+   "ok": true
+  },
+  {
+   "group": "accounts: options, fees, card payments",
+   "name": "card payment is a transfer: not counted as spending, total unchanged",
+   "ok": true
+  },
+  {
+   "group": "Home: Spendable, Savings, accounts card",
+   "name": "Savings-flagged account is excluded from Spendable (Savings starts at 1,000)",
+   "ok": true
+  },
+  {
+   "group": "Home: Spendable, Savings, accounts card",
+   "name": "hiding an account on Home does not change Spendable or Total",
+   "ok": true
+  },
+  {
+   "group": "Home: Spendable, Savings, accounts card",
+   "name": "Home shows Accounts, Spendable, Savings and History (6 newest) by default",
+   "ok": true
+  },
+  {
+   "group": "layout is saved per user",
+   "name": "hide Savings and move History to the top; a second session of the same user sees it after refresh",
+   "ok": true
+  },
+  {
+   "group": "layout is saved per user",
+   "name": "a later change in one session reaches the other after refresh (show Savings again)",
+   "ok": true
+  },
+  {
+   "group": "layout is saved per user",
+   "name": "a second user's layout is separate (defaults: Accounts before History, Savings shown)",
+   "ok": true
+  },
+  {
+   "group": "layout is saved per user",
+   "name": "totals never depend on the layout (hide everything: balance unchanged; hint with a Customize button)",
+   "ok": true
+  },
+  {
+   "group": "layout is saved per user",
+   "name": "Reset to default asks first, then restores the default layout (also in the other session)",
+   "ok": true
+  },
+  {
+   "group": "layout is saved per user",
+   "name": "other tabs keep their own layout: hide a Reports block and it stays hidden after refresh",
+   "ok": true
+  },
+  {
+   "group": "security: cross-origin server actions",
+   "name": "captured a real server-action request from the browser (probe is valid)",
+   "ok": true
+  },
+  {
+   "group": "security: cross-origin server actions",
+   "name": "replay with a foreign Origin is rejected and changes nothing",
+   "ok": true
+  },
+  {
+   "group": "security: cross-origin server actions",
+   "name": "replay with Origin: null is rejected and changes nothing",
+   "ok": true
+  },
+  {
+   "group": "security: cross-origin server actions",
+   "name": "control: replay with the real Origin is accepted (proves the check is what blocked the others)",
+   "ok": true
+  },
+  {
+   "group": "hygiene",
+   "name": "no uncaught JS errors during the run",
+   "ok": true
+  },
+  {
+   "group": "hygiene",
+   "name": "no unexpected browser dialogs (XSS payloads inert)",
+   "ok": true
+  },
+  {
+   "group": "hygiene",
+   "name": "logout works from every page (sidebar/header)",
+   "ok": true
+  }
+ ]
+}
