@@ -1,0 +1,325 @@
+{
+ "base": "https://pera-app-beta.vercel.app",
+ "at": "2026-10-10T18:43:05.110Z",
+ "pass": 62,
+ "fail": 0,
+ "users": [
+  "pera-qa-1791657641120-a@example.com",
+  "pera-qa-1791657641120-m@example.com",
+  "pera-qa-1791657641120-d@example.com",
+  "pera-qa-1791657641120-v@example.com"
+ ],
+ "failed": [],
+ "results": [
+  {
+   "group": "email confirmation pages + password rules",
+   "name": "/verify without an address offers a \"send a new link\" form",
+   "ok": true
+  },
+  {
+   "group": "email confirmation pages + password rules",
+   "name": "/verify?email= shows the address with a Resend button",
+   "ok": true
+  },
+  {
+   "group": "email confirmation pages + password rules",
+   "name": "/verify escapes hostile input (no script, no injected elements)",
+   "ok": true
+  },
+  {
+   "group": "email confirmation pages + password rules",
+   "name": "resend for an unknown address gives a generic answer (no account enumeration)",
+   "ok": true
+  },
+  {
+   "group": "email confirmation pages + password rules",
+   "name": "/verify rejects a malformed address with a plain message",
+   "ok": true
+  },
+  {
+   "group": "email confirmation pages + password rules",
+   "name": "a bad confirmation link lands on /verify with guidance, not an error page",
+   "ok": true
+  },
+  {
+   "group": "email confirmation pages + password rules",
+   "name": "a bad reset link lands on /forgot",
+   "ok": true
+  },
+  {
+   "group": "email confirmation pages + password rules",
+   "name": "open redirect through ?next= is ignored",
+   "ok": true
+  },
+  {
+   "group": "email confirmation pages + password rules",
+   "name": "an unsupported email-link type is refused safely",
+   "ok": true
+  },
+  {
+   "group": "email confirmation pages + password rules",
+   "name": "register form asks for 8+ characters",
+   "ok": true
+  },
+  {
+   "group": "email confirmation pages + password rules",
+   "name": "server rejects a 7-character password even when the browser check is bypassed",
+   "ok": true
+  },
+  {
+   "group": "email confirmation pages + password rules",
+   "name": "server rejects a single repeated character",
+   "ok": true
+  },
+  {
+   "group": "email confirmation pages + password rules",
+   "name": "server rejects a password found in a data breach (Have I Been Pwned, k-anonymity)",
+   "ok": true
+  },
+  {
+   "group": "email confirmation pages + password rules",
+   "name": "a strong unique password is accepted",
+   "ok": true
+  },
+  {
+   "group": "security page: password + devices",
+   "name": "sign up a fresh user and open /security",
+   "ok": true
+  },
+  {
+   "group": "security page: password + devices",
+   "name": "Settings links to Security and the Settings tab stays highlighted there",
+   "ok": true
+  },
+  {
+   "group": "security page: password + devices",
+   "name": "change password: wrong current password is refused",
+   "ok": true
+  },
+  {
+   "group": "security page: password + devices",
+   "name": "change password: mismatch is refused",
+   "ok": true
+  },
+  {
+   "group": "security page: password + devices",
+   "name": "change password: same password is refused",
+   "ok": true
+  },
+  {
+   "group": "security page: password + devices",
+   "name": "change password: breached password is refused",
+   "ok": true
+  },
+  {
+   "group": "security page: password + devices",
+   "name": "change password: 7 characters refused by the server",
+   "ok": true
+  },
+  {
+   "group": "security page: password + devices",
+   "name": "second device is logged in",
+   "ok": true
+  },
+  {
+   "group": "security page: password + devices",
+   "name": "change password: success keeps this device and logs out the other",
+   "ok": true
+  },
+  {
+   "group": "security page: password + devices",
+   "name": "change password: the new password works, the old one does not",
+   "ok": true
+  },
+  {
+   "group": "security page: password + devices",
+   "name": "\"Log out other devices\" ends other sessions and keeps this one",
+   "ok": true
+  },
+  {
+   "group": "security page: password + devices",
+   "name": "\"Log out everywhere\" ends this session too",
+   "ok": true
+  },
+  {
+   "group": "two-step verification (authenticator app)",
+   "name": "sign up; the setup shows a QR image and a typeable key",
+   "ok": true
+  },
+  {
+   "group": "two-step verification (authenticator app)",
+   "name": "setup: a wrong code is refused and 2FA stays off",
+   "ok": true
+  },
+  {
+   "group": "two-step verification (authenticator app)",
+   "name": "setup: the right code turns it on",
+   "ok": true
+  },
+  {
+   "group": "two-step verification (authenticator app)",
+   "name": "log out and in: the password alone only reaches the code screen",
+   "ok": true
+  },
+  {
+   "group": "two-step verification (authenticator app)",
+   "name": "while only the password is verified, every app page redirects to /2fa",
+   "ok": true
+  },
+  {
+   "group": "two-step verification (authenticator app)",
+   "name": "a wrong code is refused with a plain message",
+   "ok": true
+  },
+  {
+   "group": "two-step verification (authenticator app)",
+   "name": "the right code finishes log-in and lands on the dashboard",
+   "ok": true
+  },
+  {
+   "group": "two-step verification (authenticator app)",
+   "name": "/2fa is not reachable once fully signed in",
+   "ok": true
+  },
+  {
+   "group": "two-step verification (authenticator app)",
+   "name": "the security page shows 2FA as On and never shows the setup key again",
+   "ok": true
+  },
+  {
+   "group": "two-step verification (authenticator app)",
+   "name": "reset-password route is also gated by the code",
+   "ok": true
+  },
+  {
+   "group": "two-step verification (authenticator app)",
+   "name": "turning it off needs a valid code",
+   "ok": true
+  },
+  {
+   "group": "two-step verification (authenticator app)",
+   "name": "turning it off with the right code works",
+   "ok": true
+  },
+  {
+   "group": "two-step verification (authenticator app)",
+   "name": "after turning it off, log-in goes straight to the dashboard",
+   "ok": true
+  },
+  {
+   "group": "two-step verification is enforced by the database (migration 0006)",
+   "name": "mfa_ok() exists: callable by signed-in users, not by anonymous",
+   "ok": true
+  },
+  {
+   "group": "two-step verification is enforced by the database (migration 0006)",
+   "name": "without 2FA the user reads and writes normally",
+   "ok": true
+  },
+  {
+   "group": "two-step verification is enforced by the database (migration 0006)",
+   "name": "enrol a real authenticator factor and verify it (session becomes aal2)",
+   "ok": true
+  },
+  {
+   "group": "two-step verification is enforced by the database (migration 0006)",
+   "name": "aal2 session still reads its data",
+   "ok": true
+  },
+  {
+   "group": "two-step verification is enforced by the database (migration 0006)",
+   "name": "a fresh password-only (aal1) session is blocked from every table",
+   "ok": true
+  },
+  {
+   "group": "two-step verification is enforced by the database (migration 0006)",
+   "name": "aal1 cannot write either (insert is rejected)",
+   "ok": true
+  },
+  {
+   "group": "two-step verification is enforced by the database (migration 0006)",
+   "name": "aal1 gets nothing from the aggregate functions either",
+   "ok": true
+  },
+  {
+   "group": "two-step verification is enforced by the database (migration 0006)",
+   "name": "after the code is entered the same session reads everything again",
+   "ok": true
+  },
+  {
+   "group": "two-step verification is enforced by the database (migration 0006)",
+   "name": "another user without 2FA is unaffected",
+   "ok": true
+  },
+  {
+   "group": "two-step verification is enforced by the database (migration 0006)",
+   "name": "removing the factor restores plain password access",
+   "ok": true
+  },
+  {
+   "group": "loading skeletons",
+   "name": "every page streams its skeleton first, then the real content (full page load)",
+   "ok": true
+  },
+  {
+   "group": "loading skeletons",
+   "name": "the app shell (nav) is in the same first response as the skeleton",
+   "ok": true
+  },
+  {
+   "group": "loading skeletons",
+   "name": "navigating with slow data: the sidebar stays and a skeleton fills the page immediately",
+   "ok": true
+  },
+  {
+   "group": "loading skeletons",
+   "name": "the skeleton has an accessible name and the real page replaces it",
+   "ok": true
+  },
+  {
+   "group": "loading skeletons",
+   "name": "skeleton animation stops for people who prefer reduced motion",
+   "ok": true
+  },
+  {
+   "group": "loading skeletons",
+   "name": "mobile: tab bar stays while the skeleton shows, with no sideways scroll",
+   "ok": true
+  },
+  {
+   "group": "loading skeletons",
+   "name": "mobile 390px: /security fits the screen",
+   "ok": true
+  },
+  {
+   "group": "loading skeletons",
+   "name": "mobile 390px: /verify?email=someone@example.com fits the screen",
+   "ok": true
+  },
+  {
+   "group": "loading skeletons",
+   "name": "mobile 390px: /verify fits the screen",
+   "ok": true
+  },
+  {
+   "group": "loading skeletons",
+   "name": "mobile 390px: /login fits the screen",
+   "ok": true
+  },
+  {
+   "group": "loading skeletons",
+   "name": "mobile 390px: /register fits the screen",
+   "ok": true
+  },
+  {
+   "group": "loading skeletons",
+   "name": "mobile 390px: /forgot fits the screen",
+   "ok": true
+  },
+  {
+   "group": "loading skeletons",
+   "name": "mobile 390px: the 2FA setup (QR + key) fits the screen",
+   "ok": true
+  }
+ ]
+}
