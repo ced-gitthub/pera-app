@@ -1,0 +1,1190 @@
+{
+ "base": "https://pera-app-beta.vercel.app",
+ "at": "2026-10-10T18:44:38.513Z",
+ "pass": 236,
+ "fail": 0,
+ "user": "pera-qa-1791657641086-c@example.com",
+ "failed": [],
+ "results": [
+  {
+   "group": "layout iphone-390x844",
+   "name": "/: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/transactions: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/accounts: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/budgets: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/reports: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/assistant: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/settings: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/transactions: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/accounts: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/budgets: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/reports: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/assistant: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/settings: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/transactions: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/accounts: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/budgets: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/reports: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/assistant: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/settings: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/: bottom nav does not cover content",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/transactions: bottom nav does not cover content",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/accounts: bottom nav does not cover content",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/budgets: bottom nav does not cover content",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/reports: bottom nav does not cover content",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/assistant: bottom nav does not cover content",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/settings: bottom nav does not cover content",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/transactions: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/accounts: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/settings: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/reports: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/budgets: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/login (logged out): no overflow, targets >= 24px",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/register (logged out): no overflow, targets >= 24px",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-390x844",
+   "name": "/forgot (logged out): no overflow, targets >= 24px",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/transactions: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/accounts: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/budgets: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/reports: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/assistant: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/settings: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/transactions: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/accounts: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/budgets: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/reports: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/assistant: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/settings: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/transactions: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/accounts: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/budgets: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/reports: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/assistant: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/settings: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/: bottom nav does not cover content",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/transactions: bottom nav does not cover content",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/accounts: bottom nav does not cover content",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/budgets: bottom nav does not cover content",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/reports: bottom nav does not cover content",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/assistant: bottom nav does not cover content",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/settings: bottom nav does not cover content",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/transactions: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/accounts: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/settings: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/reports: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/budgets: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/login (logged out): no overflow, targets >= 24px",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/register (logged out): no overflow, targets >= 24px",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-393x852",
+   "name": "/forgot (logged out): no overflow, targets >= 24px",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/transactions: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/accounts: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/budgets: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/reports: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/assistant: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/settings: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/transactions: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/accounts: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/budgets: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/reports: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/assistant: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/settings: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/transactions: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/accounts: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/budgets: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/reports: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/assistant: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/settings: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/: bottom nav does not cover content",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/transactions: bottom nav does not cover content",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/accounts: bottom nav does not cover content",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/budgets: bottom nav does not cover content",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/reports: bottom nav does not cover content",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/assistant: bottom nav does not cover content",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/settings: bottom nav does not cover content",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/transactions: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/accounts: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/settings: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/reports: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/budgets: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/login (logged out): no overflow, targets >= 24px",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/register (logged out): no overflow, targets >= 24px",
+   "ok": true
+  },
+  {
+   "group": "layout iphone-max-430x932",
+   "name": "/forgot (logged out): no overflow, targets >= 24px",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/transactions: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/accounts: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/budgets: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/reports: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/assistant: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/settings: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/transactions: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/accounts: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/budgets: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/reports: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/assistant: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/settings: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/transactions: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/accounts: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/budgets: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/reports: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/assistant: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/settings: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/: bottom nav does not cover content",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/transactions: bottom nav does not cover content",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/accounts: bottom nav does not cover content",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/budgets: bottom nav does not cover content",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/reports: bottom nav does not cover content",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/assistant: bottom nav does not cover content",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/settings: bottom nav does not cover content",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/transactions: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/accounts: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/settings: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/reports: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/budgets: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/login (logged out): no overflow, targets >= 24px",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/register (logged out): no overflow, targets >= 24px",
+   "ok": true
+  },
+  {
+   "group": "layout ipad-768x1024",
+   "name": "/forgot (logged out): no overflow, targets >= 24px",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/transactions: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/accounts: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/budgets: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/reports: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/assistant: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/settings: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/transactions: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/accounts: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/budgets: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/reports: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/assistant: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/settings: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/transactions: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/accounts: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/budgets: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/reports: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/assistant: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/settings: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/transactions: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/accounts: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/settings: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/reports: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/budgets: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/login (logged out): no overflow, targets >= 24px",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/register (logged out): no overflow, targets >= 24px",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1280x800",
+   "name": "/forgot (logged out): no overflow, targets >= 24px",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/transactions: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/accounts: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/budgets: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/reports: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/assistant: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/settings: no horizontal overflow, nothing clipped off-screen",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/transactions: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/accounts: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/budgets: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/reports: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/assistant: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/settings: text/buttons not clipped",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/transactions: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/accounts: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/budgets: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/reports: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/assistant: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/settings: touch targets >= 24px (WCAG 2.2 AA)",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/transactions: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/accounts: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/settings: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/reports: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/budgets: date inputs usable",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/login (logged out): no overflow, targets >= 24px",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/register (logged out): no overflow, targets >= 24px",
+   "ok": true
+  },
+  {
+   "group": "layout desktop-1440x900",
+   "name": "/forgot (logged out): no overflow, targets >= 24px",
+   "ok": true
+  },
+  {
+   "group": "page metadata",
+   "name": "/: title, lang, viewport meta, one h1",
+   "ok": true
+  },
+  {
+   "group": "page metadata",
+   "name": "/transactions: title, lang, viewport meta, one h1",
+   "ok": true
+  },
+  {
+   "group": "page metadata",
+   "name": "/accounts: title, lang, viewport meta, one h1",
+   "ok": true
+  },
+  {
+   "group": "page metadata",
+   "name": "/budgets: title, lang, viewport meta, one h1",
+   "ok": true
+  },
+  {
+   "group": "page metadata",
+   "name": "/reports: title, lang, viewport meta, one h1",
+   "ok": true
+  },
+  {
+   "group": "page metadata",
+   "name": "/assistant: title, lang, viewport meta, one h1",
+   "ok": true
+  },
+  {
+   "group": "page metadata",
+   "name": "/settings: title, lang, viewport meta, one h1",
+   "ok": true
+  },
+  {
+   "group": "page metadata",
+   "name": "viewport-fit=cover set for safe-area insets (needed before PWA work)",
+   "ok": true
+  },
+  {
+   "group": "page metadata",
+   "name": "CSS uses env(safe-area-inset-bottom) for the fixed bottom nav",
+   "ok": true
+  },
+  {
+   "group": "page metadata",
+   "name": "inputs are >= 16px (iOS does not zoom on focus)",
+   "ok": true
+  },
+  {
+   "group": "keyboard",
+   "name": "/: Tab shows a visible focus indicator on first 8 stops",
+   "ok": true
+  },
+  {
+   "group": "keyboard",
+   "name": "/transactions: Tab shows a visible focus indicator on first 8 stops",
+   "ok": true
+  },
+  {
+   "group": "keyboard",
+   "name": "/accounts: Tab shows a visible focus indicator on first 8 stops",
+   "ok": true
+  },
+  {
+   "group": "keyboard",
+   "name": "/settings: Tab shows a visible focus indicator on first 8 stops",
+   "ok": true
+  },
+  {
+   "group": "keyboard",
+   "name": "Quick Add works with keyboard only (type + Enter)",
+   "ok": true
+  },
+  {
+   "group": "dark mode",
+   "name": "light: / text contrast >= 4.5:1 (3:1 large)",
+   "ok": true
+  },
+  {
+   "group": "dark mode",
+   "name": "light: /transactions text contrast >= 4.5:1 (3:1 large)",
+   "ok": true
+  },
+  {
+   "group": "dark mode",
+   "name": "light: /accounts text contrast >= 4.5:1 (3:1 large)",
+   "ok": true
+  },
+  {
+   "group": "dark mode",
+   "name": "light: /budgets text contrast >= 4.5:1 (3:1 large)",
+   "ok": true
+  },
+  {
+   "group": "dark mode",
+   "name": "light: /reports text contrast >= 4.5:1 (3:1 large)",
+   "ok": true
+  },
+  {
+   "group": "dark mode",
+   "name": "light: /assistant text contrast >= 4.5:1 (3:1 large)",
+   "ok": true
+  },
+  {
+   "group": "dark mode",
+   "name": "light: /settings text contrast >= 4.5:1 (3:1 large)",
+   "ok": true
+  },
+  {
+   "group": "dark mode",
+   "name": "dark: / text contrast >= 4.5:1 (3:1 large)",
+   "ok": true
+  },
+  {
+   "group": "dark mode",
+   "name": "dark: /transactions text contrast >= 4.5:1 (3:1 large)",
+   "ok": true
+  },
+  {
+   "group": "dark mode",
+   "name": "dark: /accounts text contrast >= 4.5:1 (3:1 large)",
+   "ok": true
+  },
+  {
+   "group": "dark mode",
+   "name": "dark: /budgets text contrast >= 4.5:1 (3:1 large)",
+   "ok": true
+  },
+  {
+   "group": "dark mode",
+   "name": "dark: /reports text contrast >= 4.5:1 (3:1 large)",
+   "ok": true
+  },
+  {
+   "group": "dark mode",
+   "name": "dark: /assistant text contrast >= 4.5:1 (3:1 large)",
+   "ok": true
+  },
+  {
+   "group": "dark mode",
+   "name": "dark: /settings text contrast >= 4.5:1 (3:1 large)",
+   "ok": true
+  },
+  {
+   "group": "dark mode",
+   "name": "dark: page background is actually dark",
+   "ok": true
+  },
+  {
+   "group": "reduced motion",
+   "name": "celebration animation is disabled when the user prefers reduced motion",
+   "ok": true
+  },
+  {
+   "group": "reduced motion",
+   "name": "no running CSS animations/transitions anywhere on the dashboard",
+   "ok": true
+  },
+  {
+   "group": "states",
+   "name": "slow network: Quick Add shows Working… and disables the button",
+   "ok": true
+  },
+  {
+   "group": "states",
+   "name": "offline: Quick Add fails gracefully with a retry path",
+   "ok": true
+  }
+ ]
+}

@@ -1,0 +1,536 @@
+{
+ "iphone-390x844/": {
+  "small": 3,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": {
+   "tabsTop": 772,
+   "lastContentBottom": 680,
+   "hidden": 0
+  },
+  "dates": []
+ },
+ "iphone-390x844/transactions": {
+  "small": 3,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": {
+   "tabsTop": 772,
+   "lastContentBottom": 689,
+   "hidden": 0
+  },
+  "dates": [
+   {
+    "w": 174,
+    "inside": true
+   },
+   {
+    "w": 174,
+    "inside": true
+   }
+  ]
+ },
+ "iphone-390x844/accounts": {
+  "small": 0,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": {
+   "tabsTop": 772,
+   "lastContentBottom": 686,
+   "hidden": 0
+  },
+  "dates": [
+   {
+    "w": 175,
+    "inside": true
+   }
+  ]
+ },
+ "iphone-390x844/budgets": {
+  "small": 0,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": {
+   "tabsTop": 772,
+   "lastContentBottom": 677,
+   "hidden": 0
+  },
+  "dates": []
+ },
+ "iphone-390x844/reports": {
+  "small": 4,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": {
+   "tabsTop": 772,
+   "lastContentBottom": 689,
+   "hidden": 0
+  },
+  "dates": []
+ },
+ "iphone-390x844/assistant": {
+  "small": 0,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": {
+   "tabsTop": 772,
+   "lastContentBottom": 334,
+   "hidden": 0
+  },
+  "dates": []
+ },
+ "iphone-390x844/settings": {
+  "small": 1,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": {
+   "tabsTop": 772,
+   "lastContentBottom": 689,
+   "hidden": 0
+  },
+  "dates": [
+   {
+    "w": 175,
+    "inside": true
+   }
+  ]
+ },
+ "iphone-393x852/": {
+  "small": 3,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": {
+   "tabsTop": 780,
+   "lastContentBottom": 688,
+   "hidden": 0
+  },
+  "dates": []
+ },
+ "iphone-393x852/transactions": {
+  "small": 3,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": {
+   "tabsTop": 780,
+   "lastContentBottom": 697,
+   "hidden": 0
+  },
+  "dates": [
+   {
+    "w": 174,
+    "inside": true
+   },
+   {
+    "w": 174,
+    "inside": true
+   }
+  ]
+ },
+ "iphone-393x852/accounts": {
+  "small": 0,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": {
+   "tabsTop": 780,
+   "lastContentBottom": 686,
+   "hidden": 0
+  },
+  "dates": [
+   {
+    "w": 175,
+    "inside": true
+   }
+  ]
+ },
+ "iphone-393x852/budgets": {
+  "small": 0,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": {
+   "tabsTop": 780,
+   "lastContentBottom": 685,
+   "hidden": 0
+  },
+  "dates": []
+ },
+ "iphone-393x852/reports": {
+  "small": 4,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": {
+   "tabsTop": 780,
+   "lastContentBottom": 697,
+   "hidden": 0
+  },
+  "dates": []
+ },
+ "iphone-393x852/assistant": {
+  "small": 0,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": {
+   "tabsTop": 780,
+   "lastContentBottom": 313,
+   "hidden": 0
+  },
+  "dates": []
+ },
+ "iphone-393x852/settings": {
+  "small": 1,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": {
+   "tabsTop": 780,
+   "lastContentBottom": 697,
+   "hidden": 0
+  },
+  "dates": [
+   {
+    "w": 175,
+    "inside": true
+   }
+  ]
+ },
+ "iphone-max-430x932/": {
+  "small": 4,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": {
+   "tabsTop": 860,
+   "lastContentBottom": 768,
+   "hidden": 0
+  },
+  "dates": []
+ },
+ "iphone-max-430x932/transactions": {
+  "small": 4,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": {
+   "tabsTop": 860,
+   "lastContentBottom": 777,
+   "hidden": 0
+  },
+  "dates": [
+   {
+    "w": 174,
+    "inside": true
+   },
+   {
+    "w": 174,
+    "inside": true
+   }
+  ]
+ },
+ "iphone-max-430x932/accounts": {
+  "small": 0,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": {
+   "tabsTop": 860,
+   "lastContentBottom": 686,
+   "hidden": 0
+  },
+  "dates": [
+   {
+    "w": 175,
+    "inside": true
+   }
+  ]
+ },
+ "iphone-max-430x932/budgets": {
+  "small": 0,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": {
+   "tabsTop": 860,
+   "lastContentBottom": 765,
+   "hidden": 0
+  },
+  "dates": []
+ },
+ "iphone-max-430x932/reports": {
+  "small": 4,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": {
+   "tabsTop": 860,
+   "lastContentBottom": 777,
+   "hidden": 0
+  },
+  "dates": []
+ },
+ "iphone-max-430x932/assistant": {
+  "small": 0,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": {
+   "tabsTop": 860,
+   "lastContentBottom": 313,
+   "hidden": 0
+  },
+  "dates": []
+ },
+ "iphone-max-430x932/settings": {
+  "small": 1,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": {
+   "tabsTop": 860,
+   "lastContentBottom": 777,
+   "hidden": 0
+  },
+  "dates": [
+   {
+    "w": 175,
+    "inside": true
+   }
+  ]
+ },
+ "ipad-768x1024/": {
+  "small": 4,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": null,
+  "dates": []
+ },
+ "ipad-768x1024/transactions": {
+  "small": 4,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": null,
+  "dates": [
+   {
+    "w": 174,
+    "inside": true
+   },
+   {
+    "w": 174,
+    "inside": true
+   }
+  ]
+ },
+ "ipad-768x1024/accounts": {
+  "small": 0,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": null,
+  "dates": [
+   {
+    "w": 175,
+    "inside": true
+   }
+  ]
+ },
+ "ipad-768x1024/budgets": {
+  "small": 0,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": null,
+  "dates": []
+ },
+ "ipad-768x1024/reports": {
+  "small": 4,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": null,
+  "dates": []
+ },
+ "ipad-768x1024/assistant": {
+  "small": 0,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": null,
+  "dates": []
+ },
+ "ipad-768x1024/settings": {
+  "small": 1,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": null,
+  "dates": [
+   {
+    "w": 175,
+    "inside": true
+   }
+  ]
+ },
+ "desktop-1280x800/": {
+  "small": 4,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": null,
+  "dates": []
+ },
+ "desktop-1280x800/transactions": {
+  "small": 4,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": null,
+  "dates": [
+   {
+    "w": 174,
+    "inside": true
+   },
+   {
+    "w": 174,
+    "inside": true
+   }
+  ]
+ },
+ "desktop-1280x800/accounts": {
+  "small": 0,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": null,
+  "dates": [
+   {
+    "w": 175,
+    "inside": true
+   }
+  ]
+ },
+ "desktop-1280x800/budgets": {
+  "small": 0,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": null,
+  "dates": []
+ },
+ "desktop-1280x800/reports": {
+  "small": 4,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": null,
+  "dates": []
+ },
+ "desktop-1280x800/assistant": {
+  "small": 0,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": null,
+  "dates": []
+ },
+ "desktop-1280x800/settings": {
+  "small": 1,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": null,
+  "dates": [
+   {
+    "w": 175,
+    "inside": true
+   }
+  ]
+ },
+ "desktop-1440x900/": {
+  "small": 4,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": null,
+  "dates": []
+ },
+ "desktop-1440x900/transactions": {
+  "small": 4,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": null,
+  "dates": [
+   {
+    "w": 174,
+    "inside": true
+   },
+   {
+    "w": 174,
+    "inside": true
+   }
+  ]
+ },
+ "desktop-1440x900/accounts": {
+  "small": 0,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": null,
+  "dates": [
+   {
+    "w": 175,
+    "inside": true
+   }
+  ]
+ },
+ "desktop-1440x900/budgets": {
+  "small": 0,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": null,
+  "dates": []
+ },
+ "desktop-1440x900/reports": {
+  "small": 4,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": null,
+  "dates": []
+ },
+ "desktop-1440x900/assistant": {
+  "small": 0,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": null,
+  "dates": []
+ },
+ "desktop-1440x900/settings": {
+  "small": 1,
+  "tiny": [],
+  "clip": [],
+  "off": [],
+  "overlap": null,
+  "dates": [
+   {
+    "w": 175,
+    "inside": true
+   }
+  ]
+ }
+}
