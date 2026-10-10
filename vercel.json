@@ -1,4 +1,16 @@
 {
-  "regions": ["syd1"],
-  "git": { "deploymentEnabled": { "qa-db": false, "qa-qa": false, "qa-responsive": false, "qa-results": false, "qa-rls": false, "qa-security": false } }
+ "regions": [
+  "syd1"
+ ],
+ "git": {
+  "deploymentEnabled": {
+   "qa-db": false,
+   "qa-qa": false,
+   "qa-responsive": false,
+   "qa-results": false,
+   "qa-rls": false,
+   "qa-security": false,
+   "qa-feature": false
+  }
+ }
 }

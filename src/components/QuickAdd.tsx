@@ -7,10 +7,10 @@ import { saveItems, parseServer, runCommand, restoreTx } from '@/app/actions';
 import { cheer } from '@/lib/vibe';
 import { commandOf } from '@/lib/commands';
 type Cat = { name: string; type: 'income' | 'expense' };
-const EG = ['lunch 150 gcash', 'grocery 800 cash', 'salary 25000 bpi', 'coffee 120'];
+const EG = ['lunch 150 gcash', 'grocery 800 cash', 'salary 25000 bpi', 'transfer 300 from maya to gcash. 15 fee'];
 const BITS = Array.from({ length: 16 }, (_, i) => { const a = (i / 16) * Math.PI * 2, r = 70 + (i % 4) * 22; return { x: Math.round(Math.cos(a) * r), y: Math.round(Math.sin(a) * r - 30), r: (i * 47) % 360, c: ['#5b35e8', '#ffc53d', '#0f8a5c', '#d6324a'][i % 4] }; });
-const line = (i: Item) => `${i.type === 'income' ? 'Income' : 'Expense'} — ${i.category} — ${formatMinor(i.amount_minor)}${i.description ? ` (${i.description})` : ''} · ${i.date}`;
-export default function QuickAdd({ accounts, categories, aiEnabled }: { accounts: string[]; categories: Cat[]; aiEnabled: boolean }) {
+const line = (i: Item) => `${i.type === 'transfer' ? `Transfer — ${i.account} → ${i.to_account}` : `${i.type === 'income' ? 'Income' : 'Expense'} — ${i.category}`} — ${formatMinor(i.amount_minor)}${i.description ? ` (${i.description})` : ''}${i.type !== 'transfer' && i.account ? ` · ${i.account}` : ''} · ${i.date}`;
+export default function QuickAdd({ accounts, aliases, balances, categories, aiEnabled }: { accounts: string[]; aliases: Record<string, string>; balances: Record<string, number>; categories: Cat[]; aiEnabled: boolean }) {
   const [text, setText] = useState(''), [busy, setBusy] = useState(false), [pend, setPend] = useState<Parsed[]>([]), [ready, setReady] = useState<Item[]>([]);
   const [msgs, setMsgs] = useState<{ bad?: boolean; ok?: boolean; t: string }[]>([]), [undo, setUndo] = useState<Record<string, unknown> | null>(null), [pick, setPick] = useState<Record<number, string>>({});
   const req = useRef({ id: '', key: '' }), router = useRouter();
@@ -24,7 +24,7 @@ export default function QuickAdd({ accounts, categories, aiEnabled }: { accounts
     if (busy || !text.trim()) return; setBusy(true); setMsgs([]); setUndo(null);
     try {
       if (commandOf(text)) { const r = await runCommand(text); setMsgs([{ bad: !r.ok, t: r.message }]); if (r.ok) { setUndo(r.deleted ?? null); setText(''); router.refresh(); } return; }
-      const c = { today: manilaToday(), accounts }; let items = parseInput(text, c);
+      const c = { today: manilaToday(), accounts, aliases, balances }; let items = parseInput(text, c);
       if (aiEnabled && items.some(i => i.kind !== 'ok')) { try { items = await parseServer(text, c.today); } catch { /* fall back to deterministic result */ } }
       const ok = items.filter(i => i.kind === 'ok') as Item[], rest = items.filter(i => i.kind === 'ask' || i.kind === 'confirm');
       setMsgs(items.filter(i => i.kind === 'error').map(e => ({ bad: true, t: (e as { message: string }).message })));
@@ -37,7 +37,7 @@ export default function QuickAdd({ accounts, categories, aiEnabled }: { accounts
     const rest = pend.filter((_, i) => i !== idx), items = [...ready, p as Item]; setReady(items); setPend(rest);
     if (!rest.length) { setBusy(true); try { await save(items); } finally { setBusy(false); } }
   }
-  const c = () => ({ today: manilaToday(), accounts });
+  const c = () => ({ today: manilaToday(), accounts, aliases, balances });
   return (
     <section className="card log" aria-label="Quick add">
       <h1 className="text-2xl font-semibold mb-2">What did you spend or earn?</h1>

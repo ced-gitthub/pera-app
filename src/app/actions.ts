@@ -8,13 +8,14 @@ import { backupConfigured, getBackup, getBackupRaw, saveBackup, patchBackup, cle
 import { sendMail } from '@/lib/mail';
 import { newCode, hashCode, checkCode, nextSend, cooldownPassed, CODE_TTL_MS, MAX_ATTEMPTS } from '@/lib/backupcode';
 import { passwordProblem, isPwned, isEmail, safeNext, PWNED } from '@/lib/password';
-import { ctx } from '@/lib/data';
+import { ctx, aliasMap, balanceMap } from '@/lib/data';
+import { TABS, normalizeLayout, normalizeTab, type TabId } from '@/lib/layout';
 import { manilaToday, parseAmountMinor, isDate, formatMinor } from '@/core/money';
-import { categoryFor, type Parsed } from '@/core/parser';
+import { categoryFor, FEE_CATS, type Parsed } from '@/core/parser';
 import { totals, type Tx } from '@/core/aggregate';
 import { fromCsv, mapLegacy, type Row } from '@/core/io';
 import { parseWithFallback, getProvider } from '@/ai/provider';
-import { validateItems, parseOptionalMinor, defaultAccount } from '@/lib/validate';
+import { validateItems, parseOptionalMinor, defaultAccount, minorToInput } from '@/lib/validate';
 import { parseQuestion } from '@/lib/assistant';
 import { safeMessage, authMessage, logErr } from '@/lib/safe';
 import { MAX_CSV_BYTES, MAX_CSV_LABEL } from '@/lib/limits';
@@ -172,10 +173,27 @@ export async function disableMfa(fd: FormData) {
 
 // ---- quick add (writes only after server-side validation; success is reported only after the rows are re-counted)
 type Saved = { ok: true; n: number } | { ok: false; error: string };
+type Sb0 = Awaited<ReturnType<typeof ctx>>['sb'];
+// A new category goes just before "Other" (so "Other" stays last). Used for the fee categories that appear the first time you use them, and for categories you add.
+async function addCategory(sb: Sb0, userId: string, name: string, type: 'income' | 'expense') {
+  const { data: list } = await sb.from('categories').select('id,name,sort_order').eq('type', type).order('sort_order').order('name');
+  const last = (list ?? []).find(c => c.name === (type === 'income' ? 'Other Income' : 'Other')), max = Math.max(0, ...(list ?? []).map(c => Number(c.sort_order)));
+  const r = await sb.from('categories').insert({ user_id: userId, name, type, sort_order: last ? Number(last.sort_order) : max + 10 }).select('id,name,type,sort_order').single();
+  if (!r.error && last) await sb.from('categories').update({ sort_order: Number(last.sort_order) + 10 }).eq('id', last.id);
+  return r;
+}
 export async function saveItems(requestId: string, items: unknown): Promise<Saved> {
   if (!/^[0-9a-f-]{36}$/i.test(requestId)) return { ok: false, error: 'Not saved: bad request id' };
   try {
-    const { sb, user, accounts, categories } = await ctx(true); const v = validateItems(items, { categories, accounts }); if (!v.ok) return { ok: false, error: 'Not saved: ' + v.error };
+    const { sb, user, accounts, categories: have } = await ctx(true); let categories = have;
+    // Fee categories (Transfer Fee, ATM Fee, ...) are created the first time they are used. Only these exact names can be created this way.
+    const wanted = [...new Set((Array.isArray(items) ? items : []).map((x: any) => (x && x.type === 'expense' && typeof x.category === 'string' ? FEE_CATS.find(f => f.toLowerCase() === x.category.toLowerCase()) : undefined)).filter(Boolean))] as string[];
+    for (const name of wanted) if (!categories.some(c => c.type === 'expense' && c.name.toLowerCase() === name.toLowerCase())) {
+      const r = await addCategory(sb, user.id, name, 'expense');
+      if (r.error && (r.error as { code?: string }).code !== '23505') return { ok: false, error: 'Not saved: ' + safeMessage(r.error, 'saveItems.fee') };
+      if (r.error) categories = (await ctx(true)).categories; else categories = [...categories, r.data as any];
+    }
+    const v = validateItems(items, { categories, accounts }); if (!v.ok) return { ok: false, error: 'Not saved: ' + v.error };
     const rows = v.rows.map((r, i) => ({ ...r, user_id: user.id, request_id: requestId, request_idx: i }));
     const { error } = await sb.from('transactions').upsert(rows, { onConflict: 'user_id,request_id,request_idx', ignoreDuplicates: true }); // retry-safe
     if (error) return { ok: false, error: 'Not saved: ' + safeMessage(error, 'saveItems') };
@@ -185,8 +203,8 @@ export async function saveItems(requestId: string, items: unknown): Promise<Save
   } catch (e) { return { ok: false, error: 'Not saved: ' + safeMessage(e, 'saveItems') }; }
 }
 export async function parseServer(text: string, today: string): Promise<Parsed[]> {
-  const { accounts, categories } = await ctx(true);
-  return parseWithFallback(text.slice(0, 500), { today: isDate(today) ? today : manilaToday(), accounts: accounts.map(a => a.name) }, categories.map(c => c.name), getProvider(process.env));
+  const { sb, accounts, categories } = await ctx(true), bal = await balanceMap(sb);
+  return parseWithFallback(text.slice(0, 500), { today: isDate(today) ? today : manilaToday(), accounts: accounts.map(a => a.name), aliases: aliasMap(accounts), balances: Object.fromEntries(accounts.map(a => [a.name, bal.get(a.id) ?? 0])) }, categories.map(c => c.name), getProvider(process.env));
 }
 const RESTORE = ['id', 'account_id', 'transfer_account_id', 'category_id', 'type', 'amount_minor', 'description', 'notes', 'transaction_date', 'import_hash', 'external_id', 'recurring_id', 'request_id', 'request_idx', 'created_at'];
 type Sb = Awaited<ReturnType<typeof ctx>>['sb'];
@@ -253,17 +271,43 @@ export async function updateTx(fd: FormData) {
   const { data, error } = await sb.from('transactions').update(patch).eq('id', id).select('id'); if (error || !data?.length) go(back, 'err', 'Not saved: ' + (error ? safeMessage(error, 'updateTx') : 'that transaction no longer exists')); done(); go('/transactions', 'ok', 'Saved');
 }
 // ---- accounts / transfers / categories / budgets / recurring / profile
-export async function createAccount(fd: FormData) {
-  const { sb, user } = await ctx(); const open = parseOptionalMinor(str(fd, 'opening')); const name = str(fd, 'name').trim().slice(0, 40);
-  if (!name || open === null) go('/accounts', 'err', 'Name and a valid opening balance are required');
-  const { error } = await sb.from('accounts').insert({ user_id: user.id, name, account_type: str(fd, 'type') || 'other', opening_balance_minor: open }); if (error) go('/accounts', 'err', safeMessage(error, 'createAccount')); done(); go('/accounts', 'ok', 'Account created');
+const ACCT_TYPES = ['cash', 'ewallet', 'bank', 'credit_card', 'savings', 'other'], SHORT_RE = /^[a-z0-9][a-z0-9 ]{0,11}$/i;
+// A short name ("cc") is typed in Quick Add instead of the full account name, so it must be unique across your accounts and never equal another account's name.
+function shortProblem(raw: string, id: string | null, accounts: { id: string; name: string; short_name: string | null }[]): string | null {
+  const v = raw.trim(); if (!v) return null; if (!SHORT_RE.test(v)) return 'A short name is 1 to 12 letters, numbers or spaces';
+  const k = v.toLowerCase(); if (accounts.some(a => a.id !== id && (a.short_name ?? '').toLowerCase() === k)) return `"${v}" is already the short name of another account`;
+  if (accounts.some(a => a.id !== id && a.name.toLowerCase() === k)) return `"${v}" is the name of another account`; return null;
 }
+export async function createAccount(fd: FormData) {
+  const { sb, user, accounts } = await ctx(); const open = parseOptionalMinor(str(fd, 'opening')); const name = str(fd, 'name').trim().slice(0, 40), short = str(fd, 'short').trim();
+  if (!name || open === null) go('/accounts', 'err', 'Name and a valid starting balance are required'); const sp = shortProblem(short, null, accounts); if (sp) go('/accounts', 'err', sp);
+  const type = ACCT_TYPES.includes(str(fd, 'type')) ? str(fd, 'type') : 'other';
+  const { error } = await sb.from('accounts').insert({ user_id: user.id, name, account_type: type, opening_balance_minor: open, short_name: short || null, counts_as_savings: str(fd, 'savings') === 'on', show_on_home: str(fd, 'home') === 'on', sort_order: Math.max(0, ...accounts.map(a => a.sort_order)) + 10 });
+  if (error) go('/accounts', 'err', safeMessage(error, 'createAccount')); done(); go('/accounts', 'ok', 'Account created');
+}
+// Only the fields that actually changed are written.
 export async function updateAccount(fd: FormData) {
-  const { sb } = await ctx(); const open = parseOptionalMinor(str(fd, 'opening')); const name = str(fd, 'name').trim().slice(0, 40); if (!name || open === null) go('/accounts', 'err', 'Invalid name or opening balance');
-  const { error } = await sb.from('accounts').update({ name, account_type: str(fd, 'type'), opening_balance_minor: open }).eq('id', str(fd, 'id')); if (error) go('/accounts', 'err', safeMessage(error, 'updateAccount')); done(); go('/accounts', 'ok', 'Account saved');
+  const { sb, accounts } = await ctx(), cur = accounts.find(a => a.id === str(fd, 'id')); if (!cur) go('/accounts', 'err', 'That account no longer exists');
+  const open = parseOptionalMinor(str(fd, 'opening')), name = str(fd, 'name').trim().slice(0, 40), short = str(fd, 'short').trim(), type = str(fd, 'type');
+  if (!name || open === null || !ACCT_TYPES.includes(type)) go('/accounts', 'err', 'Invalid name or starting balance'); const sp = shortProblem(short, cur.id, accounts); if (sp) go('/accounts', 'err', sp);
+  const patch: Record<string, unknown> = {}, sv = str(fd, 'savings') === 'on', home = str(fd, 'home') === 'on';
+  if (name !== cur.name) patch.name = name; if (type !== cur.account_type) patch.account_type = type; if (open !== Number(cur.opening_balance_minor)) patch.opening_balance_minor = open;
+  if ((short || null) !== (cur.short_name ?? null)) patch.short_name = short || null; if (sv !== !!cur.counts_as_savings) patch.counts_as_savings = sv; if (home !== !!cur.show_on_home) patch.show_on_home = home;
+  if (!Object.keys(patch).length) go('/accounts', 'ok', 'No changes');
+  const { error } = await sb.from('accounts').update(patch).eq('id', cur.id); if (error) go('/accounts', 'err', safeMessage(error, 'updateAccount')); done(); go('/accounts', 'ok', 'Account saved');
 }
 export async function deleteAccount(fd: FormData) {
   const { sb } = await ctx(); const { error } = await sb.from('accounts').delete().eq('id', str(fd, 'id')); if (error) go('/accounts', 'err', 'Cannot delete: it is used by transactions (move or delete them first)'); done(); go('/accounts', 'ok', 'Account deleted');
+}
+// Swap an item with its neighbour. Orders are renumbered 10, 20, 30... first so ties (older rows) can never stall a move.
+async function swapOrder(sb: Sb0, table: 'accounts' | 'categories', rows: { id: string; sort_order: number }[], id: string, dir: string) {
+  const i = rows.findIndex(r => r.id === id), j = i + (dir === 'up' ? -1 : 1); if (i < 0 || j < 0 || j >= rows.length) return null;
+  const next = [...rows]; [next[i], next[j]] = [next[j], next[i]];
+  for (const [k, r] of next.entries()) if (Number(r.sort_order) !== (k + 1) * 10) { const { error } = await sb.from(table).update({ sort_order: (k + 1) * 10 }).eq('id', r.id); if (error) return error; }
+  return null;
+}
+export async function moveAccount(id: string, dir: string, _fd?: FormData) { // bound in the page: formAction={moveAccount.bind(null, id, 'up')}
+  const { sb, accounts } = await ctx(); const e = await swapOrder(sb, 'accounts', accounts, id, dir); if (e) go('/accounts', 'err', safeMessage(e, 'moveAccount')); done(); go('/accounts', 'ok', 'Moved');
 }
 export async function transfer(fd: FormData) {
   const { sb, user } = await ctx(); const amt = parseAmountMinor(str(fd, 'amount')), date = str(fd, 'date') || manilaToday(), a = str(fd, 'from'), b = str(fd, 'to');
@@ -271,12 +315,31 @@ export async function transfer(fd: FormData) {
   const { error } = await sb.from('transactions').insert({ user_id: user.id, type: 'transfer', amount_minor: amt, account_id: a, transfer_account_id: b, transaction_date: date, description: str(fd, 'description').slice(0, 120) });
   if (error) go('/accounts', 'err', 'Not saved: ' + safeMessage(error, 'transfer')); done(); go('/accounts', 'ok', 'Transfer recorded');
 }
+const backTo = (fd: FormData, d: string) => (['/settings', '/budgets'].includes(str(fd, 'back')) ? str(fd, 'back') : d);
 export async function createCategory(fd: FormData) {
-  const { sb, user } = await ctx(); const name = str(fd, 'name').trim().slice(0, 40), type = str(fd, 'type'); if (!name || (type !== 'income' && type !== 'expense')) go('/settings', 'err', 'Name and type required');
-  const { error } = await sb.from('categories').insert({ user_id: user.id, name, type }); if (error) go('/settings', 'err', safeMessage(error, 'createCategory')); done(); go('/settings', 'ok', 'Category added');
+  const { sb, user } = await ctx(), back = backTo(fd, '/settings'); const name = str(fd, 'name').trim().slice(0, 40), type = str(fd, 'type'); if (!name || (type !== 'income' && type !== 'expense')) go(back, 'err', 'Name and type required');
+  const { error } = await addCategory(sb, user.id, name, type); if (error) go(back, 'err', safeMessage(error, 'createCategory')); done(); go(back, 'ok', 'Category added');
 }
 export async function deleteCategory(fd: FormData) {
-  const { sb } = await ctx(); const { error } = await sb.from('categories').delete().eq('id', str(fd, 'id')); if (error) go('/settings', 'err', 'Cannot delete: category is in use'); done(); go('/settings', 'ok', 'Category deleted');
+  const { sb } = await ctx(), back = backTo(fd, '/settings'); const { error } = await sb.from('categories').delete().eq('id', str(fd, 'id')); if (error) go(back, 'err', 'Cannot delete: category is in use'); done(); go(back, 'ok', 'Category deleted');
+}
+export async function moveCategory(id: string, dir: string, _fd?: FormData) {
+  const { sb, categories } = await ctx(), back = '/budgets', c = categories.find(x => x.id === id); if (!c) go(back, 'err', 'That category no longer exists');
+  const e = await swapOrder(sb, 'categories', categories.filter(x => x.type === c.type), c.id, dir); if (e) go(back, 'err', safeMessage(e, 'moveCategory')); done(); go(back, 'ok', 'Moved');
+}
+// Budgets edit mode: rename and/or set the month's budget for one category. Only what changed is written.
+export async function saveBudgetRow(fd: FormData) {
+  const { sb, user, categories } = await ctx(); const ym = str(fd, 'ym'); if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(ym)) go('/budgets', 'err', 'Bad month'); const back = `/budgets?ym=${ym}`;
+  const c = categories.find(x => x.id === str(fd, 'category_id') && x.type === 'expense'); if (!c) go(back, 'err', 'That category no longer exists');
+  const name = str(fd, 'name').trim().slice(0, 40), raw = str(fd, 'amount').trim(), [year, month] = ym.split('-').map(Number); let changed = false;
+  if (name && name !== c.name) { const { error } = await sb.from('categories').update({ name }).eq('id', c.id); if (error) go(back, 'err', safeMessage(error, 'renameCategory')); changed = true; }
+  const { data: b } = await sb.from('budgets').select('amount_minor').eq('category_id', c.id).eq('month', month).eq('year', year).maybeSingle(), was = b ? minorToInput(Number(b.amount_minor)) : '';
+  if (raw !== was) {
+    if (raw === '') await sb.from('budgets').delete().eq('category_id', c.id).eq('month', month).eq('year', year);
+    else { const amt = parseOptionalMinor(raw); if (amt === null || amt < 0) go(back, 'err', 'Invalid budget amount'); const { error } = await sb.from('budgets').upsert({ user_id: user.id, category_id: c.id, amount_minor: amt, month, year }, { onConflict: 'user_id,category_id,month,year' }); if (error) go(back, 'err', safeMessage(error, 'saveBudgetRow')); }
+    changed = true;
+  }
+  done(); go(back, 'ok', changed ? 'Saved' : 'No changes');
 }
 export async function setBudget(fd: FormData) {
   const { sb, user } = await ctx(); const ym = str(fd, 'ym'), back = `/budgets?ym=${ym}`; if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(ym)) go('/budgets', 'err', 'Bad month');
@@ -318,9 +381,9 @@ export async function askAssistant(q: string): Promise<{ ok: boolean; answer: st
 import { periodFor, shiftYm, monthRange } from '@/lib/range';
 function periodFor2() { const ym = manilaToday().slice(0, 7); return { cur: periodFor('month', manilaToday()), prev: monthRange(shiftYm(ym, -1)) }; }
 // ---- CSV import + localStorage migration
-async function resolveAccounts(sb: any, user: any, existing: { id: string; name: string }[], names: string[]) {
+async function resolveAccounts(sb: any, user: any, existing: { id: string; name: string; sort_order?: number }[], names: string[]) {
   const map = new Map(existing.map(a => [a.name.toLowerCase(), a.id])); const fresh = [...new Set(names.filter(n => n && !map.has(n.toLowerCase())))].slice(0, 20);
-  if (fresh.length) { const { data } = await sb.from('accounts').insert(fresh.map(name => ({ user_id: user.id, name, account_type: 'other' }))).select('id,name'); for (const a of data ?? []) map.set(a.name.toLowerCase(), a.id); }
+  if (fresh.length) { const { data } = await sb.from('accounts').insert(fresh.map((name, i) => ({ user_id: user.id, name, account_type: 'other', sort_order: Math.max(0, ...existing.map(a => Number(a.sort_order ?? 0))) + 10 * (i + 1) }))).select('id,name'); for (const a of data ?? []) map.set(a.name.toLowerCase(), a.id); }
   return map;
 }
 function toDbRows(rows: (Row & { import_hash?: string; external_id?: string })[], accs: Map<string, string>, cats: { id: string; name: string; type: string }[], def: string, uid: string) {
@@ -355,4 +418,16 @@ export async function migrateLegacy(json: string) {
     const want = totals(out.map(o => ({ type: o.type, amount_minor: o.amount_minor, date: o.transaction_date }) as Tx)); const verified = want.income === inc && want.expense === exp; done();
     return { ok: verified, message: `${inserted} new, ${out.length - inserted} already present, ${m.bad.length + skipped} invalid. Totals ${verified ? 'verified' : 'DO NOT MATCH'}: income ${formatMinor(inc)} / expense ${formatMinor(exp)} (expected ${formatMinor(want.income)} / ${formatMinor(want.expense)}).` };
   } catch (e) { return { ok: false, message: safeMessage(e, 'migrateLegacy') }; }
+}
+
+// ---- per-user layout (Customize). One tab at a time is merged into the stored row, so two tabs never overwrite each other.
+export async function saveLayout(tab: string, value: unknown): Promise<{ ok: boolean }> {
+  if (!TABS.includes(tab as TabId)) return { ok: false };
+  try {
+    const sb = await supabaseServer(), { data: { user } } = await sb.auth.getUser(); if (!user) return { ok: false };
+    const { data: cur, error: e1 } = await sb.from('user_settings').select('layout').eq('user_id', user.id).maybeSingle(); if (e1) { logErr('saveLayout.read', e1); return { ok: false }; }
+    const layout = normalizeLayout(cur?.layout); layout[tab as TabId] = normalizeTab(tab as TabId, value);
+    const { error } = await sb.from('user_settings').upsert({ user_id: user.id, layout }, { onConflict: 'user_id' }); if (error) { logErr('saveLayout', error); return { ok: false }; }
+    return { ok: true };
+  } catch (e) { logErr('saveLayout', e); return { ok: false }; }
 }

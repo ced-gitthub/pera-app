@@ -11,4 +11,4 @@ export function streak(dates: string[], today: string) {
   return { n, loggedToday: set.has(today), week };
 }
 export const pulse = (tenths: number) => (tenths > 1000 ? 'Over budget. A lighter day tomorrow gets you back.' : tenths >= 800 ? 'Close to the limit. Spend carefully.' : tenths === 0 ? 'Nothing spent yet.' : 'On track. Nice work.');
-export const cheer = (n: number, cat: string) => (n > 1 ? `Logged ${n} entries. Nice work!` : `Logged! Filed under ${cat}.`);
+export const cheer = (n: number, cat: string) => (n > 1 ? `Logged ${n} entries. Nice work!` : (cat ? `Logged! Filed under ${cat}.` : 'Logged!'));
