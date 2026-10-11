@@ -153,7 +153,10 @@ export async function deleteMyAccount(fd: FormData) {
   if (str(fd, 'confirm').trim() !== 'DELETE') go('/security', 'err', 'Type DELETE in capital letters to confirm.');
   if (!adminConfigured()) go('/security', 'err', 'Account deletion is not available right now. Please try again later.');
   if ((user.identities ?? []).some((i) => i.provider === 'email')) {
-    const { error: wrong } = await supabaseProbe().auth.signInWithPassword({ email: user.email ?? '', password: str(fd, 'current') });
+    const { error: wrong } = await supabaseProbe().auth.signInWithPassword({
+      email: user.email ?? '',
+      password: str(fd, 'delete_password'),
+    });
     if (wrong)
       go(
         '/security',
