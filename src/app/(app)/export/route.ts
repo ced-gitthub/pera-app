@@ -1,4 +1,5 @@
 import { ctx } from '@/lib/data';
+import { logErr } from '@/lib/safe';
 import { toCsv, type Row } from '@/core/io';
 export async function GET() {
   const { sb, accounts, categories } = await ctx(),
@@ -12,7 +13,10 @@ export async function GET() {
       .order('transaction_date')
       .order('created_at')
       .range(from, from + 999);
-    if (error) return new Response('Export failed: ' + error.message, { status: 500 });
+    if (error) {
+      logErr('export', error);
+      return new Response('Export failed. Please try again.', { status: 500 });
+    }
     for (const x of data)
       rows.push({
         date: x.transaction_date,
@@ -27,6 +31,6 @@ export async function GET() {
     if (data.length < 1000) break;
   }
   return new Response(toCsv(rows), {
-    headers: { 'content-type': 'text/csv; charset=utf-8', 'content-disposition': 'attachment; filename="pera-export.csv"' },
+    headers: { 'content-type': 'text/csv; charset=utf-8', 'content-disposition': 'attachment; filename="zovix-export.csv"' },
   });
 }

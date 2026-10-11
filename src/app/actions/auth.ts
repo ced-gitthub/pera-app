@@ -6,7 +6,7 @@ import { supabaseProbe } from '@/lib/supabase/probe';
 import { passwordProblem, isPwned, isEmail, safeNext, PWNED } from '@/lib/password';
 import { authMessage, logErr } from '@/lib/safe';
 import { admin, adminConfigured } from '@/lib/admin';
-import { recentSignIn } from '@/lib/session';
+import { recentSignIn, sessionSignInAt } from '@/lib/session';
 import { go, str, siteUrl, verifyUrl, errCode, code6, authed, needsSecondStep } from './shared';
 
 // Google sign-in: Supabase sends the user to Google, then back to /auth/callback (PKCE). Google has already verified the address, so no confirmation email is needed.
@@ -162,7 +162,7 @@ export async function deleteMyAccount(fd: FormData) {
           ? 'Your current password is not right.'
           : authMessage(wrong, 'deleteMyAccount'),
       );
-  } else if (!recentSignIn(user.last_sign_in_at)) {
+  } else if (!recentSignIn(sessionSignInAt((await sb.auth.getSession()).data.session?.access_token) ?? user.last_sign_in_at)) {
     // Google-only accounts have no password: require a sign-in within the last 10 minutes instead.
     go('/security', 'err', 'For your safety, log out, sign in with Google again, then delete your account within 10 minutes.');
   }
