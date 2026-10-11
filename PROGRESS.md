@@ -32,6 +32,8 @@
 
 - 2026-10-11: REJECTED design, do not rebuild: Google sign-in for the iPhone app via a parked OAuth code (sheet parks the code under a nonce, app polls and exchanges it). The judge showed it allows account takeover: an attacker starts the flow on their own device, sends the victim the Google link, and the victim's code is redeemed by the attacker's PKCE verifier. Safe options need a device-code confirmation step and cannot be tested on an iPhone from here. Decision: Google works on Android and Safari; the installed iPhone app uses the email code (/code) or password.
 
+- 2026-10-12: Everything now lives in one folder, `C:\Users\Ced\Ced Personal Project`: `Zovix\pera-app` (this repo), `Zovix\android-build` (APK build script, JDK, Android SDK, signing keystore: back it up, never commit it) and `Claude Code Setup\myapp`. Hook paths in .claude/settings.json are quoted because the folder name has spaces. The APK signing key was replaced (the first one's password appeared in a log; it was never published) and ANDROID_SHA256_CERT_FINGERPRINTS in Vercel was updated to the new key. Rebuild the APK with `node build.mjs` in android-build (SITE=https://zovixhub.com once the domain is live). The old empty folder C:\Users\Ced\pera-app can be deleted once Claude is closed.
+
 ## Next steps
 
 0. Owner: turn Supabase Confirm email back ON after any live-suite run. Provide the domain (with ending) to attach it in Vercel, then follow docs/play-store/PLAY_CONSOLE_GUIDE.md.

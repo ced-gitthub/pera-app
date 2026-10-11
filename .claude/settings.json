@@ -9,9 +9,9 @@
     "deny": ["Bash(cat *.env*)", "Bash(head *.env*)", "Bash(tail *.env*)", "Bash(git reset --hard*)", "Bash(git push --force*)", "Bash(git push -f *)", "Bash(git push * --force*)", "Bash(rm -rf *)", "Read(./.env)", "Read(./.env.local)", "Read(./.env.production)"]
   },
   "hooks": {
-    "SessionStart": [{ "hooks": [{ "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/status.sh" }] }],
-    "PreToolUse": [{ "matcher": "Write|Edit|MultiEdit|mcp__supabase__apply_migration|mcp__supabase__execute_sql", "hooks": [{ "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/guard.mjs" }] }],
-    "Stop": [{ "hooks": [{ "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/tests.sh" }] }]
+    "SessionStart": [{ "hooks": [{ "type": "command", "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/status.sh\"" }] }],
+    "PreToolUse": [{ "matcher": "Write|Edit|MultiEdit|mcp__supabase__apply_migration|mcp__supabase__execute_sql", "hooks": [{ "type": "command", "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard.mjs\"" }] }],
+    "Stop": [{ "hooks": [{ "type": "command", "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/tests.sh\"" }] }]
   },
   "enabledPlugins": { "code-review@claude-plugins-official": true }
 }
