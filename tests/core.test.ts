@@ -496,3 +496,16 @@ test('recentSignIn: Google-only accounts must have signed in within 10 minutes t
   assert.equal(recentSignIn('not a date', now), false);
   assert.equal(recentSignIn('2026-10-11T13:00:00Z', now), false); // far in the future is not "recent"
 });
+
+test('Android asset links: empty until a valid package and fingerprint are set', async () => {
+  const { buildAssetLinks } = await import('../src/lib/assetlinks.ts');
+  const fp = Array.from({ length: 32 }, (_, i) => (i * 7 + 10).toString(16).toUpperCase().padStart(2, '0')).join(':');
+  assert.deepEqual(buildAssetLinks(undefined, undefined), []);
+  assert.deepEqual(buildAssetLinks('com.zovixhub.app', 'not-a-fingerprint'), []);
+  assert.deepEqual(buildAssetLinks('Bad Package', fp), []);
+  const ok = buildAssetLinks('com.zovixhub.app', `${fp.toLowerCase()}, ${fp}`);
+  assert.equal(ok.length, 1);
+  assert.equal(ok[0].target.package_name, 'com.zovixhub.app');
+  assert.equal(ok[0].target.sha256_cert_fingerprints.length, 2);
+  assert.equal(ok[0].target.sha256_cert_fingerprints[0], fp);
+});

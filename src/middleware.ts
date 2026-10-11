@@ -3,4 +3,6 @@ import { updateSession } from '@/lib/supabase/middleware';
 export function middleware(r: NextRequest) {
   return updateSession(r);
 }
-export const config = { matcher: ['/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|pwa-icon|apple-icon|.well-known).*)'] };
+export const config = {
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|pwa-icon|apple-icon|sw.js|offline.html|.well-known).*)'],
+};

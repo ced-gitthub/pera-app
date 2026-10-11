@@ -5,6 +5,7 @@ Zovix is a web app (Next.js) that is now installable (PWA). The stores need extr
 ## What already works (free, today)
 - **Android (Chrome):** open https://pera-app-beta.vercel.app, menu, "Install app".
 - **iPhone (Safari):** Share, "Add to Home Screen".
+- Full Google Play walkthrough, listing text and form answers: `docs/play-store/PLAY_CONSOLE_GUIDE.md`
 - Public pages the stores ask for: privacy policy `/privacy`; delete-account instructions are on the same page and in the app (Security, Delete my account).
 
 ## Costs (outside the project's $0 rule - owner decides)
