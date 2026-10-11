@@ -31,6 +31,11 @@ export default async function Page({ searchParams }: { searchParams: SP }) {
           </Link>
         </p>
         <p className="mt-3 m">
+          <Link href="/code" className="underline">
+            Email me a login code instead
+          </Link>
+        </p>
+        <p className="mt-3 m">
           No account?{' '}
           <Link href="/register" className="underline">
             Register

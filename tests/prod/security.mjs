@@ -78,6 +78,17 @@ G('email confirmation pages + password rules');
       ? true
       : f;
   });
+  await step('email-code login for an unknown address gives a generic answer, then a wrong code is refused plainly', async () => {
+    await q.goto('/code');
+    await q.fill('input[name=email]', em('ghostcode'));
+    await act(q, () => q.click('button:has-text("Email me a code")'));
+    const f = await flash(q);
+    if (!(/login code is on its way|Too many/.test(f) && !LEAK.test(f) && !/no account|not found|does not exist/i.test(f))) return f;
+    await q.fill('input[name=code]', '000000');
+    await act(q, () => q.click('button:has-text("Log in")'));
+    const g = await flash(q);
+    return /wrong or has expired/.test(g) && !LEAK.test(g) && new URL(q.url()).pathname === '/code' ? true : g;
+  });
   await step('/verify rejects a malformed address with a plain message', async () => {
     await q.goto('/verify');
     await q.fill('input[name=email]', 'nope');
@@ -543,7 +554,7 @@ await step('skeleton animation stops for people who prefer reduced motion', asyn
     await m.unroute('**/*');
     return tabs && ov <= 0 ? true : { tabs, ov };
   });
-  for (const r of ['/security', '/verify?email=someone@example.com', '/verify', '/login', '/register', '/forgot'])
+  for (const r of ['/security', '/verify?email=someone@example.com', '/verify', '/login', '/register', '/forgot', '/code'])
     await step(`mobile 390px: ${r} fits the screen`, async () => {
       await m.goto(r.startsWith('/security') ? r : r);
       await m.waitForTimeout(400);

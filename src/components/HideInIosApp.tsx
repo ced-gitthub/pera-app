@@ -7,5 +7,13 @@ export default function HideInIosApp({ children }: { children: React.ReactNode }
     setInApp((navigator as Navigator & { standalone?: boolean }).standalone === true);
   }, []);
   if (!inApp) return <>{children}</>;
-  return <p className="muted">Google sign-in is not available in the installed iPhone app. Log in with your email and password below.</p>;
+  return (
+    <p className="m">
+      Google sign-in does not work inside the installed iPhone app.{' '}
+      <a href="/code" className="underline">
+        Log in with an email code
+      </a>{' '}
+      (works for Google accounts too), or use your password below.
+    </p>
+  );
 }

@@ -473,7 +473,20 @@ function client(D) {
         D.recoveryCodes.delete(code);
         return { error: null };
       },
-      verifyOtp: async ({ token_hash, type }) => {
+      signInWithOtp: async ({ email, options }) => {
+        if (D.rateLimit) return { error: { code: 'over_email_send_rate_limit', message: 'rate limit' } };
+        D.otps = D.otps ?? [];
+        D.otps.push({ email, options });
+        return { error: null };
+      },
+      verifyOtp: async ({ token_hash, type, email, token }) => {
+        if (type === 'email' && email && token === '123456') {
+          const u = [...D.users.values()].find((x) => x.email === email);
+          if (!u) return { error: { code: 'otp_expired', message: 'expired' } };
+          if (D.cur !== u.id) D.aal2.delete(u.id);
+          D.cur = u.id;
+          return { error: null };
+        }
         if (type === 'recovery' && D.links?.includes(token_hash)) {
           D.links = D.links.filter((x) => x !== token_hash);
           D.cur = token_hash.replace('hash-', '');

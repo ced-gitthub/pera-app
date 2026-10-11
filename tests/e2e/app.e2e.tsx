@@ -748,6 +748,39 @@ const count = (h: string, s: string) => h.split(s).length - 1;
       (await red(() => A.resendVerification(fd({ email: 'v@x.com' })))).includes('err=Too many emails'),
     );
     D.rateLimit = false;
+    const lc1 = await red(() => A.sendLoginCode(fd({ email: 'v@x.com' }))),
+      lc2 = await red(() => A.sendLoginCode(fd({ email: 'nobody@x.com' })));
+    T(
+      'email code: same reply for known and unknown addresses, never creates accounts',
+      lc1.startsWith('/code?email=v@x.com&ok=If an account exists') &&
+        lc2.startsWith('/code?email=nobody@x.com&ok=If an account exists') &&
+        D.otps.every((o: { options: { shouldCreateUser?: boolean } }) => o.options.shouldCreateUser === false),
+      [lc1, lc2],
+    );
+    T(
+      'email code: invalid address rejected',
+      (await red(() => A.sendLoginCode(fd({ email: 'nope' })))).startsWith('/code?err=Enter a valid email'),
+    );
+    D.rateLimit = true;
+    T(
+      'email code: rate limit gives a plain message',
+      (await red(() => A.sendLoginCode(fd({ email: 'v@x.com' })))).includes('err=Too many emails'),
+    );
+    D.rateLimit = false;
+    T(
+      'email code: non-numeric code refused',
+      (await red(() => A.verifyLoginCode(fd({ email: 'v@x.com', code: 'abc' })))).includes('err=Enter the code from the email'),
+    );
+    T(
+      'email code: wrong code refused with a plain message',
+      (await red(() => A.verifyLoginCode(fd({ email: 'v@x.com', code: '999999' })))).includes('err=That code is wrong or has expired'),
+    );
+    D.cur = null;
+    T(
+      'email code: right code logs in and goes home',
+      (await red(() => A.verifyLoginCode(fd({ email: 'v@x.com', code: '123 456' })))) === '/' && D.cur !== null,
+    );
+    D.cur = null;
     T(
       'callback: confirmed-email link signs in and shows a welcome',
       await (async () => {
@@ -825,6 +858,12 @@ const count = (h: string, s: string) => h.split(s).length - 1;
       'log-in with 2FA on goes to /2fa, not the dashboard',
       (await red(() => A.signIn(fd({ email: 'm@x.com', password: 'secret12' })))) === '/2fa',
     );
+    D.cur = null;
+    D.aal2.delete(MID);
+    T(
+      'email code with 2FA on goes to /2fa, never straight to the dashboard',
+      (await red(() => A.verifyLoginCode(fd({ email: 'm@x.com', code: '123456' })))) === '/2fa' && !D.aal2.has(MID),
+    );
     T(
       '/2fa: wrong code stays on the page',
       (await red(() => A.verifyMfa(fd({ code: '111111', next: '/' })))).startsWith('/2fa?err=That code is not right') && !D.aal2.has(MID),
@@ -873,6 +912,7 @@ const count = (h: string, s: string) => h.split(s).length - 1;
       ['/security', '/2fa?next=/security'],
       ['/2fa', 'pass'],
       ['/forgot', 'pass'],
+      ['/code', '/2fa'],
       ['/auth/callback', 'pass'],
       ['/api/health', 'pass'],
     ];
