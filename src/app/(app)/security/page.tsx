@@ -199,7 +199,7 @@ export default async function Security({ searchParams }: { searchParams: SP }) {
         <form action={deleteMyAccount} className="grid gap-3">
           <input
             className="inp"
-            name="current"
+            name="delete_password"
             type="password"
             placeholder="Current password"
             aria-label="Current password"
