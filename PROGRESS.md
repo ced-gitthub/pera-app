@@ -25,6 +25,9 @@
 - CAPTCHA (Cloudflare Turnstile) needs a Cloudflare account and a Supabase setting; not done.
 - Staging: use Vercel preview deploys per branch; a second Supabase project (free tier allows two) is not created yet.
 
+- 2026-10-11: Domain zovixhub.com (+www redirect) added to the Vercel project; DNS at Cloudflare is still the owner's step (A @ 216.198.79.1, CNAME www -> 220a0159e7a04f46.vercel-dns-017.com, DNS only).
+- 2026-10-11: Android APK built locally (Bubblewrap core, JDK 17, Android SDK) in C:\Users\Ced\android-build (build.mjs, Zovix.apk, keystore/). Package com.zovixhub.app, host pera-app-beta.vercel.app, minSdk 24. The keystore and its password stay local and must be backed up; never commit them. Vercel production env ANDROID_PACKAGE_NAME and ANDROID_SHA256_CERT_FINGERPRINTS set so /.well-known/assetlinks.json lists the app. Moving to zovixhub.com means rebuilding the APK with SITE=https://zovixhub.com.
+
 ## Next steps
 
 0. Owner: turn Supabase Confirm email back ON after any live-suite run. Provide the domain (with ending) to attach it in Vercel, then follow docs/play-store/PLAY_CONSOLE_GUIDE.md.
