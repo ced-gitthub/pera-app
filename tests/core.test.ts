@@ -509,3 +509,19 @@ test('Android asset links: empty until a valid package and fingerprint are set',
   assert.equal(ok[0].target.sha256_cert_fingerprints.length, 2);
   assert.equal(ok[0].target.sha256_cert_fingerprints[0], fp);
 });
+
+test("sessionSignInAt reads this session's own sign-in time from the token", async () => {
+  const { sessionSignInAt } = await import('../src/lib/session.ts');
+  const token = (payload: object) => `h.${Buffer.from(JSON.stringify(payload)).toString('base64url')}.s`;
+  assert.equal(
+    sessionSignInAt(token({ amr: [{ method: 'password', timestamp: 1_790_000_000 }] })),
+    new Date(1_790_000_000_000).toISOString(),
+  );
+  assert.equal(
+    sessionSignInAt(token({ amr: [{ timestamp: 1_790_000_000 }, { timestamp: 1_790_000_500 }] })),
+    new Date(1_790_000_500_000).toISOString(),
+  );
+  assert.equal(sessionSignInAt(token({})), undefined);
+  assert.equal(sessionSignInAt('not-a-token'), undefined);
+  assert.equal(sessionSignInAt(null), undefined);
+});

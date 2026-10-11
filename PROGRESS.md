@@ -7,6 +7,8 @@
 
 - 2026-10-11 owner setup done: Supabase Confirm email ON, custom Gmail SMTP configured (signup confirmation emails verified working), branch rule requiring the ci check on main, deny rules added to .claude/settings.json. actions.ts split into src/app/actions/*.ts.
 
+- 2026-10-11 store prep + backend: installable app, offline page, delete-my-account (needs password or recent sign-in; blocked for password-only sessions of two-step users), privacy page, Android assetlinks route, Play Console guide (docs/play-store). Migration 0010 applied: deleting a user purges their undo-trash. App renamed to Zovix. CSV export no longer leaks error text.
+
 ## Open bugs
 
 - Lint ratchet: 286 warnings (258 `any`), all pre-existing. Do not let the number grow.
@@ -24,6 +26,8 @@
 - Staging: use Vercel preview deploys per branch; a second Supabase project (free tier allows two) is not created yet.
 
 ## Next steps
+
+0. Owner: turn Supabase Confirm email back ON after any live-suite run. Provide the domain (with ending) to attach it in Vercel, then follow docs/play-store/PLAY_CONSOLE_GUIDE.md.
 
 1. Live suite: the confirm dialogs added in the audit broke 9 steps in tests/prod/qa.mjs (fixed on branch fix-live-tests: accept "Delete ..." confirms, 404 text). Re-check the qa-qa result after the next push to main.
 2. Owner only (Claude cannot change its own permission rules): in .claude/settings.json add deny rules Bash(cat *.env*), Bash(head *.env*), Bash(tail *.env*), Bash(git reset --hard*) and narrow the broad Bash(git *), Bash(cat *), Bash(node *), Bash(python3 *) allows. In GitHub: Settings -> Branches -> add a rule for `main` that requires the `ci` check to pass.
