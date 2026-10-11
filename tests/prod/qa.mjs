@@ -1,4 +1,5 @@
 // Live suites run against production with throwaway users; they need Supabase "Confirm email" OFF (the workflow preflight skips them otherwise). Do not turn it back ON mid-run. (Vercel must be READY on the commit before a run is meaningful.)
+// Covers the 30 s screen memory (next.config.mjs staleTimes): see the "remembered screens" and "Back after logout" steps.
 // Real production QA: real Chromium -> deployed Vercel app -> real Supabase. Creates throwaway users pera-qa-*@example.com.
 import { BASE, G, T, step, act, launch, newCtx, flash, body, signup, login, logout, add, done, manila, LEAK } from './lib.mjs';
 import fs from 'node:fs';
