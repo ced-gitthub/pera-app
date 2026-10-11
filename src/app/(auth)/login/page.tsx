@@ -36,6 +36,11 @@ export default async function Page({ searchParams }: { searchParams: SP }) {
             Register
           </Link>
         </p>
+        <p className="mt-3 m">
+          <Link href="/privacy" className="underline">
+            Privacy policy
+          </Link>
+        </p>
       </div>
     </main>
   );

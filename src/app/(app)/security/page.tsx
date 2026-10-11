@@ -1,6 +1,16 @@
 import { redirect } from 'next/navigation';
 import { supabaseServer } from '@/lib/supabase/server';
-import { changePassword, disableMfa, signOutOthers, signOutEverywhere, backupStart, backupConfirm, backupRemove } from '@/app/actions';
+import {
+  changePassword,
+  disableMfa,
+  signOutOthers,
+  signOutEverywhere,
+  backupStart,
+  backupConfirm,
+  backupRemove,
+  deleteMyAccount,
+} from '@/app/actions';
+import { Btn } from '@/components/Btn';
 import { backupConfigured, getBackup } from '@/lib/backup';
 import { maskEmail } from '@/lib/backupcode';
 import MfaSetup from '@/components/MfaSetup';
@@ -179,6 +189,38 @@ export default async function Security({ searchParams }: { searchParams: SP }) {
             <button className="btn">Log out everywhere</button>
           </form>
         </div>
+      </div>
+      <div className="card" id="delete-account">
+        <h2>Delete my account</h2>
+        <p className="m" style={{ marginBottom: 12 }}>
+          Permanently deletes your login and every account, transaction, budget and setting. This cannot be undone. Download your data from
+          Settings first if you want a copy.
+        </p>
+        <form action={deleteMyAccount} className="grid gap-3">
+          <input
+            className="inp"
+            name="current"
+            type="password"
+            placeholder="Current password"
+            aria-label="Current password"
+            required
+            maxLength={72}
+            autoComplete="current-password"
+          />
+          <input
+            className="inp"
+            name="confirm"
+            placeholder="Type DELETE to confirm"
+            aria-label="Type DELETE to confirm"
+            required
+            autoComplete="off"
+          />
+          <div>
+            <Btn className="btn" confirm="Permanently delete your account and all of your data? This cannot be undone.">
+              Delete my account
+            </Btn>
+          </div>
+        </form>
       </div>
     </>
   );

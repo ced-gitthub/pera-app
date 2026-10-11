@@ -1837,6 +1837,15 @@ const count = (h: string, s: string) => h.split(s).length - 1;
       D.t.accounts.filter((a: any) => a.user_id === me() && a.name.toLowerCase() === 'newacc').length === 1,
     );
   }
+  // ---- delete my account (store requirement): refusals leave everything in place
+  {
+    const n0 = D.t.accounts.filter((a: { user_id: string }) => a.user_id === me()).length;
+    const wrongWord = await red(() => A.deleteMyAccount(fd({ current: 'secret12', confirm: 'delete' })));
+    T('delete account needs the word DELETE', wrongWord.includes('err=Type DELETE'), wrongWord);
+    const noAdmin = await red(() => A.deleteMyAccount(fd({ current: 'secret12', confirm: 'DELETE' })));
+    T('delete account is refused safely when it cannot run', noAdmin.includes('err='), noAdmin);
+    T('refused deletion removed nothing', D.t.accounts.filter((a: { user_id: string }) => a.user_id === me()).length === n0 && n0 > 0);
+  }
   // ---- isolation sanity of the stand-in itself
   login('a@x.com');
   T('A still sees exactly its own rows', rows(A_ID).length === rows().length && !rows().some((t: any) => t.user_id !== A_ID));
