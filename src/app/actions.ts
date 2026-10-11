@@ -10,7 +10,7 @@ import { newCode, hashCode, checkCode, nextSend, cooldownPassed, CODE_TTL_MS, MA
 import { passwordProblem, isPwned, isEmail, safeNext, PWNED } from '@/lib/password';
 import { ctx, aliasMap, balanceMap } from '@/lib/data';
 import { TABS, normalizeLayout, normalizeTab, type TabId } from '@/lib/layout';
-import { manilaToday, parseAmountMinor, isDate, formatMinor } from '@/core/money';
+import { manilaToday, parseAmountMinor, isDate, isSaneDate, addDays, formatMinor } from '@/core/money';
 import { categoryFor, FEE_CATS, type Parsed } from '@/core/parser';
 import { totals, type Tx } from '@/core/aggregate';
 import { fromCsv, mapLegacy, type Row } from '@/core/io';
@@ -209,12 +209,12 @@ export async function parseServer(text: string, today: string): Promise<Parsed[]
 const RESTORE = ['id', 'account_id', 'transfer_account_id', 'category_id', 'type', 'amount_minor', 'description', 'notes', 'transaction_date', 'import_hash', 'external_id', 'recurring_id', 'request_id', 'request_idx', 'created_at'];
 type Sb = Awaited<ReturnType<typeof ctx>>['sb'];
 // Put a deleted transaction back (used by the Undo button and by "undo last"). Takes the server-side copy from the trash when there is one.
-async function restoreRow(sb: Sb, userId: string, row: Record<string, unknown>): Promise<{ ok: boolean; message: string }> {
+async function restoreRow(sb: Sb, userId: string, row: Record<string, unknown>): Promise<{ ok: boolean; message: string; permanent?: boolean }> {
   const r: Record<string, unknown> = { user_id: userId }; for (const k of RESTORE) if (row[k] !== undefined && row[k] !== null) r[k] = row[k];
   if (typeof r.id !== 'string') return { ok: false, message: 'Could not restore that transaction.' };
   if (r.recurring_id) { const { data } = await sb.from('recurring_transactions').select('id').eq('id', r.recurring_id as string).maybeSingle(); if (!data) delete r.recurring_id; } // the rule was deleted since
   const { error } = await sb.from('transactions').upsert(r, { onConflict: 'id', ignoreDuplicates: true });
-  if (error) return { ok: false, message: (error as { code?: string }).code === '23503' ? "Can't restore it: its account or category was deleted since." : safeMessage(error, 'restore') };
+  if (error) return (error as { code?: string }).code === '23503' ? { ok: false, permanent: true, message: "Can't restore it: its account or category was deleted since." } : { ok: false, message: safeMessage(error, 'restore') };
   const { count } = await sb.from('transactions').select('id', { count: 'exact', head: true }).eq('id', r.id as string); if (count !== 1) return { ok: false, message: 'Could not restore that transaction.' };
   await sb.from('tx_trash').delete().eq('tx_id', r.id as string); // best effort: the entry is spent
   return { ok: true, message: 'Restored' };
@@ -224,13 +224,20 @@ export async function runCommand(text: string): Promise<{ ok: boolean; message: 
     const { sb, user, categories } = await ctx(true), cmd = commandOf(text), t = text.toLowerCase();
     if (!cmd) return { ok: false, message: 'Not a command. Try "delete last", "undo last" or "change last to Food".' };
     if (cmd === 'undo') { // restores the most recently deleted transaction; repeating walks back through older deletions
-      const { data: tr, error } = await sb.from('tx_trash').select('id,tx_id,row').order('deleted_at', { ascending: false }).limit(1); if (error) return { ok: false, message: safeMessage(error, 'undo') };
+      const { data: tr, error } = await sb.from('tx_trash').select('id,tx_id,row').order('deleted_at', { ascending: false }).limit(20); if (error) return { ok: false, message: safeMessage(error, 'undo') };
       if (!tr?.length) return { ok: false, message: NOTHING_TO_UNDO };
-      const r = await restoreRow(sb, user.id, tr[0].row as Record<string, unknown>); await sb.from('tx_trash').delete().eq('id', tr[0].id); // an unrestorable entry is dropped so undo never gets stuck on it
-      if (!r.ok) return r; done(); const x = tr[0].row as { amount_minor: number; description?: string };
-      return { ok: true, message: `Restored ${formatMinor(Number(x.amount_minor))} ${x.description || ''}`.trim() };
+      // Newest deletion first. Only a permanent problem (its account or category was deleted since) makes undo skip an entry, and that entry stays in the trash untouched.
+      // Any other failure (network, permissions, limits) stops here, so undo never restores things out of order.
+      let skipped = 0;
+      for (const e of tr) {
+        const r = await restoreRow(sb, user.id, e.row as Record<string, unknown>);
+        if (r.ok) { done(); const x = e.row as { amount_minor: number; description?: string }; return { ok: true, message: `Restored ${formatMinor(Number(x.amount_minor))} ${x.description || ''}${skipped ? ` (skipped ${skipped} that can't be restored: their account or category was deleted)` : ''}`.trim() }; }
+        if (!r.permanent) return r;
+        skipped++;
+      }
+      return { ok: false, message: `Can't undo: the ${skipped} most recent deleted transaction${skipped === 1 ? '' : 's'} belong${skipped === 1 ? 's' : ''} to an account or category that was deleted.` };
     }
-    const { data: last, error } = await sb.from('transactions').select('*').order('created_at', { ascending: false }).limit(1);
+    const { data: last, error } = await sb.from('transactions').select('*').order('created_at', { ascending: false }).order('request_idx', { ascending: false, nullsFirst: false }).order('id', { ascending: false }).limit(1); // ties (a transfer and its fee share one time) resolve the same way every time
     if (error) return { ok: false, message: safeMessage(error, 'command') }; if (!last?.length) return { ok: false, message: 'No transactions yet.' };
     const x = last[0];
     if (cmd === 'delete') {
@@ -263,7 +270,7 @@ export async function duplicateTx(id: string) {
 export async function updateTx(fd: FormData) {
   const id = str(fd, 'id'), back = `/transactions/${encodeURIComponent(id)}`, { sb, categories, accounts } = await ctx();
   const amt = parseAmountMinor(str(fd, 'amount')), date = str(fd, 'date'), type = str(fd, 'type');
-  if (amt === null) go(back, 'err', 'Amount must be 0.01 to 999,999,999.99'); if (!isDate(date)) go(back, 'err', 'Invalid date');
+  if (amt === null) go(back, 'err', 'Amount must be 0.01 to 999,999,999.99'); if (!isSaneDate(date)) go(back, 'err', 'Invalid date (use a real date between 2000 and 5 years from now)');
   if (!accounts.some(a => a.id === str(fd, 'account_id'))) go(back, 'err', 'Unknown account');
   const patch: Record<string, unknown> = { amount_minor: amt, transaction_date: date, description: str(fd, 'description').slice(0, 120), notes: str(fd, 'notes').slice(0, 500), account_id: str(fd, 'account_id'), type };
   if (type === 'transfer') { if (!accounts.some(a => a.id === str(fd, 'to_id'))) go(back, 'err', 'Unknown destination account'); patch.transfer_account_id = str(fd, 'to_id'); patch.category_id = null; }
@@ -311,8 +318,10 @@ export async function moveAccount(id: string, dir: string, _fd?: FormData) { // 
 }
 export async function transfer(fd: FormData) {
   const { sb, user } = await ctx(); const amt = parseAmountMinor(str(fd, 'amount')), date = str(fd, 'date') || manilaToday(), a = str(fd, 'from'), b = str(fd, 'to');
-  if (amt === null || !isDate(date) || !a || !b || a === b) go('/accounts', 'err', 'Choose two different accounts and a valid amount/date');
-  const { error } = await sb.from('transactions').insert({ user_id: user.id, type: 'transfer', amount_minor: amt, account_id: a, transfer_account_id: b, transaction_date: date, description: str(fd, 'description').slice(0, 120) });
+  if (amt === null || !isSaneDate(date) || !a || !b || a === b) go('/accounts', 'err', 'Choose two different accounts and a valid amount/date');
+  // The form carries a one-time id, so a double-tap or a retry on a slow connection records the transfer once.
+  const rid = str(fd, 'rid'), row = { user_id: user.id, type: 'transfer', amount_minor: amt, account_id: a, transfer_account_id: b, transaction_date: date, description: str(fd, 'description').slice(0, 120) };
+  const { error } = /^[0-9a-f-]{36}$/i.test(rid) ? await sb.from('transactions').upsert({ ...row, request_id: rid, request_idx: 0 }, { onConflict: 'user_id,request_id,request_idx', ignoreDuplicates: true }) : await sb.from('transactions').insert(row);
   if (error) go('/accounts', 'err', 'Not saved: ' + safeMessage(error, 'transfer')); done(); go('/accounts', 'ok', 'Transfer recorded');
 }
 const backTo = (fd: FormData, d: string) => (['/settings', '/budgets'].includes(str(fd, 'back')) ? str(fd, 'back') : d);
@@ -351,7 +360,8 @@ export async function setBudget(fd: FormData) {
 export async function createRecurring(fd: FormData) {
   const { sb, user, categories, accounts } = await ctx(); const amt = parseAmountMinor(str(fd, 'amount')), start = str(fd, 'start'), n = Number(str(fd, 'interval') || 1), type = str(fd, 'type');
   const cat = categories.find(c => c.id === str(fd, 'category_id') && c.type === type), acct = accounts.find(a => a.id === str(fd, 'account_id'));
-  if (amt === null || !isDate(start) || !cat || !acct || !Number.isInteger(n) || n < 1 || n > 365 || !['daily', 'weekly', 'monthly', 'yearly'].includes(str(fd, 'frequency'))) go('/settings', 'err', 'Check amount, start date, type/category, account and interval');
+  const today = manilaToday(); if (!isDate(start) || start < addDays(today, -730) || start > addDays(today, 730)) go('/settings', 'err', 'Start date must be within 2 years of today');
+  if (amt === null || !cat || !acct || !Number.isInteger(n) || n < 1 || n > 365 || !['daily', 'weekly', 'monthly', 'yearly'].includes(str(fd, 'frequency'))) go('/settings', 'err', 'Check amount, start date, type/category, account and interval');
   const { error } = await sb.from('recurring_transactions').insert({ user_id: user.id, account_id: acct.id, category_id: cat.id, type, amount_minor: amt, description: str(fd, 'description').slice(0, 120), frequency: str(fd, 'frequency'), interval_count: n, start_date: start, next_run_date: start });
   if (error) go('/settings', 'err', safeMessage(error, 'createRecurring')); done(); go('/settings', 'ok', 'Recurring rule added (runs when you open the dashboard)');
 }
@@ -382,8 +392,8 @@ import { periodFor, shiftYm, monthRange } from '@/lib/range';
 function periodFor2() { const ym = manilaToday().slice(0, 7); return { cur: periodFor('month', manilaToday()), prev: monthRange(shiftYm(ym, -1)) }; }
 // ---- CSV import + localStorage migration
 async function resolveAccounts(sb: any, user: any, existing: { id: string; name: string; sort_order?: number }[], names: string[]) {
-  const map = new Map(existing.map(a => [a.name.toLowerCase(), a.id])); const fresh = [...new Set(names.filter(n => n && !map.has(n.toLowerCase())))].slice(0, 20);
-  if (fresh.length) { const { data } = await sb.from('accounts').insert(fresh.map((name, i) => ({ user_id: user.id, name, account_type: 'other', sort_order: Math.max(0, ...existing.map(a => Number(a.sort_order ?? 0))) + 10 * (i + 1) }))).select('id,name'); for (const a of data ?? []) map.set(a.name.toLowerCase(), a.id); }
+  const map = new Map(existing.map(a => [a.name.toLowerCase(), a.id])), seen = new Set<string>(); const fresh = names.filter(n => { const k = (n ?? '').toLowerCase(); if (!n || map.has(k) || seen.has(k)) return false; seen.add(k); return true; }).slice(0, 20); // "Foo" and "foo" are one account
+  if (fresh.length) { const { data, error } = await sb.from('accounts').insert(fresh.map((name, i) => ({ user_id: user.id, name, account_type: 'other', sort_order: Math.max(0, ...existing.map(a => Number(a.sort_order ?? 0))) + 10 * (i + 1) }))).select('id,name'); if (error) throw error; for (const a of data ?? []) map.set(a.name.toLowerCase(), a.id); }
   return map;
 }
 function toDbRows(rows: (Row & { import_hash?: string; external_id?: string })[], accs: Map<string, string>, cats: { id: string; name: string; type: string }[], def: string, uid: string) {
@@ -401,7 +411,8 @@ export async function importCsv(fd: FormData) {
   const { sb, user, accounts, categories } = await ctx(); const f = fd.get('file'); if (f instanceof File && f.size > MAX_CSV_BYTES) go('/settings', 'err', `That file is too large (max ${MAX_CSV_LABEL}). Split it into smaller files.`); const text = f instanceof File && f.size ? await f.text() : str(fd, 'csv'); if (text.length > MAX_CSV_BYTES) go('/settings', 'err', `That file is too large (max ${MAX_CSV_LABEL}). Split it into smaller files.`);
   const parsed = fromCsv(text, new Set(), { income: categories.filter(c => c.type === 'income').map(c => c.name), expense: categories.filter(c => c.type === 'expense').map(c => c.name) });
   if (parsed.ok.length > MAX_CSV_ROWS) go('/settings', 'err', `Too many rows (${parsed.ok.length}). The limit is ${MAX_CSV_ROWS} per file; split it and import in parts.`);
-  const accs = await resolveAccounts(sb, user, accounts, parsed.ok.flatMap(r => [r.account, r.to_account])), def = defaultAccount(accounts)?.id ?? [...accs.values()][0];
+  let accs: Map<string, string>; try { accs = await resolveAccounts(sb, user, accounts, parsed.ok.flatMap(r => [r.account, r.to_account])); } catch (e) { go('/settings', 'err', 'Import stopped: could not create the accounts in the file. ' + safeMessage(e, 'importCsv.accounts')); }
+  const def = defaultAccount(accounts)?.id ?? [...accs.values()][0];
   const { out, skipped } = toDbRows(parsed.ok, accs, categories, def, user.id); let inserted = 0;
   for (let i = 0; i < out.length; i += 500) { const { data, error } = await sb.from('transactions').upsert(out.slice(i, i + 500), { onConflict: 'user_id,import_hash', ignoreDuplicates: true }).select('id'); if (error) go('/settings', 'err', `Import stopped after ${inserted} rows: ${safeMessage(error, 'importCsv')}`); inserted += data?.length ?? 0; }
   done(); go('/settings', 'ok', `Imported ${inserted} new. ${out.length - inserted} matched an earlier import and were skipped. ${parsed.bad.length + skipped} invalid or unmatched rows were ignored. Rows you typed by hand are never compared.`);

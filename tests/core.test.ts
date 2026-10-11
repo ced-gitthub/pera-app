@@ -69,7 +69,7 @@ test('AI: optional, validated, never trusted', async () => {
 test('no secrets committed', () => {
   const walk = (d: string): string[] => fs.readdirSync(d, { withFileTypes: true }).filter(f => !['node_modules', '.git', '.next'].includes(f.name)).flatMap(f => f.isDirectory() ? walk(`${d}/${f.name}`) : [`${d}/${f.name}`]);
   for (const f of walk('.').filter(f => !f.includes('tests/'))) assert.ok(!/sk-[A-Za-z0-9]{20}|service_role|eyJ[A-Za-z0-9_-]{30}/.test(fs.readFileSync(f, 'utf8')), f);
-  assert.ok(/NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=\n/.test(fs.readFileSync('.env.example', 'utf8')));
+  assert.ok(/NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=\r?\n/.test(fs.readFileSync('.env.example', 'utf8')));
 });
 
 test('explicit "expense" word and drinks are understood', () => {
@@ -135,4 +135,12 @@ test('quick add: longest account first, short names, transfers, fees, dates', ()
   assert.equal(parseInput('lunch 100 feb 30', c)[0].kind, 'error'); assert.equal((parseInput('spent 20 may', c)[0] as any).amount_minor, 2000);
   // unchanged behaviour
   assert.equal(parseInput('food 120', c)[0].kind, 'ok'); assert.equal(parseInput('SM 500', c)[0].kind, 'ask');
+});
+
+test('audit fixes: plausible dates, custom report ranges', async () => {
+  const { isSaneDate } = await import('../src/core/money.ts'); const { periodFor } = await import('../src/lib/range.ts');
+  for (const ok of ['2000-01-01', '2026-10-11', '2031-12-31']) assert.equal(isSaneDate(ok, '2026-10-11'), true, ok);
+  for (const bad of ['0001-01-01', '1999-12-31', '2032-01-01', '2062-05-05', '2026-02-30', 'nope']) assert.equal(isSaneDate(bad, '2026-10-11'), false, bad);
+  assert.equal(periodFor('custom', '2026-10-11', '2026-02-31', '2026-03-05').label, 'This month'); // impossible date falls back instead of reaching the database
+  assert.equal(periodFor('custom', '2026-10-11', '2026-02-01', '2026-03-05').label, '2026-02-01 to 2026-03-05');
 });

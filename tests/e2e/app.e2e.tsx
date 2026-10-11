@@ -446,6 +446,15 @@ const count = (h: string, s: string) => h.split(s).length - 1;
     await addF('dinner 400 bpi'); h = await page(Accounts); T('negative balances use the expense colour', h.includes('<span class="exp">-₱400.00</span>'));
     login('a@x.com');
   }
+  // ---- audit fixes: double-submit, recurring window, CSV account names that differ only in case
+  {
+    const rid = '11111111-2222-4333-8444-555555555555', n0 = rows().filter((t: any) => t.type === 'transfer').length;
+    const tf = () => red(() => A.transfer(fd({ from: acct('Cash'), to: acct('GCash'), amount: '7', date: today, rid })));
+    await tf(); await tf(); T('double-submitted transfer is recorded once', rows().filter((t: any) => t.type === 'transfer').length === n0 + 1);
+    T('recurring rule starting in 1900 is refused', (await red(() => A.createRecurring(fd({ amount: '5', type: 'expense', category_id: cat('Food'), account_id: acct('Cash'), frequency: 'daily', interval: '1', start: '1900-01-01' })))).includes('err='));
+    await red(() => A.importCsv(fd({ csv: 'date,type,amount,category,description,notes,account,to_account\n2026-10-01,expense,10,Food,x,,NewAcc,\n2026-10-02,expense,11,Food,y,,newacc,\n' })));
+    T('CSV accounts differing only in case become one account', D.t.accounts.filter((a: any) => a.user_id === me() && a.name.toLowerCase() === 'newacc').length === 1);
+  }
   // ---- isolation sanity of the stand-in itself
   login('a@x.com'); T('A still sees exactly its own rows', rows(A_ID).length === rows().length && !rows().some((t: any) => t.user_id !== A_ID));
   console.log(`e2e (app code vs in-memory Supabase stand-in): pass ${pass} fail ${fail}`);

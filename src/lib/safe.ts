@@ -4,6 +4,7 @@ export const GENERIC = 'Something went wrong. Please try again.';
 const BY_CODE: Record<string, string> = {
   '23505': 'That already exists.', '23503': 'That item is still in use.', '23514': 'Some of those values are not allowed.', '23502': 'A required value is missing.',
   '22P02': 'Some of those values are not valid.', '42501': 'You do not have permission to do that.', 'PGRST116': 'That item was not found.',
+  'PRLIM': 'You reached the limit for how much one user can store in this version. Delete things you no longer need, or contact the owner.',
 };
 const AUTH: Record<string, string> = {
   invalid_credentials: 'Wrong email or password.', user_already_exists: 'An account with this email already exists. Try logging in.', email_exists: 'An account with this email already exists. Try logging in.',

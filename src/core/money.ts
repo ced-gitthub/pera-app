@@ -12,6 +12,8 @@ export function formatMinor(m: number): string {
   return `${m < 0 ? '-' : ''}₱${Math.trunc(a / 100).toLocaleString('en-US')}.${String(a % 100).padStart(2, '0')}`;
 }
 export const isDate = (s: string) => { if (!/^\d{4}-\d\d-\d\d$/.test(s)) return false; const d = new Date(s + 'T00:00:00Z'); return !isNaN(d.getTime()) && d.toISOString().slice(0, 10) === s; };
-export const addDays = (s: string, n: number) => { const d = new Date(s + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
+// A real date that is also plausible for a money record: 2000-01-01 up to 5 years ahead. Catches typos like 2062 or 0001.
+export const isSaneDate = (s: string, today = manilaToday()) => isDate(s) && s >= '2000-01-01' && s <= `${Number(today.slice(0, 4)) + 5}-12-31`;
+export const addDays =(s: string, n: number) => { const d = new Date(s + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
 export const dayOfWeek = (s: string) => new Date(s + 'T00:00:00Z').getUTCDay();
 export const manilaToday = (d = new Date()) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila' }).format(d);
