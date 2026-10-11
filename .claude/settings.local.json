@@ -2,7 +2,10 @@
   "permissions": {
     "allow": [
       "Bash(node -e ' *)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(sed -i '1s#^#// Live suites run against production with throwaway users; they need Supabase \"Confirm email\" OFF \\(the workflow preflight skips them otherwise\\).\\\\n#' tests/prod/qa.mjs)",
+      "Bash(npx prettier *)",
+      "Bash(git checkout -q main && sed -i '1s#^.*$#// Live suites run against production with throwaway users; they need Supabase \"Confirm email\" OFF \\(the workflow preflight skips them otherwise\\). Do not turn it back ON mid-run.#' tests/prod/qa.mjs && npx prettier --check tests/prod/qa.mjs | tail -1 && git add tests/prod/qa.mjs && git commit -q -m \"test: clarify live-suite precondition \\(triggers prod-qa\\) *)"
     ]
   }
 }

@@ -486,3 +486,13 @@ test('audit fixes: plausible dates, custom report ranges', async () => {
   assert.equal(periodFor('custom', '2026-10-11', '2026-02-31', '2026-03-05').label, 'This month'); // impossible date falls back instead of reaching the database
   assert.equal(periodFor('custom', '2026-10-11', '2026-02-01', '2026-03-05').label, '2026-02-01 to 2026-03-05');
 });
+
+test('recentSignIn: Google-only accounts must have signed in within 10 minutes to delete the account', async () => {
+  const { recentSignIn } = await import('../src/lib/session.ts');
+  const now = Date.parse('2026-10-11T12:00:00Z');
+  assert.equal(recentSignIn('2026-10-11T11:55:00Z', now), true);
+  assert.equal(recentSignIn('2026-10-11T11:49:00Z', now), false); // 11 minutes ago
+  assert.equal(recentSignIn(null, now), false);
+  assert.equal(recentSignIn('not a date', now), false);
+  assert.equal(recentSignIn('2026-10-11T13:00:00Z', now), false); // far in the future is not "recent"
+});

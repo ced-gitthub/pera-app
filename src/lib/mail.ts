@@ -12,5 +12,5 @@ export async function sendMail(to: string, subject: string, text: string) {
     connectionTimeout: 8000,
     socketTimeout: 12000,
   });
-  await t.sendMail({ from: process.env.SMTP_FROM || `Pera <${user}>`, to, subject, text });
+  await t.sendMail({ from: process.env.SMTP_FROM || `Zovix <${user}>`, to, subject, text });
 }

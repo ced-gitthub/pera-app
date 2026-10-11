@@ -754,7 +754,7 @@ const count = (h: string, s: string) => h.split(s).length - 1;
         D.recoveryCodes = new Map([['c1', [...D.users.values()].find((u: any) => u.email === 'v@x.com').id]]);
         const r = await callback(new NextRequest('https://pera.example/auth/callback?code=c1&next=/&welcome=1'));
         return (
-          decodeURIComponent(r.headers.get('location')!) === 'https://pera.example/?ok=Email confirmed. Welcome to Pera.' && D.cur !== null
+          decodeURIComponent(r.headers.get('location')!) === 'https://pera.example/?ok=Email confirmed. Welcome to Zovix.' && D.cur !== null
         );
       })(),
     );
@@ -1836,6 +1836,15 @@ const count = (h: string, s: string) => h.split(s).length - 1;
       'CSV accounts differing only in case become one account',
       D.t.accounts.filter((a: any) => a.user_id === me() && a.name.toLowerCase() === 'newacc').length === 1,
     );
+  }
+  // ---- delete my account (store requirement): refusals leave everything in place
+  {
+    const n0 = D.t.accounts.filter((a: { user_id: string }) => a.user_id === me()).length;
+    const wrongWord = await red(() => A.deleteMyAccount(fd({ current: 'secret12', confirm: 'delete' })));
+    T('delete account needs the word DELETE', wrongWord.includes('err=Type DELETE'), wrongWord);
+    const noAdmin = await red(() => A.deleteMyAccount(fd({ current: 'secret12', confirm: 'DELETE' })));
+    T('delete account is refused safely when it cannot run', noAdmin.includes('err='), noAdmin);
+    T('refused deletion removed nothing', D.t.accounts.filter((a: { user_id: string }) => a.user_id === me()).length === n0 && n0 > 0);
   }
   // ---- isolation sanity of the stand-in itself
   login('a@x.com');

@@ -5,6 +5,8 @@ import { supabaseServer } from '@/lib/supabase/server';
 import { supabaseProbe } from '@/lib/supabase/probe';
 import { passwordProblem, isPwned, isEmail, safeNext, PWNED } from '@/lib/password';
 import { authMessage, logErr } from '@/lib/safe';
+import { admin, adminConfigured } from '@/lib/admin';
+import { recentSignIn } from '@/lib/session';
 import { go, str, siteUrl, verifyUrl, errCode, code6, authed, needsSecondStep } from './shared';
 
 // Google sign-in: Supabase sends the user to Google, then back to /auth/callback (PKCE). Google has already verified the address, so no confirmation email is needed.
@@ -143,6 +145,39 @@ export async function signOutEverywhere() {
   go('/login', 'ok', 'Logged out of every device.');
 }
 
+// Permanently deletes the signed-in user and, through the database's cascade rules, all of their data (required by Google Play and the App Store).
+// Needs the current password and the word DELETE typed in. Nothing is removed unless both are right.
+export async function deleteMyAccount(fd: FormData) {
+  const { sb, user } = await authed();
+  if (await needsSecondStep(sb)) redirect('/2fa'); // a password-only session must never delete an account that has two-step verification
+  if (str(fd, 'confirm').trim() !== 'DELETE') go('/security', 'err', 'Type DELETE in capital letters to confirm.');
+  if (!adminConfigured()) go('/security', 'err', 'Account deletion is not available right now. Please try again later.');
+  if ((user.identities ?? []).some((i) => i.provider === 'email')) {
+    const { error: wrong } = await supabaseProbe().auth.signInWithPassword({ email: user.email ?? '', password: str(fd, 'current') });
+    if (wrong)
+      go(
+        '/security',
+        'err',
+        errCode(wrong) === 'invalid_credentials' || /invalid login/i.test(String((wrong as Error).message))
+          ? 'Your current password is not right.'
+          : authMessage(wrong, 'deleteMyAccount'),
+      );
+  } else if (!recentSignIn(user.last_sign_in_at)) {
+    // Google-only accounts have no password: require a sign-in within the last 10 minutes instead.
+    go('/security', 'err', 'For your safety, log out, sign in with Google again, then delete your account within 10 minutes.');
+  }
+  const { error } = await admin().auth.admin.deleteUser(user.id);
+  if (error) {
+    logErr('deleteMyAccount', error);
+    go('/security', 'err', 'We could not delete your account. Nothing was removed. Please try again.');
+  }
+  // tx_trash deliberately has no foreign key (so the undo trigger can run during deletes), so purge this user's trash by hand.
+  const { error: trashErr } = await admin().from('tx_trash').delete().eq('user_id', user.id);
+  if (trashErr) logErr('deleteMyAccount.trash', trashErr);
+  await sb.auth.signOut();
+  go('/login', 'ok', 'Your account and all of its data were permanently deleted.');
+}
+
 // Second step after the password. Only reachable with a password session; the middleware blocks everything else until this succeeds.
 export async function verifyMfa(fd: FormData) {
   const next = safeNext(str(fd, 'next')),
@@ -169,7 +204,7 @@ export async function mfaStart(): Promise<Enroll> {
   const { data: l } = await sb.auth.mfa.listFactors();
   if (l?.totp?.length) return { ok: false, error: 'Two-step verification is already on.' };
   for (const f of l?.all ?? []) if (f.status === 'unverified') await sb.auth.mfa.unenroll({ factorId: f.id }); // drop abandoned setups
-  const { data, error } = await sb.auth.mfa.enroll({ factorType: 'totp', issuer: 'Pera', friendlyName: `Pera ${Date.now()}` });
+  const { data, error } = await sb.auth.mfa.enroll({ factorType: 'totp', issuer: 'Zovix', friendlyName: `Zovix ${Date.now()}` });
   if (error || !data) return { ok: false, error: authMessage(error, 'mfaStart') };
   return { ok: true, factorId: data.id, qr: data.totp.qr_code, secret: data.totp.secret };
 }

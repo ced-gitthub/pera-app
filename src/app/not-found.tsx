@@ -7,7 +7,7 @@ export default function NotFound() {
         That page doesn't exist or was moved.
       </p>
       <Link className="btn p" href="/">
-        Go to Pera
+        Go to Zovix
       </Link>
     </main>
   );

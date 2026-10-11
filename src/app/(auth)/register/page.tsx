@@ -7,7 +7,7 @@ export default async function Page({ searchParams }: { searchParams: SP }) {
     <main className="auth">
       <div>
         <div className="brand">
-          <span className="logo">₱</span>Pera
+          <span className="logo">₱</span>Zovix
         </div>
         <p className="tag">Create your account · track every peso</p>
         <Flash sp={await searchParams} />
@@ -32,6 +32,11 @@ export default async function Page({ searchParams }: { searchParams: SP }) {
           Have an account?{' '}
           <Link href="/login" className="underline">
             Log in
+          </Link>
+        </p>
+        <p className="mt-3 m">
+          <Link href="/privacy" className="underline">
+            Privacy policy
           </Link>
         </p>
       </div>

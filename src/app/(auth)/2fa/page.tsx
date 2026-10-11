@@ -18,13 +18,13 @@ export default async function Page({ searchParams }: { searchParams: SP }) {
     <main className="auth">
       <div>
         <div className="brand">
-          <span className="logo">₱</span>Pera
+          <span className="logo">₱</span>Zovix
         </div>
         <p className="tag">Two-step verification</p>
         <Flash sp={sp} />
         <form action={verifyMfa} className="card grid gap-3">
           <h1>Enter your code</h1>
-          <p className="sub">Open your authenticator app and type the 6-digit code for Pera.</p>
+          <p className="sub">Open your authenticator app and type the 6-digit code for Zovix.</p>
           <input type="hidden" name="next" value={next} />
           <OtpField autoSubmit autoFocus label="6-digit code from your app" />
           <button className="btn p">Verify</button>

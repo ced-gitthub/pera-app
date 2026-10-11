@@ -18,7 +18,7 @@ export async function updateSession(request: NextRequest) {
   } = await sb.auth.getUser(); // validates + refreshes the session
   const path = request.nextUrl.pathname,
     isAuthPage = ['/login', '/register'].some((p) => path.startsWith(p)),
-    isPublic = isAuthPage || ['/forgot', '/verify', '/auth/'].some((p) => path.startsWith(p));
+    isPublic = isAuthPage || ['/forgot', '/verify', '/auth/', '/privacy'].some((p) => path.startsWith(p));
   const to = (path: string, search = '') => {
     const u = request.nextUrl.clone();
     u.pathname = path;

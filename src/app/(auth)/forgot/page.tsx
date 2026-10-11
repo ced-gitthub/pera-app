@@ -7,7 +7,7 @@ export default async function Page({ searchParams }: { searchParams: SP }) {
     <main className="auth">
       <div>
         <div className="brand">
-          <span className="logo">₱</span>Pera
+          <span className="logo">₱</span>Zovix
         </div>
         <p className="tag">Reset your password</p>
         <Flash sp={await searchParams} />
@@ -29,7 +29,7 @@ export default async function Page({ searchParams }: { searchParams: SP }) {
           <details className="card">
             <summary>Can’t open that inbox?</summary>
             <form action={requestResetViaBackup} className="grid gap-3" style={{ marginTop: 12 }}>
-              <p className="sub">Enter the backup email saved in your Pera security settings. We’ll send the reset link there.</p>
+              <p className="sub">Enter the backup email saved in your Zovix security settings. We’ll send the reset link there.</p>
               <input
                 aria-label="Backup email"
                 className="inp"

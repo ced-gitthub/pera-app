@@ -244,7 +244,7 @@ export default async function Dashboard({ searchParams }: { searchParams: SP }) 
       <Flash sp={sp} />
       {rr.error && (
         <p className="flash bad" role="alert">
-          Some recurring items couldn't be processed right now. Your data is safe; Pera will try again next time you open it.
+          Some recurring items couldn't be processed right now. Your data is safe; Zovix will try again next time you open it.
         </p>
       )}
       <section className="card hero" aria-label="Your balance">

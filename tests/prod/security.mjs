@@ -398,7 +398,7 @@ G('two-step verification is enforced by the database (migration 0006)');
     return (await n(U.c)) === 6 ? true : await n(U.c);
   });
   await step('enrol a real authenticator factor and verify it (session becomes aal2)', async () => {
-    const e = await U.c.auth.mfa.enroll({ factorType: 'totp', issuer: 'Pera', friendlyName: 'qa' });
+    const e = await U.c.auth.mfa.enroll({ factorType: 'totp', issuer: 'Zovix', friendlyName: 'qa' });
     if (e.error) return e.error.message;
     fid = e.data.id;
     sec = e.data.totp.secret;

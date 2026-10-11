@@ -6,7 +6,7 @@ export default function GlobalError({ reset }: { error: Error & { digest?: strin
       <body style={{ fontFamily: 'system-ui, sans-serif', padding: 24, maxWidth: 480, margin: '0 auto' }}>
         <main role="alert">
           <h1 style={{ fontSize: 22 }}>Something went wrong</h1>
-          <p>Pera couldn't load. Try again, and if it keeps happening, come back in a few minutes. Your data is safe.</p>
+          <p>Zovix couldn't load. Try again, and if it keeps happening, come back in a few minutes. Your data is safe.</p>
           <button onClick={reset} style={{ padding: '10px 16px', fontSize: 16 }}>
             Try again
           </button>

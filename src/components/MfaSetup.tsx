@@ -50,7 +50,7 @@ export default function MfaSetup() {
         <li>
           Open an authenticator app (Google Authenticator, Microsoft Authenticator, 1Password, Authy) and scan this code.
           <div className="qr" style={{ marginTop: 10 }}>
-            <img src={s.qr} alt="QR code that adds Pera to your authenticator app" width={184} height={184} />
+            <img src={s.qr} alt="QR code that adds Zovix to your authenticator app" width={184} height={184} />
           </div>
           <p className="sub" style={{ marginTop: 10 }}>
             Can’t scan? Type this key into the app instead. Keep it somewhere safe: it sets up your codes again if you lose your phone.
