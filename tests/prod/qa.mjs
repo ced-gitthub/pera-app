@@ -674,8 +674,8 @@ await step('remembered screens never show a deleted row (delete, then hop Dashbo
   await tab('/transactions');
   await tab('/');
   await tab('/transactions'); // both screens are now remembered
-  for (let i = 0; i < 6 && !/zzcache/.test(await body(p)); i++) await p.waitForTimeout(1000);
-  if (!/zzcache/.test(await body(p)))
+  for (let i = 0; i < 6 && !/zzcache/i.test(await body(p)); i++) await p.waitForTimeout(1000);
+  if (!/zzcache/i.test(await body(p)))
     return {
       why: 'the new transaction is not listed',
       first: (await rows(p).allInnerTexts()).slice(0, 4).map((t) => t.replace(/\s+/g, ' ').slice(0, 90)),
@@ -684,11 +684,11 @@ await step('remembered screens never show a deleted row (delete, then hop Dashbo
   await p.locator('tbody tr:has-text("zzcache") button:has-text("Delete")').first().click();
   await p.locator('button:has-text("Undo")').first().waitFor({ timeout: 20000 });
   await p.waitForTimeout(1500);
-  const here = /zzcache/.test(await body(p).then((t) => t.replace(/Deleted\. Changed your mind\?/g, '')));
+  const here = /zzcache/i.test(await body(p).then((t) => t.replace(/Deleted\. Changed your mind\?/g, '')));
   await tab('/');
-  const dash = /zzcache/.test(await body(p));
+  const dash = /zzcache/i.test(await body(p));
   await tab('/transactions');
-  const list = /zzcache/.test(await body(p));
+  const list = /zzcache/i.test(await body(p));
   return !here && !dash && !list ? true : { here, dash, list };
 });
 
