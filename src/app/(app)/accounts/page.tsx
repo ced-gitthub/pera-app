@@ -1,4 +1,6 @@
 import { ctx, loadLayout, balanceMap } from '@/lib/data';
+import { randomUUID } from 'node:crypto';
+import { Btn } from '@/components/Btn';
 import { dbError } from '@/lib/safe';
 import { createAccount, updateAccount, deleteAccount, moveAccount, transfer } from '@/app/actions';
 import { formatMinor, manilaToday } from '@/core/money';
@@ -20,15 +22,15 @@ export default async function Accounts({ searchParams }: { searchParams: SP }) {
         <div className="row"><label className="fld">Name<input className="inp" name="name" defaultValue={a.name} maxLength={40} /></label><label className="fld">Type<T d={a.account_type} /></label></div>
         <div className="row"><label className="fld">Starting balance (₱)<MoneyInput name="opening" defaultValue={minorToInput(Number(a.opening_balance_minor))} label={`Starting balance for ${a.name}`} placeholder="0.00" /></label>
           <div className="fld">Current balance<b className="curbal">{amt(b)}</b></div>
-          <label className="fld">Short name<input className="inp w-28" name="short" defaultValue={a.short_name ?? ''} maxLength={12} placeholder="e.g. cc" /></label></div>
+          <label className="fld">Short name<input aria-label="Short name" className="inp w-28" name="short" defaultValue={a.short_name ?? ''} maxLength={12} placeholder="e.g. cc" /></label></div>
         <div className="row"><label className="chk"><input type="checkbox" name="savings" defaultChecked={a.counts_as_savings} /> Counts as savings</label><label className="chk"><input type="checkbox" name="home" defaultChecked={a.show_on_home} /> Show on Home</label></div>
-        <div className="row"><button className="btn p" formAction={updateAccount}>Save</button><button className="btn" formAction={moveAccount.bind(null, a.id, 'up')} disabled={i === 0} aria-label={`Move ${a.name} up`}>↑</button><button className="btn" formAction={moveAccount.bind(null, a.id, 'down')} disabled={i === accounts.length - 1} aria-label={`Move ${a.name} down`}>↓</button><button className="btn" formAction={deleteAccount}>Delete</button></div></form></div>; })}
+        <div className="row"><Btn className="btn p" formAction={updateAccount}>Save</Btn><button className="btn" formAction={moveAccount.bind(null, a.id, 'up')} disabled={i === 0} aria-label={`Move ${a.name} up`}>↑</button><button className="btn" formAction={moveAccount.bind(null, a.id, 'down')} disabled={i === accounts.length - 1} aria-label={`Move ${a.name} down`}>↓</button><Btn className="btn" formAction={deleteAccount} confirm={`Delete the account "${a.name}"? This only works if it has no transactions.`}>Delete</Btn></div></form></div>; })}
     {Number(none.n) > 0 && <div className="arow noacct"><span><b>No account</b><span className="m"> · entries without an account</span></span><b>{amt(Number(none.balance_minor))}</b></div>}</div>
     <form action={createAccount} className="card edit-only editf" aria-label="New account"><h2>New account</h2>
       <div className="row"><input className="inp" name="name" placeholder="Name" required maxLength={40} aria-label="Name" /><T /></div>
       <div className="row"><MoneyInput name="opening" label="Starting balance" placeholder="Starting balance ₱" /><input className="inp w-28" name="short" placeholder="Short name" maxLength={12} aria-label="Short name" /></div>
       <div className="row"><label className="chk"><input type="checkbox" name="savings" /> Counts as savings</label><label className="chk"><input type="checkbox" name="home" defaultChecked /> Show on Home</label><button className="btn p">Create</button></div></form>
-    <form action={transfer} className="card row"><b>Transfer</b><select className="inp" name="from" aria-label="From account">{accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}</select>→<select className="inp" name="to" aria-label="To account">{accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}</select>
-      <input className="inp w-28" name="amount" placeholder="₱" required inputMode="decimal" aria-label="Amount" /><input className="inp" type="date" name="date" defaultValue={manilaToday()} aria-label="Date" /><button className="btn p">Transfer</button></form></>;
+    <form action={transfer} className="card row"><input type="hidden" name="rid" value={randomUUID()} /><b>Transfer</b><select className="inp" name="from" aria-label="From account">{accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}</select>→<select className="inp" name="to" aria-label="To account">{accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}</select>
+      <input className="inp w-28" name="amount" placeholder="₱" required inputMode="decimal" aria-label="Amount" /><input className="inp" type="date" name="date" defaultValue={manilaToday()} aria-label="Date" /><Btn className="btn p">Transfer</Btn></form></>;
   return <Tab tab="accounts" title="Accounts" init={layout.accounts} before={before} canEdit canCustomize />;
 }

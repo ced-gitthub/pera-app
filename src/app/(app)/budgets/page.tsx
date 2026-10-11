@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Btn } from '@/components/Btn';
 import { ctx } from '@/lib/data';
 import { dbError } from '@/lib/safe';
 import { saveBudgetRow, deleteCategory, moveCategory, createCategory } from '@/app/actions';
@@ -21,7 +22,7 @@ export default async function Budgets({ searchParams }: { searchParams: SP }) {
         <div className="row view-only"><b className="w-40">{emojiFor(c.name)} {c.name}</b><span className="m">{b !== undefined ? `Budget ${formatMinor(b)}` : 'No budget set'}</span></div>
         <form className="edit-only editf" aria-label={`Edit ${c.name}`}><input type="hidden" name="ym" value={ym} /><input type="hidden" name="category_id" value={c.id} /><input type="hidden" name="id" value={c.id} /><input type="hidden" name="back" value="/budgets" />
           <div className="row"><input className="inp" name="name" defaultValue={c.name} maxLength={40} aria-label="Category name" /><input className="inp w-32" name="amount" defaultValue={b !== undefined ? minorToInput(b) : ''} placeholder="Budget ₱" inputMode="decimal" aria-label={`Budget for ${c.name}`} /></div>
-          <div className="row"><button className="btn p" formAction={saveBudgetRow}>Save</button><button className="btn" formAction={moveCategory.bind(null, c.id, 'up')} disabled={i === 0} aria-label={`Move ${c.name} up`}>↑</button><button className="btn" formAction={moveCategory.bind(null, c.id, 'down')} disabled={i === exp.length - 1} aria-label={`Move ${c.name} down`}>↓</button><button className="btn" formAction={deleteCategory}>Delete</button></div></form>
+          <div className="row"><button className="btn p" formAction={saveBudgetRow}>Save</button><button className="btn" formAction={moveCategory.bind(null, c.id, 'up')} disabled={i === 0} aria-label={`Move ${c.name} up`}>↑</button><button className="btn" formAction={moveCategory.bind(null, c.id, 'down')} disabled={i === exp.length - 1} aria-label={`Move ${c.name} down`}>↓</button><Btn className="btn" formAction={deleteCategory} confirm={`Delete the category "${c.name}"? This only works if it is unused.`}>Delete</Btn></div></form>
         {st && <><div className={`bar mt-1 ${st.state}`}><i style={{ width: `${Math.min(100, st.usageTenths / 10)}%` }} /></div>
           <div className="m">{formatMinor(s)} spent · {formatMinor(st.remaining)} remaining · {pctLabel(st.usageTenths)} {st.state === 'over' ? '· over budget' : st.state === 'near' ? '· close to the limit' : '· on track'}</div></>}
         {!st && s > 0 && <div className="m">{formatMinor(s)} spent (no budget set)</div>}</div>; })}</div>
