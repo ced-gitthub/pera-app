@@ -16,14 +16,14 @@
 
 ## Decisions
 
-- Row caps are in `supabase/pending/0009_row_limits.sql`, not applied: the assistant's permission system blocked applying it to production. Apply by pasting into the Supabase SQL editor.
+- Row caps (0009) were applied to production on 2026-10-11 after judge approval and a rolled-back dry run; triggers verified on accounts, categories, recurring_transactions and transactions. Over-limit inserts raise SQLSTATE PRLIM, which the app maps to a clear message.
 - Backups are NOT automated from GitHub Actions: this repo is public, and a database dump stored as an artifact would expose users' financial data.
 - CAPTCHA (Cloudflare Turnstile) needs a Cloudflare account and a Supabase setting; not done.
 - Staging: use Vercel preview deploys per branch; a second Supabase project (free tier allows two) is not created yet.
 
 ## Next steps
 
-1. Apply `supabase/pending/0009_row_limits.sql` in the Supabase SQL editor, then move it to `supabase/migrations/`.
-2. In GitHub: Settings -> Branches -> add a rule for `main` that requires the `ci` check to pass.
+1. Live suite: the confirm dialogs added in the audit broke 9 steps in tests/prod/qa.mjs (fixed on branch fix-live-tests: accept "Delete ..." confirms, 404 text). Re-check the qa-qa result after the next push to main.
+2. Owner only (Claude cannot change its own permission rules): in .claude/settings.json add deny rules Bash(cat *.env*), Bash(head *.env*), Bash(tail *.env*), Bash(git reset --hard*) and narrow the broad Bash(git *), Bash(cat *), Bash(node *), Bash(python3 *) allows. In GitHub: Settings -> Branches -> add a rule for `main` that requires the `ci` check to pass.
 3. Split `actions.ts`; lower the lint warning limit as `any` is removed.
 4. Optional: second Supabase project for staging; Turnstile CAPTCHA; scheduled database export to a private location.
