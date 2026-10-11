@@ -9,7 +9,7 @@ export default async function Page({ searchParams }: { searchParams: SP }) {
     <main className="auth">
       <div>
         <div className="brand">
-          <span className="logo">₱</span>Pera
+          <span className="logo">₱</span>Zovix
         </div>
         <p className="tag">{email ? 'One last step before you start' : 'Get a new confirmation link'}</p>
         <Flash sp={sp} />

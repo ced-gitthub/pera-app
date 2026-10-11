@@ -204,7 +204,7 @@ export async function mfaStart(): Promise<Enroll> {
   const { data: l } = await sb.auth.mfa.listFactors();
   if (l?.totp?.length) return { ok: false, error: 'Two-step verification is already on.' };
   for (const f of l?.all ?? []) if (f.status === 'unverified') await sb.auth.mfa.unenroll({ factorId: f.id }); // drop abandoned setups
-  const { data, error } = await sb.auth.mfa.enroll({ factorType: 'totp', issuer: 'Pera', friendlyName: `Pera ${Date.now()}` });
+  const { data, error } = await sb.auth.mfa.enroll({ factorType: 'totp', issuer: 'Zovix', friendlyName: `Zovix ${Date.now()}` });
   if (error || !data) return { ok: false, error: authMessage(error, 'mfaStart') };
   return { ok: true, factorId: data.id, qr: data.totp.qr_code, secret: data.totp.secret };
 }

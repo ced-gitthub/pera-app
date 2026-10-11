@@ -1,6 +1,6 @@
-# Releasing Pera to Google Play and the App Store
+# Releasing Zovix to Google Play and the App Store
 
-Pera is a web app (Next.js) that is now installable (PWA). The stores need extra, mostly paid, steps that only the account owner can do.
+Zovix is a web app (Next.js) that is now installable (PWA). The stores need extra, mostly paid, steps that only the account owner can do.
 
 ## What already works (free, today)
 - **Android (Chrome):** open https://pera-app-beta.vercel.app, menu, "Install app".
@@ -25,9 +25,9 @@ Pera is a web app (Next.js) that is now installable (PWA). The stores need extra
 3. Build and sign on a Mac or a cloud build service; upload to App Store Connect; fill App Privacy ("Data not collected for tracking; email and financial info linked to the user, used for app functionality").
 
 ## Listing text (draft)
-- **Name:** Pera - money tracker
-- **Short description (80):** Track every peso. Type it, done.
-- **Full description:** Pera is a simple money tracker for the Philippines. Type "lunch 150 gcash" and it records it. See your balance, budgets, monthly reports and spending by category. Your data stays private to you, with optional two-step verification, and you can export it or delete your account any time.
+- **Name:** Zovix - budget & money tracker
+- **Short description (80):** Budget and money tracker. Type it, done.
+- **Full description:** Zovix is a simple money tracker for the Philippines. Type "lunch 150 gcash" and it records it. See your balance, budgets, monthly reports and spending by category. Your data stays private to you, with optional two-step verification, and you can export it or delete your account any time.
 - **Category:** Finance. **Privacy policy URL:** https://pera-app-beta.vercel.app/privacy
 - **Data safety (Google) / App Privacy (Apple):** collected: email, name, financial info (user-entered); purpose: app functionality and account management; not shared; not sold; encrypted in transit; users can request deletion (in-app).
 - **Screenshots needed:** phone screenshots (at least 2); Apple also needs 6.7-inch and 6.5-inch sizes.

@@ -754,7 +754,7 @@ const count = (h: string, s: string) => h.split(s).length - 1;
         D.recoveryCodes = new Map([['c1', [...D.users.values()].find((u: any) => u.email === 'v@x.com').id]]);
         const r = await callback(new NextRequest('https://pera.example/auth/callback?code=c1&next=/&welcome=1'));
         return (
-          decodeURIComponent(r.headers.get('location')!) === 'https://pera.example/?ok=Email confirmed. Welcome to Pera.' && D.cur !== null
+          decodeURIComponent(r.headers.get('location')!) === 'https://pera.example/?ok=Email confirmed. Welcome to Zovix.' && D.cur !== null
         );
       })(),
     );

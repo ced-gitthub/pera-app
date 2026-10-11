@@ -1,4 +1,4 @@
-# Pera — working rules for Claude
+# Zovix — working rules for Claude
 
 Free-tier PHP money tracker. Next.js 15 + TypeScript + Tailwind 4, Supabase (project `vxhgkkzbmrhxayzryake`), Vercel Hobby. Production: https://pera-app-beta.vercel.app. Read README.md for architecture.
 

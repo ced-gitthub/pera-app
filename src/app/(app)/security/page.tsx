@@ -51,7 +51,7 @@ export default async function Security({ searchParams }: { searchParams: SP }) {
         {on ? (
           <>
             <p className="m" style={{ marginBottom: 12 }}>
-              Pera asks for a code from your authenticator app each time you log in. Without the code, nobody can open your data, even with
+              Zovix asks for a code from your authenticator app each time you log in. Without the code, nobody can open your data, even with
               your password.
             </p>
             <form action={disableMfa} className="row">

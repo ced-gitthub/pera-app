@@ -1,11 +1,11 @@
 import type { MetadataRoute } from 'next';
 
-// Makes Pera installable on Android and iPhone ("Add to Home Screen") and is the base for the Play Store (TWA) version.
+// Makes Zovix installable on Android and iPhone ("Add to Home Screen") and is the base for the Play Store (TWA) version.
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Pera - money tracker',
-    short_name: 'Pera',
-    description: 'Track every peso. Type it, done.',
+    name: 'Zovix - budget & money tracker',
+    short_name: 'Zovix',
+    description: 'Budget and money tracker. Type it, done.',
     start_url: '/',
     scope: '/',
     display: 'standalone',

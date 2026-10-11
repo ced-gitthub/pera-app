@@ -25,7 +25,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ size: s
         borderRadius: size === 'maskable' ? 0 : s.px * 0.22,
       }}
     >
-      P
+      Z
     </div>,
     { width: s.px, height: s.px, headers: { 'Cache-Control': 'public, max-age=86400' } },
   );

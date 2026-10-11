@@ -67,8 +67,8 @@ export async function backupStart(fd: FormData) {
       if (
         !(await mailSafe(
           email,
-          'Your Pera backup email code',
-          `Your Pera backup email code is ${code}.\n\nIt expires in 10 minutes. If you did not ask for this, ignore this email and nothing changes.`,
+          'Your Zovix backup email code',
+          `Your Zovix backup email code is ${code}.\n\nIt expires in 10 minutes. If you did not ask for this, ignore this email and nothing changes.`,
         ))
       )
         fail = 'We could not send that email. Check the address and try again.';
@@ -108,8 +108,8 @@ export async function backupConfirm(fd: FormData) {
   if (user.email)
     await mailSafe(
       user.email,
-      'A backup email was added to Pera',
-      'A backup email address was just added to your Pera account, so you can reset your password if you lose access to this inbox.\n\nIf this was not you, log in, remove it under Security, and change your password.',
+      'A backup email was added to Zovix',
+      'A backup email address was just added to your Zovix account, so you can reset your password if you lose access to this inbox.\n\nIf this was not you, log in, remove it under Security, and change your password.',
     );
   go('/security', 'ok', 'Backup email saved.');
 }
@@ -125,8 +125,8 @@ export async function backupRemove() {
   if (user.email)
     await mailSafe(
       user.email,
-      'A backup email was removed from Pera',
-      'The backup email on your Pera account was removed. If this was not you, change your password under Security.',
+      'A backup email was removed from Zovix',
+      'The backup email on your Zovix account was removed. If this was not you, change your password under Security.',
     );
   go('/security', 'ok', 'Backup email removed.');
 }
@@ -146,13 +146,13 @@ export async function requestResetViaBackup(fd: FormData) {
         const link = `${await siteUrl()}/auth/callback?token_hash=${encodeURIComponent(token)}&type=recovery&next=/reset`;
         await mailSafe(
           email,
-          'Reset your Pera password',
-          `Use this link to choose a new password for your Pera account:\n\n${link}\n\nIt works once and expires soon. If you did not ask for this, ignore this email.`,
+          'Reset your Zovix password',
+          `Use this link to choose a new password for your Zovix account:\n\n${link}\n\nIt works once and expires soon. If you did not ask for this, ignore this email.`,
         );
         await mailSafe(
           primary,
           'Password reset requested through your backup email',
-          'Someone asked to reset your Pera password using the backup email on your account. If that was you, no action is needed. If not, log in, change your password and review Security.',
+          'Someone asked to reset your Zovix password using the backup email on your account. If that was you, no action is needed. If not, log in, change your password and review Security.',
         );
       }
     }

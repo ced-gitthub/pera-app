@@ -12,7 +12,7 @@ export default async function Page({ searchParams }: { searchParams: SP }) {
     <main className="auth">
       <div>
         <div className="brand">
-          <span className="logo">₱</span>Pera
+          <span className="logo">₱</span>Zovix
         </div>
         <p className="tag">Choose a new password</p>
         <Flash sp={await searchParams} />

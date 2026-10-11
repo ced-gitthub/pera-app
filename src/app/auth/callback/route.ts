@@ -38,5 +38,5 @@ export async function GET(req: NextRequest) {
             ),
         );
   }
-  return welcome ? to('/', '?ok=' + encodeURIComponent('Email confirmed. Welcome to Pera.')) : to(next);
+  return welcome ? to('/', '?ok=' + encodeURIComponent('Email confirmed. Welcome to Zovix.')) : to(next);
 }

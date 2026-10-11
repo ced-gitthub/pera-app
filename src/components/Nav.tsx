@@ -29,7 +29,7 @@ const Ic = ({ d }: { d: string }) => (
 export function Brand() {
   return (
     <div className="brand">
-      <span className="logo">₱</span>Pera
+      <span className="logo">₱</span>Zovix
     </div>
   );
 }
