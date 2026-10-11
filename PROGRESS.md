@@ -30,6 +30,8 @@
 
 - 2026-10-11: Google sign-in cannot finish inside an installed iPhone home-screen app (separate cookie jar from Safari). Added passwordless email-code login at /code (signInWithOtp, shouldCreateUser false, then verifyOtp type email; TOTP users still go to /2fa). The Google button is replaced by a hint when navigator.standalone is true. OWNER STEP REQUIRED: Supabase -> Authentication -> Email Templates -> Magic Link must contain {{ .Token }} (the default template only has a link, so no code would be sent). Not covered live: a successful code login (needs a mailbox or the service key); covered by the e2e tests.
 
+- 2026-10-11: REJECTED design, do not rebuild: Google sign-in for the iPhone app via a parked OAuth code (sheet parks the code under a nonce, app polls and exchanges it). The judge showed it allows account takeover: an attacker starts the flow on their own device, sends the victim the Google link, and the victim's code is redeemed by the attacker's PKCE verifier. Safe options need a device-code confirmation step and cannot be tested on an iPhone from here. Decision: Google works on Android and Safari; the installed iPhone app uses the email code (/code) or password.
+
 ## Next steps
 
 0. Owner: turn Supabase Confirm email back ON after any live-suite run. Provide the domain (with ending) to attach it in Vercel, then follow docs/play-store/PLAY_CONSOLE_GUIDE.md.
