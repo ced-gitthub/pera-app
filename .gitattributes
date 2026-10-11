@@ -1,0 +1,5 @@
+# Same line endings on every machine (the Windows CRLF difference broke a test once).
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.ico binary

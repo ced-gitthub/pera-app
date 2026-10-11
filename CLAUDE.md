@@ -14,6 +14,22 @@ Free-tier PHP money tracker. Next.js 15 + TypeScript + Tailwind 4, Supabase (pro
 - Security boundary is Postgres RLS. Every new table needs RLS + tests in `tests/prod/rls-suite.ts`.
 - Don't ask the user to run anything locally. Do it, or say exactly what is blocked.
 
+## Feature checklist (every feature, no exceptions)
+- Every form that creates something: a one-time request id (or a database unique key) so a double-tap or retry saves once, and `<Btn>` (disables while saving).
+- Every delete: confirm (`<Btn confirm=...>`) or Undo. Never silently drop data; delete a trash/backup copy only after the restore succeeded.
+- Every input: server-side limits (length, amount, plausible date via `isSaneDate`), a visible label or `aria-label`, and an error message that says what to fix.
+- Every new table: RLS owner policy + the MFA restrictive policy + a per-user row cap + RLS tests in `tests/prod/rls-suite.ts`.
+- Anything that can run unbounded (imports, recurring rules, exports, search): a hard cap and a clear message when it is reached.
+- Loading, empty, error and success states for every new screen; keyboard and mobile (375px) usable.
+- Rules enforced in the database beat rules only in app code. Add both.
+
+## Quality gates
+- `npm run verify` (safety self-test, typecheck, unit tests, lint) must pass. A git pre-push hook blocks pushing `main` otherwise; CI also runs the app tests, the build and `npm run format:check`.
+- `npm run selftest` proves the guard hook and tool-name rules still work. Run it after any change to `.claude/` or `.mcp.json`.
+- Lint warnings are a ratchet: the count in `package.json` (`--max-warnings`) may only go down. Do not add `any`; do not grow files past 400 lines; split by topic.
+- Format with `npm run format` before committing. Money never goes through `parseFloat`.
+- Work on a branch, then merge to `main` only when the gates are green. Weekly health check: `.github/workflows/weekly-health.yml`.
+
 ## Team (use subagents; keep the main thread short)
 | Agent | Model | Use for |
 |---|---|---|

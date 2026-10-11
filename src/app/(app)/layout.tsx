@@ -1,2 +1,9 @@
 import Nav from '@/components/Nav';
-export default function AppLayout({ children }: { children: React.ReactNode }) { return <div className="shell"><Nav /><main className="content">{children}</main></div>; }
+export default function AppLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="shell">
+      <Nav />
+      <main className="content">{children}</main>
+    </div>
+  );
+}

@@ -6,6 +6,19 @@ import type { ButtonHTMLAttributes } from 'react';
 // Pass `confirm="Delete this account?"` to ask first; cancelling stops the submit.
 export function Btn({ confirm: msg, onClick, disabled, ...p }: ButtonHTMLAttributes<HTMLButtonElement> & { confirm?: string }) {
   const { pending } = useFormStatus();
-  return <button {...p} type="submit" disabled={pending || disabled} aria-busy={pending || undefined}
-    onClick={e => { if (msg && !window.confirm(msg)) { e.preventDefault(); return; } onClick?.(e); }} />;
+  return (
+    <button
+      {...p}
+      type="submit"
+      disabled={pending || disabled}
+      aria-busy={pending || undefined}
+      onClick={(e) => {
+        if (msg && !window.confirm(msg)) {
+          e.preventDefault();
+          return;
+        }
+        onClick?.(e);
+      }}
+    />
+  );
 }

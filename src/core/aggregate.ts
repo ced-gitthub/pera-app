@@ -1,10 +1,21 @@
 export type TxType = 'income' | 'expense' | 'transfer';
-export type Tx = { type: TxType; amount_minor: number; category?: string; account?: string | null; to_account?: string | null; date: string };
+export type Tx = {
+  type: TxType;
+  amount_minor: number;
+  category?: string;
+  account?: string | null;
+  to_account?: string | null;
+  date: string;
+};
 const signed = (t: Tx) => (t.type === 'income' ? t.amount_minor : t.type === 'expense' ? -t.amount_minor : 0);
-export const inRange = (txs: Tx[], from: string, to: string) => txs.filter(t => t.date >= from && t.date <= to);
+export const inRange = (txs: Tx[], from: string, to: string) => txs.filter((t) => t.date >= from && t.date <= to);
 export function totals(txs: Tx[]) {
-  let income = 0, expense = 0;
-  for (const t of txs) { if (t.type === 'income') income += t.amount_minor; else if (t.type === 'expense') expense += t.amount_minor; }
+  let income = 0,
+    expense = 0;
+  for (const t of txs) {
+    if (t.type === 'income') income += t.amount_minor;
+    else if (t.type === 'expense') expense += t.amount_minor;
+  }
   return { income, expense, net: income - expense };
 }
 export function byCategory(txs: Tx[]) {

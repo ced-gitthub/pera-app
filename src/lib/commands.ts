@@ -7,4 +7,5 @@ export function commandOf(text: string): Cmd | null {
   if (/\b(change|set|make|move)\b.*\b(last|latest)\b.*\bto\b/.test(t)) return 'change';
   return null;
 }
-export const NOTHING_TO_UNDO = 'Nothing to undo. Undo brings back something you deleted in the last 30 days. To remove your latest entry, type "delete last".';
+export const NOTHING_TO_UNDO =
+  'Nothing to undo. Undo brings back something you deleted in the last 30 days. To remove your latest entry, type "delete last".';
