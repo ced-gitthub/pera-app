@@ -1,85 +1,426 @@
 // Real-Supabase integration + RLS suite. Run by tests/prod/rls.mjs from GitHub Actions (it used to be a token-gated route; the route was removed so no test endpoint exists in production).
 // Creates two throwaway users (pera-qa-*@example.com) using only the publishable key; their data is cleaned up, the auth users remain (delete them in Supabase > Authentication > Users).
 import { createClient } from '@supabase/supabase-js';
-export const dynamic = 'force-dynamic'; export const maxDuration = 60;
-const same = (a: string, b: string) => { if (a.length !== b.length) return false; let d = 0; for (let i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i); return d === 0; };
+export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
+const same = (a: string, b: string) => {
+  if (a.length !== b.length) return false;
+  let d = 0;
+  for (let i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return d === 0;
+};
 export async function GET(req: Request) {
-  const tok = process.env.QA_TOKEN ?? ''; if (tok.length < 16 || !same(new URL(req.url).searchParams.get('token') ?? '', tok)) return new Response('Not found', { status: 404 });
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!, key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!, stamp = Date.now(), R: { name: string; ok: boolean; detail?: unknown }[] = [];
+  const tok = process.env.QA_TOKEN ?? '';
+  if (tok.length < 16 || !same(new URL(req.url).searchParams.get('token') ?? '', tok)) return new Response('Not found', { status: 404 });
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    stamp = Date.now(),
+    R: { name: string; ok: boolean; detail?: unknown }[] = [];
   const mk = () => createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
-  const step = async (name: string, fn: () => Promise<unknown>) => { try { const r = await fn(); R.push(r === true ? { name, ok: true } : { name, ok: false, detail: r }); } catch (e) { R.push({ name, ok: false, detail: (e as Error).message }); } };
-  const done = (extra?: unknown) => { const failed = R.filter(r => !r.ok); return Response.json({ commit: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? 'n/a', summary: { pass: R.length - failed.length, fail: failed.length }, extra, failed, results: R.map(r => `${r.ok ? 'PASS' : 'FAIL'} ${r.name}`) }, { headers: { 'cache-control': 'no-store' } }); };
-  const user = async (tag: string) => { const c = mk(), { data, error } = await c.auth.signUp({ email: `pera-qa-${stamp}-${tag}@example.com`, password: `Qa-${stamp}-pw!` }); if (error) throw new Error('signUp: ' + error.message); if (!data.session) throw new Error('No session returned: turn OFF "Confirm email" (Supabase > Authentication > Providers > Email) for the test'); return { c, id: data.user!.id as string }; };
-  let A: any, B: any; try { A = await user('a'); B = await user('b'); } catch (e) { R.push({ name: 'create two test users', ok: false, detail: (e as Error).message }); return done(); }
-  const anon = mk(), cnt = (r: any) => (r.error ? -1 : (r.data?.length ?? 0)), code = (r: any) => r.error?.code ?? (r.error ? 'error' : 'NO_ERROR');
-  const [a, c0] = await Promise.all([A.c.from('accounts').select('id,name'), A.c.from('categories').select('id,name,type')]); const acc: any[] = a.data ?? [], cats: any[] = c0.data ?? [];
-  await step('signup trigger seeded defaults (6 accounts, 20 categories: 6 income + 14 expense)', async () => (acc.length === 6 && cats.length === 20 && cats.filter(x => x.type === 'income').length === 6 ? true : { accounts: acc.length, categories: cats.length, err: a.error?.message ?? c0.error?.message }));
+  const step = async (name: string, fn: () => Promise<unknown>) => {
+    try {
+      const r = await fn();
+      R.push(r === true ? { name, ok: true } : { name, ok: false, detail: r });
+    } catch (e) {
+      R.push({ name, ok: false, detail: (e as Error).message });
+    }
+  };
+  const done = (extra?: unknown) => {
+    const failed = R.filter((r) => !r.ok);
+    return Response.json(
+      {
+        commit: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? 'n/a',
+        summary: { pass: R.length - failed.length, fail: failed.length },
+        extra,
+        failed,
+        results: R.map((r) => `${r.ok ? 'PASS' : 'FAIL'} ${r.name}`),
+      },
+      { headers: { 'cache-control': 'no-store' } },
+    );
+  };
+  const user = async (tag: string) => {
+    const c = mk(),
+      { data, error } = await c.auth.signUp({ email: `pera-qa-${stamp}-${tag}@example.com`, password: `Qa-${stamp}-pw!` });
+    if (error) throw new Error('signUp: ' + error.message);
+    if (!data.session)
+      throw new Error('No session returned: turn OFF "Confirm email" (Supabase > Authentication > Providers > Email) for the test');
+    return { c, id: data.user!.id as string };
+  };
+  let A: any, B: any;
+  try {
+    A = await user('a');
+    B = await user('b');
+  } catch (e) {
+    R.push({ name: 'create two test users', ok: false, detail: (e as Error).message });
+    return done();
+  }
+  const anon = mk(),
+    cnt = (r: any) => (r.error ? -1 : (r.data?.length ?? 0)),
+    code = (r: any) => r.error?.code ?? (r.error ? 'error' : 'NO_ERROR');
+  const [a, c0] = await Promise.all([A.c.from('accounts').select('id,name'), A.c.from('categories').select('id,name,type')]);
+  const acc: any[] = a.data ?? [],
+    cats: any[] = c0.data ?? [];
+  await step('signup trigger seeded defaults (6 accounts, 20 categories: 6 income + 14 expense)', async () =>
+    acc.length === 6 && cats.length === 20 && cats.filter((x) => x.type === 'income').length === 6
+      ? true
+      : { accounts: acc.length, categories: cats.length, err: a.error?.message ?? c0.error?.message },
+  );
   if (acc.length !== 6) return done('stopped: migration 0002 trigger did not seed defaults');
-  const aid = (n: string) => acc.find(x => x.name === n).id, cid = (n: string, t?: string) => cats.find(x => x.name === n && (!t || x.type === t)).id, d = '2020-03-';
-  const tx = (o: any) => ({ user_id: A.id, transaction_date: d + '10', ...o }), ex = (cat: string, acct: string, m: number) => tx({ type: 'expense', category_id: cid(cat), account_id: aid(acct), amount_minor: m }), inc = (cat: string, m: number) => tx({ type: 'income', category_id: cid(cat), account_id: aid('BPI'), amount_minor: m });
-  const ins = await A.c.from('transactions').insert([inc('Salary', 2500000), inc('Freelance', 750000), inc('Gift', 200000), ex('Food', 'GCash', 125000), ex('Groceries', 'Cash', 250000), ex('Transportation', 'Cash', 85000), ex('Utilities', 'BPI', 200000), ex('Shopping', 'GCash', 325000), ex('Entertainment', 'Cash', 90000)]).select('id');
+  const aid = (n: string) => acc.find((x) => x.name === n).id,
+    cid = (n: string, t?: string) => cats.find((x) => x.name === n && (!t || x.type === t)).id,
+    d = '2020-03-';
+  const tx = (o: any) => ({ user_id: A.id, transaction_date: d + '10', ...o }),
+    ex = (cat: string, acct: string, m: number) => tx({ type: 'expense', category_id: cid(cat), account_id: aid(acct), amount_minor: m }),
+    inc = (cat: string, m: number) => tx({ type: 'income', category_id: cid(cat), account_id: aid('BPI'), amount_minor: m });
+  const ins = await A.c
+    .from('transactions')
+    .insert([
+      inc('Salary', 2500000),
+      inc('Freelance', 750000),
+      inc('Gift', 200000),
+      ex('Food', 'GCash', 125000),
+      ex('Groceries', 'Cash', 250000),
+      ex('Transportation', 'Cash', 85000),
+      ex('Utilities', 'BPI', 200000),
+      ex('Shopping', 'GCash', 325000),
+      ex('Entertainment', 'Cash', 90000),
+    ])
+    .select('id');
   await step('insert the spec dataset (9 rows)', async () => (ins.data?.length === 9 ? true : ins.error?.message));
   const sum = async (c: any) => ((await c.rpc('period_summary', { p_from: d + '01', p_to: d + '31' })).data ?? []) as any[];
-  await step('period_summary: income 3,450,000 / expenses 1,075,000 / net 2,375,000 minor units', async () => { const s = await sum(A.c), i = s.filter(x => x.type === 'income').reduce((n, x) => n + Number(x.total_minor), 0), e = s.filter(x => x.type === 'expense').reduce((n, x) => n + Number(x.total_minor), 0); return i === 3450000 && e === 1075000 ? true : { i, e }; });
-  const bal = async (c: any) => Object.fromEntries(((await c.rpc('account_balances')).data ?? []).map((x: any) => [x.account_id, Number(x.balance_minor)]));
-  await step('account_balances: BPI 3,250,000 / GCash -450,000 / Cash -425,000; total 2,375,000', async () => { const b = await bal(A.c), t = Object.values(b).reduce((n: number, x: any) => n + x, 0); return b[aid('BPI')] === 3250000 && b[aid('GCash')] === -450000 && b[aid('Cash')] === -425000 && t === 2375000 ? true : b; });
-  await step('account_spending + monthly_summary(2020) + sum_expense', async () => { const sp = Object.fromEntries(((await A.c.rpc('account_spending', { p_from: d + '01', p_to: d + '31' })).data ?? []).map((x: any) => [x.account_id, Number(x.total_minor)])), ms = ((await A.c.rpc('monthly_summary', { p_year: 2020 })).data ?? [])[0], fe = Number((await A.c.rpc('sum_expense', { p_from: d + '01', p_to: d + '31', p_category: cid('Food'), p_account: aid('GCash') })).data);
-    return sp[aid('GCash')] === 450000 && sp[aid('Cash')] === 425000 && sp[aid('BPI')] === 200000 && ms?.month === 3 && Number(ms.income_minor) === 3450000 && Number(ms.expense_minor) === 1075000 && fe === 125000 ? true : { sp, ms, fe }; });
-  await step('transfer GCash->Cash 2,000: moves balances, total unchanged, not income/expense', async () => { const r = await A.c.from('transactions').insert({ user_id: A.id, type: 'transfer', amount_minor: 200000, account_id: aid('GCash'), transfer_account_id: aid('Cash'), transaction_date: d + '15' }); const b = await bal(A.c), s = await sum(A.c), t = Object.values(b).reduce((n: number, x: any) => n + x, 0);
-    return !r.error && b[aid('GCash')] === -650000 && b[aid('Cash')] === -225000 && t === 2375000 && s.every(x => x.type !== 'transfer') ? true : { err: r.error?.message, b, t }; });
+  await step('period_summary: income 3,450,000 / expenses 1,075,000 / net 2,375,000 minor units', async () => {
+    const s = await sum(A.c),
+      i = s.filter((x) => x.type === 'income').reduce((n, x) => n + Number(x.total_minor), 0),
+      e = s.filter((x) => x.type === 'expense').reduce((n, x) => n + Number(x.total_minor), 0);
+    return i === 3450000 && e === 1075000 ? true : { i, e };
+  });
+  const bal = async (c: any) =>
+    Object.fromEntries(((await c.rpc('account_balances')).data ?? []).map((x: any) => [x.account_id, Number(x.balance_minor)]));
+  await step('account_balances: BPI 3,250,000 / GCash -450,000 / Cash -425,000; total 2,375,000', async () => {
+    const b = await bal(A.c),
+      t = Object.values(b).reduce((n: number, x: any) => n + x, 0);
+    return b[aid('BPI')] === 3250000 && b[aid('GCash')] === -450000 && b[aid('Cash')] === -425000 && t === 2375000 ? true : b;
+  });
+  await step('account_spending + monthly_summary(2020) + sum_expense', async () => {
+    const sp = Object.fromEntries(
+        ((await A.c.rpc('account_spending', { p_from: d + '01', p_to: d + '31' })).data ?? []).map((x: any) => [
+          x.account_id,
+          Number(x.total_minor),
+        ]),
+      ),
+      ms = ((await A.c.rpc('monthly_summary', { p_year: 2020 })).data ?? [])[0],
+      fe = Number(
+        (await A.c.rpc('sum_expense', { p_from: d + '01', p_to: d + '31', p_category: cid('Food'), p_account: aid('GCash') })).data,
+      );
+    return sp[aid('GCash')] === 450000 &&
+      sp[aid('Cash')] === 425000 &&
+      sp[aid('BPI')] === 200000 &&
+      ms?.month === 3 &&
+      Number(ms.income_minor) === 3450000 &&
+      Number(ms.expense_minor) === 1075000 &&
+      fe === 125000
+      ? true
+      : { sp, ms, fe };
+  });
+  await step('transfer GCash->Cash 2,000: moves balances, total unchanged, not income/expense', async () => {
+    const r = await A.c.from('transactions').insert({
+      user_id: A.id,
+      type: 'transfer',
+      amount_minor: 200000,
+      account_id: aid('GCash'),
+      transfer_account_id: aid('Cash'),
+      transaction_date: d + '15',
+    });
+    const b = await bal(A.c),
+      s = await sum(A.c),
+      t = Object.values(b).reduce((n: number, x: any) => n + x, 0);
+    return !r.error && b[aid('GCash')] === -650000 && b[aid('Cash')] === -225000 && t === 2375000 && s.every((x) => x.type !== 'transfer')
+      ? true
+      : { err: r.error?.message, b, t };
+  });
   const other = { user_id: A.id, type: 'expense', category_id: cid('Food'), account_id: aid('Cash'), transaction_date: '2026-10-05' };
-  for (const m of [0, -5, 1e12]) await step(`constraint: amount ${m} rejected`, async () => { const r = await A.c.from('transactions').insert({ ...other, amount_minor: m }); return r.error ? true : 'accepted'; });
-  await step('constraint: transfer to same account rejected', async () => ((await A.c.from('transactions').insert({ user_id: A.id, type: 'transfer', amount_minor: 5, account_id: aid('Cash'), transfer_account_id: aid('Cash'), transaction_date: d + '01' })).error ? true : 'accepted'));
-  await step('constraint: expense without category rejected', async () => ((await A.c.from('transactions').insert({ ...other, category_id: null, amount_minor: 5 })).error ? true : 'accepted'));
-  await step('constraint: description over 120 chars rejected', async () => ((await A.c.from('transactions').insert({ ...other, amount_minor: 5, description: 'x'.repeat(121) })).error ? true : 'accepted'));
-  await step('constraint: duplicate account name rejected; account in use cannot be deleted', async () => { const dup = await A.c.from('accounts').insert({ user_id: A.id, name: 'Cash' }), del = await A.c.from('accounts').delete().eq('id', aid('Cash')).select('id'); return dup.error && (del.error || !del.data?.length) ? true : { dup: code(dup), del: code(del) }; });
-  const rid = crypto.randomUUID(), rows = [0, 1].map(i => ({ ...other, amount_minor: 100 + i, request_id: rid, request_idx: i }));
-  await step('idempotency: same request submitted 3x => exactly 2 rows', async () => { for (let i = 0; i < 3; i++) await A.c.from('transactions').upsert(rows, { onConflict: 'user_id,request_id,request_idx', ignoreDuplicates: true }); const n = (await A.c.from('transactions').select('id', { count: 'exact', head: true }).eq('request_id', rid)).count; return n === 2 ? true : n; });
-  await step('dedupe: import_hash and external_id upserts insert once', async () => { const h = { ...other, amount_minor: 7, import_hash: 'qa-' + stamp, external_id: 'legacy:qa-' + stamp }; for (let i = 0; i < 2; i++) { await A.c.from('transactions').upsert(h, { onConflict: 'user_id,import_hash', ignoreDuplicates: true }); await A.c.from('transactions').upsert({ ...h, import_hash: 'qa2-' + i }, { onConflict: 'user_id,external_id', ignoreDuplicates: true }); } const n = (await A.c.from('transactions').select('id', { count: 'exact', head: true }).in('amount_minor', [7])).count; return n === 1 ? true : n; });
-  await step('budgets: insert ok, duplicate (category,month,year) rejected, negative rejected', async () => { const b = { user_id: A.id, category_id: cid('Food'), amount_minor: 800000, month: 3, year: 2020 }, r1 = await A.c.from('budgets').insert(b), r2 = await A.c.from('budgets').insert(b), r3 = await A.c.from('budgets').insert({ ...b, month: 4, amount_minor: -1 }); return !r1.error && r2.error && r3.error ? true : { r1: r1.error?.message, r2: code(r2), r3: code(r3) }; });
-  const rule = (o: any) => ({ user_id: A.id, account_id: aid('Cash'), category_id: cid('Subscriptions'), type: 'expense', amount_minor: 54900, description: 'QA', interval_count: 1, ...o });
-  const dates = async (desc: string) => ((await A.c.from('transactions').select('transaction_date').eq('description', desc).not('recurring_id', 'is', null).order('transaction_date')).data ?? []).map((x: any) => x.transaction_date);
-  await step('recurring monthly from Jan 31: Jan31, Feb28, Mar31, Apr30; re-run adds nothing', async () => { const i = await A.c.from('recurring_transactions').insert(rule({ description: 'QA-M', frequency: 'monthly', start_date: '2026-01-31', next_run_date: '2026-01-31' })); const n1 = (await A.c.rpc('run_recurring', { p_today: '2026-04-30' })).data, n2 = (await A.c.rpc('run_recurring', { p_today: '2026-04-30' })).data, ds = await dates('QA-M'); return !i.error && n1 === 4 && n2 === 0 && JSON.stringify(ds) === '["2026-01-31","2026-02-28","2026-03-31","2026-04-30"]' ? true : { err: i.error?.message, n1, n2, ds }; });
-  await step('recurring weekly every 2 weeks (to end_date) and yearly from Feb 29', async () => { await A.c.from('recurring_transactions').insert(rule({ description: 'QA-W', frequency: 'weekly', interval_count: 2, start_date: '2020-01-01', next_run_date: '2020-01-01', end_date: '2020-01-31' })); const w = (await A.c.rpc('run_recurring', { p_today: '2020-01-30' })).data, wd = await dates('QA-W');
-    await A.c.from('recurring_transactions').insert(rule({ description: 'QA-Y', frequency: 'yearly', start_date: '2024-02-29', next_run_date: '2024-02-29' })); const y = (await A.c.rpc('run_recurring', { p_today: '2025-03-01' })).data, yd = await dates('QA-Y'); return w === 3 && JSON.stringify(wd) === '["2020-01-01","2020-01-15","2020-01-29"]' && y === 2 && JSON.stringify(yd) === '["2024-02-29","2025-02-28"]' ? true : { w, wd, y, yd }; });
+  for (const m of [0, -5, 1e12])
+    await step(`constraint: amount ${m} rejected`, async () => {
+      const r = await A.c.from('transactions').insert({ ...other, amount_minor: m });
+      return r.error ? true : 'accepted';
+    });
+  await step('constraint: transfer to same account rejected', async () =>
+    (
+      await A.c.from('transactions').insert({
+        user_id: A.id,
+        type: 'transfer',
+        amount_minor: 5,
+        account_id: aid('Cash'),
+        transfer_account_id: aid('Cash'),
+        transaction_date: d + '01',
+      })
+    ).error
+      ? true
+      : 'accepted',
+  );
+  await step('constraint: expense without category rejected', async () =>
+    (await A.c.from('transactions').insert({ ...other, category_id: null, amount_minor: 5 })).error ? true : 'accepted',
+  );
+  await step('constraint: description over 120 chars rejected', async () =>
+    (await A.c.from('transactions').insert({ ...other, amount_minor: 5, description: 'x'.repeat(121) })).error ? true : 'accepted',
+  );
+  await step('constraint: duplicate account name rejected; account in use cannot be deleted', async () => {
+    const dup = await A.c.from('accounts').insert({ user_id: A.id, name: 'Cash' }),
+      del = await A.c.from('accounts').delete().eq('id', aid('Cash')).select('id');
+    return dup.error && (del.error || !del.data?.length) ? true : { dup: code(dup), del: code(del) };
+  });
+  const rid = crypto.randomUUID(),
+    rows = [0, 1].map((i) => ({ ...other, amount_minor: 100 + i, request_id: rid, request_idx: i }));
+  await step('idempotency: same request submitted 3x => exactly 2 rows', async () => {
+    for (let i = 0; i < 3; i++)
+      await A.c.from('transactions').upsert(rows, { onConflict: 'user_id,request_id,request_idx', ignoreDuplicates: true });
+    const n = (await A.c.from('transactions').select('id', { count: 'exact', head: true }).eq('request_id', rid)).count;
+    return n === 2 ? true : n;
+  });
+  await step('dedupe: import_hash and external_id upserts insert once', async () => {
+    const h = { ...other, amount_minor: 7, import_hash: 'qa-' + stamp, external_id: 'legacy:qa-' + stamp };
+    for (let i = 0; i < 2; i++) {
+      await A.c.from('transactions').upsert(h, { onConflict: 'user_id,import_hash', ignoreDuplicates: true });
+      await A.c
+        .from('transactions')
+        .upsert({ ...h, import_hash: 'qa2-' + i }, { onConflict: 'user_id,external_id', ignoreDuplicates: true });
+    }
+    const n = (await A.c.from('transactions').select('id', { count: 'exact', head: true }).in('amount_minor', [7])).count;
+    return n === 1 ? true : n;
+  });
+  await step('budgets: insert ok, duplicate (category,month,year) rejected, negative rejected', async () => {
+    const b = { user_id: A.id, category_id: cid('Food'), amount_minor: 800000, month: 3, year: 2020 },
+      r1 = await A.c.from('budgets').insert(b),
+      r2 = await A.c.from('budgets').insert(b),
+      r3 = await A.c.from('budgets').insert({ ...b, month: 4, amount_minor: -1 });
+    return !r1.error && r2.error && r3.error ? true : { r1: r1.error?.message, r2: code(r2), r3: code(r3) };
+  });
+  const rule = (o: any) => ({
+    user_id: A.id,
+    account_id: aid('Cash'),
+    category_id: cid('Subscriptions'),
+    type: 'expense',
+    amount_minor: 54900,
+    description: 'QA',
+    interval_count: 1,
+    ...o,
+  });
+  const dates = async (desc: string) =>
+    (
+      (
+        await A.c
+          .from('transactions')
+          .select('transaction_date')
+          .eq('description', desc)
+          .not('recurring_id', 'is', null)
+          .order('transaction_date')
+      ).data ?? []
+    ).map((x: any) => x.transaction_date);
+  await step('recurring monthly from Jan 31: Jan31, Feb28, Mar31, Apr30; re-run adds nothing', async () => {
+    const i = await A.c
+      .from('recurring_transactions')
+      .insert(rule({ description: 'QA-M', frequency: 'monthly', start_date: '2026-01-31', next_run_date: '2026-01-31' }));
+    const n1 = (await A.c.rpc('run_recurring', { p_today: '2026-04-30' })).data,
+      n2 = (await A.c.rpc('run_recurring', { p_today: '2026-04-30' })).data,
+      ds = await dates('QA-M');
+    return !i.error && n1 === 4 && n2 === 0 && JSON.stringify(ds) === '["2026-01-31","2026-02-28","2026-03-31","2026-04-30"]'
+      ? true
+      : { err: i.error?.message, n1, n2, ds };
+  });
+  await step('recurring weekly every 2 weeks (to end_date) and yearly from Feb 29', async () => {
+    await A.c.from('recurring_transactions').insert(
+      rule({
+        description: 'QA-W',
+        frequency: 'weekly',
+        interval_count: 2,
+        start_date: '2020-01-01',
+        next_run_date: '2020-01-01',
+        end_date: '2020-01-31',
+      }),
+    );
+    const w = (await A.c.rpc('run_recurring', { p_today: '2020-01-30' })).data,
+      wd = await dates('QA-W');
+    await A.c
+      .from('recurring_transactions')
+      .insert(rule({ description: 'QA-Y', frequency: 'yearly', start_date: '2024-02-29', next_run_date: '2024-02-29' }));
+    const y = (await A.c.rpc('run_recurring', { p_today: '2025-03-01' })).data,
+      yd = await dates('QA-Y');
+    return w === 3 &&
+      JSON.stringify(wd) === '["2020-01-01","2020-01-15","2020-01-29"]' &&
+      y === 2 &&
+      JSON.stringify(yd) === '["2024-02-29","2025-02-28"]'
+      ? true
+      : { w, wd, y, yd };
+  });
   // ---- isolation
   const tabs = ['transactions', 'accounts', 'categories', 'budgets', 'recurring_transactions'];
-  for (const t of tabs) await step(`RLS: user B cannot read user A's ${t}`, async () => { const r = await B.c.from(t).select('id').eq('user_id', A.id); return cnt(r) === 0 ? true : cnt(r); });
-  await step("RLS: B's unfiltered reads return only B's own rows", async () => { const [t, ac] = await Promise.all([B.c.from('transactions').select('id'), B.c.from('accounts').select('id,user_id')]); return cnt(t) === 0 && cnt(ac) === 6 && ac.data.every((x: any) => x.user_id === B.id) ? true : { tx: cnt(t), acc: cnt(ac) }; });
+  for (const t of tabs)
+    await step(`RLS: user B cannot read user A's ${t}`, async () => {
+      const r = await B.c.from(t).select('id').eq('user_id', A.id);
+      return cnt(r) === 0 ? true : cnt(r);
+    });
+  await step("RLS: B's unfiltered reads return only B's own rows", async () => {
+    const [t, ac] = await Promise.all([B.c.from('transactions').select('id'), B.c.from('accounts').select('id,user_id')]);
+    return cnt(t) === 0 && cnt(ac) === 6 && ac.data.every((x: any) => x.user_id === B.id) ? true : { tx: cnt(t), acc: cnt(ac) };
+  });
   const a1 = (await A.c.from('transactions').select('id,amount_minor').eq('amount_minor', 2500000).limit(1)).data?.[0];
-  await step("RLS: B cannot UPDATE A's transaction (and A's row is unchanged)", async () => { const r = await B.c.from('transactions').update({ amount_minor: 1 }).eq('id', a1.id).select('id'), still = (await A.c.from('transactions').select('amount_minor').eq('id', a1.id).single()).data?.amount_minor; return cnt(r) <= 0 && still === 2500000 ? true : { updated: cnt(r), still }; });
-  await step("RLS: B cannot DELETE A's transaction (and it still exists)", async () => { const r = await B.c.from('transactions').delete().eq('id', a1.id).select('id'), n = (await A.c.from('transactions').select('id', { count: 'exact', head: true }).eq('id', a1.id)).count; return cnt(r) <= 0 && n === 1 ? true : { deleted: cnt(r), n }; });
-  await step('RLS: B cannot INSERT rows owned by A (tx, account, category, budget, recurring)', async () => { const o: any = {}; o.tx = (await B.c.from('transactions').insert({ ...other, amount_minor: 1 })).error; o.acc = (await B.c.from('accounts').insert({ user_id: A.id, name: 'Hax' })).error; o.cat = (await B.c.from('categories').insert({ user_id: A.id, name: 'Hax', type: 'expense' })).error; o.bud = (await B.c.from('budgets').insert({ user_id: A.id, category_id: cid('Food'), amount_minor: 1, month: 1, year: 2020 })).error; o.rec = (await B.c.from('recurring_transactions').insert(rule({ frequency: 'daily', start_date: '2020-01-01', next_run_date: '2020-01-01' }))).error; return Object.values(o).every(Boolean) ? true : Object.fromEntries(Object.entries(o).map(([k, v]) => [k, v ? 'blocked' : 'ALLOWED'])); });
-  await step("ownership: B cannot link B's rows to A's account/category (composite FKs)", async () => { const o: any = {}; o.tx = (await B.c.from('transactions').insert({ user_id: B.id, type: 'expense', category_id: cid('Food'), account_id: aid('Cash'), amount_minor: 1, transaction_date: d + '01' })).error; o.bud = (await B.c.from('budgets').insert({ user_id: B.id, category_id: cid('Food'), amount_minor: 1, month: 1, year: 2020 })).error; o.rec = (await B.c.from('recurring_transactions').insert({ ...rule({ frequency: 'daily', start_date: '2020-01-01', next_run_date: '2020-01-01' }), user_id: B.id })).error; return Object.values(o).every(Boolean) ? true : Object.fromEntries(Object.entries(o).map(([k, v]) => [k, v ? 'blocked' : 'ALLOWED'])); });
-  await step("RLS: B's aggregate functions never include A's data", async () => { const s = await sum(B.c), b = await bal(B.c), f = Number((await B.c.rpc('sum_expense', { p_from: d + '01', p_to: d + '31' })).data), m = (await B.c.rpc('monthly_summary', { p_year: 2020 })).data ?? [], n = (await B.c.rpc('run_recurring', { p_today: '2030-01-01' })).data; return s.length === 0 && !Object.keys(b).some(k => acc.some(x => x.id === k)) && f === 0 && m.length === 0 && n === 0 ? true : { s: s.length, f, m: m.length, n }; });
-  await step("RLS: B cannot read or change A's profile; A can edit own", async () => { const r = await B.c.from('profiles').select('id').eq('id', A.id), u = await B.c.from('profiles').update({ name: 'pwned' }).eq('id', A.id).select('id'), own = await A.c.from('profiles').update({ name: 'QA' }).eq('id', A.id).select('id'); return cnt(r) === 0 && cnt(u) <= 0 && cnt(own) === 1 ? true : { read: cnt(r), upd: cnt(u), own: cnt(own) }; });
+  await step("RLS: B cannot UPDATE A's transaction (and A's row is unchanged)", async () => {
+    const r = await B.c.from('transactions').update({ amount_minor: 1 }).eq('id', a1.id).select('id'),
+      still = (await A.c.from('transactions').select('amount_minor').eq('id', a1.id).single()).data?.amount_minor;
+    return cnt(r) <= 0 && still === 2500000 ? true : { updated: cnt(r), still };
+  });
+  await step("RLS: B cannot DELETE A's transaction (and it still exists)", async () => {
+    const r = await B.c.from('transactions').delete().eq('id', a1.id).select('id'),
+      n = (await A.c.from('transactions').select('id', { count: 'exact', head: true }).eq('id', a1.id)).count;
+    return cnt(r) <= 0 && n === 1 ? true : { deleted: cnt(r), n };
+  });
+  await step('RLS: B cannot INSERT rows owned by A (tx, account, category, budget, recurring)', async () => {
+    const o: any = {};
+    o.tx = (await B.c.from('transactions').insert({ ...other, amount_minor: 1 })).error;
+    o.acc = (await B.c.from('accounts').insert({ user_id: A.id, name: 'Hax' })).error;
+    o.cat = (await B.c.from('categories').insert({ user_id: A.id, name: 'Hax', type: 'expense' })).error;
+    o.bud = (await B.c.from('budgets').insert({ user_id: A.id, category_id: cid('Food'), amount_minor: 1, month: 1, year: 2020 })).error;
+    o.rec = (
+      await B.c.from('recurring_transactions').insert(rule({ frequency: 'daily', start_date: '2020-01-01', next_run_date: '2020-01-01' }))
+    ).error;
+    return Object.values(o).every(Boolean) ? true : Object.fromEntries(Object.entries(o).map(([k, v]) => [k, v ? 'blocked' : 'ALLOWED']));
+  });
+  await step("ownership: B cannot link B's rows to A's account/category (composite FKs)", async () => {
+    const o: any = {};
+    o.tx = (
+      await B.c.from('transactions').insert({
+        user_id: B.id,
+        type: 'expense',
+        category_id: cid('Food'),
+        account_id: aid('Cash'),
+        amount_minor: 1,
+        transaction_date: d + '01',
+      })
+    ).error;
+    o.bud = (await B.c.from('budgets').insert({ user_id: B.id, category_id: cid('Food'), amount_minor: 1, month: 1, year: 2020 })).error;
+    o.rec = (
+      await B.c
+        .from('recurring_transactions')
+        .insert({ ...rule({ frequency: 'daily', start_date: '2020-01-01', next_run_date: '2020-01-01' }), user_id: B.id })
+    ).error;
+    return Object.values(o).every(Boolean) ? true : Object.fromEntries(Object.entries(o).map(([k, v]) => [k, v ? 'blocked' : 'ALLOWED']));
+  });
+  await step("RLS: B's aggregate functions never include A's data", async () => {
+    const s = await sum(B.c),
+      b = await bal(B.c),
+      f = Number((await B.c.rpc('sum_expense', { p_from: d + '01', p_to: d + '31' })).data),
+      m = (await B.c.rpc('monthly_summary', { p_year: 2020 })).data ?? [],
+      n = (await B.c.rpc('run_recurring', { p_today: '2030-01-01' })).data;
+    return s.length === 0 && !Object.keys(b).some((k) => acc.some((x) => x.id === k)) && f === 0 && m.length === 0 && n === 0
+      ? true
+      : { s: s.length, f, m: m.length, n };
+  });
+  await step("RLS: B cannot read or change A's profile; A can edit own", async () => {
+    const r = await B.c.from('profiles').select('id').eq('id', A.id),
+      u = await B.c.from('profiles').update({ name: 'pwned' }).eq('id', A.id).select('id'),
+      own = await A.c.from('profiles').update({ name: 'QA' }).eq('id', A.id).select('id');
+    return cnt(r) === 0 && cnt(u) <= 0 && cnt(own) === 1 ? true : { read: cnt(r), upd: cnt(u), own: cnt(own) };
+  });
   // ---- migration 0008: layout settings (RLS) + account options + ordering
-  await step('user_settings: A saves own layout; B cannot read, change or insert A\'s row; anonymous sees nothing', async () => {
-    const mine = await A.c.from('user_settings').upsert({ user_id: A.id, layout: { home: { order: ['history'], on: { history: true } } } }).select('user_id');
-    const rd = await B.c.from('user_settings').select('user_id').eq('user_id', A.id), up = await B.c.from('user_settings').update({ layout: {} }).eq('user_id', A.id).select('user_id'), ins = await B.c.from('user_settings').insert({ user_id: A.id, layout: {} }), an = await anon.from('user_settings').select('user_id').limit(5);
+  await step("user_settings: A saves own layout; B cannot read, change or insert A's row; anonymous sees nothing", async () => {
+    const mine = await A.c
+      .from('user_settings')
+      .upsert({ user_id: A.id, layout: { home: { order: ['history'], on: { history: true } } } })
+      .select('user_id');
+    const rd = await B.c.from('user_settings').select('user_id').eq('user_id', A.id),
+      up = await B.c.from('user_settings').update({ layout: {} }).eq('user_id', A.id).select('user_id'),
+      ins = await B.c.from('user_settings').insert({ user_id: A.id, layout: {} }),
+      an = await anon.from('user_settings').select('user_id').limit(5);
     const still = (await A.c.from('user_settings').select('layout').eq('user_id', A.id).single()).data?.layout;
-    return !mine.error && cnt(rd) === 0 && cnt(up) <= 0 && ins.error && cnt(an) <= 0 && still?.home?.order?.[0] === 'history' ? true : { mine: mine.error?.message, rd: cnt(rd), up: cnt(up), ins: code(ins), an: cnt(an), still }; });
-  await step('user_settings: B has a separate row; unfiltered reads return only B\'s own', async () => {
-    const mine = await B.c.from('user_settings').upsert({ user_id: B.id, layout: { reports: { order: ['period'], on: { period: false } } } }).select('user_id'), all = await B.c.from('user_settings').select('user_id,layout');
-    return !mine.error && cnt(all) === 1 && all.data[0].user_id === B.id && !all.data[0].layout.home ? true : { err: mine.error?.message, n: cnt(all) }; });
+    return !mine.error && cnt(rd) === 0 && cnt(up) <= 0 && ins.error && cnt(an) <= 0 && still?.home?.order?.[0] === 'history'
+      ? true
+      : { mine: mine.error?.message, rd: cnt(rd), up: cnt(up), ins: code(ins), an: cnt(an), still };
+  });
+  await step("user_settings: B has a separate row; unfiltered reads return only B's own", async () => {
+    const mine = await B.c
+        .from('user_settings')
+        .upsert({ user_id: B.id, layout: { reports: { order: ['period'], on: { period: false } } } })
+        .select('user_id'),
+      all = await B.c.from('user_settings').select('user_id,layout');
+    return !mine.error && cnt(all) === 1 && all.data[0].user_id === B.id && !all.data[0].layout.home
+      ? true
+      : { err: mine.error?.message, n: cnt(all) };
+  });
   await step('user_settings: layout must be a JSON object under 20 KB', async () => {
-    const arr = await A.c.from('user_settings').upsert({ user_id: A.id, layout: [1] }), big = await A.c.from('user_settings').upsert({ user_id: A.id, layout: { x: 'abcdefghij'.repeat(3000) } }), keep = (await A.c.from('user_settings').select('layout').eq('user_id', A.id).single()).data?.layout;
-    return arr.error && big.error && keep?.home?.order?.[0] === 'history' ? true : { arr: code(arr), big: code(big), keep }; });
+    const arr = await A.c.from('user_settings').upsert({ user_id: A.id, layout: [1] }),
+      big = await A.c.from('user_settings').upsert({ user_id: A.id, layout: { x: 'abcdefghij'.repeat(3000) } }),
+      keep = (await A.c.from('user_settings').select('layout').eq('user_id', A.id).single()).data?.layout;
+    return arr.error && big.error && keep?.home?.order?.[0] === 'history' ? true : { arr: code(arr), big: code(big), keep };
+  });
   const ao = await A.c.from('accounts').select('id,name,counts_as_savings,show_on_home,sort_order,short_name').order('sort_order');
-  await step('new users: Savings is flagged "counts as savings", the rest are not; all show on Home; manual order is set', async () => (!ao.error && ao.data.map((x: any) => x.name).join() === 'Cash,GCash,Maya,BPI,Credit Card,Savings' && ao.data.every((x: any) => x.counts_as_savings === (x.name === 'Savings') && x.show_on_home === true) && ao.data.every((x: any, i: number) => x.sort_order === (i + 1) * 10) ? true : ao.data ?? ao.error?.message));
+  await step('new users: Savings is flagged "counts as savings", the rest are not; all show on Home; manual order is set', async () =>
+    !ao.error &&
+    ao.data.map((x: any) => x.name).join() === 'Cash,GCash,Maya,BPI,Credit Card,Savings' &&
+    ao.data.every((x: any) => x.counts_as_savings === (x.name === 'Savings') && x.show_on_home === true) &&
+    ao.data.every((x: any, i: number) => x.sort_order === (i + 1) * 10)
+      ? true
+      : (ao.data ?? ao.error?.message),
+  );
   const co = await A.c.from('categories').select('name,type,sort_order').order('sort_order');
-  await step('new users: categories are ordered with "Other" and "Other Income" last', async () => { const ex = (co.data ?? []).filter((x: any) => x.type === 'expense'), inc = (co.data ?? []).filter((x: any) => x.type === 'income'); return !co.error && ex.at(-1)?.name === 'Other' && inc.at(-1)?.name === 'Other Income' && ex[0].name === 'Food' ? true : { ex: ex.map((x: any) => x.name).slice(-2), inc: inc.map((x: any) => x.name).slice(-2) }; });
+  await step('new users: categories are ordered with "Other" and "Other Income" last', async () => {
+    const ex = (co.data ?? []).filter((x: any) => x.type === 'expense'),
+      inc = (co.data ?? []).filter((x: any) => x.type === 'income');
+    return !co.error && ex.at(-1)?.name === 'Other' && inc.at(-1)?.name === 'Other Income' && ex[0].name === 'Food'
+      ? true
+      : { ex: ex.map((x: any) => x.name).slice(-2), inc: inc.map((x: any) => x.name).slice(-2) };
+  });
   await step('account short names: unique per user ignoring case, 1-12 characters, can be cleared', async () => {
-    const one = await A.c.from('accounts').update({ short_name: 'zz' }).eq('id', aid('Cash')).select('id'), dup = await A.c.from('accounts').update({ short_name: 'ZZ' }).eq('id', aid('GCash')).select('id'), long = await A.c.from('accounts').update({ short_name: 'x'.repeat(13) }).eq('id', aid('GCash')).select('id'), empty = await A.c.from('accounts').update({ short_name: '' }).eq('id', aid('GCash')).select('id'),
-      otherUser = await B.c.from('accounts').update({ short_name: 'qq' }).eq('id', aid('GCash')).select('id'), clr = await A.c.from('accounts').update({ short_name: null }).eq('id', aid('Cash')).select('id');
-    return !one.error && dup.error && long.error && empty.error && !clr.error && cnt(otherUser) <= 0 ? true : { one: one.error?.message, dup: code(dup), long: code(long), empty: code(empty), clr: clr.error?.message }; });
-  await step('no_account_summary: works for a signed-in user (one row), blocked for anonymous', async () => { const s = await A.c.rpc('no_account_summary'), an = await anon.rpc('no_account_summary'); return !s.error && (s.data ?? []).length === 1 && Number(s.data[0].n) === 0 && an.error ? true : { s: s.error?.message ?? s.data, an: an.error ? 'blocked' : an.data }; });
-  for (const t of [...tabs, 'profiles']) await step(`anonymous (no login) cannot read ${t}`, async () => { const r = await anon.from(t).select('id').limit(5); return cnt(r) <= 0 ? true : cnt(r); });
-  await step('anonymous cannot insert or call aggregate functions with data', async () => { const i = await anon.from('transactions').insert({ ...other, amount_minor: 1 }), p = await anon.rpc('period_summary', { p_from: d + '01', p_to: d + '31' }); return i.error && (p.error || (p.data ?? []).length === 0) ? true : { ins: code(i), rpc: (p.data ?? []).length }; });
-  await step('after sign-out the same client can no longer read', async () => { await A.c.auth.signOut(); return cnt(await A.c.from('transactions').select('id').limit(1)) <= 0 ? true : 'still readable'; });
+    const one = await A.c.from('accounts').update({ short_name: 'zz' }).eq('id', aid('Cash')).select('id'),
+      dup = await A.c.from('accounts').update({ short_name: 'ZZ' }).eq('id', aid('GCash')).select('id'),
+      long = await A.c
+        .from('accounts')
+        .update({ short_name: 'x'.repeat(13) })
+        .eq('id', aid('GCash'))
+        .select('id'),
+      empty = await A.c.from('accounts').update({ short_name: '' }).eq('id', aid('GCash')).select('id'),
+      otherUser = await B.c.from('accounts').update({ short_name: 'qq' }).eq('id', aid('GCash')).select('id'),
+      clr = await A.c.from('accounts').update({ short_name: null }).eq('id', aid('Cash')).select('id');
+    return !one.error && dup.error && long.error && empty.error && !clr.error && cnt(otherUser) <= 0
+      ? true
+      : { one: one.error?.message, dup: code(dup), long: code(long), empty: code(empty), clr: clr.error?.message };
+  });
+  await step('no_account_summary: works for a signed-in user (one row), blocked for anonymous', async () => {
+    const s = await A.c.rpc('no_account_summary'),
+      an = await anon.rpc('no_account_summary');
+    return !s.error && (s.data ?? []).length === 1 && Number(s.data[0].n) === 0 && an.error
+      ? true
+      : { s: s.error?.message ?? s.data, an: an.error ? 'blocked' : an.data };
+  });
+  for (const t of [...tabs, 'profiles'])
+    await step(`anonymous (no login) cannot read ${t}`, async () => {
+      const r = await anon.from(t).select('id').limit(5);
+      return cnt(r) <= 0 ? true : cnt(r);
+    });
+  await step('anonymous cannot insert or call aggregate functions with data', async () => {
+    const i = await anon.from('transactions').insert({ ...other, amount_minor: 1 }),
+      p = await anon.rpc('period_summary', { p_from: d + '01', p_to: d + '31' });
+    return i.error && (p.error || (p.data ?? []).length === 0) ? true : { ins: code(i), rpc: (p.data ?? []).length };
+  });
+  await step('after sign-out the same client can no longer read', async () => {
+    await A.c.auth.signOut();
+    return cnt(await A.c.from('transactions').select('id').limit(1)) <= 0 ? true : 'still readable';
+  });
   // ---- cleanup (data only; the two auth users remain)
-  const B2 = B.c; for (const u of [A, B]) { const c = u === A ? (await mk().auth.signInWithPassword({ email: `pera-qa-${stamp}-a@example.com`, password: `Qa-${stamp}-pw!` }), null) : null; void c; }
-  const A2 = mk(); await A2.auth.signInWithPassword({ email: `pera-qa-${stamp}-a@example.com`, password: `Qa-${stamp}-pw!` }); for (const t of ['transactions', 'budgets', 'recurring_transactions']) { await A2.from(t).delete().eq('user_id', A.id); await B2.from(t).delete().eq('user_id', B.id); }
-  const left = (await A2.from('transactions').select('id', { count: 'exact', head: true })).count; await step('cleanup: test rows removed', async () => (left === 0 ? true : left));
-  return done({ note: 'Two auth users named pera-qa-' + stamp + '-a/b@example.com remain; delete them in Supabase > Authentication > Users.' });
+  const B2 = B.c;
+  for (const u of [A, B]) {
+    const c =
+      u === A ? (await mk().auth.signInWithPassword({ email: `pera-qa-${stamp}-a@example.com`, password: `Qa-${stamp}-pw!` }), null) : null;
+    void c;
+  }
+  const A2 = mk();
+  await A2.auth.signInWithPassword({ email: `pera-qa-${stamp}-a@example.com`, password: `Qa-${stamp}-pw!` });
+  for (const t of ['transactions', 'budgets', 'recurring_transactions']) {
+    await A2.from(t).delete().eq('user_id', A.id);
+    await B2.from(t).delete().eq('user_id', B.id);
+  }
+  const left = (await A2.from('transactions').select('id', { count: 'exact', head: true })).count;
+  await step('cleanup: test rows removed', async () => (left === 0 ? true : left));
+  return done({
+    note: 'Two auth users named pera-qa-' + stamp + '-a/b@example.com remain; delete them in Supabase > Authentication > Users.',
+  });
 }

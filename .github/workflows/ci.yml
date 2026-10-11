@@ -15,6 +15,10 @@ jobs:
           if [ $c -ne 0 ]; then echo "::error title=npm audit::$(head -c 1500 audit.txt | tr '\n' ' ')"; fi
           exit $c
       - run: npm run typecheck
+      - name: Safety self-test (guard rails still work)
+        run: npm run selftest
+      - run: npm run lint
+      - run: npm run format:check
       - name: Unit tests
         run: |
           set +e

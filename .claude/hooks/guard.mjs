@@ -12,7 +12,7 @@ if (/^(Write|Edit|MultiEdit)$/.test(tool)) {
     if (tracked) deny(`${file} is already committed (assume applied). Add a new migration instead of editing it.`);
   }
 }
-if (/^mcp__Supabase__(apply_migration|execute_sql)$/.test(tool)) {
+if (/^mcp__supabase__(apply_migration|execute_sql)$/i.test(tool)) { // the server is named "supabase" in .mcp.json; match any case so a typo can never disable this guard
   const sql = String(inp.query || '').replace(/--[^\n]*/g, ' ').replace(/\/\*[\s\S]*?\*\//g, ' '), low = sql.toLowerCase();
   if (/\bdrop\s+(table|schema|database|column)\b/.test(low) || /\balter\s+table\b[^;]*\bdrop\s+column\b/.test(low)) deny('destructive DDL (drop table/schema/database/column). Ask the user to confirm and run it themselves.');
   if (/\btruncate\b/.test(low) || /\bdrop\s+owned\b|\balter\s+role\b|\bdrop\s+role\b/.test(low)) deny('truncate/role changes are not allowed from the agent.');

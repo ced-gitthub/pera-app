@@ -1,0 +1,12 @@
+#!/bin/sh
+# Blocks a push to main unless the safety self-test, typecheck, unit tests and lint all pass.
+# Enabled automatically by `npm install` (the "prepare" script sets core.hooksPath).
+while read local_ref local_sha remote_ref remote_sha; do
+  case "$remote_ref" in
+    refs/heads/main)
+      echo "Pushing to main: running the checks first (npm run verify)..."
+      npm run verify --silent || { echo "Push to main BLOCKED: fix the failures above, or push a branch instead." >&2; exit 1; }
+      ;;
+  esac
+done
+exit 0

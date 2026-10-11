@@ -1,2 +1,4 @@
 import { FormPageSk } from '@/components/Skeleton';
-export default function Loading() { return <FormPageSk label="Loading settings" />; }
+export default function Loading() {
+  return <FormPageSk label="Loading settings" />;
+}
