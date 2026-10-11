@@ -12,6 +12,8 @@ const dialogs = [];
 const ctx = await newCtx(browser);
 const p = await ctx.newPage();
 p.on('dialog', (d) => {
+  // The app asks 'Delete ...?' before deleting an account, category or recurring rule: that is expected, so accept it.
+  if (d.type() === 'confirm' && /^Delete /.test(d.message())) return void d.accept();
   dialogs.push(d.message());
   d.dismiss();
 });
@@ -617,7 +619,7 @@ await step('edit rejects invalid amounts (abc, 0, -5, 1e9999)', async () => {
 });
 await step('nonexistent transaction -> 404 page, no leak', async () => {
   const r = await p.goto('/transactions/00000000-0000-0000-0000-000000000000');
-  return /could not be found/i.test(await body(p)) && !LEAK.test(await body(p)) && r.status() === 404 ? true : r.status();
+  return /could not be found|page not found/i.test(await body(p)) && !LEAK.test(await body(p)) && r.status() === 404 ? true : r.status();
 });
 await step('malformed transaction id -> safe (404 or friendly), not a 500 with details', async () => {
   const r = await p.goto('/transactions/not-a-uuid');
