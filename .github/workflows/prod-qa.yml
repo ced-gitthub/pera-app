@@ -76,6 +76,8 @@ jobs:
           [ -d "$OUT_DIR" ] || { echo "::warning::no qa-out directory"; exit 0; }
           rm -rf /tmp/qa && mkdir -p /tmp/qa && cp -r "$OUT_DIR"/. /tmp/qa/ && cd /tmp/qa
           echo "run for ${GITHUB_SHA} at $(date -u +%FT%TZ)" > RUN.txt
+          # Vercel reads vercel.json from the branch being pushed. Without this file every result push became a (failing) deployment and used up the free 100-per-day limit.
+          echo '{"git":{"deploymentEnabled":false}}' > vercel.json
           git init -q -b qa-${{ matrix.suite }} . && git config user.name github-actions && git config user.email actions@users.noreply.github.com
           git add -A && git commit -qm "prod-qa ${{ matrix.suite }} results for ${GITHUB_SHA::7}"
           git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
