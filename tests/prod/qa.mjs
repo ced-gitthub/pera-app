@@ -657,6 +657,33 @@ await step('delete without undo removes it permanently from the list', async () 
   await p.goto('/transactions?q=IMP 6');
   return (await rows(p).count()) === n - 1 ? true : n;
 });
+// The browser remembers visited screens for 30 s (next.config.mjs staleTimes). A delete must wipe that memory: tab hops after it never show the deleted row.
+await step('remembered screens never show a deleted row (delete, then hop Dashboard <-> Transactions by tapping tabs)', async () => {
+  const tab = async (href) => {
+    await p.locator(`a[href="${href}"]:visible`).first().click();
+    await p.waitForURL((u) => new URL(u).pathname === href, { timeout: 20000 });
+    await p.waitForTimeout(700);
+  };
+  await add(p, 'zzcache 77');
+  await p.click('button:has-text("Spent")');
+  await p.locator('.cheer, button:has-text("Save")').first().waitFor();
+  if (await p.locator('button:has-text("Save")').count()) await p.click('button:has-text("Save")');
+  await p.locator('.cheer').waitFor();
+  await tab('/transactions');
+  await tab('/');
+  await tab('/transactions'); // both screens are now remembered
+  if (!/zzcache/.test(await body(p))) return 'the new transaction is not listed';
+  await edit();
+  await p.locator('tbody tr:has-text("zzcache") button:has-text("Delete")').first().click();
+  await p.locator('button:has-text("Undo")').first().waitFor({ timeout: 20000 });
+  await p.waitForTimeout(1500);
+  const here = /zzcache/.test(await body(p).then((t) => t.replace(/Deleted\. Changed your mind\?/g, '')));
+  await tab('/');
+  const dash = /zzcache/.test(await body(p));
+  await tab('/transactions');
+  const list = /zzcache/.test(await body(p));
+  return !here && !dash && !list ? true : { here, dash, list };
+});
 
 // ---------------------------------------------------------------- ACCOUNTS
 G('accounts');
@@ -1614,6 +1641,20 @@ await login(p, EM, PW);
 G('hygiene');
 await step('no uncaught JS errors during the run', async () => (jsErrors.length === 0 ? true : jsErrors.slice(0, 5)));
 await step('no unexpected browser dialogs (XSS payloads inert)', async () => (dialogs.length === 0 ? true : dialogs));
+await step("after logout, Back never shows the previous user's remembered screens", async () => {
+  await login(p, EM, PW);
+  await p.goto('/');
+  await p.locator('a[href="/transactions"]:visible').first().click();
+  await p.waitForURL((u) => new URL(u).pathname === '/transactions', { timeout: 20000 });
+  await p.waitForTimeout(700);
+  await logout(p);
+  await p.goBack();
+  await p.waitForTimeout(1500);
+  const t = await body(p);
+  return new URL(p.url()).pathname === '/login' && !/Total balance|Transactions/.test(t.replace(/Log in|Welcome back/g, ''))
+    ? true
+    : [p.url(), t.slice(0, 120)];
+});
 await step('logout works from every page (sidebar/header)', async () => {
   for (const r of ROUTES) {
     await login(p, EM, PW);

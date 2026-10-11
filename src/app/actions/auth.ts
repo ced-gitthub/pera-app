@@ -7,7 +7,7 @@ import { passwordProblem, isPwned, isEmail, safeNext, PWNED } from '@/lib/passwo
 import { authMessage, logErr } from '@/lib/safe';
 import { admin, adminConfigured } from '@/lib/admin';
 import { recentSignIn, sessionSignInAt } from '@/lib/session';
-import { go, str, siteUrl, verifyUrl, errCode, code6, authed, needsSecondStep } from './shared';
+import { go, str, siteUrl, verifyUrl, errCode, code6, authed, needsSecondStep, done } from './shared';
 
 // Google sign-in: Supabase sends the user to Google, then back to /auth/callback (PKCE). Google has already verified the address, so no confirmation email is needed.
 export async function signInWithGoogle() {
@@ -35,6 +35,7 @@ export async function signIn(fd: FormData) {
     if (errCode(error) === 'email_not_confirmed') go(verifyUrl(email), 'err', authMessage(error, 'signIn'));
     go('/login', 'err', authMessage(error, 'signIn'));
   }
+  done(); // a new session: drop every screen the browser remembered for the previous one
   if (await needsSecondStep(sb)) redirect('/2fa');
   redirect('/');
 }
@@ -53,6 +54,7 @@ export async function signUp(fd: FormData) {
     options: { data: { name: str(fd, 'name').slice(0, 60) }, emailRedirectTo: `${await siteUrl()}/auth/callback?next=/&welcome=1` },
   });
   if (error) go('/register', 'err', authMessage(error, 'signUp'));
+  done();
   if (!data.session) redirect(verifyUrl(email));
   redirect('/');
 }
@@ -98,12 +100,14 @@ export async function updatePassword(fd: FormData) {
   const { error } = await sb.auth.updateUser({ password: p });
   if (error) go('/reset', 'err', authMessage(error, 'updatePassword'));
   await sb.auth.signOut();
+  done();
   go('/login', 'ok', 'Password updated. Log in with your new password.');
 }
 
 export async function signOut() {
   const sb = await supabaseServer();
   await sb.auth.signOut();
+  done(); // forget every remembered screen so the next person on this device never sees them
   redirect('/login');
 }
 
@@ -142,6 +146,7 @@ export async function signOutOthers() {
 export async function signOutEverywhere() {
   const sb = await supabaseServer();
   await sb.auth.signOut({ scope: 'global' });
+  done();
   go('/login', 'ok', 'Logged out of every device.');
 }
 
@@ -178,6 +183,7 @@ export async function deleteMyAccount(fd: FormData) {
   const { error: trashErr } = await admin().from('tx_trash').delete().eq('user_id', user.id);
   if (trashErr) logErr('deleteMyAccount.trash', trashErr);
   await sb.auth.signOut();
+  done();
   go('/login', 'ok', 'Your account and all of its data were permanently deleted.');
 }
 
@@ -193,6 +199,7 @@ export async function verifyMfa(fd: FormData) {
   if (!factor) redirect(next);
   const { error } = await sb.auth.mfa.challengeAndVerify({ factorId: factor.id, code });
   if (error) go(back, 'err', authMessage(error, 'verifyMfa'));
+  done();
   redirect(next);
 }
 
@@ -237,5 +244,6 @@ export async function disableMfa(fd: FormData) {
   if (error) go('/security', 'err', authMessage(error, 'disableMfa'));
   const { error: e2 } = await sb.auth.mfa.unenroll({ factorId: factor.id });
   if (e2) go('/security', 'err', authMessage(e2, 'disableMfa'));
+  done();
   go('/security', 'ok', 'Two-step verification is off.');
 }

@@ -2,6 +2,7 @@
 import { supabaseServer } from '@/lib/supabase/server';
 import { TABS, normalizeLayout, normalizeTab, type TabId } from '@/lib/layout';
 import { logErr } from '@/lib/safe';
+import { done } from './shared';
 
 // ---- per-user layout (Customize). One tab at a time is merged into the stored row, so two tabs never overwrite each other.
 export async function saveLayout(tab: string, value: unknown): Promise<{ ok: boolean }> {
@@ -24,6 +25,7 @@ export async function saveLayout(tab: string, value: unknown): Promise<{ ok: boo
       logErr('saveLayout', error);
       return { ok: false };
     }
+    done(); // remembered screens must show the new layout
     return { ok: true };
   } catch (e) {
     logErr('saveLayout', e);

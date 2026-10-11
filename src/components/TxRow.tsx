@@ -3,7 +3,8 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { formatMinor } from '@/core/money';
-import { deleteTx, duplicateTx, restoreTx } from '@/app/actions';
+import { deleteTx, duplicateTx } from '@/app/actions';
+import { showUndo } from '@/lib/undobar';
 import { emojiFor } from '@/lib/vibe';
 export type R = {
   id: string;
@@ -18,30 +19,8 @@ export type R = {
 };
 export default function TxRow({ r, actions = true }: { r: R; actions?: boolean }) {
   const router = useRouter(),
-    [gone, setGone] = useState<Record<string, unknown> | null>(null),
     [err, setErr] = useState(''),
     [busy, setBusy] = useState(false);
-  if (gone)
-    return (
-      <tr>
-        <td colSpan={5}>
-          Deleted. Changed your mind?{' '}
-          <button
-            className="btn"
-            onClick={async () => {
-              const x = await restoreTx(gone);
-              if (x.ok) {
-                setGone(null);
-                router.refresh();
-              } else setErr(x.message);
-            }}
-          >
-            Undo
-          </button>{' '}
-          {err}
-        </td>
-      </tr>
-    );
   const sign = r.type === 'income' ? '+' : r.type === 'expense' ? '-' : '',
     pay = r.type === 'transfer' && !!r.card; // a transfer into a card account is shown as a card payment (display only; it is stored as a transfer)
   return (
@@ -91,9 +70,7 @@ export default function TxRow({ r, actions = true }: { r: R; actions?: boolean }
                 const x = await deleteTx(r.id);
                 setBusy(false);
                 if (x.ok)
-                  setGone(
-                    x.row,
-                  ); /* no refresh here: it would unmount this row and its Undo prompt; the list is fresh on the next navigation */
+                  showUndo(x.row); // the row disappears with the list refresh; the Undo notice lives in the layout
                 else setErr(x.message);
               }}
             >

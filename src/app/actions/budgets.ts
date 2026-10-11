@@ -162,5 +162,6 @@ export async function updateProfile(fd: FormData) {
     .update({ name: str(fd, 'name').slice(0, 60) })
     .eq('id', user.id);
   if (error) go('/settings', 'err', safeMessage(error, 'updateProfile'));
+  done(); // the dashboard greets you by name, so remembered screens must be refreshed
   go('/settings', 'ok', 'Profile saved');
 }

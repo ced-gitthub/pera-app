@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { supabaseServer } from '@/lib/supabase/server';
 import { isEmail } from '@/lib/password';
 import { authMessage, logErr } from '@/lib/safe';
-import { go, str, errCode, code6, needsSecondStep } from './shared';
+import { go, str, errCode, code6, needsSecondStep, done } from './shared';
 
 const codeUrl = (email: string) => '/code' + (isEmail(email) ? `?email=${encodeURIComponent(email)}` : '');
 
@@ -29,6 +29,7 @@ export async function verifyLoginCode(fd: FormData) {
     logErr('verifyLoginCode', error);
     go(codeUrl(email), 'err', 'That code is wrong or has expired. Request a new one.');
   }
+  done(); // a new session: drop every screen the browser remembered for the previous one
   if (await needsSecondStep(sb)) redirect('/2fa');
   redirect('/');
 }

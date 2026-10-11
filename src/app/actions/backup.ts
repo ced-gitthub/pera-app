@@ -15,7 +15,7 @@ import { sendMail } from '@/lib/mail';
 import { newCode, hashCode, checkCode, nextSend, cooldownPassed, CODE_TTL_MS, MAX_ATTEMPTS } from '@/lib/backupcode';
 import { isEmail } from '@/lib/password';
 import { safeMessage, authMessage, logErr } from '@/lib/safe';
-import { go, str, siteUrl, errCode, code6, authed } from './shared';
+import { go, str, siteUrl, errCode, code6, authed, done } from './shared';
 
 // ---- backup email (recovery when the login inbox is lost). Needs SUPABASE_SECRET_KEY + SMTP_* on the server; hidden otherwise.
 const BACKUP_OFF = 'Backup email is not available right now.',
@@ -111,6 +111,7 @@ export async function backupConfirm(fd: FormData) {
       'A backup email was added to Zovix',
       'A backup email address was just added to your Zovix account, so you can reset your password if you lose access to this inbox.\n\nIf this was not you, log in, remove it under Security, and change your password.',
     );
+  done();
   go('/security', 'ok', 'Backup email saved.');
 }
 
@@ -128,6 +129,7 @@ export async function backupRemove() {
       'A backup email was removed from Zovix',
       'The backup email on your Zovix account was removed. If this was not you, change your password under Security.',
     );
+  done();
   go('/security', 'ok', 'Backup email removed.');
 }
 

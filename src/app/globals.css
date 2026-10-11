@@ -127,6 +127,24 @@ a {
   border: 1px solid var(--line);
   box-shadow: 0 18px 40px -14px rgba(63, 34, 184, 0.5);
 }
+.undobar {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(96px + env(safe-area-inset-bottom));
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  max-width: calc(100vw - 20px);
+  padding: 10px 14px;
+  border-radius: 18px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: 0 12px 30px -10px rgba(63, 34, 184, 0.45);
+  font-weight: 600;
+}
 .tab {
   display: flex;
   flex-direction: column;

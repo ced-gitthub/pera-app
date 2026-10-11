@@ -10,6 +10,10 @@ const security = [
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  // The browser remembers a visited screen in memory for 30 seconds, so switching tabs in the app is instant. Memory only (never on disk, gone when the app closes).
+  // Every save, delete, login and logout calls revalidatePath('/', 'layout') (see actions/shared.ts `done`), which wipes this memory, so nothing shown can be stale or belong to a previous user.
+  // tests/app.test.ts fails if a mutating action stops calling done() or if this value is raised.
+  experimental: { staleTimes: { dynamic: 30, static: 180 } },
   async headers() {
     return [
       { source: '/:path*', headers: security },
