@@ -665,7 +665,8 @@ await step('remembered screens never show a deleted row (delete, then hop Dashbo
     await p.waitForURL((u) => new URL(u).pathname === href, { timeout: 20000 });
     await p.waitForTimeout(700);
   };
-  await add(p, 'zzcache 77');
+  await p.goto('/'); // Quick Add on the dashboard, from a fresh page load (empty screen memory)
+  await add(p, 'zzcache 77', { settle: false });
   await p.click('button:has-text("Spent")');
   await p.locator('.cheer, button:has-text("Save")').first().waitFor();
   if (await p.locator('button:has-text("Save")').count()) await p.click('button:has-text("Save")');
@@ -673,7 +674,12 @@ await step('remembered screens never show a deleted row (delete, then hop Dashbo
   await tab('/transactions');
   await tab('/');
   await tab('/transactions'); // both screens are now remembered
-  if (!/zzcache/.test(await body(p))) return 'the new transaction is not listed';
+  for (let i = 0; i < 6 && !/zzcache/.test(await body(p)); i++) await p.waitForTimeout(1000);
+  if (!/zzcache/.test(await body(p)))
+    return {
+      why: 'the new transaction is not listed',
+      first: (await rows(p).allInnerTexts()).slice(0, 4).map((t) => t.replace(/\s+/g, ' ').slice(0, 90)),
+    };
   await edit();
   await p.locator('tbody tr:has-text("zzcache") button:has-text("Delete")').first().click();
   await p.locator('button:has-text("Undo")').first().waitFor({ timeout: 20000 });
