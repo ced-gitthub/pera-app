@@ -1,7 +1,8 @@
 import { signInWithGoogle } from '@/app/actions';
+import HideInIosApp from '@/components/HideInIosApp';
 export default function GoogleButton() {
   return (
-    <>
+    <HideInIosApp>
       <form action={signInWithGoogle}>
         <button className="btn gbtn" type="submit">
           <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
@@ -22,6 +23,6 @@ export default function GoogleButton() {
       <div className="or" role="separator">
         <span>or use your email</span>
       </div>
-    </>
+    </HideInIosApp>
   );
 }
