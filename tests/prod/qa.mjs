@@ -1,3 +1,4 @@
+// Live suites run against production with throwaway users; they need Supabase "Confirm email" OFF (the workflow preflight skips them otherwise).
 // Real production QA: real Chromium -> deployed Vercel app -> real Supabase. Creates throwaway users pera-qa-*@example.com.
 import { BASE, G, T, step, act, launch, newCtx, flash, body, signup, login, logout, add, done, manila, LEAK } from './lib.mjs';
 import fs from 'node:fs';
