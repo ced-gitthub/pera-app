@@ -85,6 +85,22 @@ G('email confirmation pages + password rules');
     const list = fa.trim().split(/\s+/).sort().join(' ');
     return /^'self' https:\/\/accounts\.google\.com https:\/\/[a-z0-9]+\.supabase\.co$/.test(list) && !/\*/.test(fa) ? true : csp;
   });
+  // Regression (2026-10-12): after a custom domain was attached, the site told Supabase to send Google back to that unfinished domain, so sign-in never completed.
+  await step('"Continue with Google" asks Supabase to return to THIS site (never another domain)', async () => {
+    const seen = [];
+    const onReq = (r) => {
+      if (/\.supabase\.co\/auth\/v1\/authorize/.test(r.url())) seen.push(r.url());
+    };
+    q.on('request', onReq);
+    await q.goto('/login');
+    await q.waitForTimeout(2500);
+    await q.locator('button:has-text("Continue with Google")').click();
+    await q.waitForTimeout(5000);
+    q.off('request', onReq);
+    if (!seen.length) return 'no authorize request was made';
+    const to = new URL(seen[0]).searchParams.get('redirect_to') ?? '';
+    return new URL(to).origin === new URL(BASE).origin && new URL(to).pathname === '/auth/callback' ? true : to;
+  });
   await step('email-code login for an unknown address gives a generic answer, then a wrong code is refused plainly', async () => {
     await q.goto('/code');
     await q.fill('input[name=email]', em('ghostcode'));
