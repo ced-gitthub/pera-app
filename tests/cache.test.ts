@@ -52,6 +52,14 @@ test('Content-Security-Policy form-action allows the Google sign-in redirect cha
   const origins = m[1].trim().split(/\s+/).sort();
   assert.deepEqual(origins, ["'self'", 'https://accounts.google.com', 'https://vxhgkkzbmrhxayzryake.supabase.co'].sort());
 });
+test('login page: no standing advice; errors appear right above the form and are highlighted', () => {
+  const login = read('src/app/(auth)/login/page.tsx');
+  assert.ok(login.indexOf('<GoogleButton />') < login.indexOf('<Flash '), 'error message sits below the Google button, above the form');
+  assert.ok(login.indexOf('<Flash ') < login.indexOf('<form action={signIn}'));
+  const hint = read('src/components/HideInIosApp.tsx');
+  assert.match(hint, /\{blocked && \(/, 'the iPhone-app explanation shows only after the Google button is tapped');
+  assert.match(read('src/app/globals.css'), /\.flash\.bad,\s*\.flash\.good \{[^}]*border-left/);
+});
 test('auth links are built from the pinned site address, never from the project production domain', () => {
   const s = read('src/app/actions/shared.ts');
   assert.match(s, /NEXT_PUBLIC_SITE_URL/);

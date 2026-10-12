@@ -10,8 +10,8 @@ export default async function Page({ searchParams }: { searchParams: SP }) {
           <span className="logo">₱</span>Zovix
         </div>
         <p className="tag">Welcome back · track every peso</p>
-        <Flash sp={await searchParams} />
         <GoogleButton />
+        <Flash sp={await searchParams} />
         <form action={signIn} className="card grid gap-3">
           <input aria-label="Email" className="inp" name="email" type="email" placeholder="Email" required autoComplete="email" />
           <input

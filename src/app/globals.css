@@ -338,6 +338,35 @@ a {
   background: var(--inc-soft);
   color: var(--inc);
 }
+/* Messages must be noticed: accent bar, soft glow and a short pop-in (skipped for people who ask for less motion). */
+.flash.bad,
+.flash.good {
+  border-left: 6px solid currentColor;
+  box-shadow: 0 8px 22px -12px currentColor;
+  animation: flashpop 0.35s ease-out;
+}
+.flash.bad::before {
+  content: '⚠ ';
+}
+@keyframes flashpop {
+  0% {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+  60% {
+    transform: translateY(0) scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .flash.bad,
+  .flash.good {
+    animation: none;
+  }
+}
 .inc {
   color: var(--inc);
 }
