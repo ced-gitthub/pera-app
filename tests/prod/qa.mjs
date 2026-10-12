@@ -66,6 +66,37 @@ G('auth: logged-out');
     const bad = await q.locator('[role=alert]').first().innerText();
     return /₱1,200\.00/.test(before) && /₱1,050\.00/.test(after) && bad.length > 5 && !LEAK.test(bad) ? true : { before, after, bad };
   });
+  await step('welcome tutorial: five guided steps (entry, income, goal, budget, ready) with the next step highlighted', async () => {
+    await q.goto('/welcome');
+    const stepOf = async () => (await q.locator('.wl-prog-row b').innerText()).replace(/\s+/g, ' ');
+    const seen = [await stepOf()];
+    if ((await q.locator('.spot').count()) < 1) return 'nothing is highlighted on step 1';
+    await q.click('button.wl-chip:has-text("lunch 150 gcash")');
+    seen.push(await stepOf());
+    await q.click('button.wl-chip:has-text("salary 5000 bpi")');
+    seen.push(await stepOf());
+    await q.click('button:has-text("Start my goal")');
+    seen.push(await stepOf());
+    await q.click('button:has-text("Set my budget")');
+    seen.push(await stepOf());
+    const win = await q.locator('.wl-win').count();
+    return seen.join('|') === 'Step 1 of 5|Step 2 of 5|Step 3 of 5|Step 4 of 5|Step 5 of 5' && win === 1 ? true : { seen, win };
+  });
+  await step('dashboard tutorial: a new account sees "Getting started" with exactly one highlighted next step', async () => {
+    const c3 = await newCtx(browser),
+      r3 = await c3.newPage();
+    const e3 = `pera-qa-${stamp}-tour@example.com`;
+    await signup(r3, e3, PW, 'Tour');
+    await r3.goto('/');
+    const card = r3.locator('section.missions');
+    await card.waitFor({ timeout: 15000 });
+    const t = await card.innerText(),
+      next = await card.locator('.mrow.next').count();
+    await c3.close();
+    return /Getting started/.test(t) && /0\/5 done/.test(t) && next === 1 && /Do this next/.test(t) && /Log your first peso/.test(t)
+      ? true
+      : { next, t: t.slice(0, 200) };
+  });
   await step('/api/health is public and healthy', async () => {
     const r = await c.request.get('/api/health');
     const j = await r.json();

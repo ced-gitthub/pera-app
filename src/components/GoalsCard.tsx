@@ -14,7 +14,7 @@ export type GoalView = {
 };
 export default function GoalsCard({ goals, accounts }: { goals: GoalView[]; accounts: { id: string; name: string }[] }) {
   return (
-    <section className="card goals" aria-label="Savings goals">
+    <section className="card goals" id="goals" aria-label="Savings goals">
       <h2>Savings goals</h2>
       {goals.length === 0 && (
         <p className="m">Saving for something? Add a goal, like a new phone or an emergency fund, and watch the bar fill up.</p>

@@ -81,3 +81,29 @@ export function spendByCategory(s: DemoState) {
     .map(([category, amount]) => ({ category, amount }))
     .sort((a, b) => b.amount - a.amount);
 }
+
+// ---- guided tutorial on the welcome page: five steps, each unlocked by doing the previous one.
+export const DEMO_GOAL_MINOR = 1000000; // "New phone", ₱10,000
+export const DEMO_BUDGET_MINOR = 200000; // "Food", ₱2,000 a month
+export type DemoExtras = { goal: boolean; budget: boolean };
+// What the visitor has "saved" so far in the sample: income minus expenses of the entries they typed (transfers do not count).
+export const demoNet = (s: DemoState) =>
+  s.entries.reduce((n, e) => n + (e.type === 'income' ? e.amount_minor : e.type === 'expense' ? -e.amount_minor : 0), 0);
+export const foodSpent = (s: DemoState) =>
+  s.entries.filter((e) => e.type === 'expense' && e.category === 'Food').reduce((n, e) => n + e.amount_minor, 0);
+export function tutorialStep(s: DemoState, x: DemoExtras) {
+  const hasEntry = s.entries.length >= 1,
+    hasIncome = s.entries.some((e) => e.type === 'income'),
+    flags = [hasEntry, hasIncome, x.goal, x.budget],
+    completed = flags.filter(Boolean).length,
+    first = flags.findIndex((f) => !f),
+    n = first === -1 ? 5 : first + 1,
+    copy: [string, string][] = [
+      ['Add your first entry', 'Tap a suggestion below, or type what you spent, like "lunch 150 gcash".'],
+      ['Now add some income', 'Tap "salary 5000 bpi" to see money come in.'],
+      ['Start a savings goal', 'Goals show how close you are to something you want. Tap the glowing button.'],
+      ['Set a budget', 'A budget tells you how much is left. Tap the glowing button.'],
+      ['You are ready!', 'That is the whole app. Save your progress and your streak starts today.'],
+    ];
+  return { n, completed, pct: Math.round((completed * 100) / 4), done: n === 5, title: copy[n - 1][0], tip: copy[n - 1][1] };
+}

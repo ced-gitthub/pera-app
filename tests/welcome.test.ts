@@ -59,3 +59,41 @@ test('the login caption says "Welcome back" only for returning users', () => {
   assert.match(loginCaption(true), /Welcome back/);
   assert.doesNotMatch(loginCaption(false), /Welcome back/);
 });
+import { tutorialStep, demoNet, foodSpent, DEMO_GOAL_MINOR, DEMO_BUDGET_MINOR } from '../src/lib/welcomeDemo.ts';
+const feed = (...lines: string[]) => {
+  let s = startDemo();
+  for (const l of lines) {
+    const r = addEntry(s, l, TODAY);
+    if (r.ok) s = r.state;
+  }
+  return s;
+};
+test('tutorial: five guided steps, each unlocked by doing the previous one', () => {
+  const none = { goal: false, budget: false };
+  assert.equal(tutorialStep(startDemo(), none).n, 1);
+  const one = feed('lunch 150 gcash');
+  assert.equal(tutorialStep(one, none).n, 2, 'after the first entry it asks for income');
+  const inc = feed('lunch 150 gcash', 'salary 5000 bpi');
+  assert.equal(tutorialStep(inc, none).n, 3, 'after income it asks for a goal');
+  assert.equal(tutorialStep(inc, { goal: true, budget: false }).n, 4);
+  const all = tutorialStep(inc, { goal: true, budget: true });
+  assert.ok(all.n === 5 && all.done);
+  assert.ok(tutorialStep(startDemo(), none).title.length > 3 && tutorialStep(startDemo(), none).tip.length > 10);
+});
+test('tutorial progress counts completed steps (0 to 4) and never exceeds 100%', () => {
+  const none = { goal: false, budget: false };
+  assert.equal(tutorialStep(startDemo(), none).completed, 0);
+  const inc = feed('lunch 150 gcash', 'salary 5000 bpi');
+  assert.equal(tutorialStep(inc, { goal: true, budget: true }).completed, 4);
+  assert.equal(tutorialStep(inc, { goal: true, budget: true }).pct, 100);
+  assert.equal(tutorialStep(inc, none).pct, 50);
+});
+test('demo goal and budget are driven by the entries the visitor typed', () => {
+  assert.equal(DEMO_GOAL_MINOR, 1000000);
+  assert.equal(DEMO_BUDGET_MINOR, 200000);
+  const s = feed('salary 5000 bpi', 'lunch 150 gcash');
+  assert.equal(demoNet(s), 485000, 'income minus expenses');
+  assert.equal(foodSpent(s), 15000);
+  assert.equal(demoNet(startDemo()), 0);
+  assert.equal(foodSpent(feed('grocery 800 cash')), 0, 'only Food counts toward the Food budget');
+});

@@ -1,0 +1,109 @@
+.mhead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.mbar {
+  height: 12px;
+  border-radius: 999px;
+  background: var(--ube-soft);
+  overflow: hidden;
+  margin: 10px 0 14px;
+}
+.mbar i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--mango), #ff9f1c);
+  transition: width 0.6s cubic-bezier(0.3, 1.3, 0.5, 1);
+}
+.mlist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.mrow {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 18px;
+  background: var(--bg);
+  border: 2px solid transparent;
+}
+.mrow .mic {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+  border-radius: 14px;
+  background: var(--surface);
+}
+.mtxt {
+  display: grid;
+  min-width: 0;
+}
+.mtxt small {
+  color: var(--mute);
+}
+.mrow.done {
+  background: var(--inc-soft);
+  border-color: var(--inc);
+}
+.mrow.done .mic {
+  background: var(--surface);
+  color: var(--inc);
+  border: 2px solid var(--inc);
+  font-weight: 800;
+}
+.mrow.done .mtxt small {
+  color: var(--inc);
+  font-weight: 700;
+}
+/* the one thing to do next: a pulsing yellow ring, a tag and a button */
+.mrow.next {
+  grid-template-columns: 44px minmax(0, 1fr);
+  background: var(--surface);
+  border-color: var(--mango);
+  box-shadow: 0 0 0 0 rgba(255, 197, 61, 0.7);
+  animation: mpulse 1.8s ease-out infinite;
+}
+.mgo {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.mgo .btn {
+  text-decoration: none;
+}
+.mtag {
+  font-weight: 800;
+  font-size: 13px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: var(--mango);
+  color: #3b2a00;
+}
+@keyframes mpulse {
+  70% {
+    box-shadow: 0 0 0 10px rgba(255, 197, 61, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 197, 61, 0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mrow.next {
+    animation: none;
+  }
+  .mbar i {
+    transition: none;
+  }
+}

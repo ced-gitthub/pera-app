@@ -4,7 +4,19 @@ import { useEffect, useRef, useState } from 'react';
 import ZovixMark from '@/components/ZovixMark';
 import InstallApp from '@/components/InstallApp';
 import { formatMinor } from '@/core/money';
-import { DEMO_ACCOUNTS, DEMO_GOAL, addEntry, levelFor, spendByCategory, startDemo, total, type DemoState } from '@/lib/welcomeDemo';
+import {
+  DEMO_ACCOUNTS,
+  DEMO_BUDGET_MINOR,
+  DEMO_GOAL_MINOR,
+  addEntry,
+  demoNet,
+  foodSpent,
+  spendByCategory,
+  startDemo,
+  total,
+  tutorialStep,
+  type DemoState,
+} from '@/lib/welcomeDemo';
 // The first screen a new visitor sees: a working sample of the app (nothing is saved), so they feel progress BEFORE they sign up.
 const manilaToday = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila' }).format(new Date());
 const TRY = ['lunch 150 gcash', 'grocery 800 cash', 'salary 5000 bpi', 'coffee 120'];
@@ -56,8 +68,12 @@ export default function Welcome({ google }: { google: React.ReactNode }) {
     [text, setText] = useState(''),
     [msg, setMsg] = useState(''),
     [last, setLast] = useState(0),
+    [goalOn, setGoalOn] = useState(false),
+    [budgetOn, setBudgetOn] = useState(false),
     n = demo.entries.length,
-    lvl = levelFor(n),
+    tut = tutorialStep(demo, { goal: goalOn, budget: budgetOn }),
+    saved = Math.max(0, demoNet(demo)),
+    food = foodSpent(demo),
     bal = useCountUp(total(demo)),
     bars = spendByCategory(demo),
     top = bars[0]?.amount || 1;
@@ -90,7 +106,7 @@ export default function Welcome({ google }: { google: React.ReactNode }) {
       <section className="wl-demo" aria-label="Try Zovix">
         <div className="wl-prog">
           <div className="wl-prog-row">
-            <b>{lvl.title}</b>
+            <b>Step {tut.n} of 5</b>
             <span className={n > 0 ? 'wl-flame on' : 'wl-flame'} aria-label={n > 0 ? '1-day streak' : 'No streak yet'}>
               🔥 {n > 0 ? 1 : 0}
             </span>
@@ -99,13 +115,21 @@ export default function Welcome({ google }: { google: React.ReactNode }) {
             className="wl-bar"
             role="progressbar"
             aria-valuemin={0}
-            aria-valuemax={DEMO_GOAL}
-            aria-valuenow={lvl.step}
-            aria-label="Sample progress"
+            aria-valuemax={100}
+            aria-valuenow={tut.pct}
+            aria-label="Tutorial progress"
           >
-            <i style={{ width: `${(lvl.step / DEMO_GOAL) * 100}%` }} />
+            <i style={{ width: `${tut.pct}%` }} />
           </div>
-          <p className="wl-hint">{lvl.next}</p>
+          <div className="wl-coach" role="status">
+            <span className="wl-pointer" aria-hidden="true">
+              👉
+            </span>
+            <div>
+              <b>{tut.title}</b>
+              <p>{tut.tip}</p>
+            </div>
+          </div>
         </div>
         <div className="wl-total">
           <span>Your sample wallet</span>
@@ -119,7 +143,8 @@ export default function Welcome({ google }: { google: React.ReactNode }) {
           ))}
         </div>
         <form
-          className="wl-form"
+          className={tut.n === 1 ? 'wl-form spot' : 'wl-form'}
+
           onSubmit={(e) => {
             e.preventDefault();
             submit(text);
@@ -144,7 +169,12 @@ export default function Welcome({ google }: { google: React.ReactNode }) {
         </form>
         <div className="wl-chips">
           {TRY.map((t) => (
-            <button key={t} type="button" className="wl-chip" onClick={() => submit(t)}>
+            <button
+              key={t}
+              type="button"
+              className={tut.n === 1 || (tut.n === 2 && t === 'salary 5000 bpi') ? 'wl-chip spot' : 'wl-chip'}
+              onClick={() => submit(t)}
+            >
               {t}
             </button>
           ))}
@@ -188,7 +218,67 @@ export default function Welcome({ google }: { google: React.ReactNode }) {
             ))}
           </div>
         )}
-        {lvl.done && (
+        {(tut.n >= 3 || goalOn) && (
+          <div className={goalOn ? 'wl-panel' : 'wl-panel spot'}>
+            <div className="wl-ptop">
+              <span aria-hidden="true">📱</span>
+              <b>New phone</b>
+              <small>{formatMinor(DEMO_GOAL_MINOR)} goal</small>
+            </div>
+            {goalOn ? (
+              <>
+                <div
+                  className="wl-gbar"
+                  role="progressbar"
+                  aria-label="Sample goal progress"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={Math.min(100, Math.floor((saved * 100) / DEMO_GOAL_MINOR))}
+                >
+                  <i style={{ width: `${Math.min(100, (saved * 100) / DEMO_GOAL_MINOR)}%` }} />
+                </div>
+                <small>
+                  {formatMinor(saved)} saved of {formatMinor(DEMO_GOAL_MINOR)}. Every entry moves this bar.
+                </small>
+              </>
+            ) : (
+              <button type="button" className="btn p" onClick={() => setGoalOn(true)}>
+                Start my goal
+              </button>
+            )}
+          </div>
+        )}
+        {(tut.n >= 4 || budgetOn) && (
+          <div className={budgetOn ? 'wl-panel' : 'wl-panel spot'}>
+            <div className="wl-ptop">
+              <span aria-hidden="true">🍜</span>
+              <b>Food budget</b>
+              <small>{formatMinor(DEMO_BUDGET_MINOR)} a month</small>
+            </div>
+            {budgetOn ? (
+              <>
+                <div
+                  className="wl-gbar"
+                  role="progressbar"
+                  aria-label="Sample budget used"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={Math.min(100, Math.floor((food * 100) / DEMO_BUDGET_MINOR))}
+                >
+                  <i style={{ width: `${Math.min(100, (food * 100) / DEMO_BUDGET_MINOR)}%` }} />
+                </div>
+                <small>
+                  {formatMinor(food)} spent · {formatMinor(Math.max(0, DEMO_BUDGET_MINOR - food))} left
+                </small>
+              </>
+            ) : (
+              <button type="button" className="btn p" onClick={() => setBudgetOn(true)}>
+                Set my budget
+              </button>
+            )}
+          </div>
+        )}
+        {tut.done && (
           <div className="wl-win" role="status">
             <div className="wl-confetti" aria-hidden="true">
               {Array.from({ length: 16 }, (_, i) => (
@@ -268,8 +358,8 @@ export default function Welcome({ google }: { google: React.ReactNode }) {
         </p>
       </section>
       {n > 0 && (
-        <div className="wl-sticky">
-          <span>{lvl.done ? 'Badge unlocked!' : `${n} tracked so far`}</span>
+        <div className={tut.done ? 'wl-sticky spot' : 'wl-sticky'}>
+          <span>{tut.done ? 'Tutorial complete!' : `${n} tracked so far`}</span>
           <Link href="/register" className="btn p">
             Save my progress
           </Link>

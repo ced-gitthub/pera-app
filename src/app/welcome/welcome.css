@@ -503,3 +503,72 @@
     transform: translateY(-10px) rotate(8deg);
   }
 }
+
+/* guided tutorial: the coach bubble and the pulsing "tap here" highlight */
+.wl-coach {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-top: 10px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #fff3cf, #ffe08a);
+  color: #4a3300;
+}
+.wl-coach p {
+  font-size: 14px;
+}
+.wl-pointer {
+  font-size: 24px;
+  animation: wlpoint 1.2s ease-in-out infinite;
+}
+.spot {
+  border-radius: 18px;
+  outline: 3px solid var(--mango);
+  outline-offset: 3px;
+  animation: wlspot 1.8s ease-out infinite;
+}
+.wl-chip.spot {
+  background: #fff6dc;
+  color: #4a3300;
+  border-style: solid;
+  border-color: var(--mango);
+}
+.wl-form.spot {
+  border-radius: 20px;
+}
+.wl-panel {
+  margin-top: 12px;
+  padding: 14px;
+  border-radius: 18px;
+  background: var(--bg);
+  display: grid;
+  gap: 8px;
+}
+.wl-ptop {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 10px;
+  align-items: center;
+}
+.wl-ptop small,
+.wl-panel > small {
+  color: var(--mute);
+}
+.wl-sticky.spot {
+  border-radius: 22px;
+}
+@keyframes wlspot {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 197, 61, 0.75);
+  }
+  70%,
+  100% {
+    box-shadow: 0 0 0 12px rgba(255, 197, 61, 0);
+  }
+}
+@keyframes wlpoint {
+  50% {
+    transform: translateX(5px);
+  }
+}

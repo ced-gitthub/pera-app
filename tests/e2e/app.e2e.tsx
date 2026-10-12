@@ -120,6 +120,14 @@ const count = (h: string, s: string) => h.split(s).length - 1;
       h.includes('Earn XP') &&
       /role="progressbar"/.test(h),
   );
+  T(
+    'home: getting-started tutorial shows progress, highlights exactly one next step with a button, and the quick-add anchor exists',
+    h.includes('Getting started') &&
+      (h.match(/class="mrow next"/g) ?? []).length === 1 &&
+      h.includes('Do this next') &&
+      h.includes('id="quick"') &&
+      /\d\/5 done/.test(h),
+  );
   T('home: has the joyful page banner', h.includes('Your money at a glance') && h.includes('class="th-emoji"'));
   T(
     'home: nine entries logged today completes both daily count quests',

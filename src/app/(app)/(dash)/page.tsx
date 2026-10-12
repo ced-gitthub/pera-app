@@ -10,6 +10,8 @@ import { emojiFor, greetingFor, manilaHour, streak, pulse } from '@/lib/vibe';
 import Quick from '@/components/Quick';
 import QuestBoard from '@/components/QuestBoard';
 import InstallApp from '@/components/InstallApp';
+import MissionsCard from '@/components/MissionsCard';
+import { buildMissions } from '@/lib/missions';
 import GoalsCard, { type GoalView } from '@/components/GoalsCard';
 import { buildQuests, xpFor, tipFor } from '@/lib/quests';
 import Tab from '@/components/Tab';
@@ -32,7 +34,7 @@ export default async function Dashboard({ searchParams }: { searchParams: SP }) 
     ym = today.slice(0, 7),
     mr = monthRange(ym),
     [yy, mm] = ym.split('-').map(Number);
-  const [s, bal, na, r, d, bud, ms, prof, layout, tc, gl] = await Promise.all([
+  const [s, bal, na, r, d, bud, ms, prof, layout, tc, gl, bc] = await Promise.all([
     sb.rpc('period_summary', { p_from: per.from, p_to: per.to }),
     balanceMap(sb),
     sb.rpc('no_account_summary'),
@@ -54,6 +56,7 @@ export default async function Dashboard({ searchParams }: { searchParams: SP }) 
     loadLayout(sb, user.id),
     sb.from('transactions').select('id', { count: 'exact', head: true }), // lifetime entries, for the level
     sb.from('savings_goals').select('id,name,emoji,target_minor,account_id,started_on').order('created_at'),
+    sb.from('budgets').select('id', { count: 'exact', head: true }), // any budget ever set, for the getting-started missions
   ]);
   const bad = s.error ?? na.error ?? r.error ?? bud.error ?? ms.error;
   if (bad) dbError(bad, 'dashboard');
@@ -121,6 +124,13 @@ export default async function Dashboard({ searchParams }: { searchParams: SP }) 
       totalEntries: entriesN,
       streak: st.n,
     });
+  const tutorial = buildMissions({
+    totalEntries: entriesN,
+    accounts,
+    budgetsCount: bc.count ?? 0,
+    goalsCount: goalRows.length,
+    streak: st.n,
+  });
   const amt = (m: number) => <span className={m < 0 ? 'exp' : ''}>{formatMinor(m)}</span>;
   const nodes = {
     accounts: (
@@ -311,7 +321,10 @@ export default async function Dashboard({ searchParams }: { searchParams: SP }) 
               : 'One quick entry starts it.'}
         </p>
       </section>
-      <Quick />
+      {!tutorial.complete && <MissionsCard missions={tutorial.missions} doneCount={tutorial.doneCount} />}
+      <div id="quick">
+        <Quick />
+      </div>
       <InstallApp dismissible />
       <GoalsCard goals={goalViews} accounts={accounts.map((a) => ({ id: a.id, name: a.name }))} />
       <QuestBoard quests={quests} xp={xpFor({ totalEntries: entriesN, streak: st.n })} tip={tipFor(today)} />
