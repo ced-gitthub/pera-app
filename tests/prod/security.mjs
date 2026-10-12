@@ -78,6 +78,13 @@ G('email confirmation pages + password rules');
       ? true
       : f;
   });
+  await step('Content-Security-Policy lets "Continue with Google" redirect to Supabase and Google (and nowhere else)', async () => {
+    const r = await q.goto('/login');
+    const csp = r.headers()['content-security-policy'] ?? '';
+    const fa = (csp.match(/form-action ([^;]+)/) ?? [])[1] ?? '';
+    const list = fa.trim().split(/\s+/).sort().join(' ');
+    return /^'self' https:\/\/accounts\.google\.com https:\/\/[a-z0-9]+\.supabase\.co$/.test(list) && !/\*/.test(fa) ? true : csp;
+  });
   await step('email-code login for an unknown address gives a generic answer, then a wrong code is refused plainly', async () => {
     await q.goto('/code');
     await q.fill('input[name=email]', em('ghostcode'));

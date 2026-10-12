@@ -5,7 +5,12 @@ const security = [
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
   { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), payment=(), usb=()' },
   { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains' },
-  { key: 'Content-Security-Policy', value: "frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'" },
+  // form-action also covers the redirects that follow a form post. "Continue with Google" posts to this site, which redirects to Supabase and then Google, so exactly those two origins must be allowed or Chrome blocks the sign-in (seen on Android).
+  {
+    key: 'Content-Security-Policy',
+    value:
+      "frame-ancestors 'none'; base-uri 'self'; form-action 'self' https://vxhgkkzbmrhxayzryake.supabase.co https://accounts.google.com; object-src 'none'",
+  },
 ];
 const nextConfig = {
   reactStrictMode: true,

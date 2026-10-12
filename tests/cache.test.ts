@@ -46,6 +46,12 @@ test('deleting a transaction refreshes the list and the Undo notice lives in the
   assert.match(read('src/app/(app)/layout.tsx'), /<UndoBar \/>/);
   assert.doesNotMatch(read('src/components/TxRow.tsx'), /Changed your mind/);
 });
+test('Content-Security-Policy form-action allows the Google sign-in redirect chain and nothing broader', () => {
+  const m = read('next.config.mjs').match(/form-action ('self'[^;"]*)/);
+  assert.ok(m, 'form-action is set');
+  const origins = m[1].trim().split(/\s+/).sort();
+  assert.deepEqual(origins, ["'self'", 'https://accounts.google.com', 'https://vxhgkkzbmrhxayzryake.supabase.co'].sort());
+});
 test('the Android app reloads the login page when you come back from Google in Chrome', () => {
   const s = read('src/components/HideInIosApp.tsx');
   assert.match(s, /visibilitychange/);
