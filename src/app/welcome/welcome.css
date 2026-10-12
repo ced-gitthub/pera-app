@@ -367,3 +367,8 @@
     transition: none !important;
   }
 }
+.wl-small a {
+  display: inline-block;
+  padding: 12px 6px;
+  margin: -12px -2px;
+}
