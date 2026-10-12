@@ -20,6 +20,17 @@ export async function GET(req: NextRequest) {
     x.search = q;
     return NextResponse.redirect(x);
   };
+  // TEMPORARY diagnostics (remove once Google sign-in in the Android app is understood): yes/no facts only, never values.
+  console.log(
+    JSON.stringify({
+      t: 'cb',
+      ua: (req.headers.get('user-agent') ?? '').slice(0, 140),
+      oauth,
+      hasCode: !!code,
+      hasVerifierCookie: req.cookies.getAll().some((c) => c.name.endsWith('code-verifier')),
+      hasSessionCookie: req.cookies.getAll().some((c) => /auth-token/.test(c.name)),
+    }),
+  );
   const sb = await supabaseServer();
   let error: unknown = code || hash ? null : new Error('missing code');
   if (code) ({ error } = await sb.auth.exchangeCodeForSession(code));

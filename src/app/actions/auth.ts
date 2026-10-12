@@ -1,5 +1,6 @@
 'use server';
 import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import { supabaseServer } from '@/lib/supabase/server';
 import { supabaseProbe } from '@/lib/supabase/probe';
@@ -13,6 +14,11 @@ import { go, str, siteUrl, verifyUrl, errCode, code6, authed, needsSecondStep, d
 export async function signInWithGoogle() {
   const sb = await supabaseServer();
   let url = '';
+  // TEMPORARY diagnostics (remove once Google sign-in in the Android app is understood): which browser/app started it.
+  const hh = await headers();
+  console.log(
+    JSON.stringify({ t: 'google-start', ua: (hh.get('user-agent') ?? '').slice(0, 140), ref: (hh.get('referer') ?? '').slice(0, 60) }),
+  );
   try {
     const { data, error } = await sb.auth.signInWithOAuth({
       provider: 'google',
