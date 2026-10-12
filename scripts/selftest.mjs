@@ -60,7 +60,7 @@ parseAmountMinor('12.34') === 1234 ? ok('amount is whole centavos') : bad('amoun
   : bad('date plausibility');
 
 // 4) The install files must stay reachable while logged out, or the app cannot be installed.
-const matcherSrc = fs.readFileSync('src/middleware.ts', 'utf8').match(/matcher: \['([^']+)'\]/)[1];
+const matcherSrc = fs.readFileSync('src/middleware.ts', 'utf8').match(/matcher:\s*\[\s*'([^']+)',?\s*\]/)[1];
 const matcher = new RegExp('^' + matcherSrc + '$');
 for (const p of [
   '/manifest.webmanifest',
