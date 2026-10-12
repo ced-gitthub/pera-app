@@ -1,10 +1,9 @@
 import { ctx } from '@/lib/data';
 import { Btn } from '@/components/Btn';
 import { updateProfile, createCategory, deleteCategory, createRecurring, deleteRecurring } from '@/app/actions';
-import { getProvider } from '@/ai/provider';
 import { manilaToday, formatMinor } from '@/core/money';
-import Migrate from '@/components/Migrate';
 import ImportForm from '@/components/ImportForm';
+import InstallApp from '@/components/InstallApp';
 import Link from 'next/link';
 import { Flash, type SP } from '@/components/ui';
 export default async function Settings({ searchParams }: { searchParams: SP }) {
@@ -14,14 +13,10 @@ export default async function Settings({ searchParams }: { searchParams: SP }) {
     sb.from('profiles').select('name').eq('id', user.id).maybeSingle(),
     sb.from('recurring_transactions').select('*').order('next_run_date'),
   ]);
-  const cn = new Map(categories.map((c) => [c.id, c.name])),
-    ai = process.env.AI_PROVIDER
-      ? getProvider(process.env)
-        ? `Configured: ${process.env.AI_PROVIDER}`
-        : `AI_PROVIDER="${process.env.AI_PROVIDER}" is set but no provider with that name is registered in src/ai/provider.ts`
-      : 'Not configured (optional)';
+  const cn = new Map(categories.map((c) => [c.id, c.name]));
   return (
     <>
+      <InstallApp />
       <Flash sp={sp} />
       <div className="card">
         <h2 className="font-semibold">Profile & currency</h2>
@@ -129,14 +124,6 @@ export default async function Settings({ searchParams }: { searchParams: SP }) {
         <p className="m mt-1">
           Re-importing the same file is safe (rows are de-duplicated against earlier imports). Rows you typed by hand are not compared.
         </p>
-      </div>
-      <div className="card">
-        <h2 className="font-semibold mb-2">Migrate prototype data</h2>
-        <Migrate />
-      </div>
-      <div className="card">
-        <h2 className="font-semibold">AI configuration</h2>
-        <p>{ai}</p>
       </div>
     </>
   );

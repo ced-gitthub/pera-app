@@ -1,5 +1,6 @@
 import './globals.css';
 import './polish.css'; // in-app look (hero, cards, buttons, tabs); must load after globals.css
+import './joy.css'; // the shared joyful look (sign-in screens, page banners, buttons); loads last
 import RegisterSW from '@/components/RegisterSW';
 import { Bricolage_Grotesque, Figtree } from 'next/font/google';
 const display = Bricolage_Grotesque({ subsets: ['latin'], variable: '--font-display', display: 'swap' });

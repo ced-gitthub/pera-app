@@ -42,7 +42,7 @@ export default async function Budgets({ searchParams }: { searchParams: SP }) {
             s = spent.get(c.id) ?? 0,
             st = b !== undefined ? budgetStatus(b, s) : null;
           return (
-            <div key={c.id} className="mb-3">
+            <div key={c.id} className={st ? 'mb-3 brow' : 'mb-3 brow unset'}>
               <div className="row view-only">
                 <b className="w-40">
                   {emojiFor(c.name)} {c.name}

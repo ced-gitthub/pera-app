@@ -372,3 +372,134 @@
   padding: 12px 6px;
   margin: -12px -2px;
 }
+
+.wl-steps,
+.wl-ladder {
+  padding-top: 34px;
+}
+.wl-steps h2,
+.wl-ladder h2 {
+  font-size: 26px;
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+.wl-steps ol {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 10px;
+}
+.wl-steps li {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+  padding: 14px;
+  border-radius: 22px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+}
+.wl-n {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  font:
+    800 22px var(--font-display),
+    sans-serif;
+  color: #3b2a00;
+  border-radius: 16px;
+  background: linear-gradient(145deg, #fff1c2, var(--mango));
+  box-shadow: 0 4px 0 #e0a516;
+  transform: rotate(-4deg);
+}
+.wl-steps p,
+.wl-sub2 {
+  color: var(--mute);
+}
+.wl-rungs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 14px 0;
+}
+.wl-rung {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 14px;
+  background: var(--ube-soft);
+  color: var(--ink);
+}
+.wl-rung i {
+  font-style: normal;
+}
+.wl-rung.on {
+  background: var(--mango);
+  color: #3b2a00;
+}
+.wl-goal {
+  padding: 16px;
+  border-radius: 22px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+}
+.wl-goal-top {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 10px;
+  align-items: center;
+  font-size: 18px;
+}
+.wl-goal-top small,
+.wl-goal > small {
+  color: var(--mute);
+}
+.wl-gbar {
+  height: 14px;
+  border-radius: 999px;
+  background: var(--ube-soft);
+  margin: 10px 0 8px;
+  overflow: hidden;
+}
+.wl-gbar i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--ube), #9a7dff);
+}
+/* a few floating coins in the hero */
+.wl-hero {
+  position: relative;
+}
+.wl-hero::before,
+.wl-hero::after {
+  content: '🪙';
+  position: absolute;
+  font-size: 30px;
+  opacity: 0.9;
+  animation: wlfloat 5s ease-in-out infinite;
+  pointer-events: none;
+}
+.wl-hero::before {
+  right: 28px;
+  top: 14px;
+}
+.wl-hero::after {
+  content: '✨';
+  right: 34px;
+  top: 118px;
+  animation-delay: 1.4s;
+  font-size: 24px;
+}
+@keyframes wlfloat {
+  50% {
+    transform: translateY(-10px) rotate(8deg);
+  }
+}

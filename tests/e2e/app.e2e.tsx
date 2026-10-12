@@ -120,6 +120,7 @@ const count = (h: string, s: string) => h.split(s).length - 1;
       h.includes('Earn XP') &&
       /role="progressbar"/.test(h),
   );
+  T('home: has the joyful page banner', h.includes('Your money at a glance') && h.includes('class="th-emoji"'));
   T(
     'home: nine entries logged today completes both daily count quests',
     (h.match(/class="qrow done"/g) ?? []).length >= 2,
@@ -489,7 +490,10 @@ const count = (h: string, s: string) => h.split(s).length - 1;
   );
   T(
     'settings renders',
-    (await page(Settings)).includes('Migrate prototype data') && (await page(Assistant)).includes('No AI provider is configured'),
+    (await page(Settings)).includes('Import / export') &&
+      !(await page(Settings)).includes('Migrate prototype data') &&
+      !(await page(Settings)).includes('AI configuration') &&
+      !(await page(Assistant)).includes('AI provider'),
   );
   // ---- user E: localStorage migration
   await su('e@x.com');
@@ -1439,6 +1443,19 @@ const count = (h: string, s: string) => h.split(s).length - 1;
         return l.pathname === '/login' && decodeURIComponent(l.search).includes('Google sign-in did not work');
       })(),
     );
+    {
+      const reg = renderToStaticMarkup(await (await import('@/app/(auth)/register/page')).default({ searchParams: Promise.resolve({}) }));
+      T(
+        'register: joyful sign-up (headline, perks, ready-for-you checklist, friendly name field)',
+        reg.includes('Start your streak today') &&
+          reg.includes('Daily streaks') &&
+          reg.includes('Ready for you on day one') &&
+          reg.includes('What should we call you?') &&
+          reg.includes('Create account'),
+      );
+      const lg = renderToStaticMarkup(await Login({ searchParams: Promise.resolve({}) }));
+      T('login: shares the joyful brand block (Zovix Pera Tracker)', lg.includes('Zovix Pera Tracker') && lg.includes('class="logo"'));
+    }
     for (const [n, P] of [
       ['login', Login],
       ['register', (await import('@/app/(auth)/register/page')).default],

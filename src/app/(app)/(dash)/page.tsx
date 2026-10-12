@@ -9,6 +9,7 @@ import { mapRows } from '@/lib/rows';
 import { emojiFor, greetingFor, manilaHour, streak, pulse } from '@/lib/vibe';
 import Quick from '@/components/Quick';
 import QuestBoard from '@/components/QuestBoard';
+import InstallApp from '@/components/InstallApp';
 import GoalsCard, { type GoalView } from '@/components/GoalsCard';
 import { buildQuests, xpFor, tipFor } from '@/lib/quests';
 import Tab from '@/components/Tab';
@@ -311,6 +312,7 @@ export default async function Dashboard({ searchParams }: { searchParams: SP }) 
         </p>
       </section>
       <Quick />
+      <InstallApp dismissible />
       <GoalsCard goals={goalViews} accounts={accounts.map((a) => ({ id: a.id, name: a.name }))} />
       <QuestBoard quests={quests} xp={xpFor({ totalEntries: entriesN, streak: st.n })} tip={tipFor(today)} />
     </>

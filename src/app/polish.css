@@ -66,3 +66,47 @@ body::before {
     animation: none;
   }
 }
+
+/* ---------- install card ---------- */
+.install {
+  position: relative;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  background: linear-gradient(135deg, var(--surface), var(--ube-soft));
+}
+.install-ic {
+  flex: none;
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  font-size: 28px;
+  border-radius: 18px;
+  background: linear-gradient(145deg, #fff1c2, var(--mango));
+  box-shadow: 0 5px 0 #e0a516;
+  transform: rotate(-4deg);
+}
+.install-body {
+  flex: 1;
+  min-width: 0;
+}
+.install-body h2 {
+  margin-bottom: 4px;
+}
+.install-btns {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+.install-btns .btn {
+  text-decoration: none;
+}
+.install-x {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  min-width: 44px;
+  min-height: 44px;
+}

@@ -1259,46 +1259,6 @@ await step('transfers import and re-import idempotently; same-account transfer r
   return /Imported 1 new/.test(m1) && /Imported 0 new/.test(m2) ? true : [m1, m2];
 });
 
-G('prototype migration UI');
-await step('migration with no prototype data shows a friendly note', async () => {
-  await p.goto('/settings');
-  await p.evaluate(() => localStorage.removeItem('mt1'));
-  await p.click('button:has-text("Migrate prototype data")');
-  await p.waitForTimeout(800);
-  return /No prototype data/.test(await body(p)) ? true : (await body(p)).slice(-300);
-});
-await step('migration with data imports, verifies, and is repeatable', async () => {
-  await p.reload();
-  await p.evaluate(() =>
-    localStorage.setItem(
-      'mt1',
-      JSON.stringify({
-        tx: [
-          { id: 91, date: '2026-09-01', type: 'income', amount: 1000, cat: 'Salary', acct: 'BPI', desc: 'Legacy pay' },
-          { id: 92, date: '2026-09-02', type: 'expense', amount: 55.5, cat: 'Food', acct: 'Cash', desc: 'Legacy lunch' },
-        ],
-      }),
-    ),
-  );
-  await p.click('button:has-text("Migrate prototype data")');
-  await p.locator('.flash').first().waitFor({ timeout: 40000 });
-  const a = await flash(p);
-  await p.reload();
-  await p.click('button:has-text("Migrate prototype data")');
-  await p.locator('.flash').first().waitFor({ timeout: 40000 });
-  const b = await flash(p);
-  return /verified/i.test(a) && /^0 new/.test(b.trim()) ? true : [a, b];
-});
-await step('migration with junk data fails safely', async () => {
-  await p.evaluate(() => localStorage.setItem('mt1', '{not json'));
-  await p.reload();
-  await p.click('button:has-text("Migrate prototype data")');
-  await p.locator('.flash').first().waitFor({ timeout: 20000 });
-  const f = await flash(p);
-  return !LEAK.test(f) ? true : f;
-});
-await p.evaluate(() => localStorage.removeItem('mt1'));
-
 // ---------------------------------------------------------------- ASSISTANT
 G('assistant');
 const ask = async (q) => {

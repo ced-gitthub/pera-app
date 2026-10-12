@@ -1,5 +1,5 @@
 import { cookies } from 'next/headers';
-import ZovixMark from '@/components/ZovixMark';
+import AuthBrand from '@/components/AuthBrand';
 import { loginCaption } from '@/lib/welcomeDemo';
 import Link from 'next/link';
 import { signIn } from '@/app/actions';
@@ -10,12 +10,7 @@ export default async function Page({ searchParams }: { searchParams: SP }) {
   return (
     <main className="auth">
       <div>
-        <div className="brand">
-          <ZovixMark />
-          Zovix
-        </div>
-        <h1 className="auth-title">Zovix Pera Tracker</h1>
-        <p className="tag">{loginCaption(returning)}</p>
+        <AuthBrand title="Zovix Pera Tracker" tag={loginCaption(returning)} />
         <GoogleButton />
         <Flash sp={await searchParams} />
         <form action={signIn} className="card grid gap-3">

@@ -118,6 +118,14 @@ export type TabProps = {
   canEdit?: boolean;
   canCustomize?: boolean;
 };
+// Banner emoji and one friendly line for each tab.
+const META: Record<string, [string, string]> = {
+  home: ['👋', 'Your money at a glance'],
+  transactions: ['🧾', 'Every peso you logged'],
+  accounts: ['👛', 'Where your money lives'],
+  budgets: ['🎯', 'Set limits, stay in control'],
+  reports: ['📊', 'See where it all went'],
+};
 export default function Tab({ tab, title, init, nodes = {}, before, after, tail, asForm, canEdit, canCustomize }: TabProps) {
   const lt = tab === 'budgets' ? null : tab,
     { lay, commit } = useLayout(lt, init),
@@ -137,7 +145,15 @@ export default function Tab({ tab, title, init, nodes = {}, before, after, tail,
   return (
     <div className={`tabroot ${edit ? 'editing' : ''} ${off}`} data-hn={lt === 'home' ? (lay.n ?? HISTORY_DEFAULT) : undefined}>
       <div className="tabhead">
-        <h1>{title}</h1>
+        <div className="th-title">
+          <span className="th-emoji" aria-hidden="true">
+            {META[tab][0]}
+          </span>
+          <div>
+            <h1>{title}</h1>
+            <p>{META[tab][1]}</p>
+          </div>
+        </div>
         <span className="row">
           {canEdit && (
             <button type="button" className={`btn ${edit ? 'p' : ''}`} aria-pressed={edit} onClick={() => setEdit(!edit)}>

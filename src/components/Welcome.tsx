@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import ZovixMark from '@/components/ZovixMark';
+import InstallApp from '@/components/InstallApp';
 import { formatMinor } from '@/core/money';
 import { DEMO_ACCOUNTS, DEMO_GOAL, addEntry, levelFor, spendByCategory, startDemo, total, type DemoState } from '@/lib/welcomeDemo';
 // The first screen a new visitor sees: a working sample of the app (nothing is saved), so they feel progress BEFORE they sign up.
@@ -32,6 +33,18 @@ function useCountUp(target: number) {
   }, [target]);
   return shown;
 }
+const STEPS: [string, string, string][] = [
+  ['1', 'Type what you spent', 'Like "lunch 150 gcash". No forms, no spreadsheets.'],
+  ['2', 'Zovix sorts it', 'Amount, category and account are filled in for you.'],
+  ['3', 'Watch your progress', 'Streaks, quests, goals and reports show where it all went.'],
+];
+const LEVELS: [string, string][] = [
+  ['🪙', 'Broke Rookie'],
+  ['🐷', 'Peso Pincher'],
+  ['🎒', 'Budget Buddy'],
+  ['⚔️', 'Wallet Warrior'],
+  ['👑', 'Money Master'],
+];
 const BENEFITS: [string, string, string][] = [
   ['⚡', 'Type it. Done.', 'Write "lunch 150 gcash" and Zovix picks the amount, category and account. No forms, no spreadsheets.'],
   ['🎯', 'See where it goes', 'Spending by category, month by month, so you know what to cut and what to keep.'],
@@ -187,6 +200,47 @@ export default function Welcome({ google }: { google: React.ReactNode }) {
           </div>
         )}
       </section>
+      <section className="wl-steps" aria-label="How it works">
+        <h2>How it works</h2>
+        <ol>
+          {STEPS.map(([n, t, d]) => (
+            <li key={n}>
+              <span className="wl-n" aria-hidden="true">
+                {n}
+              </span>
+              <div>
+                <b>{t}</b>
+                <p>{d}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </section>
+      <section className="wl-ladder" aria-label="Level up">
+        <h2>Level up as you track</h2>
+        <p className="wl-sub2">
+          Every entry earns XP. Climb from Broke Rookie to Money Master, clear daily quests and keep your streak alive.
+        </p>
+        <div className="wl-rungs">
+          {LEVELS.map(([e, t], i) => (
+            <span key={t} className={i === 0 ? 'wl-rung on' : 'wl-rung'}>
+              <i aria-hidden="true">{e}</i>
+              {t}
+            </span>
+          ))}
+        </div>
+        <div className="wl-goal" aria-label="Savings goal example">
+          <div className="wl-goal-top">
+            <span aria-hidden="true">📱</span>
+            <b>New phone</b>
+            <small>₱3,500 of ₱10,000</small>
+          </div>
+          <div className="wl-gbar">
+            <i style={{ width: '35%' }} />
+          </div>
+          <small>Set a savings goal, connect an account, and watch the bar fill up.</small>
+        </div>
+      </section>
       <section className="wl-benefits" aria-label="What you get">
         <h2>What you get with Zovix</h2>
         <div className="wl-grid">
@@ -199,6 +253,7 @@ export default function Welcome({ google }: { google: React.ReactNode }) {
           ))}
         </div>
       </section>
+      <InstallApp />
       <section className="wl-final" id="join">
         <h2>{n > 0 ? 'Keep your progress' : 'Start free in 10 seconds'}</h2>
         <p>Free forever. No ads. No bank login.</p>
