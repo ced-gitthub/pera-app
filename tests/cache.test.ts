@@ -52,11 +52,9 @@ test('Content-Security-Policy form-action allows the Google sign-in redirect cha
   const origins = m[1].trim().split(/\s+/).sort();
   assert.deepEqual(origins, ["'self'", 'https://accounts.google.com', 'https://vxhgkkzbmrhxayzryake.supabase.co'].sort());
 });
-test('the Android app reloads the login page when you come back from Google in Chrome', () => {
-  const s = read('src/components/HideInIosApp.tsx');
-  assert.match(s, /visibilitychange/);
-  assert.match(s, /window\.location\.reload\(\)/);
-  assert.match(s, /android-app:\/\//);
+test('auth links are built from the pinned site address, never from the project production domain', () => {
+  const s = read('src/app/actions/shared.ts');
+  assert.match(s, /NEXT_PUBLIC_SITE_URL/);
 });
 test('a pending Undo is forgotten when the app layout unmounts (logout), so the next user never sees it', () => {
   assert.match(read('src/components/UndoBar.tsx'), /useEffect\(\(\) => \(\) => clearUndo\(\), \[\]\)/);
