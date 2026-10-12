@@ -9,6 +9,7 @@ import { mapRows } from '@/lib/rows';
 import { emojiFor, greetingFor, manilaHour, streak, pulse } from '@/lib/vibe';
 import Quick from '@/components/Quick';
 import QuestBoard from '@/components/QuestBoard';
+import GoalsCard, { type GoalView } from '@/components/GoalsCard';
 import { buildQuests, xpFor, tipFor } from '@/lib/quests';
 import Tab from '@/components/Tab';
 import TxRow from '@/components/TxRow';
@@ -30,7 +31,7 @@ export default async function Dashboard({ searchParams }: { searchParams: SP }) 
     ym = today.slice(0, 7),
     mr = monthRange(ym),
     [yy, mm] = ym.split('-').map(Number);
-  const [s, bal, na, r, d, bud, ms, prof, layout, tc] = await Promise.all([
+  const [s, bal, na, r, d, bud, ms, prof, layout, tc, gl] = await Promise.all([
     sb.rpc('period_summary', { p_from: per.from, p_to: per.to }),
     balanceMap(sb),
     sb.rpc('no_account_summary'),
@@ -51,6 +52,7 @@ export default async function Dashboard({ searchParams }: { searchParams: SP }) 
     sb.from('profiles').select('name').eq('id', user.id).maybeSingle(),
     loadLayout(sb, user.id),
     sb.from('transactions').select('id', { count: 'exact', head: true }), // lifetime entries, for the level
+    sb.from('savings_goals').select('id,name,emoji,target_minor,account_id,started_on').order('created_at'),
   ]);
   const bad = s.error ?? na.error ?? r.error ?? bud.error ?? ms.error;
   if (bad) dbError(bad, 'dashboard');
@@ -87,6 +89,28 @@ export default async function Dashboard({ searchParams }: { searchParams: SP }) 
       (n, x) => n + (x.type === 'income' ? Number(x.total_minor) : x.type === 'expense' ? -Number(x.total_minor) : 0),
       0,
     );
+  if (gl.error) logErr('dashboard.goals', gl.error); // goals just do not show; never breaks the page
+  const goalRows = gl.data ?? [];
+  // A goal connected to an account counts that account's balance; an unconnected one counts income minus expenses since it started.
+  const sinceStart = await Promise.all(
+    goalRows.map((g) => (g.account_id ? null : sb.rpc('period_summary', { p_from: g.started_on as string, p_to: today }))),
+  );
+  const goalViews: GoalView[] = goalRows.map((g, i) => {
+    const acct = accounts.find((a) => a.id === g.account_id),
+      rows = (sinceStart[i]?.data ?? []) as { type: string; total_minor: number }[],
+      net = rows.reduce((n, x) => n + (x.type === 'income' ? Number(x.total_minor) : x.type === 'expense' ? -Number(x.total_minor) : 0), 0);
+    const failed = sinceStart[i]?.error;
+    if (failed) logErr('dashboard.goal', failed); // shown as "unavailable", never as a made-up zero
+    return {
+      unavailable: !!failed,
+      id: g.id as string,
+      name: g.name as string,
+      emoji: g.emoji as string,
+      target_minor: Number(g.target_minor),
+      have: acct ? (bal.get(acct.id) ?? 0) : net,
+      source: acct ? `Counting the balance of ${acct.name}` : `Counting money saved since ${g.started_on}`,
+    };
+  });
   if (tc.error) logErr('dashboard.count', tc.error); // the level just shows less XP; never breaks the page
   const entriesN = tc.count ?? 0,
     quests = buildQuests({
@@ -287,6 +311,7 @@ export default async function Dashboard({ searchParams }: { searchParams: SP }) 
         </p>
       </section>
       <Quick />
+      <GoalsCard goals={goalViews} accounts={accounts.map((a) => ({ id: a.id, name: a.name }))} />
       <QuestBoard quests={quests} xp={xpFor({ totalEntries: entriesN, streak: st.n })} tip={tipFor(today)} />
     </>
   );

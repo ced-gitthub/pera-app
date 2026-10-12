@@ -1,6 +1,7 @@
 // In-memory stand-in for Supabase: mirrors the query API + RLS ownership + the main constraints/functions of the SQL. It tests APP code, NOT the real SQL.
 const crypto = require('crypto');
 const DEF = {
+  savings_goals: { emoji: '🎯', account_id: null, started_on: '2026-10-01' },
   transactions: {
     description: '',
     notes: '',
@@ -36,6 +37,7 @@ const UNIQ = {
   accounts: [['user_id', 'name']],
   categories: [['user_id', 'name', 'type']],
   budgets: [['user_id', 'category_id', 'month', 'year']],
+  savings_goals: [['user_id', 'name']],
 };
 const MAXM = 99999999999;
 function db() {
@@ -45,6 +47,7 @@ function db() {
       categories: [],
       transactions: [],
       budgets: [],
+      savings_goals: [],
       recurring_transactions: [],
       profiles: [],
       tx_trash: [],
@@ -94,6 +97,11 @@ function check(D, table, r) {
     return E('duplicate key value violates unique constraint "accounts_short_uq"', '23505');
   if (table === 'accounts' && r.short_name != null && !(r.short_name.length >= 1 && r.short_name.length <= 12))
     return E('accounts short_name check violated', '23514');
+  if (table === 'savings_goals') {
+    if (!(String(r.name ?? '').trim().length >= 1 && r.name.length <= 40) || !Number.isInteger(r.target_minor) || r.target_minor < 1)
+      return E('savings_goals check violated', '23514');
+    if (r.account_id && !own('accounts', r.account_id)) return E('foreign key violation on account_id', '23503');
+  }
   if (table === 'budgets' && !(r.amount_minor >= 0 && r.amount_minor <= MAXM && r.month >= 1 && r.month <= 12))
     return E('budgets check violated', '23514');
   return null;

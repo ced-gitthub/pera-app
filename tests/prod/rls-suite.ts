@@ -216,6 +216,66 @@ export async function GET(req: Request) {
           .order('transaction_date')
       ).data ?? []
     ).map((x: any) => x.transaction_date);
+  await step(
+    'savings_goals: owner can create; duplicate, bad target, bad name, a foreign account and the 13th goal are refused',
+    async () => {
+      const g = (o: Record<string, unknown> = {}) => ({ user_id: A.id, name: 'Phone', target_minor: 500000, ...o });
+      const first = await A.c.from('savings_goals').insert(g());
+      if (first.error) return 'owner insert failed: ' + first.error.message;
+      const bAcct = (await B.c.from('accounts').select('id').limit(1)).data?.[0]?.id;
+      if (!bAcct) return 'could not read the second test user account';
+      const res = {
+        dup: code(await A.c.from('savings_goals').insert(g())),
+        zero: code(await A.c.from('savings_goals').insert(g({ name: 'Zero', target_minor: 0 }))),
+        neg: code(await A.c.from('savings_goals').insert(g({ name: 'Neg', target_minor: -5 }))),
+        empty: code(await A.c.from('savings_goals').insert(g({ name: '   ' }))),
+        long: code(await A.c.from('savings_goals').insert(g({ name: 'x'.repeat(41) }))),
+        spaces: code(await A.c.from('savings_goals').insert(g({ name: 'a' + ' '.repeat(100) }))),
+        blank: code(await A.c.from('savings_goals').insert(g({ name: '\t\n' }))),
+        foreign: code(await A.c.from('savings_goals').insert(g({ name: 'Foreign', account_id: bAcct }))),
+      };
+      const bad = Object.entries(res).filter(([, v]) => v === 'NO_ERROR');
+      if (bad.length) return { accepted: bad.map(([k]) => k) };
+      if (res.foreign !== '23503') return { foreign: res.foreign }; // must be the composite foreign key, not some other error
+      const own = await A.c.from('savings_goals').insert(g({ name: 'Linked', account_id: aid('Cash') }));
+      if (own.error) return 'linking to my own account failed: ' + own.error.message;
+      for (let i = 1; i <= 10; i++) {
+        const r = await A.c.from('savings_goals').insert(g({ name: `G${i}` }));
+        if (r.error) return `goal ${i + 2} refused too early: ${r.error.message}`;
+      }
+      const cap = code(await A.c.from('savings_goals').insert(g({ name: 'One too many' })));
+      return cap === 'PRLIM' ? true : { cap };
+    },
+  );
+  await step('savings_goals: deleting the connected account keeps the goal and just unlinks it', async () => {
+    const acct = await A.c.from('accounts').insert({ user_id: A.id, name: 'Goal jar' }).select('id').single();
+    if (acct.error) return 'account insert failed: ' + acct.error.message;
+    await A.c.from('savings_goals').delete().eq('name', 'G10'); // make room under the 12-goal cap
+    const goal = await A.c
+      .from('savings_goals')
+      .insert({ user_id: A.id, name: 'Jar goal', target_minor: 1000, account_id: acct.data.id })
+      .select('id')
+      .single();
+    if (goal.error) return 'goal insert failed: ' + goal.error.message;
+    const del = await A.c.from('accounts').delete().eq('id', acct.data.id).select('id');
+    const after = await A.c.from('savings_goals').select('account_id').eq('id', goal.data.id);
+    return del.data?.length === 1 && after.data?.length === 1 && after.data[0].account_id === null
+      ? true
+      : { del: del.error?.message, after: after.data };
+  });
+  await step('savings_goals: another user cannot read, change, delete or create goals for me; anon sees nothing', async () => {
+    const mine = (await A.c.from('savings_goals').select('id').eq('name', 'Phone')).data?.[0]?.id;
+    if (!mine) return 'goal missing';
+    const rd = await B.c.from('savings_goals').select('id').eq('user_id', A.id),
+      up = await B.c.from('savings_goals').update({ target_minor: 1 }).eq('id', mine).select('id'),
+      del = await B.c.from('savings_goals').delete().eq('id', mine).select('id'),
+      ins = await B.c.from('savings_goals').insert({ user_id: A.id, name: 'Hax', target_minor: 100 }),
+      an = await anon.from('savings_goals').select('id');
+    const intact = (await A.c.from('savings_goals').select('target_minor').eq('id', mine)).data?.[0]?.target_minor === 500000;
+    return cnt(rd) === 0 && cnt(up) === 0 && cnt(del) === 0 && !!ins.error && cnt(an) <= 0 && intact
+      ? true
+      : { rd: cnt(rd), up: cnt(up), del: cnt(del), ins: ins.error?.message, anon: cnt(an), intact };
+  });
   await step('recurring monthly from Jan 31: Jan31, Feb28, Mar31, Apr30; re-run adds nothing', async () => {
     const i = await A.c
       .from('recurring_transactions')

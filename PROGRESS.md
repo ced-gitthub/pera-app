@@ -43,6 +43,8 @@
 
 - 2026-10-13: Quest board on the dashboard (src/lib/quests.ts, components/QuestBoard.tsx, quests.css): a level (Broke Rookie, Peso Pincher, Budget Buddy, Wallet Warrior, Money Master) from XP (+5 per entry, +10 per streak day), daily quests (log your first peso, triple tap, stay in budget when budgets exist), weekly quests (5 of 7 days, 7-day streak) and a daily money tip for students. Everything is derived from existing transactions; nothing new is stored. The in-app look now matches welcome/login (polish.css: hero gradient with the Z watermark, softer cards, gradient button and active tab, cheer pop). Not built: a savings goal (needs a new column or table, migration plus tests).
 
+- 2026-10-13: Savings goals. Migration 0011 (`savings_goals`: owner RLS + restrictive mfa policy, composite FK so a goal can only point at the user's own account with ON DELETE SET NULL, name 1-40 with a visible character, target 1..1e11 centavos, 12-goal cap) was dry-run in a rolled-back DO block, judge-approved, applied to production on 2026-10-13 and verified (8 columns, RLS on, 2 policies, row-limit trigger). App: src/lib/goals.ts (validation + progress), actions/goals.ts, components/GoalsCard.tsx, dashboard card. Progress is derived, never stored: a connected goal shows that account's balance; an unconnected one shows income minus expenses since it started (transfers ignored). Tests: goals unit, e2e amounts, live RLS steps (isolation, FK, cap, unlink on account delete) and live UI steps.
+
 ## Next steps
 
 0. Owner: turn Supabase Confirm email back ON after any live-suite run. Provide the domain (with ending) to attach it in Vercel, then follow docs/play-store/PLAY_CONSOLE_GUIDE.md.

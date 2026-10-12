@@ -1,0 +1,111 @@
+.goals .grow {
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+.goals h2 + .grow {
+  border-top: 0;
+}
+.gtop {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+.gname {
+  display: grid;
+  min-width: 0;
+}
+.gname b {
+  overflow-wrap: anywhere;
+}
+.gname small {
+  color: var(--mute);
+}
+.gbar {
+  height: 14px;
+  border-radius: 999px;
+  background: var(--ube-soft);
+  overflow: hidden;
+  margin: 10px 0 6px;
+}
+.gbar i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--ube), #9a7dff);
+  transition: width 0.6s cubic-bezier(0.3, 1.2, 0.5, 1);
+}
+.grow.reached .gbar i {
+  background: linear-gradient(90deg, var(--mango), #ff9f1c);
+}
+.gnums {
+  color: var(--mute);
+  font-size: 14px;
+}
+.gnums b {
+  color: var(--ink);
+}
+.gwin {
+  margin: 8px 0 0;
+  padding: 10px 12px;
+  border-radius: 14px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #fff3cf, #ffe08a);
+  color: #4a3300;
+  animation: qpop 0.5s cubic-bezier(0.3, 1.5, 0.5, 1);
+}
+.gadd {
+  margin-top: 14px;
+}
+.gadd summary {
+  cursor: pointer;
+  list-style: none;
+  display: inline-flex;
+}
+.gadd summary::-webkit-details-marker {
+  display: none;
+}
+.gadd form {
+  margin-top: 12px;
+}
+.gemos {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.gemo {
+  position: relative;
+}
+.gemo input {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+}
+.gemo span {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  font-size: 22px;
+  border-radius: 14px;
+  background: var(--bg);
+  border: 2px solid transparent;
+}
+.gemo input:checked + span {
+  border-color: var(--ube);
+  background: var(--ube-soft);
+}
+.gemo input:focus-visible + span {
+  outline: 3px solid var(--ube);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .gwin,
+  .gbar i {
+    animation: none;
+    transition: none;
+  }
+}

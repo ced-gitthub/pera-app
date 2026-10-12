@@ -24,7 +24,7 @@ const READ_ONLY = new Set([
   'changePassword',
 ]);
 test('every action that changes data or the session refreshes remembered screens', () => {
-  const files = ['auth', 'emailcode', 'accounts', 'budgets', 'transactions', 'imports', 'customize', 'backup', 'assistant'];
+  const files = ['auth', 'emailcode', 'accounts', 'budgets', 'transactions', 'imports', 'customize', 'backup', 'assistant', 'goals'];
   const missing: string[] = [];
   let seen = 0;
   for (const f of files) {

@@ -130,6 +130,81 @@ const count = (h: string, s: string) => h.split(s).length - 1;
     h.includes('Total balance') && count(h, '₱23,750.00') >= 3 && !h.includes('>Income<') && !h.includes('Where your money went'),
     h.match(/₱[\d,.]+/g)?.slice(0, 6),
   );
+  // ---- savings goals (migration 0011)
+  {
+    const mine = D.t.accounts.filter((a: { user_id: string }) => a.user_id === D.cur),
+      acct = mine.find((a: { name: string }) => a.name === 'BPI') ?? mine[0];
+    const g1 = await red(() => A.createGoal(fd({ name: 'New phone', emoji: '📱', amount: '30000', account: acct.id })));
+    T('goals: creating one goes home with a friendly message', g1.startsWith('/?ok=Goal added'), g1);
+    let gh = await page(Dashboard);
+    T(
+      'goals: the dashboard shows it, counting the connected account, with a progress bar',
+      gh.includes('New phone') &&
+        gh.includes(`Counting the balance of ${acct.name}`) &&
+        /aria-label="New phone progress"/.test(gh) &&
+        gh.includes('₱30,000.00'),
+    );
+    {
+      // the progress figure must equal the connected account's balance shown in the Accounts block (clamped at zero), and the % must follow from it
+      const m = gh.match(new RegExp(`${acct.name}</span><b>(?:<span[^>]*>)?(-?)₱([\\d,]+)\\.(\\d\\d)`));
+      const cents = m ? (m[1] ? 0 : Number(m[2].replace(/,/g, '')) * 100 + Number(m[3])) : -1;
+      const shown = gh.match(/class="gnums"><b>₱([\d,]+)\.(\d\d)<\/b> of ₱30,000\.00 · (\d+)%/);
+      T(
+        'goals: a connected goal shows exactly the account balance and the matching percentage',
+        !!m &&
+          !!shown &&
+          Number(shown[1].replace(/,/g, '')) * 100 + Number(shown[2]) === cents &&
+          Number(shown[3]) === Math.min(100, Math.floor((cents * 100) / 3000000)),
+        [m?.slice(1, 4), shown?.slice(1, 4)],
+      );
+    }
+    T(
+      'goals: the same name twice is refused kindly',
+      (await red(() => A.createGoal(fd({ name: 'New phone', amount: '100', account: '' })))).includes(
+        'err=You already have a goal with that name',
+      ),
+    );
+    T(
+      'goals: a bad amount is refused with what to fix',
+      (await red(() => A.createGoal(fd({ name: 'Bad one', amount: 'abc', account: '' })))).startsWith('/?err=Enter how much'),
+    );
+    T(
+      'goals: an account that is not yours is refused',
+      (await red(() => A.createGoal(fd({ name: 'Sneaky', amount: '100', account: '00000000-0000-4000-8000-000000000000' })))).includes(
+        'Pick one of your own accounts',
+      ),
+    );
+    T(
+      'goals: an empty name is refused',
+      (await red(() => A.createGoal(fd({ name: '  ', amount: '100', account: '' })))).includes('err=Give your goal a name'),
+    );
+    const g2 = await red(() => A.createGoal(fd({ name: 'Emergency fund', emoji: '🐷', amount: '50000', account: '' })));
+    gh = await page(Dashboard);
+    T(
+      'goals: an unconnected goal counts money saved since it started',
+      g2.startsWith('/?ok=') && gh.includes('Emergency fund') && gh.includes('Counting money saved since'),
+    );
+    T(
+      'goals: an unconnected goal shows income minus expenses since it started (transfers never count): 34,500 - 10,750 = 23,750 -> 47%',
+      gh.includes('<b>₱23,750.00</b> of ₱50,000.00 · 47%') && gh.includes('₱26,250.00 to go'),
+    );
+    const gid = D.t.savings_goals.find((x: { name: string }) => x.name === 'New phone').id;
+    T(
+      'goals: a bad id cannot remove anything',
+      (await red(() => A.deleteGoal(fd({ id: 'nope' })))).includes('err=That goal no longer exists') && D.t.savings_goals.length === 2,
+    );
+    T(
+      'goals: removing one works and leaves transactions alone',
+      (await red(() => A.deleteGoal(fd({ id: gid })))).startsWith('/?ok=Goal removed') && D.t.savings_goals.length === 1,
+    );
+    const lastRes = await red(() => A.deleteGoal(fd({ id: D.t.savings_goals[0].id })));
+    gh = await page(Dashboard);
+    T(
+      'goals: with none, the card invites you to add one',
+      !gh.includes('aria-label="New phone progress"') && gh.includes('Saving for something'),
+      [lastRes, D.t.savings_goals.length],
+    );
+  }
   h = await page(Reports);
   T(
     'reports: 34,500 / 10,750 / 23,750',

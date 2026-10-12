@@ -15,7 +15,7 @@ const ctx = await newCtx(browser);
 const p = await ctx.newPage();
 p.on('dialog', (d) => {
   // The app asks 'Delete ...?' before deleting an account, category or recurring rule: that is expected, so accept it.
-  if (d.type() === 'confirm' && /^Delete /.test(d.message())) return void d.accept();
+  if (d.type() === 'confirm' && /^(Delete|Remove) /.test(d.message())) return void d.accept();
   dialogs.push(d.message());
   d.dismiss();
 });
@@ -328,6 +328,55 @@ await step('quest board: shows a level and quests, and logging completes "Log yo
   return /Level \d/.test(t) && /Log your first peso/.test(t) && /Triple tap/.test(t) && /Earn XP/.test(t) && done >= 1
     ? true
     : { done, t: t.slice(0, 200) };
+});
+// Removes a goal left behind by an interrupted earlier run (the QA user is long-lived), so one failure cannot break every later run.
+const cleanGoal = async (name) => {
+  await p.goto('/');
+  const r = p.locator(`section.goals .grow:has-text("${name}")`);
+  for (let i = 0; i < 3 && (await r.count()); i++) {
+    await r.first().locator('button:has-text("Remove")').click();
+    await p.waitForTimeout(2500);
+    await p.goto('/');
+  }
+};
+await step('savings goal: add one connected to an account, see its progress, then remove it', async () => {
+  await cleanGoal('QA phone');
+  await p.goto('/');
+  const card = p.locator('section.goals');
+  await card.waitFor({ timeout: 15000 });
+  await card.locator('summary').click();
+  await card.locator('input[name=name]').fill('QA phone');
+  await card.locator('input[name=amount]').fill('3000');
+  await card.locator('select[name=account]').selectOption({ label: 'Cash: use its balance' });
+  await Promise.all([p.waitForLoadState('networkidle'), card.locator('button:has-text("Add goal")').click()]);
+  const row = p.locator('section.goals .grow:has-text("QA phone")');
+  await row.waitFor({ timeout: 15000 });
+  const t = await row.innerText(),
+    f = await flash(p);
+  const shown = /Counting the balance of Cash/.test(t) && /of ₱3,000\.00/.test(t) && /Goal added/.test(f) && !LEAK.test(t + f);
+  await row.locator('button:has-text("Remove")').click();
+  await row.waitFor({ state: 'detached', timeout: 15000 });
+  return shown ? true : { t: t.slice(0, 160), f };
+});
+await step('savings goal: a duplicate name and a bad amount are refused with a plain message', async () => {
+  await cleanGoal('Dup goal');
+  const fill = async (name, amount) => {
+    await p.goto('/');
+    const card = p.locator('section.goals');
+    await card.locator('summary').click();
+    await card.locator('input[name=name]').fill(name);
+    await card.locator('input[name=amount]').fill(amount);
+    await Promise.all([p.waitForLoadState('networkidle'), card.locator('button:has-text("Add goal")').click()]);
+    return flash(p);
+  };
+  const ok = await fill('Dup goal', '500'),
+    dup = await fill('Dup goal', '500'),
+    bad = await fill('Other goal', 'abc');
+  await p.locator('section.goals .grow:has-text("Dup goal") button:has-text("Remove")').click();
+  await p.locator('section.goals .grow:has-text("Dup goal")').waitFor({ state: 'detached', timeout: 15000 });
+  return /Goal added/.test(ok) && /already have a goal/.test(dup) && /Enter how much/.test(bad) && !LEAK.test(dup + bad)
+    ? true
+    : { ok, dup, bad };
 });
 await step('Quick Add: multiple entries in one line', async () => {
   await add(p, 'coffee 120, grocery 800 cash, taxi 200');
