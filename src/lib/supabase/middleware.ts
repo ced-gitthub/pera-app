@@ -17,7 +17,7 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await sb.auth.getUser(); // validates + refreshes the session
   const path = request.nextUrl.pathname,
-    isAuthPage = ['/login', '/register'].some((p) => path.startsWith(p)),
+    isAuthPage = ['/login', '/register', '/welcome'].some((p) => path.startsWith(p)),
     isPublic = isAuthPage || ['/forgot', '/verify', '/code', '/auth/', '/privacy'].some((p) => path.startsWith(p));
   const to = (path: string, search = '') => {
     const u = request.nextUrl.clone();
@@ -32,6 +32,8 @@ export async function updateSession(request: NextRequest) {
       u.search = '?err=' + encodeURIComponent('That link is invalid or has expired. Request a new one.');
       return NextResponse.redirect(u);
     }
+    // First-time visitors land on the interactive sample; people who have been in the app before (cookie set by MarkReturning) go straight to log in.
+    if (path === '/') return to(request.cookies.get('zovix_seen') ? '/login' : '/welcome');
     return to('/login');
   }
   // Two-step gate: a password-only session (aal1) of a user who turned on an authenticator app can reach nothing but the code screen, the email-link callback and the public recovery pages.

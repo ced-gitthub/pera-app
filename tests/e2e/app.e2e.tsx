@@ -941,12 +941,18 @@ const count = (h: string, s: string) => h.split(s).length - 1;
       T(`gate: user without 2FA at ${path} -> ${want}`, got === want, got);
     }
     D.cur = null;
+    // returning devices (cookie set by the app) skip the sample
+    {
+      const r = await updateSession(new NextRequest('https://pera.example/', { headers: { cookie: 'zovix_seen=1' } }));
+      T('gate: logged out at / with the returning cookie -> /login', (r.headers.get('location') ?? '').endsWith('/login'));
+    }
     for (const [path, want] of [
-      ['/', '/login'],
+      ['/', '/welcome'], // first-time visitors get the interactive sample
       ['/transactions', '/login'],
       ['/security', '/login'],
       ['/2fa', '/login'],
       ['/verify', 'pass'],
+      ['/welcome', 'pass'],
       ['/login', 'pass'],
       ['/forgot', 'pass'],
       ['/reset', '/forgot?err=That link is invalid or has expired. Request a new one.'],

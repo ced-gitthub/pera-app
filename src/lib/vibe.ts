@@ -1,4 +1,4 @@
-import { addDays } from '../core/money';
+import { addDays } from '../core/money.ts';
 const E: [RegExp, string][] = [
   [/food|dining|restaurant|meal|eat/i, '🍜'],
   [/grocer/i, '🛒'],

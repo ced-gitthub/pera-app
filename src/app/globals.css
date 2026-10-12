@@ -1055,3 +1055,31 @@ details.card[open] summary {
   display: flex;
   align-items: center;
 }
+
+/* ---------- brand mark ---------- */
+.logo svg {
+  width: 72%;
+  height: 72%;
+}
+.auth-title {
+  text-align: center;
+  color: #fff;
+  font-size: 26px;
+  line-height: 1.15;
+  font-weight: 800;
+  margin: 2px 0 4px;
+}
+.auth {
+  background-image:
+    radial-gradient(520px 340px at 90% -5%, rgba(255, 197, 61, 0.38), transparent),
+    radial-gradient(460px 320px at -5% 105%, rgba(255, 255, 255, 0.16), transparent),
+    linear-gradient(160deg, #7a52ff 0%, #5b35e8 45%, #3f22b8 100%);
+}
+.auth .card {
+  box-shadow: 0 30px 60px -28px rgba(20, 8, 80, 0.7);
+}
+
+.auth .or {
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 600;
+}

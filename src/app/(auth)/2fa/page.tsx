@@ -1,3 +1,4 @@
+import ZovixMark from '@/components/ZovixMark';
 import { redirect } from 'next/navigation';
 import { supabaseServer } from '@/lib/supabase/server';
 import { verifyMfa, signOut } from '@/app/actions';
@@ -18,7 +19,8 @@ export default async function Page({ searchParams }: { searchParams: SP }) {
     <main className="auth">
       <div>
         <div className="brand">
-          <span className="logo">₱</span>Zovix
+          <ZovixMark />
+          Zovix
         </div>
         <p className="tag">Two-step verification</p>
         <Flash sp={sp} />

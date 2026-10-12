@@ -1,3 +1,4 @@
+import ZovixMark from '@/components/ZovixMark';
 import Link from 'next/link';
 import { signUp } from '@/app/actions';
 import GoogleButton from '@/components/GoogleButton';
@@ -7,7 +8,8 @@ export default async function Page({ searchParams }: { searchParams: SP }) {
     <main className="auth">
       <div>
         <div className="brand">
-          <span className="logo">₱</span>Zovix
+          <ZovixMark />
+          Zovix
         </div>
         <p className="tag">Create your account · track every peso</p>
         <Flash sp={await searchParams} />

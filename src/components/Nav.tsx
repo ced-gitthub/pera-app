@@ -1,4 +1,5 @@
 'use client';
+import ZovixMark from '@/components/ZovixMark';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut } from '@/app/actions';
@@ -29,7 +30,8 @@ const Ic = ({ d }: { d: string }) => (
 export function Brand() {
   return (
     <div className="brand">
-      <span className="logo">₱</span>Zovix
+      <ZovixMark />
+      Zovix
     </div>
   );
 }

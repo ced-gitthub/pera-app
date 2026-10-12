@@ -15,7 +15,7 @@ const VPS = [
   ['desktop-1440x900', 1440, 900, 1],
 ];
 const APP = ['/', '/transactions', '/accounts', '/budgets', '/reports', '/assistant', '/settings'],
-  AUTH = ['/login', '/register', '/forgot'];
+  AUTH = ['/login', '/register', '/forgot', '/welcome'];
 const browser = await launch();
 // seed one user with realistic data
 const seed = await newCtx(browser);

@@ -1,15 +1,21 @@
+import { cookies } from 'next/headers';
+import ZovixMark from '@/components/ZovixMark';
+import { loginCaption } from '@/lib/welcomeDemo';
 import Link from 'next/link';
 import { signIn } from '@/app/actions';
 import GoogleButton from '@/components/GoogleButton';
 import { Flash, type SP } from '@/components/ui';
 export default async function Page({ searchParams }: { searchParams: SP }) {
+  const returning = !!(await cookies()).get('zovix_seen'); // set by the app once this device has been logged in
   return (
     <main className="auth">
       <div>
         <div className="brand">
-          <span className="logo">₱</span>Zovix
+          <ZovixMark />
+          Zovix
         </div>
-        <p className="tag">Welcome back · track every peso</p>
+        <h1 className="auth-title">Zovix Pera Tracker</h1>
+        <p className="tag">{loginCaption(returning)}</p>
         <GoogleButton />
         <Flash sp={await searchParams} />
         <form action={signIn} className="card grid gap-3">

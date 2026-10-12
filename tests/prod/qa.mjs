@@ -49,8 +49,23 @@ G('auth: logged-out');
     await step(`logged out ${r} -> redirected away from app`, async () => {
       await q.goto(r);
       const u = new URL(q.url()).pathname;
-      return /^\/(login|forgot)/.test(u) ? true : u;
+      // Only the front door ('/') may land on the sample; every other protected page must still go to login (or the recovery page).
+      return (r === '/' ? /^\/welcome$/ : /^\/(login|forgot)/).test(u) ? true : u;
     });
+  await step('welcome sample: a good entry shows a row and lowers the wallet; bad input shows an alert', async () => {
+    await q.goto('/');
+    if (new URL(q.url()).pathname !== '/welcome') return q.url();
+    const gcash = async () => (await q.locator('.wl-acct:has-text("GCash")').innerText()).replace(/\s+/g, ' ');
+    const before = await gcash();
+    await q.fill('#wl-in', 'lunch 150 gcash');
+    await q.click('button:has-text("Add")');
+    await q.locator('.wl-row').first().waitFor({ timeout: 10000 });
+    const after = await gcash();
+    await q.fill('#wl-in', 'hello there');
+    await q.click('button:has-text("Add")');
+    const bad = await q.locator('[role=alert]').first().innerText();
+    return /₱1,200\.00/.test(before) && /₱1,050\.00/.test(after) && bad.length > 5 && !LEAK.test(bad) ? true : { before, after, bad };
+  });
   await step('/api/health is public and healthy', async () => {
     const r = await c.request.get('/api/health');
     const j = await r.json();
@@ -1648,6 +1663,15 @@ await login(p, EM, PW);
 G('hygiene');
 await step('no uncaught JS errors during the run', async () => (jsErrors.length === 0 ? true : jsErrors.slice(0, 5)));
 await step('no unexpected browser dialogs (XSS payloads inert)', async () => (dialogs.length === 0 ? true : dialogs));
+await step('logged in: /welcome bounces to the dashboard, and the device is remembered (zovix_seen cookie)', async () => {
+  await login(p, EM, PW);
+  await p.goto('/');
+  await p.waitForTimeout(800);
+  await p.goto('/welcome');
+  const at = new URL(p.url()).pathname;
+  const seen = (await ctx.cookies()).some((c) => c.name === 'zovix_seen');
+  return at === '/' && seen ? true : { at, seen };
+});
 await step("after logout, Back never shows the previous user's remembered screens", async () => {
   await login(p, EM, PW);
   await p.goto('/');
@@ -1661,6 +1685,20 @@ await step("after logout, Back never shows the previous user's remembered screen
   return new URL(p.url()).pathname === '/login' && !/Total balance|Transactions/.test(t.replace(/Log in|Welcome back/g, ''))
     ? true
     : [p.url(), t.slice(0, 120)];
+});
+await step('a returning device skips the sample: / goes to login, which says "Welcome back"', async () => {
+  await p.goto('/');
+  const at = new URL(p.url()).pathname,
+    t = await body(p);
+  return at === '/login' && /Welcome back/.test(t) && /Zovix Pera Tracker/.test(t) ? true : { at, t: t.slice(0, 160) };
+});
+await step('a first-time device sees "Start free", never "Welcome back"', async () => {
+  const c2 = await newCtx(browser),
+    q2 = await c2.newPage();
+  await q2.goto('/login');
+  const t = await body(q2);
+  await c2.close();
+  return /Start free/.test(t) && !/Welcome back/.test(t) ? true : t.slice(0, 160);
 });
 await step('logout works from every page (sidebar/header)', async () => {
   for (const r of ROUTES) {

@@ -1,3 +1,4 @@
+import ZovixMark from '@/components/ZovixMark';
 import Link from 'next/link';
 import { resendVerification } from '@/app/actions';
 import { isEmail } from '@/lib/password';
@@ -9,7 +10,8 @@ export default async function Page({ searchParams }: { searchParams: SP }) {
     <main className="auth">
       <div>
         <div className="brand">
-          <span className="logo">₱</span>Zovix
+          <ZovixMark />
+          Zovix
         </div>
         <p className="tag">{email ? 'One last step before you start' : 'Get a new confirmation link'}</p>
         <Flash sp={sp} />

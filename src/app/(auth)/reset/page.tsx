@@ -1,3 +1,4 @@
+import ZovixMark from '@/components/ZovixMark';
 import { redirect } from 'next/navigation';
 import { supabaseServer } from '@/lib/supabase/server';
 import { updatePassword } from '@/app/actions';
@@ -12,7 +13,8 @@ export default async function Page({ searchParams }: { searchParams: SP }) {
     <main className="auth">
       <div>
         <div className="brand">
-          <span className="logo">₱</span>Zovix
+          <ZovixMark />
+          Zovix
         </div>
         <p className="tag">Choose a new password</p>
         <Flash sp={await searchParams} />

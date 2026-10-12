@@ -1,3 +1,4 @@
+import ZovixMark from '@/components/ZovixMark';
 import Link from 'next/link';
 import { sendLoginCode, verifyLoginCode } from '@/app/actions';
 import { isEmail } from '@/lib/password';
@@ -9,7 +10,8 @@ export default async function Page({ searchParams }: { searchParams: SP }) {
     <main className="auth">
       <div>
         <div className="brand">
-          <span className="logo">₱</span>Zovix
+          <ZovixMark />
+          Zovix
         </div>
         <p className="tag">Log in with an email code</p>
         <Flash sp={sp} />
