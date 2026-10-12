@@ -62,7 +62,15 @@ parseAmountMinor('12.34') === 1234 ? ok('amount is whole centavos') : bad('amoun
 // 4) The install files must stay reachable while logged out, or the app cannot be installed.
 const matcherSrc = fs.readFileSync('src/middleware.ts', 'utf8').match(/matcher: \['([^']+)'\]/)[1];
 const matcher = new RegExp('^' + matcherSrc + '$');
-for (const p of ['/manifest.webmanifest', '/pwa-icon/192', '/apple-icon', '/sw.js', '/offline.html', '/.well-known/assetlinks.json'])
+for (const p of [
+  '/manifest.webmanifest',
+  '/pwa-icon/192',
+  '/apple-icon',
+  '/sw.js',
+  '/offline.html',
+  '/zovix.apk',
+  '/.well-known/assetlinks.json',
+])
   !matcher.test(p) ? ok('login check skips ' + p) : bad('login check skips ' + p, 'middleware would redirect it to /login');
 matcher.test('/transactions') ? ok('app pages still go through the login check') : bad('app pages still go through the login check');
 

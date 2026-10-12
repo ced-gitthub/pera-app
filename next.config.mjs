@@ -17,6 +17,7 @@ const nextConfig = {
   async headers() {
     return [
       { source: '/:path*', headers: security },
+      { source: '/zovix.apk', headers: [{ key: 'Content-Type', value: 'application/vnd.android.package-archive' }] }, // the Android app, public download
       { source: '/((?!_next/static|_next/image|favicon.ico).*)', headers: [{ key: 'Cache-Control', value: 'private, no-store, max-age=0' }] },
     ];
   },
