@@ -93,7 +93,7 @@ export default function GoalsCard({ goals, accounts }: { goals: GoalView[]; acco
           <label>
             <span className="m">Count savings from</span>
             <select className="inp" name="account" defaultValue="">
-              <option value="">Not connected: count money I save from today</option>
+              <option value="">Not connected (counts from today)</option>
               {accounts.map((a) => (
                 <option key={a.id} value={a.id}>
                   {a.name}: use its balance

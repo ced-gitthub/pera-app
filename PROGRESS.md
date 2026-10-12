@@ -45,6 +45,8 @@
 
 - 2026-10-13: Savings goals. Migration 0011 (`savings_goals`: owner RLS + restrictive mfa policy, composite FK so a goal can only point at the user's own account with ON DELETE SET NULL, name 1-40 with a visible character, target 1..1e11 centavos, 12-goal cap) was dry-run in a rolled-back DO block, judge-approved, applied to production on 2026-10-13 and verified (8 columns, RLS on, 2 policies, row-limit trigger). App: src/lib/goals.ts (validation + progress), actions/goals.ts, components/GoalsCard.tsx, dashboard card. Progress is derived, never stored: a connected goal shows that account's balance; an unconnected one shows income minus expenses since it started (transfers ignored). Tests: goals unit, e2e amounts, live RLS steps (isolation, FK, cap, unlink on account delete) and live UI steps.
 
+- 2026-10-13: Migration 0012 (exact row caps), judge-approved, applied and verified. The live savings-goal test found that 0009's cap check let a user store ONE row more than every limit (transactions 50000, accounts 60, categories 150, recurring 100, goals 12); the function now refuses an insert when the user already has `limit` rows. The live responsive check also caught the "New goal" form overflowing a phone screen (a long <option> stretched the grid); fixed with a minmax(0,1fr) column and a shorter option label.
+
 ## Next steps
 
 0. Owner: turn Supabase Confirm email back ON after any live-suite run. Provide the domain (with ending) to attach it in Vercel, then follow docs/play-store/PLAY_CONSOLE_GUIDE.md.

@@ -109,3 +109,17 @@
     transition: none;
   }
 }
+/* the form must never be wider than the card (a long <option> would otherwise stretch the grid column past the screen) */
+.gadd form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+.gadd label,
+.gadd .inp,
+.gemos {
+  min-width: 0;
+  max-width: 100%;
+}
+.gadd .inp {
+  width: 100%;
+}
