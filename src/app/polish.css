@@ -1,0 +1,68 @@
+/* In-app look that matches the welcome and login screens: richer purple hero with the Zovix mark, softer cards, gradient buttons and a livelier tab bar. Loaded after globals.css, so it only overrides what it names. */
+/* the tint sits on its own layer so the body keeps a plain background (the live contrast check skips anything with a background image) */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(520px 260px at 100% -40px, rgba(122, 82, 255, 0.14), transparent) no-repeat;
+}
+.card {
+  border-radius: 24px;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.6) inset,
+    0 18px 34px -22px rgba(63, 34, 184, 0.45);
+}
+.card h2 {
+  font-family: var(--font-display), sans-serif;
+  letter-spacing: -0.02em;
+}
+.hero {
+  background:
+    radial-gradient(420px 260px at 92% -10%, rgba(255, 197, 61, 0.38), transparent),
+    linear-gradient(150deg, #7a52ff 0%, #5b35e8 55%, #3f22b8 100%);
+}
+.hero::after {
+  content: '';
+  right: -10px;
+  top: -14px;
+  width: 190px;
+  height: 190px;
+  font: inherit;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' fill='none' stroke='white' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='13,13 35,13 13,35 35,35' stroke-width='5.5'/%3E%3Cline x1='10' y1='20.5' x2='38' y2='20.5' stroke-width='3.4'/%3E%3Cline x1='10' y1='26.5' x2='38' y2='26.5' stroke-width='3.4'/%3E%3C/svg%3E")
+    center/contain no-repeat;
+  opacity: 0.12;
+  transform: rotate(10deg);
+}
+.btn.p {
+  background: linear-gradient(180deg, #7a52ff, #5b35e8);
+}
+.btn.p:hover {
+  background: linear-gradient(180deg, #6a43f5, #4b27d6);
+}
+.tab[aria-current='page'] {
+  background: linear-gradient(160deg, #7a52ff, #4b27d6);
+  box-shadow: 0 8px 16px -8px rgba(63, 34, 184, 0.8);
+}
+.tabs {
+  box-shadow: 0 20px 44px -14px rgba(63, 34, 184, 0.55);
+}
+.cheer {
+  animation: cheerpop 0.45s cubic-bezier(0.3, 1.5, 0.5, 1);
+}
+@keyframes cheerpop {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cheer {
+    animation: none;
+  }
+}

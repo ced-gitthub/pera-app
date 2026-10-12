@@ -8,6 +8,8 @@ import { homeNumbers } from '@/lib/balances';
 import { mapRows } from '@/lib/rows';
 import { emojiFor, greetingFor, manilaHour, streak, pulse } from '@/lib/vibe';
 import Quick from '@/components/Quick';
+import QuestBoard from '@/components/QuestBoard';
+import { buildQuests, xpFor, tipFor } from '@/lib/quests';
 import Tab from '@/components/Tab';
 import TxRow from '@/components/TxRow';
 import { Flash, type SP } from '@/components/ui';
@@ -28,7 +30,7 @@ export default async function Dashboard({ searchParams }: { searchParams: SP }) 
     ym = today.slice(0, 7),
     mr = monthRange(ym),
     [yy, mm] = ym.split('-').map(Number);
-  const [s, bal, na, r, d, bud, ms, prof, layout] = await Promise.all([
+  const [s, bal, na, r, d, bud, ms, prof, layout, tc] = await Promise.all([
     sb.rpc('period_summary', { p_from: per.from, p_to: per.to }),
     balanceMap(sb),
     sb.rpc('no_account_summary'),
@@ -48,6 +50,7 @@ export default async function Dashboard({ searchParams }: { searchParams: SP }) 
     sb.rpc('period_summary', { p_from: mr.from, p_to: mr.to }),
     sb.from('profiles').select('name').eq('id', user.id).maybeSingle(),
     loadLayout(sb, user.id),
+    sb.from('transactions').select('id', { count: 'exact', head: true }), // lifetime entries, for the level
   ]);
   const bad = s.error ?? na.error ?? r.error ?? bud.error ?? ms.error;
   if (bad) dbError(bad, 'dashboard');
@@ -84,6 +87,15 @@ export default async function Dashboard({ searchParams }: { searchParams: SP }) 
       (n, x) => n + (x.type === 'income' ? Number(x.total_minor) : x.type === 'expense' ? -Number(x.total_minor) : 0),
       0,
     );
+  if (tc.error) logErr('dashboard.count', tc.error); // the level just shows less XP; never breaks the page
+  const entriesN = tc.count ?? 0,
+    quests = buildQuests({
+      today,
+      dates: ((d.data as { transaction_date: string }[] | null) ?? []).map((x) => x.transaction_date),
+      budgets: goals.map((g) => ({ spent: g.spent, amount: g.spent + g.remaining })),
+      totalEntries: entriesN,
+      streak: st.n,
+    });
   const amt = (m: number) => <span className={m < 0 ? 'exp' : ''}>{formatMinor(m)}</span>;
   const nodes = {
     accounts: (
@@ -275,6 +287,7 @@ export default async function Dashboard({ searchParams }: { searchParams: SP }) 
         </p>
       </section>
       <Quick />
+      <QuestBoard quests={quests} xp={xpFor({ totalEntries: entriesN, streak: st.n })} tip={tipFor(today)} />
     </>
   );
   return <Tab tab="home" title="Home" init={layout.home} nodes={nodes} before={before} canCustomize />;

@@ -1,4 +1,5 @@
 import './globals.css';
+import './polish.css'; // in-app look (hero, cards, buttons, tabs); must load after globals.css
 import RegisterSW from '@/components/RegisterSW';
 import { Bricolage_Grotesque, Figtree } from 'next/font/google';
 const display = Bricolage_Grotesque({ subsets: ['latin'], variable: '--font-display', display: 'swap' });

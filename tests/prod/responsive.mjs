@@ -301,7 +301,7 @@ G('dark mode');
     };
     const bad = [],
       seen = new Set();
-    for (const el of document.querySelectorAll('h1,h2,p,b,span,td,label,a,button,.m,input,select')) {
+    for (const el of document.querySelectorAll('h1,h2,p,b,em,span,td,label,a,button,.m,input,select')) {
       const r = el.getBoundingClientRect();
       if (!r.width || !r.height || !(el.innerText || el.value || '').trim()) continue;
       const cs = getComputedStyle(el);

@@ -41,6 +41,8 @@
 
 - 2026-10-13: Brand and first-run experience. New mark (a Z crossed by two peso bars; src/components/ZovixMark.tsx, also drawn in the app and Apple icons) replaces the ₱ tile. New public `/welcome`: an interactive sample wallet (pure logic in src/lib/welcomeDemo.ts, nothing saved) with progress bar, streak, count-up balance, spending chart, confetti and a "Save my progress" bar, plus benefit cards and Google/email sign-up. Middleware sends a logged-out visitor at `/` to `/welcome`, unless the plain cookie `zovix_seen` (set by MarkReturning inside the app) says this device has used Zovix; then to `/login`. The login page says "Zovix Pera Tracker" and shows "Welcome back" only when that cookie exists. Errors and successes are highlighted (accent bar, glow, pop-in). Not built yet: carrying the sample entries into the new account after signup; redesigning the in-app screens.
 
+- 2026-10-13: Quest board on the dashboard (src/lib/quests.ts, components/QuestBoard.tsx, quests.css): a level (Broke Rookie, Peso Pincher, Budget Buddy, Wallet Warrior, Money Master) from XP (+5 per entry, +10 per streak day), daily quests (log your first peso, triple tap, stay in budget when budgets exist), weekly quests (5 of 7 days, 7-day streak) and a daily money tip for students. Everything is derived from existing transactions; nothing new is stored. The in-app look now matches welcome/login (polish.css: hero gradient with the Z watermark, softer cards, gradient button and active tab, cheer pop). Not built: a savings goal (needs a new column or table, migration plus tests).
+
 ## Next steps
 
 0. Owner: turn Supabase Confirm email back ON after any live-suite run. Provide the domain (with ending) to attach it in Vercel, then follow docs/play-store/PLAY_CONSOLE_GUIDE.md.

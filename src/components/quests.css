@@ -1,0 +1,167 @@
+.quests h3 {
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mute);
+  margin: 14px 0 6px;
+}
+.qhead {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+.qbadge {
+  width: 58px;
+  height: 58px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  font-size: 30px;
+  border-radius: 20px;
+  background: linear-gradient(145deg, #fff1c2, var(--mango));
+  box-shadow: 0 5px 0 #e0a516;
+  transform: rotate(-4deg);
+}
+.qlevel {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+.qlevel b {
+  font-family: var(--font-display), sans-serif;
+  font-size: 18px;
+}
+.qlevel small {
+  color: var(--mute);
+  font-weight: 600;
+}
+.qxp {
+  height: 12px;
+  border-radius: 999px;
+  background: var(--ube-soft);
+  overflow: hidden;
+}
+.qxp i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--mango), #ff9f1c);
+  transition: width 0.6s cubic-bezier(0.3, 1.3, 0.5, 1);
+}
+.qlist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.qrow {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) 84px;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  background: var(--bg);
+  border: 1.5px solid transparent;
+}
+.qrow.done {
+  background: var(--inc-soft);
+  border-color: var(--inc);
+}
+.qic {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  font-size: 22px;
+  background: var(--surface);
+}
+.qrow.done .qic {
+  background: var(--surface);
+  color: var(--inc);
+  border: 2px solid var(--inc);
+  font-weight: 800;
+  animation: qpop 0.5s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+.qtxt {
+  display: grid;
+  min-width: 0;
+}
+.qtxt small {
+  color: var(--mute);
+}
+.qrow.done .qtxt small {
+  color: var(--inc);
+  font-weight: 700;
+}
+.qprog {
+  display: grid;
+  gap: 4px;
+  text-align: right;
+}
+.qbar {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--ube-soft);
+  overflow: hidden;
+}
+.qrow.done .qbar {
+  background: var(--surface);
+}
+.qbar i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--ube), #9a7dff);
+  transition: width 0.5s ease-out;
+}
+.qrow.done .qbar i {
+  background: var(--inc);
+}
+.qprog em {
+  font-style: normal;
+  font-weight: 800;
+  font-size: 13px;
+  color: var(--ink);
+}
+.qwin {
+  margin: 12px 0 0;
+  padding: 12px 14px;
+  border-radius: 16px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #fff3cf, #ffe08a);
+  color: #4a3300;
+  animation: qpop 0.5s cubic-bezier(0.3, 1.5, 0.5, 1);
+}
+.qtip {
+  margin: 14px 0 2px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: var(--ube-soft);
+  font-weight: 600;
+}
+.qlegend {
+  margin: 6px 2px 0;
+  font-size: 12px;
+  color: var(--mute);
+}
+@keyframes qpop {
+  0% {
+    transform: scale(0.7);
+    opacity: 0;
+  }
+  100% {
+    transform: none;
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .quests *,
+  .qwin {
+    animation: none !important;
+    transition: none !important;
+  }
+}

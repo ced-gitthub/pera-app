@@ -319,6 +319,16 @@ await step('Quick Add: income (salary 25000 bpi)', async () => {
   const t = await logText();
   return /Income/.test(t) && /25,000\.00/.test(t) ? true : t;
 });
+await step('quest board: shows a level and quests, and logging completes "Log your first peso"', async () => {
+  await p.goto('/');
+  const board = p.locator('section.quests');
+  await board.waitFor({ timeout: 15000 });
+  const t = await board.innerText(),
+    done = await p.locator('.qrow.done').count();
+  return /Level \d/.test(t) && /Log your first peso/.test(t) && /Triple tap/.test(t) && /Earn XP/.test(t) && done >= 1
+    ? true
+    : { done, t: t.slice(0, 200) };
+});
 await step('Quick Add: multiple entries in one line', async () => {
   await add(p, 'coffee 120, grocery 800 cash, taxi 200');
   const t = await logText();

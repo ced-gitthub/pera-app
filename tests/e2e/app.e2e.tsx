@@ -111,6 +111,21 @@ const count = (h: string, s: string) => h.split(s).length - 1;
   T('dataset saved', r1.ok && (r1 as any).n === 9, r1);
   let h = await page(Dashboard);
   T(
+    'home: quest board shows a level, today and weekly quests, and the XP rule',
+    h.includes('Quest board') &&
+      /Level \d/.test(h) &&
+      h.includes('Log your first peso') &&
+      h.includes('Triple tap') &&
+      h.includes('5 of 7 days') &&
+      h.includes('Earn XP') &&
+      /role="progressbar"/.test(h),
+  );
+  T(
+    'home: nine entries logged today completes both daily count quests',
+    (h.match(/class="qrow done"/g) ?? []).length >= 2,
+    (h.match(/class="qrow[^"]*"/g) ?? []).join(','),
+  );
+  T(
     'home: total 23,750 and spendable 23,750; Income/Expenses/Net are off by default',
     h.includes('Total balance') && count(h, '₱23,750.00') >= 3 && !h.includes('>Income<') && !h.includes('Where your money went'),
     h.match(/₱[\d,.]+/g)?.slice(0, 6),
