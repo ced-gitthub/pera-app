@@ -46,6 +46,12 @@ test('deleting a transaction refreshes the list and the Undo notice lives in the
   assert.match(read('src/app/(app)/layout.tsx'), /<UndoBar \/>/);
   assert.doesNotMatch(read('src/components/TxRow.tsx'), /Changed your mind/);
 });
+test('the Android app reloads the login page when you come back from Google in Chrome', () => {
+  const s = read('src/components/HideInIosApp.tsx');
+  assert.match(s, /visibilitychange/);
+  assert.match(s, /window\.location\.reload\(\)/);
+  assert.match(s, /android-app:\/\//);
+});
 test('a pending Undo is forgotten when the app layout unmounts (logout), so the next user never sees it', () => {
   assert.match(read('src/components/UndoBar.tsx'), /useEffect\(\(\) => \(\) => clearUndo\(\), \[\]\)/);
 });
