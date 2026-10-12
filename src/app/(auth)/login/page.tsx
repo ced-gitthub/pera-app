@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers';
 import AuthBrand from '@/components/AuthBrand';
+import InstallApp from '@/components/InstallApp';
 import { loginCaption } from '@/lib/welcomeDemo';
 import Link from 'next/link';
 import { signIn } from '@/app/actions';
@@ -36,6 +37,7 @@ export default async function Page({ searchParams }: { searchParams: SP }) {
             Email me a login code instead
           </Link>
         </p>
+        <InstallApp />
         <p className="mt-3 m">
           No account?{' '}
           <Link href="/register" className="underline">

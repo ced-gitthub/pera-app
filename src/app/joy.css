@@ -214,3 +214,22 @@
     animation: none;
   }
 }
+
+/* install card on the purple sign-in screens */
+.auth .install {
+  margin: 16px 0 6px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1.5px dashed rgba(255, 255, 255, 0.55);
+  box-shadow: none;
+  color: #fff;
+}
+.auth .install h2,
+.auth .install .m {
+  color: #fff;
+}
+.auth .install h2 {
+  font-size: 17px;
+}
+.auth .install .btn {
+  min-height: 44px;
+}

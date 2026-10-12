@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { signUp } from '@/app/actions';
 import AuthBrand from '@/components/AuthBrand';
+import InstallApp from '@/components/InstallApp';
 import GoogleButton from '@/components/GoogleButton';
 import { Flash, type SP } from '@/components/ui';
 // Same joyful look as the welcome page: a headline that sells the first day, perks, a chunky yellow button, and a "ready for you" checklist (all true: the sign-up trigger seeds accounts and categories).
@@ -43,6 +44,7 @@ export default async function Page({ searchParams }: { searchParams: SP }) {
             <li>✅ Quest board and level 1 badge waiting</li>
           </ul>
         </section>
+        <InstallApp />
         <p className="mt-3 m">
           Have an account?{' '}
           <Link href="/login" className="underline">
