@@ -5,7 +5,7 @@ import { Btn } from './Btn';
 import { Sheet } from './Sheet';
 import { Chip } from './Tabs';
 import { deleteEntry, loadTransferTarget, updateEntry } from './entries';
-import { categoriesFor, formOf, switchType, UNDO_MS } from './entriesLogic';
+import { autoDismissMs, categoriesFor, formOf, switchType } from './entriesLogic';
 import { planTxEdit, type Snapshot, type Tx, type TxEdit } from './logic';
 import { c, r, s, sp, t } from './ui';
 
@@ -158,13 +158,19 @@ export function EntrySheet({
   );
 }
 
-// A snackbar at the bottom of the screen: "Entry deleted. Undo". It goes away by itself after about 8 seconds.
+// A snackbar above the tab bar: "Entry deleted. Undo". It goes away by itself after about 8 seconds, unless a failed
+// Undo left a message: then it stays (with Undo available to retry) until it works or the person dismisses it.
+// lift = distance from the bottom edge (pass the tab bar height) so it never covers the tabs.
 export function UndoBar({
   row,
+  error,
+  lift = 0,
   onUndo,
   onDismiss,
 }: {
   row: Record<string, unknown> | null;
+  error?: string;
+  lift?: number;
   onUndo: () => void | Promise<void>;
   onDismiss: () => void;
 }) {
@@ -175,10 +181,11 @@ export function UndoBar({
 
   useEffect(() => {
     setBusy(false);
-    if (!row) return;
-    const id = setTimeout(() => dismiss.current(), UNDO_MS);
+    const ms = autoDismissMs(error);
+    if (!row || ms === null) return;
+    const id = setTimeout(() => dismiss.current(), ms);
     return () => clearTimeout(id);
-  }, [row]);
+  }, [row, error]);
 
   if (!row) return null;
   const undo = async () => {
@@ -197,7 +204,7 @@ export function UndoBar({
         position: 'absolute',
         left: sp.l,
         right: sp.l,
-        bottom: bottom + sp.l,
+        bottom: bottom + lift + sp.l,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -209,7 +216,10 @@ export function UndoBar({
         paddingHorizontal: sp.l,
       }}
     >
-      <Text style={{ color: c.ink, fontSize: t.body, flex: 1 }}>Entry deleted.</Text>
+      <View style={{ flex: 1 }}>
+        <Text style={{ color: c.ink, fontSize: t.body }}>Entry deleted.</Text>
+        {!!error && <Text style={{ color: c.down, fontSize: t.body, marginTop: sp.xs }}>{error}</Text>}
+      </View>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Undo"
@@ -218,7 +228,9 @@ export function UndoBar({
         hitSlop={sp.m}
         style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: sp.m, opacity: busy ? 0.5 : 1 }}
       >
-        <Text style={{ color: c.primary, fontSize: t.body, fontWeight: '800' }}>{busy ? 'Restoring...' : 'Undo'}</Text>
+        <Text style={{ color: c.primary, fontSize: t.body, fontWeight: '800' }}>
+          {busy ? 'Restoring...' : error ? 'Try again' : 'Undo'}
+        </Text>
       </Pressable>
     </View>
   );

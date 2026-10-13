@@ -7,7 +7,7 @@
   "build": "next build",
   "start": "next start",
   "typecheck": "tsc --noEmit",
-  "test": "node --experimental-strip-types --test tests/core.test.ts tests/app.test.ts tests/auth.test.ts tests/cache.test.ts tests/welcome.test.ts tests/quests.test.ts tests/goals.test.ts tests/missions.test.ts tests/onboarding.test.ts tests/native.test.ts tests/native-design.test.ts tests/native-home.test.ts tests/native-entries.test.ts tests/native-entries2.test.ts tests/native-recurring.test.ts tests/native-reports.test.ts tests/native-manage.test.ts tests/native-csv.test.ts",
+  "test": "node --experimental-strip-types --test tests/core.test.ts tests/app.test.ts tests/auth.test.ts tests/cache.test.ts tests/welcome.test.ts tests/quests.test.ts tests/goals.test.ts tests/missions.test.ts tests/onboarding.test.ts tests/native-csv.test.ts tests/native-csv2.test.ts tests/native-design.test.ts tests/native-entries.test.ts tests/native-entries2.test.ts tests/native-entries3.test.ts tests/native-entries4.test.ts tests/native-home.test.ts tests/native-manage.test.ts tests/native-recurring-resume.test.ts tests/native-recurring.test.ts tests/native-recurring2.test.ts tests/native-reports.test.ts tests/native.test.ts",
   "test:app": "tsx --tsconfig tests/e2e/tsconfig.json tests/e2e/app.e2e.tsx",
   "test:browser": "node tests/browser/build.cjs && python3 tests/browser/quickadd.py",
   "test:prod": "echo 'Production suites run in GitHub Actions: .github/workflows/prod-qa.yml'",

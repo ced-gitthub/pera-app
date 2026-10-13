@@ -194,7 +194,7 @@ export function Activity({ snap, onPick, ver }: { snap: Snapshot; onPick: (t: Tx
   );
 }
 
-export function TabBar({ tab, setTab }: { tab: string; setTab: (t: string) => void }) {
+export function TabBar({ tab, setTab, onHeight }: { tab: string; setTab: (t: string) => void; onHeight?: (h: number) => void }) {
   const { bottom } = useSafeAreaInsets();
   const items = [
     ['home', '🏠', 'Home'],
@@ -205,6 +205,7 @@ export function TabBar({ tab, setTab }: { tab: string; setTab: (t: string) => vo
   ];
   return (
     <View
+      onLayout={(e) => onHeight?.(e.nativeEvent.layout.height)}
       style={{
         flexDirection: 'row',
         backgroundColor: c.card,

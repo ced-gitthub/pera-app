@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { AppState } from 'react-native';
 import { Text, View } from 'react-native';
 import type { Gate as GateResult } from '../../src/lib/onboarding';
 import { supabase } from './supabase';
@@ -9,14 +10,17 @@ import { type Tx, decideGate, firstName, FINISH_FLAGS, REPLAY_FLAGS } from './lo
 import { Home } from './Home';
 import { EntrySheet, UndoBar } from './EntrySheet';
 import { restoreEntry } from './entries';
+import { afterRestore, type UndoState } from './entriesLogic';
 import { runDue } from './recurringApi';
+import { shouldRunDue } from './recurringLogic';
+import { manilaToday } from '../../src/core/money';
 import { Activity, TabBar } from './Tabs';
 import { Budgets, Goals } from './Planning';
 import { Settings } from './Settings';
 import { HomeSkeleton } from './Skeleton';
 import { Wizard } from './Wizard';
 import { Btn } from './Btn';
-import { s } from './ui';
+import { c, s, sp, t } from './ui';
 
 // Decides between the wizard and Home from REAL data (entries, opening balances, budgets, goals). Flags only remember what was seen, per account.
 // If the counts cannot be read the person is let in (fail open) and nothing is blocked by a read error.
@@ -27,8 +31,10 @@ export function Gate() {
   const [name, setName] = useState('');
   const [tab, setTab] = useState('home');
   const [picked, setPicked] = useState<Tx | null>(null);
-  const [undo, setUndo] = useState<{ row: Record<string, unknown> } | null>(null);
-  const ranDue = useRef(false); // due recurring rules run once per app start, like the website does on each Home load
+  const [undo, setUndo] = useState<UndoState | null>(null);
+  const [tabH, setTabH] = useState(0);
+  const [notice, setNotice] = useState('');
+  const lastDue = useRef<string | null>(null); // Manila day when due recurring rules last ran; they run again when the day changes, like the website does on each Home load
   const [ver, setVer] = useState(0); // bumps when an entry changes, so lists reload
   const [err, setErr] = useState('');
   // Returns '' on success, or the message to show. A failed re-read is shown, never hidden.
@@ -37,9 +43,10 @@ export function Gate() {
       const { data } = await supabase.auth.getSession();
       const id = data.session?.user.id;
       if (!id) return 'Session expired. Please sign in again.';
-      if (!ranDue.current) {
-        ranDue.current = true;
-        await runDue().catch(() => null);
+      if (shouldRunDue(lastDue.current, manilaToday())) {
+        const r = await runDue().catch(() => null);
+        if (r && !r.error) lastDue.current = manilaToday();
+        setNotice(r?.error ?? '');
       }
       const sn = await load();
       const flags = await readFlags(id);
@@ -62,6 +69,13 @@ export function Gate() {
   }, []);
   useEffect(() => {
     refresh();
+  }, [refresh]);
+  useEffect(() => {
+    // coming back to the app on a new day runs the day's recurring entries and reloads the numbers
+    const sub = AppState.addEventListener('change', (st) => {
+      if (st === 'active' && shouldRunDue(lastDue.current, manilaToday())) void refresh();
+    });
+    return () => sub.remove();
   }, [refresh]);
 
   if (!snap || !gate)
@@ -105,14 +119,18 @@ export function Gate() {
       </View>
       <UndoBar
         row={undo?.row ?? null}
+        error={undo?.error}
+        lift={tabH}
         onDismiss={() => setUndo(null)}
         onUndo={async () => {
           if (!undo) return;
           const m = await restoreEntry(undo.row);
-          if (m) return setErr(m);
-          setUndo(null);
-          setVer((v) => v + 1);
-          await refresh();
+          const next = afterRestore(undo, m);
+          setUndo(next);
+          if (!next) {
+            setVer((v) => v + 1);
+            await refresh();
+          }
         }}
       />
       <EntrySheet
@@ -125,7 +143,8 @@ export function Gate() {
           await refresh();
         }}
       />
-      <TabBar tab={tab} setTab={setTab} />
+      {!!notice && <Text style={{ color: c.mute, fontSize: t.caption, textAlign: 'center', padding: sp.s }}>{notice}</Text>}
+      <TabBar tab={tab} setTab={setTab} onHeight={setTabH} />
     </View>
   );
 }

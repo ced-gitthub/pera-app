@@ -3,7 +3,12 @@ import assert from 'node:assert/strict';
 import {
   MAX_IMPORT_ROWS,
   MAX_CSV_CHARS,
+  MAX_SHARE_CHARS,
   buildExport,
+  checkShareSize,
+  checkExportRange,
+  exportDoneMessage,
+  rangeLabel,
   planImport,
   importMessage,
   importError,
@@ -253,4 +258,99 @@ test('problem list is capped for display with a count of the rest', () => {
   assert.equal(lines[0], 'Row 1: bad 1');
   assert.match(lines[10], /15 more/);
   assert.deepEqual(problemLines(ps.slice(0, 2), 10), ['Row 1: bad 1', 'Row 2: bad 2']);
+});
+
+// ---- share size cap, date range, messages
+test('share cap: exactly at the cap is fine, one character over is refused', () => {
+  assert.equal(MAX_SHARE_CHARS, 200000);
+  assert.deepEqual(checkShareSize('x'.repeat(MAX_SHARE_CHARS)), { ok: true });
+  assert.equal(checkShareSize('x'.repeat(MAX_SHARE_CHARS + 1)).ok, false);
+});
+
+test('share cap: the refusal says how many entries and tells the person to narrow From/To', () => {
+  const rows = Array.from({ length: 3000 }, (_, i) => tx({ description: `Lunch number ${i} with a long description to add size` }));
+  const out = buildExport(rows, snap);
+  assert.ok(out.text.length > MAX_SHARE_CHARS);
+  const r = checkShareSize(out.text, out.count);
+  assert.equal(r.ok, false);
+  if (!r.ok) {
+    assert.match(r.message, /3,000 entries/);
+    assert.match(r.message, /From/);
+    assert.match(r.message, /To/);
+    assert.match(r.message, /date range/i);
+  }
+});
+
+test('share cap: without an explicit count the entries are counted from the text', () => {
+  const rows = Array.from({ length: 5000 }, (_, i) => tx({ description: `Lunch ${i} padded padded padded padded` }));
+  const r = checkShareSize(buildExport(rows, snap).text);
+  assert.equal(r.ok, false);
+  if (!r.ok) assert.match(r.message, /5,000 entries/);
+});
+
+test('range: only entries inside From..To (inclusive) are exported', () => {
+  const txs = [
+    tx({ transaction_date: '2026-01-31', description: 'aaa' }),
+    tx({ transaction_date: '2026-02-01', description: 'bbb' }),
+    tx({ transaction_date: '2026-02-28', description: 'ccc' }),
+    tx({ transaction_date: '2026-03-01', description: 'ddd' }),
+  ];
+  const out = buildExport(txs, snap, { from: '2026-02-01', to: '2026-02-28' });
+  assert.equal(out.count, 2);
+  assert.ok(out.text.includes('"bbb"') && out.text.includes('"ccc"'));
+  assert.ok(!out.text.includes('"aaa"') && !out.text.includes('"ddd"'));
+  assert.equal(buildExport(txs, snap, { from: '2026-02-28' }).count, 2);
+  assert.equal(buildExport(txs, snap, { to: '2026-01-31' }).count, 1);
+  assert.equal(buildExport(txs, snap, {}).count, 4);
+  assert.equal(buildExport(txs, snap).count, 4);
+});
+
+test('range: empty means everything; whitespace is ignored', () => {
+  assert.deepEqual(checkExportRange('', '', TODAY), { ok: true, range: {} });
+  assert.deepEqual(checkExportRange('  ', ' ', TODAY), { ok: true, range: {} });
+  assert.deepEqual(checkExportRange(' 2026-01-01 ', '', TODAY), { ok: true, range: { from: '2026-01-01' } });
+  assert.deepEqual(checkExportRange('2026-01-01', '2026-01-01', TODAY), { ok: true, range: { from: '2026-01-01', to: '2026-01-01' } });
+});
+
+test('range: invalid, impossible or out-of-range dates say what to fix', () => {
+  for (const bad of ['2026-13-01', '2026-02-30', 'yesterday', '10/14/2026', '1999-12-31', '2040-01-01']) {
+    const a = checkExportRange(bad, '', TODAY);
+    assert.equal(a.ok, false, bad);
+    if (!a.ok) {
+      assert.match(a.message, /^From /);
+      assert.match(a.message, /YYYY-MM-DD/);
+    }
+    const b = checkExportRange('', bad, TODAY);
+    assert.equal(b.ok, false, bad);
+    if (!b.ok) assert.match(b.message, /^To /);
+  }
+});
+
+test('range: From after To is refused with both dates named', () => {
+  const r = checkExportRange('2026-05-02', '2026-05-01', TODAY);
+  assert.equal(r.ok, false);
+  if (!r.ok) {
+    assert.match(r.message, /2026-05-02/);
+    assert.match(r.message, /2026-05-01/);
+    assert.match(r.message, /after/i);
+  }
+});
+
+test('range label and success text say exactly how many entries and the range', () => {
+  assert.equal(rangeLabel({}), '');
+  assert.equal(rangeLabel({ from: '2026-01-01', to: '2026-03-31' }), 'from 2026-01-01 to 2026-03-31');
+  assert.equal(rangeLabel({ from: '2026-01-01' }), 'from 2026-01-01 onwards');
+  assert.equal(rangeLabel({ to: '2026-03-31' }), 'up to 2026-03-31');
+  assert.match(exportDoneMessage(1234, {}), /^1,234 entries shared\./);
+  assert.match(exportDoneMessage(1, {}), /^1 entry shared\./);
+  const m = exportDoneMessage(12, { from: '2026-01-01', to: '2026-03-31' });
+  assert.match(m, /12 entries shared from 2026-01-01 to 2026-03-31/);
+  assert.match(m, /zovix-export\.csv/);
+  assert.ok(!/ready/.test(m));
+});
+
+test('the export-row comment no longer claims it never cuts anything off', async () => {
+  const { readFileSync } = await import('node:fs');
+  const src = readFileSync(new URL('../native/src/csvLogic.ts', import.meta.url), 'utf8');
+  assert.ok(!/never cuts anything off/.test(src));
 });

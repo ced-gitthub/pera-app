@@ -1,6 +1,15 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { shiftMonth, monthLabel, monthBounds, summarize, yearSeries, barHeights, canGoNext } from '../native/src/reportsLogic.ts';
+import {
+  shiftMonth,
+  monthLabel,
+  monthBounds,
+  summarize,
+  yearSeries,
+  barHeights,
+  canGoNext,
+  canGoPrev,
+} from '../native/src/reportsLogic.ts';
 
 const cats = [
   { id: 'f', name: 'Food', type: 'expense' as const },
@@ -133,4 +142,10 @@ test('barHeights: scaled to the biggest value, integers 0..100, empty year is al
   assert.deepEqual(h[5], { income: 0, expense: 0 });
   assert.deepEqual(barHeights(yearSeries([]))[0], { income: 0, expense: 0 });
   for (const x of h) assert.ok(x.income <= 100 && x.expense <= 100);
+});
+
+test('the previous-month arrow stops at January 2000 (no malformed dates below the year 2000)', () => {
+  assert.equal(canGoPrev('2000-01'), false);
+  assert.equal(canGoPrev('2000-02'), true);
+  assert.equal(canGoPrev('2026-10'), true);
 });

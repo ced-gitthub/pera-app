@@ -1,33 +1,15 @@
 import { supabase } from './supabase';
 import type { Snapshot } from './logic';
-import {
-  BATCH_SIZE,
-  MAX_EXPORT_ROWS,
-  PAGE_SIZE,
-  buildExport,
-  importError,
-  planImport,
-  type ExportTx,
-  type ImportPlan,
-  type ImportResult,
-} from './csvLogic';
+import { exportRowsWith, runImportWith, type CsvDb } from './csvCore';
+import { MAX_EXPORT_ROWS, PAGE_SIZE, buildExport, planImport, type ExportRange, type ImportPlan, type ImportResult } from './csvLogic';
 
-// Export: every entry, oldest first, read a page at a time (1000 per page) up to the database's own 50,000 limit.
-export async function exportCsv(s: Snapshot): Promise<{ text: string; count: number }> {
-  const all: ExportTx[] = [];
-  for (let from = 0; all.length < MAX_EXPORT_ROWS; from += PAGE_SIZE) {
-    const { data, error } = await supabase
-      .from('transactions')
-      .select('type,amount_minor,transaction_date,description,notes,category_id,account_id,transfer_account_id')
-      .order('transaction_date')
-      .order('created_at')
-      .order('id')
-      .range(from, from + PAGE_SIZE - 1);
-    if (error) throw new Error('Could not export your entries. Check your connection and try again.');
-    all.push(...(data as ExportTx[]));
-    if (data.length < PAGE_SIZE) break;
-  }
-  return buildExport(all.slice(0, MAX_EXPORT_ROWS), s);
+// The real client, seen through the small chain csvCore uses.
+const db = supabase as unknown as CsvDb;
+
+// Export: entries oldest first, read a page at a time (1000 per page) up to the database's own 50,000 limit, optionally inside a date range.
+export async function exportCsv(s: Snapshot, range: ExportRange = {}): Promise<{ text: string; count: number }> {
+  const rows = await exportRowsWith(db, range);
+  return buildExport(rows, s, range);
 }
 
 // Hashes of earlier imports inside the dates of the pasted file, so Check can say how many are already there. Best effort: the database skips them anyway.
@@ -58,21 +40,7 @@ export async function checkImport(text: string, s: Snapshot): Promise<{ plan: Im
   return { plan: planImport(text, s, existing), dupCheck: true };
 }
 
-// Batched upsert on (user_id, import_hash) with ignoreDuplicates: importing the same file twice saves each row once. Stops at the first failed batch and says how far it got.
 export async function runImport(plan: ImportPlan): Promise<ImportResult> {
   const { data: u } = await supabase.auth.getUser();
-  if (!u.user) return { added: 0, dup: plan.dup, problems: plan.problems.length, error: 'Session expired. Please sign in again.' };
-  let added = 0;
-  let seen = 0;
-  for (let i = 0; i < plan.rows.length; i += BATCH_SIZE) {
-    const batch = plan.rows.slice(i, i + BATCH_SIZE).map((r) => ({ ...r, user_id: u.user!.id }));
-    const { data, error } = await supabase
-      .from('transactions')
-      .upsert(batch, { onConflict: 'user_id,import_hash', ignoreDuplicates: true })
-      .select('id');
-    if (error) return { added, dup: plan.dup + seen - added, problems: plan.problems.length, error: importError(error) };
-    added += data?.length ?? 0;
-    seen += batch.length;
-  }
-  return { added, dup: plan.dup + plan.rows.length - added, problems: plan.problems.length, error: null };
+  return runImportWith(db, u.user?.id ?? '', plan);
 }

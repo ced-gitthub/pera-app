@@ -125,7 +125,7 @@ export function Recurring({ snap, onClose, onChanged }: { snap: Snapshot; onClos
           </Text>
           <ToggleRow
             label={r.active ? 'Running' : 'Paused'}
-            hint={r.active ? 'Turn off to pause.' : 'Turn on to resume. Missed dates are added.'}
+            hint={r.active ? 'Turn off to pause.' : 'Turn on to resume. Dates missed while paused are skipped.'}
             on={r.active}
             busy={working === r.id}
             onChange={(on) => change(r.id, () => setRuleActive(r.id, on))}

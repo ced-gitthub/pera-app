@@ -3,6 +3,8 @@ import { minorToInput } from '../../src/lib/validate.ts';
 import type { Category, Tx, TxEdit } from './logic.ts';
 
 export const UNDO_MS = 8000;
+// Shown when Undo finds the entry already there (for example the same CSV was imported again). Treated as success.
+export const ALREADY_BACK = 'It is already back, so there is nothing to undo.';
 
 const FAIL: Record<'save' | 'delete' | 'restore', string> = {
   save: 'Not saved: the server refused it or could not be reached. Try again.',
@@ -12,6 +14,7 @@ const FAIL: Record<'save' | 'delete' | 'restore', string> = {
 // Friendly text for a failed write. Raw database messages are never shown.
 export function entryError(error: { message: string; code?: string }, what: 'save' | 'delete' | 'restore'): string {
   if (error.code === 'PRLIM' || /PRLIM/.test(error.message)) return 'You reached the limit for entries. Delete some old ones first.';
+  if (what === 'restore' && error.code === '23505') return ALREADY_BACK;
   if (what === 'restore' && error.code === '23503') return "Can't bring it back: its account or category was deleted since.";
   return FAIL[what];
 }
@@ -37,3 +40,14 @@ export function switchType(f: TxEdit, type: TxEdit['type'], cats: Category[]): T
   const keep = type !== 'transfer' && cats.some((x) => x.id === f.categoryId && x.type === type);
   return { ...f, type, categoryId: keep ? f.categoryId : '', toId: type === 'transfer' ? f.toId : '' };
 }
+
+// What the Undo bar holds after a restore attempt: null clears it (restored, or it was already back); a failure keeps
+// the row so Undo can be tried again and carries the message to show.
+export type UndoState = { row: Record<string, unknown>; error?: string };
+export function afterRestore(state: UndoState, message: string | null): UndoState | null {
+  if (message === null || message === ALREADY_BACK) return null;
+  return { row: state.row, error: message };
+}
+
+// How long the Undo bar stays: the usual time, but not at all while a failure message is showing (it must be read).
+export const autoDismissMs = (error?: string): number | null => (error ? null : UNDO_MS);

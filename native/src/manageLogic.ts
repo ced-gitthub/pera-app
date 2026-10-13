@@ -85,7 +85,7 @@ export function manageError(
   if (code === '23505') return `You already have ${what === 'account' ? 'an account' : 'a category'} with that name. Pick another name.`;
   if (code === '23503' && action === 'delete')
     return what === 'account'
-      ? "This is used by entries, so it can't be deleted. Move or delete those entries first, or rename it instead."
+      ? "This account is used by entries or repeating entries, so it can't be deleted. Move or delete those first, or rename it instead."
       : "This is used by entries, budgets or repeating entries, so it can't be deleted. Rename it instead.";
   return action === 'delete' ? 'Not deleted: could not reach the server. Try again.' : 'Not saved: could not reach the server. Try again.';
 }
@@ -93,6 +93,6 @@ export function manageError(
 // Shown in the confirm dialog: what goes away and what stays. The database refuses the delete while entries still use it.
 export function deleteWarning(what: 'account' | 'category', name: string): string {
   return what === 'account'
-    ? `Delete "${name}"? Its starting balance goes with it. Savings goals linked to it are kept but become unlinked. If entries still use this account the delete is refused and nothing changes.`
+    ? `Delete "${name}"? Its starting balance goes with it. Savings goals linked to it are kept but become unlinked. If entries or repeating entries still use this account the delete is refused and nothing changes.`
     : `Delete "${name}"? If entries, budgets or repeating entries still use it the delete is refused and nothing changes. Otherwise it is gone for good.`;
 }

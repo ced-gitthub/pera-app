@@ -6,7 +6,8 @@ import type { Snapshot } from './logic';
 
 export const MAX_IMPORT_ROWS = 5000; // per paste; keeps one import to ten small batches
 export const MAX_CSV_CHARS = 900_000; // same size limit as the website
-export const MAX_EXPORT_ROWS = 50_000; // the database allows 50,000 entries per person, so this never cuts anything off
+export const MAX_EXPORT_ROWS = 50_000; // the database allows 50,000 entries per person; this is a hard stop on reading so a loop can never run away
+export const MAX_SHARE_CHARS = 200_000; // text handed to the share sheet; Android passes it through a channel of about 1 MB and many apps cut long text
 export const PAGE_SIZE = 1000;
 export const BATCH_SIZE = 500;
 export const MAX_SHOWN_PROBLEMS = 10;
@@ -23,10 +24,13 @@ export type ExportTx = {
   transfer_account_id: string | null;
 };
 
-export function buildExport(txs: ExportTx[], s: Snapshot): { text: string; count: number } {
+export type ExportRange = { from?: string; to?: string }; // inclusive transaction_date bounds; a missing side is open
+
+export function buildExport(txs: ExportTx[], s: Snapshot, range: ExportRange = {}): { text: string; count: number } {
   const an = new Map(s.accounts.map((a) => [a.id, a.name]));
   const cn = new Map(s.categories.map((c) => [c.id, c.name]));
-  const rows: Row[] = txs.map((x) => ({
+  const inRange = (x: ExportTx) => (!range.from || x.transaction_date >= range.from) && (!range.to || x.transaction_date <= range.to);
+  const rows: Row[] = txs.filter(inRange).map((x) => ({
     date: x.transaction_date,
     type: x.type,
     amount_minor: Number(x.amount_minor),
@@ -37,6 +41,48 @@ export function buildExport(txs: ExportTx[], s: Snapshot): { text: string; count
     to_account: (x.transfer_account_id && an.get(x.transfer_account_id)) || '',
   }));
   return { text: toCsv(rows), count: rows.length };
+}
+
+// The From/To boxes (YYYY-MM-DD, empty = open). Messages say which box and what to fix.
+export function checkExportRange(
+  fromText: string,
+  toText: string,
+  today = manilaToday(),
+): { ok: true; range: ExportRange } | { ok: false; message: string } {
+  const from = fromText.trim();
+  const to = toText.trim();
+  const fix = (label: string) =>
+    `${label} must be a real date like ${today} (YYYY-MM-DD, from the year 2000 to five years from now), or leave it empty.`;
+  if (from && !isSaneDate(from, today)) return { ok: false, message: fix('From') };
+  if (to && !isSaneDate(to, today)) return { ok: false, message: fix('To') };
+  if (from && to && from > to)
+    return { ok: false, message: `From (${from}) is after To (${to}). Put the earlier date in From and the later one in To.` };
+  const range: ExportRange = {};
+  if (from) range.from = from;
+  if (to) range.to = to;
+  return { ok: true, range };
+}
+
+export function rangeLabel(r: ExportRange): string {
+  if (r.from && r.to) return `from ${r.from} to ${r.to}`;
+  if (r.from) return `from ${r.from} onwards`;
+  if (r.to) return `up to ${r.to}`;
+  return '';
+}
+
+// The text goes through the share sheet, which cannot carry a huge file. Refuse instead of handing over something that may arrive cut off.
+export function checkShareSize(text: string, count?: number): { ok: true } | { ok: false; message: string } {
+  if (text.length <= MAX_SHARE_CHARS) return { ok: true };
+  const entries = count ?? Math.max(0, csvParse(text).length - 1);
+  return {
+    ok: false,
+    message: `This export has ${n(entries)} ${entries === 1 ? 'entry' : 'entries'}, too many to share as text in one go (limit about ${n(MAX_SHARE_CHARS)} characters). Narrow the date range with From and To, and export the rest in more parts, for example one year at a time.`,
+  };
+}
+
+export function exportDoneMessage(count: number, range: ExportRange): string {
+  const r = rangeLabel(range);
+  return `${n(count)} ${count === 1 ? 'entry' : 'entries'} shared${r ? ` ${r}` : ''}. Save the text into a file named zovix-export.csv.`;
 }
 
 // ---- import

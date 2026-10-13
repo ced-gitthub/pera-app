@@ -29,6 +29,8 @@ export function monthBounds(ym: string) {
   return { from: r.from, to: r.to, year: r.year };
 }
 // Forward arrow limit: up to one month after the current Manila month (planned entries), no further.
+// Reports start at January 2000, the earliest date the app accepts anywhere.
+export const canGoPrev = (ym: string) => ym > '2000-01';
 export const canGoNext = (ym: string, today: string) => shiftMonth(ym, 1) <= shiftMonth(today.slice(0, 7), 1);
 
 // Totals use the website's own rule (aggregate.totals); categories are grouped by id so renamed or duplicate names stay separate.

@@ -4,7 +4,17 @@ import { formatMinor, manilaToday } from '../../src/core/money';
 import { Btn } from './Btn';
 import type { Snapshot } from './logic';
 import { loadMonthSummary, loadYearMonths } from './reportsApi';
-import { barHeights, canGoNext, monthLabel, shiftMonth, summarize, yearSeries, type MonthRow, type SummaryRow } from './reportsLogic';
+import {
+  barHeights,
+  canGoNext,
+  canGoPrev,
+  monthLabel,
+  shiftMonth,
+  summarize,
+  yearSeries,
+  type MonthRow,
+  type SummaryRow,
+} from './reportsLogic';
 import { Sheet } from './Sheet';
 import { ListSkeleton } from './Skeleton';
 import { Bar } from './Tabs';
@@ -80,7 +90,7 @@ export function Reports({ snap, onClose }: { snap: Snapshot; onClose: () => void
   return (
     <Sheet open title="Reports" onClose={onClose}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: sp.m }}>
-        <Arrow label="Previous month" glyph="‹" off={false} onPress={() => setYm(shiftMonth(ym, -1))} />
+        <Arrow label="Previous month" glyph="‹" off={!canGoPrev(ym)} onPress={() => setYm(shiftMonth(ym, -1))} />
         <Text accessibilityRole="header" style={{ color: c.ink, fontSize: t.lead, fontWeight: '700' }}>
           {monthLabel(ym)}
         </Text>

@@ -142,3 +142,8 @@ test('delete warning says what is kept and what is lost', () => {
   assert.match(c, /budget/i);
   assert.match(c, /entries/i);
 });
+
+test('account delete messages mention repeating entries, not only entries', () => {
+  assert.match(manageError({ code: '23503', message: 'x' }, 'account', 'delete'), /repeating entries/i);
+  assert.match(deleteWarning('account', 'Cash'), /repeating entries/i);
+});

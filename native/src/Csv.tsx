@@ -4,7 +4,15 @@ import type { Snapshot } from './logic';
 import { Sheet } from './Sheet';
 import { Btn } from './Btn';
 import { checkImport, exportCsv, runImport } from './csvApi';
-import { checkSummary, importMessage, problemLines, type ImportPlan } from './csvLogic';
+import {
+  checkExportRange,
+  checkShareSize,
+  checkSummary,
+  exportDoneMessage,
+  importMessage,
+  problemLines,
+  type ImportPlan,
+} from './csvLogic';
 import { c, s, sp } from './ui';
 
 type Msg = { bad: boolean; t: string } | null;
@@ -16,6 +24,8 @@ export function Csv({ snap, onClose, onChanged }: { snap: Snapshot; onClose: () 
   const lock = useRef(false); // a second tap in the same instant is ignored, not queued
   const [text, setText] = useState('');
   const [plan, setPlan] = useState<ImportPlan | null>(null);
+  const [fromText, setFromText] = useState('');
+  const [toText, setToText] = useState('');
   const [exportMsg, setExportMsg] = useState<Msg>(null);
   const [importMsg, setImportMsg] = useState<Msg>(null);
   const [note, setNote] = useState('');
@@ -35,14 +45,23 @@ export function Csv({ snap, onClose, onChanged }: { snap: Snapshot; onClose: () 
   const doExport = () =>
     run('export', async () => {
       setExportMsg(null);
+      const r = checkExportRange(fromText, toText);
+      if (!r.ok) return setExportMsg({ bad: true, t: r.message });
       try {
-        const out = await exportCsv(snap);
-        if (!out.count) return setExportMsg({ bad: true, t: 'Nothing to export yet. Add an entry first.' });
-        await Share.share({ message: out.text, title: 'Zovix export' });
-        setExportMsg({
-          bad: false,
-          t: `${out.count.toLocaleString('en-US')} entries ready. Save the text into a file named zovix-export.csv.`,
-        });
+        const out = await exportCsv(snap, r.range);
+        if (!out.count)
+          return setExportMsg({
+            bad: true,
+            t:
+              r.range.from || r.range.to
+                ? 'No entries in that date range. Change From or To.'
+                : 'Nothing to export yet. Add an entry first.',
+          });
+        const size = checkShareSize(out.text, out.count);
+        if (!size.ok) return setExportMsg({ bad: true, t: size.message });
+        const res = await Share.share({ message: out.text, title: 'Zovix export' });
+        if (res.action === Share.dismissedAction) return setExportMsg({ bad: true, t: 'Sharing was cancelled, so nothing was exported.' });
+        setExportMsg({ bad: false, t: exportDoneMessage(out.count, r.range) });
       } catch (e) {
         const m = e instanceof Error && /export|connection/i.test(e.message) ? e.message : 'Could not open the share sheet. Try again.';
         setExportMsg({ bad: true, t: m });
@@ -86,8 +105,33 @@ export function Csv({ snap, onClose, onChanged }: { snap: Snapshot; onClose: () 
       <View style={s.card}>
         <Text style={s.h2}>Export</Text>
         <Text style={[s.p, { marginBottom: sp.m }]}>
-          Share all your entries as CSV text. Open it in a spreadsheet, or import it on the website.
+          Share your entries as CSV text. Open it in a spreadsheet, or import it on the website. Leave From and To empty to share
+          everything, or fill them (YYYY-MM-DD) to share only that period. Very large exports must be split by date range.
         </Text>
+        <View style={{ flexDirection: 'row', gap: sp.s }}>
+          <TextInput
+            style={[s.input, { flex: 1 }]}
+            accessibilityLabel="Export from date, YYYY-MM-DD, empty for everything"
+            placeholder="From (YYYY-MM-DD)"
+            placeholderTextColor={c.mute}
+            autoCapitalize="none"
+            autoCorrect={false}
+            value={fromText}
+            onChangeText={setFromText}
+            editable={work === ''}
+          />
+          <TextInput
+            style={[s.input, { flex: 1 }]}
+            accessibilityLabel="Export to date, YYYY-MM-DD, empty for everything"
+            placeholder="To (YYYY-MM-DD)"
+            placeholderTextColor={c.mute}
+            autoCapitalize="none"
+            autoCorrect={false}
+            value={toText}
+            onChangeText={setToText}
+            editable={work === ''}
+          />
+        </View>
         {!!exportMsg && <Text style={exportMsg.bad ? s.err : s.ok}>{exportMsg.t}</Text>}
         <Btn label="Export my entries" busy={work === 'export'} onPress={doExport} />
       </View>

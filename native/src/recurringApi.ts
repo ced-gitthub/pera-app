@@ -1,6 +1,8 @@
+import Constants from 'expo-constants';
 import { supabase } from './supabase';
 import { manilaToday } from '../../src/core/money';
-import { MAX_RULES, recurringError, type RuleRow } from './recurringLogic';
+import { DATE_UNCONFIRMED, createRuleWith, deleteRuleWith, runDueWith, setRuleActiveWith, type Db } from './recurringCore';
+import { MAX_RULES, manilaDateFromHttpDate, type RuleRow } from './recurringLogic';
 
 export type Rule = {
   id: string;
@@ -29,29 +31,49 @@ export async function listRules(): Promise<Rule[]> {
   return (data ?? []).map((x) => ({ ...(x as unknown as Rule), amount_minor: Number(x.amount_minor) }));
 }
 
-// Retry-safe: the row id is made once per form, so sending the same rule twice saves it once (a duplicate id means it already saved).
+const db = supabase as unknown as Db;
+
 export async function createRule(row: RuleRow): Promise<string | null> {
   const { data: u } = await supabase.auth.getUser();
   if (!u.user) return 'Session expired. Please sign in again.';
-  const { error } = await supabase.from('recurring_transactions').insert({ ...row, user_id: u.user.id });
-  if (error && error.code === '23505') return null;
-  return recurringError(error);
+  return createRuleWith(db, u.user.id, row);
 }
 
-export async function setRuleActive(id: string, active: boolean): Promise<string | null> {
-  const { error } = await supabase.from('recurring_transactions').update({ active }).eq('id', id);
-  return error ? 'Could not change that rule. Check your connection and try again.' : null;
+// Pausing flips `active`. Resuming skips the dates missed while paused (see setRuleActiveWith).
+export function setRuleActive(id: string, active: boolean): Promise<string | null> {
+  return setRuleActiveWith(db, { id }, active, manilaToday());
 }
 
-// Entries the rule already made stay (their link to the rule is cleared by the database, not deleted).
-export async function deleteRule(id: string): Promise<string | null> {
-  const { error } = await supabase.from('recurring_transactions').delete().eq('id', id);
-  return error ? 'Could not delete that rule. Check your connection and try again.' : null;
+export function deleteRule(id: string): Promise<string | null> {
+  return deleteRuleWith(db, id);
 }
 
-// Makes every entry that is due up to today (Manila). Safe to run again: it never makes the same entry twice.
+const x = Constants.expoConfig?.extra as { supabaseUrl: string; supabasePublishableKey: string };
+const CLOCK_TIMEOUT_MS = 8000;
+
+// Today's date (Manila) according to the server, not the phone: a phone clock set ahead must not create future entries.
+// A HEAD request to the REST root is tiny; its `Date` header is the server time. null when it cannot be read.
+export async function serverToday(): Promise<string | null> {
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), CLOCK_TIMEOUT_MS);
+  try {
+    const res = await fetch(`${x.supabaseUrl}/rest/v1/`, {
+      method: 'HEAD',
+      headers: { apikey: x.supabasePublishableKey },
+      signal: ctl.signal,
+    });
+    const header = res.headers.get('date');
+    return header ? manilaDateFromHttpDate(header) : null;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// Makes every entry that is due up to today (server date, Manila). Does nothing when the date cannot be confirmed.
 export async function runDue(): Promise<{ created: number; error: string | null }> {
-  const { data, error } = await supabase.rpc('run_recurring', { p_today: manilaToday() });
-  if (error) return { created: 0, error: 'Could not run your recurring rules right now. Try again in a moment.' };
-  return { created: Number(data ?? 0), error: null };
+  const today = await serverToday();
+  if (!today) return { created: 0, error: DATE_UNCONFIRMED };
+  return runDueWith(db, today, manilaToday());
 }

@@ -93,3 +93,69 @@ export function recurringError(error: { message: string; code?: string } | null)
     return `You can have at most ${MAX_RULES} recurring rules. Delete one to add another.`;
   return 'Not saved: the server refused it or could not be reached. Try again.';
 }
+
+// ---- Schedule maths. Mirrors recurring_occurrence(r, k) in supabase/migrations/0002_app.sql exactly. ----
+export type Schedule = { start_date: string; frequency: string; interval_count: number };
+
+const pad = (n: number, w = 2) => String(n).padStart(w, '0');
+const daysInMonth = (y: number, m0: number) => new Date(Date.UTC(y, m0 + 1, 0)).getUTCDate();
+
+// Postgres `date + make_interval(months => n)`: same day of month, clamped to the last valid day of the target month.
+function addMonths(date: string, n: number): string {
+  const y = Number(date.slice(0, 4));
+  const m0 = Number(date.slice(5, 7)) - 1;
+  const d = Number(date.slice(8, 10));
+  const total = y * 12 + m0 + n;
+  const ty = Math.floor(total / 12);
+  const tm0 = total - ty * 12;
+  return `${pad(ty, 4)}-${pad(tm0 + 1)}-${pad(Math.min(d, daysInMonth(ty, tm0)))}`;
+}
+
+// The date of the k-th run (k starts at 0), always computed from start_date so it never drifts.
+export function occurrence(rule: Schedule, k: number): string {
+  const n = k * rule.interval_count;
+  switch (rule.frequency) {
+    case 'daily':
+      return addDays(rule.start_date, n);
+    case 'weekly':
+      return addDays(rule.start_date, 7 * n);
+    case 'monthly':
+      return addMonths(rule.start_date, n);
+    default:
+      return addMonths(rule.start_date, 12 * n); // yearly
+  }
+}
+
+// Resuming a paused rule: skip every date missed while it was paused. The first run is the first occurrence on or after today.
+export function resumePlan(
+  rule: Schedule & { end_date: string | null },
+  today: string,
+): { run_count: number; next_run_date: string; active: boolean } {
+  let k = 0;
+  let d = occurrence(rule, 0);
+  while (d < today) {
+    k++;
+    d = occurrence(rule, k);
+    if (k > 100_000) break; // a daily rule needs well under this; never loop forever on bad data
+  }
+  return { run_count: k, next_run_date: d, active: rule.end_date === null || d <= rule.end_date };
+}
+
+// ---- Clock safety ----
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+// 'Tue, 14 Oct 2026 02:10:00 GMT' (an HTTP Date header) -> '2026-10-14' on the Asia/Manila calendar. null if it cannot be read.
+export function manilaDateFromHttpDate(header: string): string | null {
+  if (typeof header !== 'string') return null;
+  const m = /^[A-Za-z]{3}, (\d{1,2}) ([A-Za-z]{3}) (\d{4}) (\d{2}):(\d{2}):(\d{2}) GMT$/.exec(header.trim());
+  if (!m) return null;
+  const mon = MONTHS.indexOf(m[2]);
+  const [day, year, hh, mm, ss] = [m[1], m[3], m[4], m[5], m[6]].map(Number);
+  if (mon < 0 || day < 1 || day > daysInMonth(year, mon) || hh > 23 || mm > 59 || ss > 59) return null;
+  return manilaToday(new Date(Date.UTC(year, mon, day, hh, mm, ss)));
+}
+
+// Run the due rules when we never have, or when the Manila day has changed since the last run.
+export function shouldRunDue(lastRunDate: string | null, today: string): boolean {
+  return lastRunDate === null || lastRunDate !== today;
+}
