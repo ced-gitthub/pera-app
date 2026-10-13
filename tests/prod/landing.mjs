@@ -28,6 +28,7 @@ for (const [label, vp, scheme] of [
   const url = ONLY ? '/' : '/welcome';
   await step(`${url} shows the landing page with a Download for Android button`, async () => {
     await q.goto(url);
+    await q.locator('text=Private by design').waitFor({ timeout: 20000 });
     const a = q.locator('a:has-text("Download for Android")');
     const n = await a.count(),
       href = await a.first().getAttribute('href');
@@ -50,7 +51,7 @@ for (const [label, vp, scheme] of [
       'Is Zovix really free?',
       'iPhone',
     ];
-    const miss = need.filter((x) => !t.includes(x));
+    const miss = need.filter((x) => !t.includes(x.toLowerCase()));
     return miss.length ? miss : true;
   });
   await step('a FAQ answer opens when tapped', async () => {

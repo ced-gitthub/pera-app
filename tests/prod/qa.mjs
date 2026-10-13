@@ -55,10 +55,11 @@ G('auth: logged-out');
   await step('landing page: Download for Android, worked sample "lunch 150 gcash", install steps; nothing to type into', async () => {
     await q.goto('/');
     if (new URL(q.url()).pathname !== '/welcome') return q.url();
-    const t = (await q.locator('body').innerText()).replace(/s+/g, ' ');
+    await q.locator('text=Private by design').waitFor({ timeout: 20000 });
+    const t = (await q.locator('body').innerText()).replace(/\s+/g, ' ').toLowerCase();
     const href = await q.locator('a:has-text("Download for Android")').first().getAttribute('href');
     const need = ['lunch 150 gcash', 'What Zovix does', 'Add to Home Screen', 'Broke Rookie', 'Private by design'];
-    const miss = need.filter((x) => !t.includes(x));
+    const miss = need.filter((x) => !t.includes(x.toLowerCase()));
     return href === '/zovix.apk' && !miss.length && (await q.locator('#wl-in').count()) === 0 ? true : { href, miss };
   });
   await step('dashboard tutorial: a new account sees "Getting started" with exactly one highlighted next step', async () => {
