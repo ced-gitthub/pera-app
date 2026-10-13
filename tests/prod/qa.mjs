@@ -143,10 +143,34 @@ G('auth: logged-out');
       await w.locator('.ob').waitFor({ state: 'detached', timeout: 20000 });
       await w.goto('/accounts');
       const free = (await w.locator('.ob').count()) === 0;
+      // an account that already has all four steps (like the owner's) on a device with no cookies: it must get the sliding walkthrough, not the bare dashboard
+      for (const name of ['zovix_onboarded3', 'zovix_toured', 'zovix_wizard', 'zovix_wizard_bal']) await cw.clearCookies({ name });
+      await w.goto('/');
+      await w.locator('.ob').waitFor({ timeout: 20000 });
+      const tour = [];
+      for (let k = 0; k < 4; k++) {
+        tour.push((await w.locator('.ob-count b').first().innerText()).trim());
+        await w.locator('.ob button:has-text("Next")').click();
+      }
+      tour.push((await w.locator('.ob-count b').first().innerText()).trim());
+      const tourOk = tour.join('|') === 'Step 1 of 5|Step 2 of 5|Step 3 of 5|Step 4 of 5|Step 5 of 5';
+      const tourBodyHidden = await w.evaluate(
+        () =>
+          getComputedStyle(document.querySelector('.shell')).display === 'none' &&
+          document.documentElement.scrollHeight <= window.innerHeight + 1,
+      );
+      await w.locator('button:has-text("Open my Zovix")').click();
+      await w.locator('.ob').waitFor({ state: 'detached', timeout: 20000 });
       await cw.close();
-      return seen.join('|') === 'Step 1 of 5|Step 2 of 5|Step 3 of 5|Step 4 of 5|Step 5 of 5' && inert && noSkip && refused && free
+      return seen.join('|') === 'Step 1 of 5|Step 2 of 5|Step 3 of 5|Step 4 of 5|Step 5 of 5' &&
+        inert &&
+        noSkip &&
+        refused &&
+        free &&
+        tourOk &&
+        tourBodyHidden
         ? true
-        : { seen, inert, noSkip, refused, free };
+        : { seen, inert, noSkip, refused, free, tour, tourOk, tourBodyHidden };
     },
   );
   await step('/api/health is public and healthy', async () => {
