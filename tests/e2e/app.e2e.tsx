@@ -210,6 +210,14 @@ const count = (h: string, s: string) => h.split(s).length - 1;
           !('review' in j),
         ld.slice(0, 120),
       );
+      const { escapeJsonForHtml } = await import('@/lib/jsonLd'),
+        hostile = { t: '</script><script>alert(1)</script> & ' + String.fromCharCode(0x2028) },
+        esc = escapeJsonForHtml(JSON.stringify(hostile));
+      T(
+        'json-ld escaping: nothing can close the script tag, and the value survives a round trip',
+        !/[<>&]/.test(esc) && !esc.includes(String.fromCharCode(0x2028)) && JSON.parse(esc).t === hostile.t,
+        esc,
+      );
       const rb = (await import('@/app/robots')).default(),
         sm = (await import('@/app/sitemap')).default(),
         dis = JSON.stringify(rb.rules);
