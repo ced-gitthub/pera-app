@@ -7,12 +7,17 @@ import { load, type Snapshot } from './data';
 import { loadCounts } from './wizardData';
 import { readFlags, setFlags, tabTourSeen, markTabTourSeen } from './flags';
 import { TabTour } from './TabTour';
+import { CoachProvider } from './Coach';
+import { TOUR } from './tourContent';
 import { type Tx, decideGate, firstName, FINISH_FLAGS, REPLAY_FLAGS } from './logic';
 import { Home } from './Home';
 import { EntrySheet, UndoBar } from './EntrySheet';
 import { restoreEntry } from './entries';
 import { afterRestore, type UndoState } from './entriesLogic';
 import { runDue } from './recurringApi';
+import { cleanIfNewlySignedUp } from './fresh';
+import { MakeItYours } from './MakeItYours';
+import { makeItYoursSeen } from './profile';
 import { shouldRunDue } from './recurringLogic';
 import { manilaToday } from '../../src/core/money';
 import { Activity, TabBar } from './Tabs';
@@ -33,20 +38,34 @@ export function Gate() {
   const [name, setName] = useState('');
   const [tab, setTab] = useState('home');
   const [picked, setPicked] = useState<Tx | null>(null);
+  const [creating, setCreating] = useState(false); // the manual "New entry" form from Activity
   const [undo, setUndo] = useState<UndoState | null>(null);
   const [tabH, setTabH] = useState(0);
   const [notice, setNotice] = useState('');
-  const [tour, setTour] = useState(false);
+  const [mine, setMine] = useState(false); // 'Make it yours' (theme + profile), once per account
+  const [tour, setTour] = useState<number | null>(null); // index of the live-tour step, or null when it is closed
+  const tourFrom = useRef('home'); // the tab the person was on, restored when the tour ends
   const lastTry = useRef<number | null>(null);
   const lastDue = useRef<string | null>(null); // Manila day when due recurring rules last ran; they run again when the day changes, like the website does on each Home load
   const [ver, setVer] = useState(0); // bumps when an entry changes, so lists reload
   const [err, setErr] = useState('');
+  const startTour = (from: string) => {
+    tourFrom.current = from;
+    setTour(0);
+  };
+  useEffect(() => {
+    // every tour step shows its own real tab underneath the overlay
+    if (tour !== null) setTab(TOUR[Math.min(tour, TOUR.length - 1)].tab);
+  }, [tour]);
   // Returns '' on success, or the message to show. A failed re-read is shown, never hidden.
   const refresh = useCallback(async (): Promise<string> => {
     try {
       const { data } = await supabase.auth.getSession();
       const id = data.session?.user.id;
       if (!id) return 'Session expired. Please sign in again.';
+      // A brand-new in-app account starts empty: the tutorial before sign-up was the sample. Runs once, only right after a sign-up on this phone.
+      const cleanMsg = await cleanIfNewlySignedUp(data.session?.user.created_at);
+      if (cleanMsg) return cleanMsg;
       const sn = await load();
       const flags = await readFlags(id);
       const counts = await loadCounts().catch(() => null);
@@ -81,11 +100,15 @@ export function Gate() {
     refresh();
   }, [refresh]);
   useEffect(() => {
+    if (!uid) return;
+    void makeItYoursSeen(uid).then((seen) => !seen && setMine(true));
+  }, [uid]);
+  useEffect(() => {
     // the tab tour opens once per account, as soon as the first-run steps are out of the way
     if (!snap || !gate || gate.show || !uid) return;
     void tabTourSeen(uid).then((seen) => {
       if (!seen) {
-        setTour(true);
+        startTour('home');
         void markTabTourSeen(uid);
       }
     });
@@ -98,6 +121,7 @@ export function Gate() {
     return () => sub.remove();
   }, [refresh]);
 
+  if (mine) return <MakeItYours open onDone={() => setMine(false)} />;
   if (!snap || !gate)
     return err ? (
       <View style={s.screen}>
@@ -123,52 +147,62 @@ export function Gate() {
         }}
       />
     );
+  const endTour = () => {
+    setTour(null);
+    setTab(tourFrom.current);
+  };
   const replay = async () => {
     await setFlags(uid, REPLAY_FLAGS);
     setTab('home');
     await refresh();
   };
   return (
-    <View style={{ flex: 1 }}>
+    <CoachProvider>
       <View style={{ flex: 1 }}>
-        {tab === 'home' && (
-          <Home snap={snap} refresh={refresh} name={firstName(name)} onPick={setPicked} onOpenAccounts={() => setTab('accounts')} />
-        )}
-        {tab === 'activity' && <Activity snap={snap} onPick={setPicked} ver={ver} />}
-        {tab === 'accounts' && <AccountsTab snap={snap} refresh={refresh} />}
-        {tab === 'budgets' && <Budgets snap={snap} />}
-        {tab === 'goals' && <Goals snap={snap} />}
-        {tab === 'more' && <Settings snap={snap} name={name} refresh={refresh} onReplay={replay} onTour={() => setTour(true)} />}
-      </View>
-      <UndoBar
-        row={undo?.row ?? null}
-        error={undo?.error}
-        lift={tabH}
-        onDismiss={() => setUndo(null)}
-        onUndo={async () => {
-          if (!undo) return;
-          const m = await restoreEntry(undo.row);
-          const next = afterRestore(undo, m);
-          setUndo(next);
-          if (!next) {
+        <View style={{ flex: 1 }}>
+          {tab === 'home' && (
+            <Home snap={snap} refresh={refresh} name={firstName(name)} onPick={setPicked} onOpenAccounts={() => setTab('accounts')} />
+          )}
+          {tab === 'activity' && <Activity snap={snap} onPick={setPicked} onAdd={() => setCreating(true)} ver={ver} />}
+          {tab === 'accounts' && <AccountsTab snap={snap} refresh={refresh} />}
+          {tab === 'budgets' && <Budgets snap={snap} />}
+          {tab === 'goals' && <Goals snap={snap} />}
+          {tab === 'more' && <Settings snap={snap} name={name} refresh={refresh} onReplay={replay} onTour={() => startTour(tab)} />}
+        </View>
+        <UndoBar
+          row={undo?.row ?? null}
+          error={undo?.error}
+          lift={tabH}
+          onDismiss={() => setUndo(null)}
+          onUndo={async () => {
+            if (!undo) return;
+            const m = await restoreEntry(undo.row);
+            const next = afterRestore(undo, m);
+            setUndo(next);
+            if (!next) {
+              setVer((v) => v + 1);
+              await refresh();
+            }
+          }}
+        />
+        <EntrySheet
+          tx={picked}
+          creating={creating}
+          snap={snap}
+          onClose={() => {
+            setPicked(null);
+            setCreating(false);
+          }}
+          onChanged={async (u) => {
+            setUndo(u ?? null);
             setVer((v) => v + 1);
             await refresh();
-          }
-        }}
-      />
-      <EntrySheet
-        tx={picked}
-        snap={snap}
-        onClose={() => setPicked(null)}
-        onChanged={async (u) => {
-          setUndo(u ?? null);
-          setVer((v) => v + 1);
-          await refresh();
-        }}
-      />
-      {!!notice && <Text style={{ color: c.mute, fontSize: t.caption, textAlign: 'center', padding: sp.s }}>{notice}</Text>}
-      <TabTour open={tour} onClose={() => setTour(false)} />
-      <TabBar tab={tab} setTab={setTab} onHeight={setTabH} />
-    </View>
+          }}
+        />
+        {!!notice && <Text style={{ color: c.mute, fontSize: t.caption, textAlign: 'center', padding: sp.s }}>{notice}</Text>}
+        <TabBar tab={tab} setTab={setTab} onHeight={setTabH} />
+        {tour !== null && <TabTour index={tour} onIndex={setTour} onClose={endTour} />}
+      </View>
+    </CoachProvider>
   );
 }

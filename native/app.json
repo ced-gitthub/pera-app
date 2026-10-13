@@ -2,14 +2,14 @@
   "expo": {
     "name": "Zovix",
     "slug": "zovix-native",
-    "version": "0.8.0",
+    "version": "0.9.0",
     "scheme": "zovix",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "android": {
       "package": "com.zovixhub.pera",
-      "versionCode": 10,
+      "versionCode": 11,
       "allowBackup": false,
       "adaptiveIcon": {
         "backgroundColor": "#5B2EE0",
@@ -21,6 +21,7 @@
     },
     "plugins": ["expo-web-browser", ["expo-build-properties", { "android": { "usesCleartextTraffic": false } }]],
     "extra": {
+      "siteUrl": "https://pera-app-beta.vercel.app",
       "supabaseUrl": "https://vxhgkkzbmrhxayzryake.supabase.co",
       "supabasePublishableKey": "sb_publishable_YGZgbXB3xS6tP2ssvT8pCA_c3i4hRL2"
     }

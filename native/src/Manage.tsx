@@ -5,7 +5,7 @@ import { formatMinor } from '../../src/core/money';
 import { minorToInput } from '../../src/lib/validate';
 import type { Snapshot, Category } from './logic';
 import { Btn } from './Btn';
-import { Sheet } from './Sheet';
+import { HeaderClose, Sheet } from './Sheet';
 import { Chip } from './Tabs';
 import { c, s, sp, t } from './ui';
 import {
@@ -37,7 +37,17 @@ const OFFLINE_DELETE = 'Not deleted: could not reach the server. Try again.';
 const typeLabel = (id: string) => ACCOUNT_TYPES.find((x) => x.id === id)?.label ?? 'Other';
 
 // Add, rename and delete accounts and categories. The database refuses a delete while entries still use the row, and we say so plainly.
-export function Manage({ snap, onClose, onChanged }: { snap: Snapshot; onClose: () => void; onChanged: () => void | Promise<unknown> }) {
+export function Manage({
+  snap,
+  onClose,
+  onChanged,
+  startAdd,
+}: {
+  snap: Snapshot;
+  onClose: () => void;
+  onChanged: () => void | Promise<unknown>;
+  startAdd?: boolean; // open straight on the new-account form
+}) {
   const { top, bottom } = useSafeAreaInsets();
   const [rows, setRows] = useState<AccountRow[] | null>(null);
   const [loadErr, setLoadErr] = useState('');
@@ -60,6 +70,11 @@ export function Manage({ snap, onClose, onChanged }: { snap: Snapshot; onClose: 
   useEffect(() => {
     void reload();
   }, [reload]);
+
+  useEffect(() => {
+    if (startAdd) openAccount(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const changed = async () => {
     await reload();
@@ -152,11 +167,28 @@ export function Manage({ snap, onClose, onChanged }: { snap: Snapshot; onClose: 
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingTop: top + sp.s,
+          paddingHorizontal: sp.l,
+          paddingBottom: sp.s,
+          borderBottomWidth: 1,
+          borderBottomColor: c.line,
+        }}
+      >
+        <Text style={[s.h1, { flex: 1 }]} accessibilityRole="header">
+          Accounts and categories
+        </Text>
+        <HeaderClose label="Close" onPress={onClose} />
+      </View>
       <ScrollView
-        contentContainerStyle={{ paddingTop: top + sp.l, paddingHorizontal: sp.l, paddingBottom: bottom + sp.clear }}
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingTop: sp.l, paddingHorizontal: sp.l, paddingBottom: Math.max(bottom, sp.xl) + sp.xl }}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={s.h1}>Accounts and categories</Text>
         <Text style={[s.p, { marginVertical: sp.s }]}>
           Names cannot repeat. Something your entries use cannot be deleted; rename it instead.
         </Text>
@@ -202,7 +234,6 @@ export function Manage({ snap, onClose, onChanged }: { snap: Snapshot; onClose: 
             <Btn label="Add category" alt onPress={() => openCategory(null)} />
           )}
         </View>
-        <Btn label="Done" onPress={onClose} />
       </ScrollView>
 
       <Sheet open={!!target} title={title} onClose={() => !busy && setTarget(null)}>

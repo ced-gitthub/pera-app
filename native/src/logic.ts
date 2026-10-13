@@ -144,27 +144,23 @@ export function sendCodeError(error: { message: string; status?: number } | null
   return creating ? 'Sign-up is not available for that email right now. Check the address, or try again later.' : null;
 }
 
-// ---- Home numbers. Total is the net of everything, like the website; Spendable and Savings follow the owner's rule below (negatives are owed, not subtracted).
-// Spendable = money you can spend now: the positive balances of accounts that are not savings. Savings = positive balances of savings accounts.
-// A negative balance anywhere (a credit card, an overdrawn account) is "owed", not subtracted from spendable. Total is the net of everything, as on the website.
+// ---- Home numbers. Spendable = every non-savings account (a card or overdraft below zero REDUCES it), Savings = the savings accounts,
+// and Spendable + Savings is always the Total, so the numbers can never disagree. "owed" is information only: how much of it is debt.
 export function homeView(s: Snapshot) {
-  let spendable = 0,
+  let spendable = s.noAccount, // older entries with no account count as spendable money
     savings = 0,
-    owed = 0;
+    owed = s.noAccount < 0 ? -s.noAccount : 0;
   for (const a of s.accounts) {
     const b = s.balances[a.id] ?? 0;
-    if (b < 0) owed -= b;
-    else if (a.counts_as_savings) savings += b;
+    if (a.counts_as_savings) savings += b;
     else spendable += b;
+    if (b < 0) owed -= b;
   }
-  if (s.noAccount < 0)
-    owed -= s.noAccount; // legacy entries with no account
-  else spendable += s.noAccount;
   return {
     spendable,
     savings,
     owed,
-    total: spendable + savings - owed,
+    total: spendable + savings,
     hero: s.accounts.some((a) => a.counts_as_savings) ? ('spendable' as const) : ('total' as const),
     cards: s.accounts.filter((a) => a.show_on_home),
   };
@@ -182,28 +178,19 @@ export function homeTiles(s: Snapshot): HomeTile[] {
   ];
 }
 
-export type OverviewRow = { id: string; name: string; balance: number; group: 'spendable' | 'savings' | 'owed'; showOnHome: boolean };
-// Every account (hidden ones too) grouped the same way the Home numbers are, so the groups always add up to the total.
+export type OverviewRow = { id: string; name: string; balance: number; group: 'spendable' | 'savings'; showOnHome: boolean };
+// Every account (hidden ones too) in the same two groups as the Home numbers, so each group's rows add up to its figure.
 export function accountsOverview(s: Snapshot) {
-  const rows: OverviewRow[] = s.accounts.map((a) => {
-    const balance = s.balances[a.id] ?? 0;
-    return {
-      id: a.id,
-      name: a.name,
-      balance,
-      group: balance < 0 ? 'owed' : a.counts_as_savings ? 'savings' : 'spendable',
-      showOnHome: a.show_on_home,
-    };
-  });
-  // older entries with no account have no row of their own, so they get one: the groups then always add up to the numbers above them
+  const rows: OverviewRow[] = s.accounts.map((a) => ({
+    id: a.id,
+    name: a.name,
+    balance: s.balances[a.id] ?? 0,
+    group: a.counts_as_savings ? 'savings' : 'spendable',
+    showOnHome: a.show_on_home,
+  }));
+  // older entries with no account have no row of their own, so they get one
   if (s.noAccount !== 0)
-    rows.push({
-      id: 'none',
-      name: 'No account (older entries)',
-      balance: s.noAccount,
-      group: s.noAccount < 0 ? 'owed' : 'spendable',
-      showOnHome: false,
-    });
+    rows.push({ id: 'none', name: 'No account (older entries)', balance: s.noAccount, group: 'spendable', showOnHome: false });
   const v = homeView(s);
   return { rows, spendable: v.spendable, savings: v.savings, owed: v.owed, total: v.total };
 }

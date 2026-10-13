@@ -1,6 +1,6 @@
 // Bulk-delete database logic with an injected db, so it can be tested without react-native or a network. reset.ts wires in the real client.
 // Row-level security limits every query to the signed-in person's own rows.
-import { RESET_KINDS, resetError, type ResetKind } from './resetLogic.ts';
+import { RESET_KINDS, partialMessage, resetError, sumCounts, type ResetKind } from './resetLogic.ts';
 
 type DbError = { message: string; code?: string } | null;
 type Res = { count?: number | null; error: DbError };
@@ -33,4 +33,29 @@ export async function resetWith(db: Db, kind: ResetKind): Promise<ResetResult> {
   } catch (x) {
     return { error: resetError(x), deleted: null };
   }
+}
+
+// Smallest tables first, so a failure on the biggest one (entries) leaves the small ones done.
+export const ALL_ORDER: ResetKind[] = ['budgets', 'goals', 'entries'];
+export type ResetAllResult = { error: string | null; deleted: number | null; done: ResetKind[] };
+
+// Deletes budgets, goals, then entries, one after the other, and stops at the first failure.
+export async function resetAllWith(db: Db): Promise<ResetAllResult> {
+  const done: ResetKind[] = [];
+  let total = 0;
+  let known = true;
+  for (const kind of ALL_ORDER) {
+    const res = await resetWith(db, kind);
+    if (res.error) return { error: partialMessage(done, res.error), deleted: null, done };
+    done.push(kind);
+    if (res.deleted === null) known = false;
+    else total += res.deleted;
+  }
+  return { error: null, deleted: known ? total : null, done };
+}
+
+// Rows across all three tables; null if any count is unknown.
+export async function countAllWith(db: Db): Promise<number | null> {
+  const [entries, budgets, goals] = await Promise.all(RESET_KINDS.map((k) => countRows(db, k)));
+  return sumCounts({ entries, budgets, goals });
 }

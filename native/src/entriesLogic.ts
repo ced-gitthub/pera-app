@@ -51,3 +51,8 @@ export function afterRestore(state: UndoState, message: string | null): UndoStat
 
 // How long the Undo bar stays: the usual time, but not at all while a failure message is showing (it must be read).
 export const autoDismissMs = (error?: string): number | null => (error ? null : UNDO_MS);
+
+// The empty form of the "New entry" sheet: a spent entry dated today (Manila) on the first account, no category yet.
+export function blankForm(snap: { accounts: { id: string }[] }, today: string): TxEdit {
+  return { type: 'expense', amount: '', date: today, description: '', accountId: snap.accounts[0]?.id ?? '', toId: '', categoryId: '' };
+}

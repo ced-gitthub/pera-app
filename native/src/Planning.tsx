@@ -10,6 +10,7 @@ import { deleteBudget, deleteGoal } from './config';
 import { Bar, Chip, Page, useList } from './Tabs';
 import { Sheet } from './Sheet';
 import { Btn } from './Btn';
+import { CoachTarget } from './Coach';
 import { c, s, sp, t } from './ui';
 
 // Delete always asks first; the message says what is lost and what is kept.
@@ -59,32 +60,31 @@ export function Budgets({ snap }: { snap: Snapshot }) {
         line="What is left to spend this month."
         tint={c.hero.plum}
         loading={l.rows === null}
-        onGear={() => edit()}
-        gearLabel="New budget"
+        fab={{ label: '＋ New budget', onPress: () => edit() }}
         {...l}
       >
         {!!l.rows?.length && <Text style={[s.p, { marginBottom: sp.s }]}>Tap a budget to change or delete it.</Text>}
-        {l.rows?.length === 0 && <Text style={s.p}>No budgets this month. Tap New budget to set a limit for something you spend on.</Text>}
-        {l.rows?.map((b) => (
-          <Pressable
-            key={b.id}
-            accessibilityRole="button"
-            accessibilityLabel={`Edit ${b.name} budget`}
-            onPress={() => edit(b)}
-            style={s.card}
-          >
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <Text style={s.h2}>{b.name}</Text>
-              <Text style={{ color: b.over ? c.down : c.ink, fontWeight: '800', fontSize: t.body }}>
-                {b.over ? `Over by ${formatMinor(b.overBy)}` : `${formatMinor(b.left)} left`}
+        {l.rows?.length === 0 && (
+          <CoachTarget id="budgets:card" empty>
+            <Text style={s.p}>No budgets this month. Tap New budget to set a limit for something you spend on.</Text>
+          </CoachTarget>
+        )}
+        {l.rows?.map((b, i) => (
+          <CoachTarget key={b.id} id="budgets:card" on={i === 0}>
+            <Pressable accessibilityRole="button" accessibilityLabel={`Edit ${b.name} budget`} onPress={() => edit(b)} style={s.card}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                <Text style={s.h2}>{b.name}</Text>
+                <Text style={{ color: b.over ? c.down : c.ink, fontWeight: '800', fontSize: t.body }}>
+                  {b.over ? `Over by ${formatMinor(b.overBy)}` : `${formatMinor(b.left)} left`}
+                </Text>
+                <Text style={{ color: c.mute, fontSize: t.title }}> ›</Text>
+              </View>
+              <Bar pct={b.pct} color={b.over ? c.down : b.state === 'near' ? c.warn : c.up} />
+              <Text style={s.p}>
+                {formatMinor(b.spent)} of {formatMinor(b.limit)}
               </Text>
-              <Text style={{ color: c.mute, fontSize: t.title }}> ›</Text>
-            </View>
-            <Bar pct={b.pct} color={b.over ? c.down : b.state === 'near' ? c.warn : c.up} />
-            <Text style={s.p}>
-              {formatMinor(b.spent)} of {formatMinor(b.limit)}
-            </Text>
-          </Pressable>
+            </Pressable>
+          </CoachTarget>
         ))}
       </Page>
       <Sheet open={open} title={editing ? `${editing.name} budget` : 'New budget'} onClose={() => setOpen(false)}>
@@ -155,38 +155,42 @@ export function Goals({ snap }: { snap: Snapshot }) {
         line="Watch them fill up."
         tint={c.hero.amber}
         loading={l.rows === null}
-        onGear={fresh}
-        gearLabel="New goal"
+        fab={{ label: '＋ New goal', onPress: fresh }}
         {...l}
       >
         {!!l.rows?.length && <Text style={[s.p, { marginBottom: sp.s }]}>Tap a goal to change or delete it.</Text>}
-        {l.rows?.length === 0 && <Text style={s.p}>No goals yet. Tap New goal: a phone, an emergency fund, anything.</Text>}
-        {l.rows?.map((g) => (
-          <Pressable
-            key={g.id}
-            accessibilityRole="button"
-            accessibilityLabel={`${g.name} goal`}
-            onPress={() => {
-              setSel(g);
-              setName(g.name);
-              setEmoji(g.emoji);
-              setAmount(minorToInput(g.target));
-              setAccount(g.accountId);
-              sv.setErr('');
-              setOpen(true);
-            }}
-            style={s.card}
-          >
-            <Text style={s.h2}>
-              {g.emoji} {g.name} {g.reached ? '🎉' : ''}
-            </Text>
-            <Bar pct={g.pct} color={g.reached ? c.up : c.reward} />
-            <Text style={s.p}>
-              {g.unavailable
-                ? 'Progress unavailable right now. Pull down to retry.'
-                : `${formatMinor(g.have)} of ${formatMinor(g.target)} · ${g.pct}%${g.reached ? '' : ` · ${formatMinor(g.remaining)} to go`}`}
-            </Text>
-          </Pressable>
+        {l.rows?.length === 0 && (
+          <CoachTarget id="goals:card" empty>
+            <Text style={s.p}>No goals yet. Tap New goal: a phone, an emergency fund, anything.</Text>
+          </CoachTarget>
+        )}
+        {l.rows?.map((g, i) => (
+          <CoachTarget key={g.id} id="goals:card" on={i === 0}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`${g.name} goal`}
+              onPress={() => {
+                setSel(g);
+                setName(g.name);
+                setEmoji(g.emoji);
+                setAmount(minorToInput(g.target));
+                setAccount(g.accountId);
+                sv.setErr('');
+                setOpen(true);
+              }}
+              style={s.card}
+            >
+              <Text style={s.h2}>
+                {g.emoji} {g.name} {g.reached ? '🎉' : ''}
+              </Text>
+              <Bar pct={g.pct} color={g.reached ? c.up : c.reward} />
+              <Text style={s.p}>
+                {g.unavailable
+                  ? 'Progress unavailable right now. Pull down to retry.'
+                  : `${formatMinor(g.have)} of ${formatMinor(g.target)} · ${g.pct}%${g.reached ? '' : ` · ${formatMinor(g.remaining)} to go`}`}
+              </Text>
+            </Pressable>
+          </CoachTarget>
         ))}
       </Page>
       <Sheet open={open} title={sel ? 'Edit goal' : 'New goal'} onClose={() => setOpen(false)}>

@@ -29,6 +29,24 @@ export async function updateEntryWith(db: Db, id: string, patch: TxPatch): Promi
   }
 }
 
+// Adds one entry by hand. Retry-safe: the same requestId sent twice saves once (unique user_id + request_id + request_idx),
+// and the count confirms it is really there. Returns null when saved, otherwise a message.
+export async function createEntryWith(db: Db, userId: string, patch: TxPatch, requestId: string): Promise<string | null> {
+  try {
+    const row = { ...patch, user_id: userId, request_id: requestId, request_idx: 0 };
+    const { error } = await db.from('transactions').upsert(row, { onConflict: 'user_id,request_id,request_idx', ignoreDuplicates: true });
+    if (error) return entryError(error, 'save');
+    const { count, error: countError } = await db
+      .from('transactions')
+      .select('id', { count: 'exact', head: true })
+      .eq('request_id', requestId);
+    if (countError || count !== 1) return entryError({ message: 'missing' }, 'save');
+    return null;
+  } catch {
+    return entryError({ message: 'network' }, 'save');
+  }
+}
+
 // Deletes one entry and hands back the deleted row so Undo can put it back. The database also keeps a copy in tx_trash.
 export async function deleteEntryWith(db: Db, id: string): Promise<{ row: Record<string, unknown> } | { error: string }> {
   try {

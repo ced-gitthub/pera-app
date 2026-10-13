@@ -1,39 +1,151 @@
 import { useEffect, useRef, useState } from 'react';
-import {
-  AccessibilityInfo,
-  Animated,
-  Modal,
-  Pressable,
-  ScrollView,
-  Text,
-  View,
-  useWindowDimensions,
-  type NativeScrollEvent,
-  type NativeSyntheticEvent,
-} from 'react-native';
+import { AccessibilityInfo, Animated, BackHandler, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Btn } from './Btn';
-import { TOUR, type TourSlide } from './tourContent';
-import { c, e, r, s, sp, t } from './ui';
+import { useCoach } from './Coach';
+import { nextIndex, padRect, placeTip, scrollDelta, sameRect, type Rect } from './coachLogic';
+import { TOUR } from './tourContent';
+import { c, r, sp, t } from './ui';
 
-const SLIDE_MS = 320;
-const BOUNCE_MS = 700;
+const MOVE_MS = 280;
+const TIP_MS = 220;
+const BOUNCE_MS = 520;
+const TIP_W = 340;
+const TIP_GUESS_H = 200;
+const WAITS = [0, 120, 120, 200, 300, 500]; // after a tab switch the target may mount late; measure a few times until it stops moving
+const pause = (ms: number) => new Promise<void>((res) => setTimeout(res, ms));
+const fixed = (tgt: string) => tgt.startsWith('tab:') || tgt === 'fab'; // these sit on the screen already; never scroll for them
 
-// One slide. When it becomes the active one, the text slides in and the emoji bounces (still, if the phone asks for reduced motion).
-function Slide({ slide, width, active, still }: { slide: TourSlide; width: number; active: boolean; still: boolean }) {
-  const enter = useRef(new Animated.Value(still ? 1 : 0)).current;
+// The live coach-mark tour. It draws ON TOP of the real app (Gate has already switched to the step's tab): a dim layer with a hole around the real
+// control, a tooltip with an arrow, and Back / Next / Skip. A full-screen touch blocker keeps everything underneath untappable.
+export function TabTour({ index, onIndex, onClose }: { index: number; onIndex: (i: number) => void; onClose: () => void }) {
+  const api = useCoach();
+  const { width, height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const step = TOUR[Math.min(Math.max(index, 0), TOUR.length - 1)];
+  const root = useRef<View>(null);
+  const [still, setStill] = useState(false);
+  const [hole, setHole] = useState<Rect | null>(null);
+  const [empty, setEmpty] = useState(false);
+  const [tipH, setTipH] = useState(TIP_GUESS_H);
+  const [tick, setTick] = useState(0);
+  const ax = useRef(new Animated.Value(width / 2)).current;
+  const ay = useRef(new Animated.Value(height / 2)).current;
+  const aw = useRef(new Animated.Value(0)).current;
+  const ah = useRef(new Animated.Value(0)).current;
+  const tipIn = useRef(new Animated.Value(0)).current;
   const bounce = useRef(new Animated.Value(0)).current;
+  const first = useRef(true);
+
   useEffect(() => {
-    if (still) {
-      enter.setValue(1);
+    let live = true;
+    AccessibilityInfo.isReduceMotionEnabled()
+      .catch(() => false)
+      .then((v) => live && setStill(!!v));
+    const sub = AccessibilityInfo.addEventListener('reduceMotionChanged', (v) => setStill(!!v));
+    return () => {
+      live = false;
+      sub.remove();
+    };
+  }, []);
+
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      onClose();
+      return true;
+    });
+    return () => sub.remove();
+  }, [onClose]);
+
+  // Re-measure when a target mounts or lays out late (a list that finishes loading). Debounced so a burst is one pass.
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const off = api.subscribe(() => {
+      clearTimeout(timer);
+      timer = setTimeout(() => setTick((n) => n + 1), 150);
+    });
+    return () => {
+      clearTimeout(timer);
+      off();
+    };
+  }, [api]);
+
+  // The tooltip leaves while we look for the new target...
+  useEffect(() => {
+    tipIn.setValue(still ? 1 : 0);
+  }, [index, still, tipIn]);
+
+  // ...find the real control, scroll it into view if needed, wait until it stops moving, then move the spotlight there.
+  useEffect(() => {
+    let live = true;
+    const id = step.targetId;
+    const origin = () =>
+      new Promise<{ x: number; y: number }>((res) => {
+        const n = root.current;
+        if (!n) return res({ x: 0, y: 0 });
+        n.measureInWindow((x, y) => res({ x: Number.isFinite(x) ? x : 0, y: Number.isFinite(y) ? y : 0 }));
+      });
+    const commit = (r: Rect | null) => {
+      if (!live) return;
+      const h = r ? padRect(r, sp.s, { w: width, h: height }) : null;
+      setHole(h);
+      setEmpty(!r || api.isEmpty(id));
+      const to = h ?? { x: width / 2, y: height / 2, w: 0, h: 0 };
+      const jump = still || first.current;
+      first.current = false;
+      if (jump) {
+        ax.setValue(to.x);
+        ay.setValue(to.y);
+        aw.setValue(to.w);
+        ah.setValue(to.h);
+      } else {
+        Animated.parallel(
+          [ax, ay, aw, ah].map((v, k) =>
+            Animated.timing(v, { toValue: [to.x, to.y, to.w, to.h][k], duration: MOVE_MS, useNativeDriver: false }),
+          ),
+        ).start();
+      }
+      if (still) tipIn.setValue(1);
+      else Animated.timing(tipIn, { toValue: 1, duration: TIP_MS, useNativeDriver: true }).start();
+    };
+    void (async () => {
+      let prev: Rect | null = null;
+      let scrolls = 0;
+      for (const w of WAITS) {
+        await pause(w);
+        if (!live) return;
+        const [o, raw, bar] = await Promise.all([origin(), api.measure(id), fixed(id) ? Promise.resolve(null) : api.measure('tab:home')]);
+        if (!live) return;
+        if (!raw) {
+          prev = null;
+          continue;
+        }
+        const rect = { x: raw.x - o.x, y: raw.y - o.y, w: raw.w, h: raw.h };
+        if (!fixed(id) && scrolls < 3) {
+          const band = { top: insets.top, bottom: bar ? bar.y - o.y : height - insets.bottom - sp.clear };
+          const dy = scrollDelta(rect, band, sp.l);
+          if (dy !== 0) {
+            scrolls += 1;
+            api.scrollBy(dy);
+            prev = null;
+            continue;
+          }
+        }
+        if (sameRect(prev, rect)) return commit(rect);
+        prev = rect;
+      }
+      commit(prev);
+    })();
+    return () => {
+      live = false;
+    };
+  }, [index, tick, width, height, still, step.targetId, api, insets.top, insets.bottom, ax, ay, aw, ah, tipIn]);
+
+  useEffect(() => {
+    if (still || !hole) {
       bounce.setValue(0);
       return;
     }
-    if (!active) {
-      enter.setValue(0);
-      return;
-    }
-    Animated.timing(enter, { toValue: 1, duration: SLIDE_MS, useNativeDriver: true }).start();
     const loop = Animated.loop(
       Animated.sequence([
         Animated.timing(bounce, { toValue: 1, duration: BOUNCE_MS, useNativeDriver: true }),
@@ -42,117 +154,119 @@ function Slide({ slide, width, active, still }: { slide: TourSlide; width: numbe
     );
     loop.start();
     return () => loop.stop();
-  }, [active, still, enter, bounce]);
-  const slideIn = enter.interpolate({ inputRange: [0, 1], outputRange: [48, 0] });
-  const lift = bounce.interpolate({ inputRange: [0, 1], outputRange: [0, -sp.m] });
+  }, [still, hole, bounce]);
+
+  const last = index >= TOUR.length - 1;
+  const tipW = Math.min(TIP_W, width - sp.l * 2);
+  const place = placeTip(
+    hole,
+    { w: width, h: height },
+    { w: tipW, h: tipH },
+    { top: insets.top + sp.s, bottom: insets.bottom + sp.s },
+    sp.l,
+    sp.l,
+  );
+  const dir = place.side === 'below' ? -1 : 1; // the arrow bounces toward the control
+  const arrowShift = bounce.interpolate({ inputRange: [0, 1], outputRange: [0, dir * sp.xs] });
+  const slide = tipIn.interpolate({ inputRange: [0, 1], outputRange: [place.side === 'above' ? -sp.m : sp.m, 0] });
+  const body = empty && step.emptyText ? step.emptyText : step.text;
+  const go = (d: 1 | -1) => {
+    const n = nextIndex(index, TOUR.length, d);
+    if (n.done) onClose();
+    else onIndex(n.index);
+  };
+  const dim = { position: 'absolute', backgroundColor: c.overlay } as const;
+  const arrowBase = {
+    position: 'absolute',
+    width: 0,
+    height: 0,
+    borderLeftWidth: sp.m,
+    borderRightWidth: sp.m,
+    borderColor: 'transparent',
+  } as const;
+
   return (
     <View
-      style={{ width, paddingHorizontal: sp.xl, justifyContent: 'center' }}
-      accessible
-      accessibilityLabel={`${slide.title}. ${slide.text} Example: ${slide.example}`}
+      ref={root}
+      collapsable={false}
+      style={StyleSheet.absoluteFill}
+      onStartShouldSetResponder={() => true}
+      accessibilityViewIsModal
+      testID="coach-overlay"
     >
-      <Animated.View style={{ opacity: enter, transform: [{ translateX: slideIn }] }}>
-        <Animated.Text style={{ fontSize: e.l, textAlign: 'center', transform: [{ translateY: lift }] }}>{slide.emoji}</Animated.Text>
-        <Text style={[s.h1, { textAlign: 'center', marginTop: sp.l }]}>{slide.title}</Text>
-        <Text style={{ color: c.ink, fontSize: t.lead, textAlign: 'center', marginTop: sp.m }}>{slide.text}</Text>
-        <View style={{ backgroundColor: c.card, borderRadius: r.m, padding: sp.l, marginTop: sp.xl, borderWidth: 1, borderColor: c.line }}>
-          <Text style={{ color: c.reward, fontSize: t.caption, fontWeight: '700' }}>EXAMPLE</Text>
-          <Text style={{ color: c.mute, fontSize: t.body, marginTop: sp.xs }}>{slide.example}</Text>
-        </View>
-      </Animated.View>
-    </View>
-  );
-}
-
-// A full-screen tour of the bottom tabs. Swipe, or use Back / Next at the bottom (reachable with one thumb). Skip is always visible until the last slide.
-export function TabTour({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { width } = useWindowDimensions();
-  const { top, bottom } = useSafeAreaInsets();
-  const [i, setI] = useState(0);
-  const [still, setStill] = useState(false);
-  const scroller = useRef<ScrollView>(null);
-  const last = i === TOUR.length - 1;
-
-  useEffect(() => {
-    let live = true;
-    AccessibilityInfo.isReduceMotionEnabled()
-      .catch(() => false)
-      .then((v) => live && setStill(!!v));
-    return () => {
-      live = false;
-    };
-  }, [open]);
-
-  useEffect(() => {
-    if (open) {
-      setI(0);
-      scroller.current?.scrollTo({ x: 0, animated: false });
-    }
-  }, [open]);
-
-  const go = (n: number) => {
-    const k = Math.max(0, Math.min(TOUR.length - 1, n));
-    setI(k);
-    scroller.current?.scrollTo({ x: k * width, animated: !still });
-  };
-  const onEnd = (ev: NativeSyntheticEvent<NativeScrollEvent>) => setI(Math.round(ev.nativeEvent.contentOffset.x / width));
-
-  return (
-    <Modal visible={open} animationType={still ? 'none' : 'fade'} statusBarTranslucent navigationBarTranslucent onRequestClose={onClose}>
-      <View style={{ flex: 1, backgroundColor: c.bg, paddingTop: top + sp.m, paddingBottom: bottom + sp.l }}>
-        <Text accessibilityLiveRegion="polite" style={{ color: c.mute, fontSize: t.caption, textAlign: 'center' }}>
-          {`${i + 1} of ${TOUR.length}`}
-        </Text>
-        <ScrollView
-          ref={scroller}
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          onMomentumScrollEnd={onEnd}
-          style={{ flex: 1 }}
-          contentContainerStyle={{ alignItems: 'center' }}
-        >
-          {TOUR.map((x, k) => (
-            <Slide key={x.id} slide={x} width={width} active={open && k === i} still={still} />
-          ))}
-        </ScrollView>
-        <View style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: sp.l }}>
-          {TOUR.map((x, k) => (
-            <View
-              key={x.id}
-              style={{
-                width: k === i ? 24 : 8,
-                height: 8,
-                borderRadius: r.pill,
-                marginHorizontal: sp.xs,
-                backgroundColor: k === i ? c.primary : c.dim,
-              }}
-            />
-          ))}
-        </View>
-        <View style={{ paddingHorizontal: sp.l }}>
-          {last ? (
-            <Btn label="Got it" onPress={onClose} />
-          ) : (
-            <View style={{ flexDirection: 'row' }}>
-              <View style={{ flex: 1, marginRight: sp.s }}>{i > 0 ? <Btn label="Back" alt onPress={() => go(i - 1)} /> : null}</View>
-              <View style={{ flex: 2 }}>
-                <Btn label="Next" onPress={() => go(i + 1)} />
-              </View>
+      <Animated.View pointerEvents="none" style={[dim, { left: 0, right: 0, top: 0, height: ay }]} />
+      <Animated.View pointerEvents="none" style={[dim, { left: 0, right: 0, bottom: 0, top: Animated.add(ay, ah) }]} />
+      <Animated.View pointerEvents="none" style={[dim, { left: 0, top: ay, height: ah, width: ax }]} />
+      <Animated.View pointerEvents="none" style={[dim, { right: 0, top: ay, height: ah, left: Animated.add(ax, aw) }]} />
+      {hole && (
+        <Animated.View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            left: ax,
+            top: ay,
+            width: aw,
+            height: ah,
+            borderRadius: r.s,
+            borderWidth: 2,
+            borderColor: c.primary,
+            opacity: tipIn,
+          }}
+        />
+      )}
+      <Animated.View
+        onLayout={(ev) => setTipH(ev.nativeEvent.layout.height)}
+        accessibilityLiveRegion="polite"
+        style={{
+          position: 'absolute',
+          top: place.top,
+          left: place.left,
+          width: tipW,
+          opacity: tipIn,
+          transform: [{ translateY: slide }],
+          backgroundColor: c.card,
+          borderRadius: r.m,
+          borderWidth: 1,
+          borderColor: c.line,
+          padding: sp.l,
+        }}
+      >
+        {place.side !== 'center' && (
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              arrowBase,
+              { left: place.arrowX - sp.m, transform: [{ translateY: arrowShift }] },
+              place.side === 'below'
+                ? { top: -sp.m, borderBottomWidth: sp.m, borderBottomColor: c.card }
+                : { bottom: -sp.m, borderTopWidth: sp.m, borderTopColor: c.card },
+            ]}
+          />
+        )}
+        <Text style={{ color: c.mute, fontSize: t.caption }}>{`${index + 1} of ${TOUR.length}`}</Text>
+        <Text style={{ color: c.ink, fontSize: t.title, fontWeight: '800', marginTop: sp.xs }}>{step.title}</Text>
+        <Text style={{ color: c.ink, fontSize: t.body, marginTop: sp.s, marginBottom: sp.l }}>{body}</Text>
+        <View style={{ flexDirection: 'row' }}>
+          {index > 0 && (
+            <View style={{ flex: 1, marginRight: sp.s }}>
+              <Btn label="Back" alt onPress={() => go(-1)} />
             </View>
           )}
-          {!last && (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Skip the tour"
-              onPress={onClose}
-              style={{ minHeight: 48, alignItems: 'center', justifyContent: 'center' }}
-            >
-              <Text style={{ color: c.mute, fontSize: t.body, fontWeight: '600' }}>Skip</Text>
-            </Pressable>
-          )}
+          <View style={{ flex: 2 }}>
+            <Btn label={last ? 'Got it' : 'Next'} onPress={() => go(1)} />
+          </View>
         </View>
-      </View>
-    </Modal>
+        {!last && (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Skip the tour"
+            onPress={onClose}
+            style={{ minHeight: 48, alignItems: 'center', justifyContent: 'center' }}
+          >
+            <Text style={{ color: c.mute, fontSize: t.body, fontWeight: '600' }}>Skip</Text>
+          </Pressable>
+        )}
+      </Animated.View>
+    </View>
   );
 }

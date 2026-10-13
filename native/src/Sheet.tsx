@@ -1,10 +1,28 @@
 import type { ReactNode } from 'react';
 import { KeyboardAvoidingView, Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Btn } from './Btn';
 import { c, r, s, sp, t } from './ui';
 
-// A bottom sheet that rises above the keyboard. Tapping outside or "Done" closes it.
+// The pinned close button of a sheet or full-screen page: always in the header, never scrolled away, at least 48 tall.
+export function HeaderClose({ label = 'Done', onPress }: { label?: string; onPress: () => void }) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      onPress={onPress}
+      hitSlop={sp.s}
+      style={({ pressed }) => [
+        s.chip,
+        { minHeight: 48, minWidth: 72, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 },
+      ]}
+    >
+      <Text style={{ color: c.primary, fontSize: t.body, fontWeight: '800' }}>{label}</Text>
+    </Pressable>
+  );
+}
+
+// A bottom sheet that rises above the keyboard. The title and a "Done" button sit in a header that is always visible;
+// only the content scrolls (it shrinks to fit), so Done is never pushed off-screen. Tapping outside also closes it.
 export function Sheet({ open, title, onClose, children }: { open: boolean; title: string; onClose: () => void; children: ReactNode }) {
   const { bottom } = useSafeAreaInsets();
   return (
@@ -14,16 +32,24 @@ export function Sheet({ open, title, onClose, children }: { open: boolean; title
         <View
           style={{
             backgroundColor: c.card,
-            padding: sp.l,
-            paddingBottom: bottom + sp.l,
+            paddingHorizontal: sp.l,
+            paddingTop: sp.m,
+            // inside a Modal the inset can read 0 on Android, so keep a floor clear of the system navigation bar
+            paddingBottom: Math.max(bottom, sp.xl),
             borderTopLeftRadius: r.l,
             borderTopRightRadius: r.l,
             maxHeight: '85%',
           }}
         >
-          <Text style={s.h2}>{title}</Text>
-          <ScrollView keyboardShouldPersistTaps="handled">{children}</ScrollView>
-          <Btn label="Done" alt onPress={onClose} />
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: sp.s }}>
+            <Text style={[s.h2, { flex: 1, marginBottom: 0 }]} accessibilityRole="header" numberOfLines={2}>
+              {title}
+            </Text>
+            <HeaderClose onPress={onClose} />
+          </View>
+          <ScrollView style={{ flexShrink: 1 }} keyboardShouldPersistTaps="handled">
+            {children}
+          </ScrollView>
         </View>
       </KeyboardAvoidingView>
     </Modal>

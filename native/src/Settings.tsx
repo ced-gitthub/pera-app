@@ -6,14 +6,19 @@ import { Page } from './Tabs';
 import { Sheet, ToggleRow } from './Sheet';
 import { confirmSignOut } from './signout';
 import { Btn } from './Btn';
+import { CoachTarget } from './Coach';
 import { Reports } from './Reports';
 import { Recurring } from './Recurring';
 import { Manage } from './Manage';
 import { Csv } from './Csv';
 import { ResetData } from './ResetData';
+import { DeleteAccount } from './DeleteAccount';
+import { Personalize } from './Personalize';
+import { PersonalizeCard } from './PersonalizeCard';
+import { RECORDS_DELETE } from './deleteAccountLogic';
 import { c, s, sp, t } from './ui';
 
-export const APP_VERSION = '0.8.0';
+export const APP_VERSION = '0.9.0';
 
 // Which accounts are savings (they leave "You can spend") and which show as cards on Home. Both are saved on the account itself, so the website agrees.
 export function AccountsSheet({
@@ -83,6 +88,9 @@ export function Settings({
   const [msg, setMsg] = useState<{ bad: boolean; t: string } | null>(null);
   const [accounts, setAccounts] = useState(false);
   const [reset, setReset] = useState(false);
+  const [delAccount, setDelAccount] = useState(false);
+  const [personalize, setPersonalize] = useState(false);
+  const [pver, setPver] = useState(0);
   const [tool, setTool] = useState<'' | 'reports' | 'recurring' | 'manage' | 'csv'>('');
   const save = async () => {
     setBusy(true);
@@ -98,45 +106,65 @@ export function Settings({
   return (
     <>
       <Page emoji="⚙️" title="Settings" line="Make Zovix yours." tint={c.hero.violet} busy={false} reload={() => {}} err="">
-        <View style={s.card}>
-          <Text style={s.h2}>Your name</Text>
-          <TextInput
-            style={s.input}
-            value={nm}
-            onChangeText={setNm}
-            placeholder="Your name"
-            placeholderTextColor={c.mute}
-            accessibilityLabel="Your name"
-            maxLength={60}
-          />
-          {msg && <Text style={msg.bad ? s.err : s.ok}>{msg.t}</Text>}
-          <Btn label="Save name" busy={busy} onPress={save} />
-        </View>
-        <View style={s.card}>
-          <Text style={s.h2}>Tools</Text>
-          <Btn label="📊 Reports" alt onPress={() => setTool('reports')} />
-          <Btn label="🔁 Recurring entries" alt onPress={() => setTool('recurring')} />
-          <Btn label="🗂 Accounts and categories" alt onPress={() => setTool('manage')} />
-          <Btn label="📄 Import and export CSV" alt onPress={() => setTool('csv')} />
-        </View>
+        <PersonalizeCard onOpen={() => setPersonalize(true)} version={pver} />
+        <CoachTarget id="settings:name">
+          <View style={s.card}>
+            <Text style={s.h2}>Your name</Text>
+            <TextInput
+              style={s.input}
+              value={nm}
+              onChangeText={setNm}
+              placeholder="Your name"
+              placeholderTextColor={c.mute}
+              accessibilityLabel="Your name"
+              maxLength={60}
+            />
+            {msg && <Text style={msg.bad ? s.err : s.ok}>{msg.t}</Text>}
+            <Btn label="Save name" busy={busy} onPress={save} />
+          </View>
+        </CoachTarget>
+        <CoachTarget id="settings:tools">
+          <View style={s.card}>
+            <Text style={s.h2}>Tools</Text>
+            <Btn label="📊 Reports" alt onPress={() => setTool('reports')} />
+            <Btn label="🔁 Recurring entries" alt onPress={() => setTool('recurring')} />
+            <Btn label="🗂 Accounts and categories" alt onPress={() => setTool('manage')} />
+            <Btn label="📄 Import and export CSV" alt onPress={() => setTool('csv')} />
+          </View>
+        </CoachTarget>
         <View style={s.card}>
           <Text style={s.h2}>Accounts</Text>
           <Text style={[s.p, { marginBottom: sp.m }]}>Choose which accounts are savings and which show on Home.</Text>
           <Btn label="Manage accounts" alt onPress={() => setAccounts(true)} />
         </View>
-        <View style={s.card}>
-          <Text style={s.h2}>Your data</Text>
-          <Text style={[s.p, { marginBottom: sp.m }]}>
-            Deletes ALL of your entries, budgets or goals (including real ones, not just the tutorial samples). You are asked to type DELETE
-            to confirm.
-          </Text>
-          <Btn label="🗑 Delete data" alt onPress={() => setReset(true)} />
-        </View>
-        <View style={s.card}>
-          <Text style={s.h2}>Help</Text>
-          <Btn label="🧭 Take the tour of the tabs" alt onPress={onTour} />
-          <Btn label="Show the first-run tutorial again" alt onPress={onReplay} />
-        </View>
+        <CoachTarget id="settings:delete">
+          <View style={s.card}>
+            <Text style={s.h2}>Delete my records</Text>
+            {RECORDS_DELETE.map((line) => (
+              <Text key={line} style={[s.p, { marginBottom: sp.s }]}>
+                • {line}
+              </Text>
+            ))}
+            <Btn label="🗑 Delete my records" alt onPress={() => setReset(true)} />
+          </View>
+        </CoachTarget>
+        <CoachTarget id="settings:delete-account">
+          <View style={[s.card, { borderColor: c.down }]}>
+            <Text style={s.h2}>Delete my account</Text>
+            <Text style={[s.p, { marginBottom: sp.m }]}>
+              Removes your login and every record for good. This is different from deleting records: nothing is kept, and it cannot be
+              undone.
+            </Text>
+            <Btn label="Delete my account" danger onPress={() => setDelAccount(true)} />
+          </View>
+        </CoachTarget>
+        <CoachTarget id="settings:help">
+          <View style={s.card}>
+            <Text style={s.h2}>Help</Text>
+            <Btn label="🧭 Take the tour of the tabs" alt onPress={onTour} />
+            <Btn label="Show the first-run tutorial again" alt onPress={onReplay} />
+          </View>
+        </CoachTarget>
         <View style={s.card}>
           <Text style={s.h2}>Account</Text>
           <Btn label="Log out" alt onPress={confirmSignOut} />
@@ -157,6 +185,8 @@ export function Settings({
           {tool === 'manage' && <Manage snap={snap} onClose={() => setTool('')} onChanged={refresh} />}
         </View>
       </Modal>
+      <Personalize open={personalize} onClose={() => setPersonalize(false)} onChanged={() => setPver((n) => n + 1)} />
+      <DeleteAccount open={delAccount} onClose={() => setDelAccount(false)} />
       <ResetData open={reset} onClose={() => setReset(false)} onDone={() => void refresh()} />
       <AccountsSheet open={accounts} onClose={() => setAccounts(false)} snap={snap} refresh={refresh} />
     </>

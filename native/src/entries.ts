@@ -1,7 +1,7 @@
 import { supabase } from './supabase';
 import type { TxPatch } from './logic';
 import { entryError } from './entriesLogic';
-import { deleteEntryWith, restoreEntryWith, updateEntryWith, type Db } from './entriesCore';
+import { createEntryWith, deleteEntryWith, restoreEntryWith, updateEntryWith, type Db } from './entriesCore';
 
 const SESSION = 'Session expired. Please sign in again.';
 
@@ -28,5 +28,16 @@ export async function restoreEntry(row: Record<string, unknown>): Promise<string
     return await restoreEntryWith(db, u.user.id, row);
   } catch {
     return entryError({ message: 'network' }, 'restore');
+  }
+}
+
+// Adds one entry by hand. Pass the same requestId on a retry so it saves once.
+export async function createEntry(patch: TxPatch, requestId: string): Promise<string | null> {
+  try {
+    const { data: u } = await supabase.auth.getUser();
+    if (!u.user) return SESSION;
+    return await createEntryWith(db, u.user.id, patch, requestId);
+  } catch {
+    return entryError({ message: 'network' }, 'save');
   }
 }

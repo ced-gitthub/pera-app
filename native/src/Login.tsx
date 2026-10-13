@@ -4,6 +4,7 @@ import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { sendCode, verifyCode, signInWithGoogle, verifyTotp } from './auth';
 import { Btn } from './Btn';
 import { confirmSignOut } from './signout';
+import { markJustSignedUp } from './fresh';
 import { c, s, sp, t, e, r } from './ui';
 
 // One screen for both: "Create account" (name + email, code, you are in) and "Sign in" (email, code).
@@ -110,7 +111,13 @@ export function Login({ start }: { start: 'signup' | 'login' }) {
               <Btn
                 label={signup ? 'Confirm and start' : 'Sign in'}
                 busy={busy}
-                onPress={() => run(() => verifyCode(email.trim(), code.trim()))}
+                onPress={() =>
+                  run(async () => {
+                    const e = await verifyCode(email.trim(), code.trim());
+                    if (!e && signup) await markJustSignedUp(); // the next load starts this new account empty (see fresh.ts)
+                    return e;
+                  })
+                }
               />
               <Pressable onPress={() => setSent(false)} style={{ padding: sp.s }}>
                 <Text style={{ color: c.primary, textAlign: 'center', fontWeight: '700' }}>Wrong email? Go back</Text>

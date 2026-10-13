@@ -4,9 +4,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Btn } from './Btn';
 import { Sheet } from './Sheet';
 import { Chip } from './Tabs';
-import { deleteEntry, loadTransferTarget, updateEntry } from './entries';
-import { autoDismissMs, categoriesFor, formOf, switchType } from './entriesLogic';
-import { planTxEdit, type Snapshot, type Tx, type TxEdit } from './logic';
+import { createEntry, deleteEntry, loadTransferTarget, updateEntry } from './entries';
+import { autoDismissMs, blankForm, categoriesFor, formOf, switchType } from './entriesLogic';
+import { newRequestId, planTxEdit, type Snapshot, type Tx, type TxEdit } from './logic';
+import { manilaToday } from '../../src/core/money';
 import { c, r, s, sp, t } from './ui';
 
 const TYPES: [TxEdit['type'], string][] = [
@@ -20,11 +21,13 @@ const Label = ({ text }: { text: string }) => <Text style={[s.p, { marginBottom:
 // Tap an entry to change it or delete it. Delete is immediate because the Undo bar can bring it straight back.
 export function EntrySheet({
   tx,
+  creating,
   snap,
   onClose,
   onChanged,
 }: {
   tx: Tx | null;
+  creating?: boolean; // true = the "New entry" form (tx is null)
   snap: Snapshot;
   onClose: () => void;
   onChanged: (undo?: { row: Record<string, unknown> }) => void;
@@ -32,13 +35,20 @@ export function EntrySheet({
   const [f, setF] = useState<TxEdit | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
+  const requestId = useRef(newRequestId()); // a double tap or retry of the same new entry saves once
   const working = useRef(false); // blocks a second tap before React has re-rendered the disabled button
 
   useEffect(() => {
     setErr('');
     working.current = false;
     setBusy(false);
-    if (!tx) return setF(null);
+    if (!tx) {
+      if (creating) {
+        requestId.current = newRequestId();
+        setF(blankForm(snap, manilaToday()));
+      } else setF(null);
+      return;
+    }
     setF(formOf(tx));
     if (tx.type !== 'transfer') return;
     let live = true;
@@ -48,18 +58,19 @@ export function EntrySheet({
     return () => {
       live = false;
     };
-  }, [tx]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tx, creating]);
 
   const set = (patch: Partial<TxEdit>) => setF((p) => (p ? { ...p, ...patch } : p));
 
   const save = async () => {
-    if (!tx || !f || working.current) return;
+    if ((!tx && !creating) || !f || working.current) return;
     const plan = planTxEdit(f, snap);
     if (!plan.ok) return setErr(plan.message);
     working.current = true;
     setBusy(true);
     setErr('');
-    const e = await updateEntry(tx.id, plan.patch);
+    const e = tx ? await updateEntry(tx.id, plan.patch) : await createEntry(plan.patch, requestId.current);
     working.current = false;
     setBusy(false);
     if (e) return setErr(e);
@@ -82,7 +93,7 @@ export function EntrySheet({
 
   const cats = f ? categoriesFor(f.type, snap.categories) : [];
   return (
-    <Sheet open={!!tx && !!f} title="Edit entry" onClose={onClose}>
+    <Sheet open={(!!tx || !!creating) && !!f} title={tx ? 'Edit entry' : 'New entry'} onClose={onClose}>
       {f && (
         <View>
           <Label text="Type" />
@@ -150,8 +161,8 @@ export function EntrySheet({
             </>
           )}
           {!!err && <Text style={s.err}>{err}</Text>}
-          <Btn label="Save changes" busy={busy} onPress={save} />
-          <Btn label="Delete" danger busy={busy} onPress={remove} />
+          <Btn label={tx ? 'Save changes' : 'Save entry'} busy={busy} onPress={save} />
+          {tx && <Btn label="Delete" danger busy={busy} onPress={remove} />}
         </View>
       )}
     </Sheet>

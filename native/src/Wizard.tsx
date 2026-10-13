@@ -16,13 +16,8 @@ import { confirmSignOut } from './signout';
 import { c, s, sp, t, e, r } from './ui';
 
 export type Slide = GateStep | 'finish';
-const HERO: Record<Slide, string> = {
-  first: c.hero.violet,
-  balance: c.hero.teal,
-  budget: c.hero.plum,
-  goal: c.hero.amber,
-  finish: c.hero.violet,
-};
+const heroFor = (slide: Slide): string =>
+  ({ first: c.hero.violet, balance: c.hero.teal, budget: c.hero.plum, goal: c.hero.amber, finish: c.hero.violet })[slide];
 const ORDER: Slide[] = [...GATE_STEPS, 'finish'];
 
 function Dots({ now, done }: { now: number; done: string[] }) {
@@ -94,7 +89,7 @@ export function Wizard(p: {
     slideIn.setValue(0);
     Animated.spring(slideIn, { toValue: 1, useNativeDriver: true, friction: 7 }).start();
   }, [slide, slideIn]);
-  const tint = HERO[slide];
+  const tint = heroFor(slide);
   return (
     <ScrollView
       style={{ flex: 1 }}

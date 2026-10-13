@@ -8,3 +8,6 @@ export function confirmSignOut() {
     { text: 'Log out', style: 'destructive', onPress: () => void supabase.auth.signOut() },
   ]);
 }
+
+// After the server has deleted the account there is nothing left to confirm: just leave this phone signed out.
+export const finishAfterDeletion = () => supabase.auth.signOut({ scope: 'local' });

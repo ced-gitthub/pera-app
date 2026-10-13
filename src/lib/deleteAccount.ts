@@ -1,0 +1,37 @@
+import { recentSignIn } from './session.ts';
+// Rules for deleting an account from the native app (the website has its own form, see actions/auth.ts deleteMyAccount). Pure, so they are unit-tested.
+export type DeleteCheck = {
+  confirm: string; // what the person typed
+  adminReady: boolean; // the server has the key it needs
+  hasVerifiedFactor: boolean; // the account uses two-step verification
+  aal: string | undefined; // the session's assurance level from its access token
+  signedInAt: string | undefined; // when THIS session authenticated (the token's amr timestamp)
+  now: number;
+};
+export type DeleteVerdict = { ok: true } | { ok: false; status: 400 | 403 | 503; error: string };
+
+export function checkDeleteRequest(c: DeleteCheck): DeleteVerdict {
+  if (c.confirm.trim() !== 'DELETE') return { ok: false, status: 400, error: 'Type DELETE in capital letters to confirm.' };
+  if (!c.adminReady) return { ok: false, status: 503, error: 'Account deletion is not available right now. Please try again later.' };
+  // A session that has not passed the second step must never delete an account that has two-step verification.
+  if (c.hasVerifiedFactor && c.aal !== 'aal2')
+    return { ok: false, status: 403, error: 'Finish two-step verification first, then try again.' };
+  if (!recentSignIn(c.signedInAt, c.now))
+    return { ok: false, status: 403, error: 'For your safety, log out, sign in again, then delete your account within 10 minutes.' };
+  return { ok: true };
+}
+
+// The access token's "aal" claim ('aal1' = signed in, 'aal2' = also passed two-step). undefined when unreadable.
+export function tokenAal(accessToken: string | null | undefined): string | undefined {
+  try {
+    const p = JSON.parse(Buffer.from((accessToken ?? '').split('.')[1] ?? '', 'base64url').toString('utf8')) as { aal?: unknown };
+    return typeof p.aal === 'string' ? p.aal : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export function bearerToken(header: string | null | undefined): string | null {
+  const m = /^Bearer\s+(\S+)$/i.exec(header ?? '');
+  return m ? m[1] : null;
+}

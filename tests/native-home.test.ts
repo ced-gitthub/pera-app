@@ -180,19 +180,20 @@ const withCard = () =>
     acct('d', 'Credit Card', false),
     acct('e', 'BPI', false),
   ]);
-test('spendable = positive balances of non-savings accounts; credit cards and other negatives are owed, not subtracted', () => {
+test('spendable counts negative balances (cards, overdrafts) so Spendable + Savings is always the Total', () => {
   const s = { ...withCard(), balances: { a: 100000, b: 250000, c: 400000, d: -50000, e: 30000 } };
   const v = homeView(s);
-  assert.equal(v.spendable, 380000); // 100000 + 250000 + 30000
+  assert.equal(v.spendable, 330000); // 100000 + 250000 - 50000 + 30000
   assert.equal(v.savings, 400000);
-  assert.equal(v.owed, 50000);
-  assert.equal(v.total, 730000); // net of everything, including what is owed (same as the website's Total)
+  assert.equal(v.owed, 50000); // information only: how much of it is debt
+  assert.equal(v.total, 730000);
+  assert.equal(v.spendable + v.savings, v.total); // the two can never disagree
 });
 
-test('a negative balance in a savings account is also owed, never added to savings', () => {
+test('a negative savings account lowers Savings and the owed figure, and the totals still agree', () => {
   const s = { ...snap(), balances: { a: 100000, b: 250000, c: -20000 } };
   const v = homeView(s);
-  assert.deepEqual({ sp: v.spendable, sv: v.savings, ow: v.owed }, { sp: 350000, sv: 0, ow: 20000 });
+  assert.deepEqual({ sp: v.spendable, sv: v.savings, ow: v.owed, tot: v.total }, { sp: 350000, sv: -20000, ow: 20000, tot: 330000 });
 });
 
 test('home tiles: Spendable and Savings first, then the first two other accounts shown on Home (4 fit without scrolling)', () => {
@@ -206,7 +207,7 @@ test('home tiles: Spendable and Savings first, then the first two other accounts
     t.filter((x) => x.kind === 'account').map((x) => x.id),
     ['a', 'b'],
   );
-  assert.equal(t[0].amount, 380000);
+  assert.equal(t[0].amount, 330000);
   assert.equal(t[1].amount, 400000);
 });
 
@@ -220,7 +221,7 @@ test('home tiles: hidden accounts are skipped and fewer than two accounts still 
   assert.equal(t.length, 3);
 });
 
-test('accounts overview groups every account as spendable, savings or owed and sums to the total', () => {
+test('accounts overview: every account is Spendable or Savings (negatives stay in their group) and the groups sum to the total', () => {
   const s = { ...withCard(), balances: { a: 100000, b: 250000, c: 400000, d: -50000, e: 30000 } };
   const o = accountsOverview(s);
   assert.deepEqual(
@@ -229,28 +230,28 @@ test('accounts overview groups every account as spendable, savings or owed and s
       ['a', 'spendable'],
       ['b', 'spendable'],
       ['c', 'savings'],
-      ['d', 'owed'],
+      ['d', 'spendable'],
       ['e', 'spendable'],
     ],
   );
-  assert.equal(o.spendable + o.savings - o.owed, o.total);
+  assert.equal(
+    o.rows.filter((r) => r.group === 'spendable').reduce((a, r) => a + r.balance, 0),
+    o.spendable,
+  );
+  assert.equal(o.spendable + o.savings, o.total);
+  assert.equal(o.owed, 50000);
 });
 
 test('accounts overview shows older no-account entries as their own row so the groups add up', () => {
-  const pos = accountsOverview({ ...withCard(), balances: { a: 100000, b: 250000, c: 400000, d: -50000, e: 30000 }, noAccount: 12345 });
-  const row = pos.rows.find((r) => r.id === 'none');
-  assert.deepEqual([row?.group, row?.balance], ['spendable', 12345]);
-  const sum = (g: string) => pos.rows.filter((r) => r.group === g).reduce((a, r) => a + Math.abs(r.balance), 0);
-  assert.equal(sum('spendable'), pos.spendable);
-  assert.equal(sum('savings'), pos.savings);
-  assert.equal(sum('owed'), pos.owed);
-  const neg = accountsOverview({ ...withCard(), balances: { a: 100000, b: 250000, c: 400000, d: -50000, e: 30000 }, noAccount: -7000 });
-  assert.equal(neg.rows.find((r) => r.id === 'none')?.group, 'owed');
-  assert.equal(neg.owed, 57000);
-  assert.equal(
-    neg.total,
-    neg.rows.reduce((a, r) => a + r.balance, 0),
-  );
+  for (const noAccount of [12345, -7000]) {
+    const o = accountsOverview({ ...withCard(), balances: { a: 100000, b: 250000, c: 400000, d: -50000, e: 30000 }, noAccount });
+    const row = o.rows.find((r) => r.id === 'none');
+    assert.deepEqual([row?.group, row?.balance], ['spendable', noAccount]);
+    const sum = (g: string) => o.rows.filter((r) => r.group === g).reduce((a, r) => a + r.balance, 0);
+    assert.equal(sum('spendable'), o.spendable);
+    assert.equal(sum('savings'), o.savings);
+    assert.equal(o.spendable + o.savings, o.total);
+  }
   assert.equal(
     accountsOverview(withCard()).rows.some((r) => r.id === 'none'),
     false,
@@ -258,16 +259,14 @@ test('accounts overview shows older no-account entries as their own row so the g
 });
 
 import { sandboxNumbers } from '../native/src/sandbox.ts';
-test('the welcome sandbox uses the same rule: a negative spendable account does not lower what you can spend', () => {
-  const s = startSandbox();
-  const n = sandboxNumbers({ ...s, balances: { Cash: -5000, GCash: 320000, Savings: 500000 } });
-  assert.equal(n.spendable, 320000);
-  assert.equal(n.savings, 500000);
+test('the welcome sandbox uses the same rule: a negative account lowers Spendable, and Spendable + Savings is the total', () => {
+  const n = sandboxNumbers({ ...startSandbox(), balances: { Cash: -5000, GCash: 320000, Savings: 500000 } });
+  assert.deepEqual({ sp: n.spendable, sv: n.savings, ow: n.owed, tot: n.total }, { sp: 315000, sv: 500000, ow: 5000, tot: 815000 });
 });
 
-test('sandbox: Savings below zero is owed, and total is the net of everything', () => {
+test('sandbox: Savings below zero lowers Savings, and total is still Spendable + Savings', () => {
   const n = sandboxNumbers({ ...startSandbox(), balances: { Cash: -5000, GCash: 320000, Savings: -2000 } });
-  assert.deepEqual({ sp: n.spendable, sv: n.savings, ow: n.owed, tot: n.total }, { sp: 320000, sv: 0, ow: 7000, tot: 313000 });
+  assert.deepEqual({ sp: n.spendable, sv: n.savings, ow: n.owed, tot: n.total }, { sp: 315000, sv: -2000, ow: 7000, tot: 313000 });
 });
 
 test('accounts tab: the older-entries row is not tappable and an empty list says so', () => {

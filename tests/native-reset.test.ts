@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { RESET_KINDS, resetWarning, confirmPhrase, canConfirm, resetError } from '../native/src/resetLogic.ts';
-import { countRows, resetWith, RESET_TABLES } from '../native/src/resetCore.ts';
+import { RESET_KINDS, resetWarning, confirmPhrase, canConfirm, resetError, RESET_LABEL, sumCounts } from '../native/src/resetLogic.ts';
+import { countRows, resetWith, resetAllWith, countAllWith, RESET_TABLES } from '../native/src/resetCore.ts';
 import { fakeDb4 } from './helpers/fakeDb4.ts';
 
 test('reset kinds are entries, budgets and goals, each mapped to its table', () => {
@@ -173,4 +173,82 @@ test('the reset UI shows the server count and reloads the counts after any error
   const run = src.slice(src.indexOf('async function run'));
   const errBranch = run.slice(run.indexOf('if (res.error)'), run.indexOf('setDone'));
   assert.match(errBranch, /load\(\)/);
+});
+
+test('resetAllWith deletes budgets, goals, then entries and sums the removed rows', async () => {
+  const { db, log, counts } = fakeDb4({ counts: { transactions: 5, budgets: 3, savings_goals: 2 } });
+  assert.deepEqual(await resetAllWith(db), { error: null, deleted: 10, done: ['budgets', 'goals', 'entries'] });
+  assert.deepEqual(
+    log.deletes.map((d) => d.table),
+    ['budgets', 'savings_goals', 'transactions'],
+  );
+  assert.deepEqual(counts, { transactions: 0, budgets: 0, savings_goals: 0 });
+});
+
+test('resetAllWith stops at the first failure and says what was deleted', async () => {
+  const { db, log } = fakeDb4({ counts: { transactions: 5, budgets: 3, savings_goals: 2 }, failTables: ['transactions'] });
+  const res = await resetAllWith(db);
+  assert.deepEqual(res.done, ['budgets', 'goals']);
+  assert.equal(res.deleted, null);
+  assert.match(res.error ?? '', /^Budgets and goals were deleted, entries were not\. /);
+  assert.doesNotMatch(res.error ?? '', /permission denied|transactions|raw|42501/i);
+  assert.equal(log.deletes.length, 3);
+
+  const g = fakeDb4({ counts: { budgets: 3 }, failTables: ['savings_goals'] });
+  const r2 = await resetAllWith(g.db);
+  assert.deepEqual(r2.done, ['budgets']);
+  assert.match(r2.error ?? '', /^Budgets were deleted, goals and entries were not\. /);
+  assert.equal(g.log.deletes.length, 2, 'entries never attempted');
+
+  const b = fakeDb4({ failTables: ['budgets'] });
+  const r3 = await resetAllWith(b.db);
+  assert.deepEqual(r3.done, []);
+  assert.equal(b.log.deletes.length, 1);
+  assert.ok(r3.error && !/were deleted/.test(r3.error));
+});
+
+test('resetAllWith treats a thrown failure like an error and still reports progress', async () => {
+  const { db } = fakeDb4({ throwDelete: new Error('Network request failed') });
+  const res = await resetAllWith(db);
+  assert.deepEqual(res.done, []);
+  assert.match(res.error ?? '', /could not confirm/i);
+});
+
+test('the all warning names every table, what stays, and the side effects', () => {
+  const w = resetWarning('all', { entries: 12, budgets: 3, goals: 1 });
+  assert.match(w, /12 entries/);
+  assert.match(w, /3 budgets/);
+  assert.match(w, /1 savings goal/);
+  assert.match(w, /real ones/);
+  assert.match(w, /login/i);
+  assert.match(w, /accounts/i);
+  assert.match(w, /categories/i);
+  assert.match(w, /recurring rules/i);
+  assert.match(w, /starting balances/i);
+  assert.match(w, /streak, XP and level/i);
+  assert.match(w, /30 days/);
+  assert.match(w, /cannot be undone/i);
+  assert.match(w, /not the same as deleting your account/i);
+});
+
+test('the all choice uses the same DELETE word and a label', () => {
+  assert.equal(confirmPhrase('all'), 'DELETE');
+  assert.equal(canConfirm(' delete ', 'all'), true);
+  assert.equal(canConfirm('del', 'all'), false);
+  assert.equal(RESET_LABEL.all, 'Delete ALL my records');
+});
+
+test('counts sum to one number, null if any is unknown', async () => {
+  assert.equal(sumCounts({ entries: 1, budgets: 2, goals: 3 }), 6);
+  assert.equal(sumCounts({ entries: 1, budgets: null, goals: 3 }), null);
+  assert.equal(await countAllWith(fakeDb4({ counts: { transactions: 4, budgets: 1, savings_goals: 2 } }).db), 7);
+  assert.equal(await countAllWith(fakeDb4({ failCount: true }).db), null);
+});
+
+test('ResetData renders the all row first, with a stronger confirm', () => {
+  const src = fs.readFileSync('native/src/ResetData.tsx', 'utf8');
+  assert.match(src, /\[\s*'all'\s*,\s*\.\.\.RESET_KINDS\s*\]/);
+  assert.match(src, /resetChoice/);
+  assert.match(src, /sumCounts/);
+  assert.match(src, /borderWidth: choice === 'all'/);
 });

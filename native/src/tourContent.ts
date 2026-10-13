@@ -1,49 +1,112 @@
-// The words of the tab tour. One slide per bottom tab; the ids match the tab bar in Tabs.tsx (a test checks it).
-// Every claim here describes a control that exists in the app; tests/native-tour.test.ts checks the ones it can.
-export type TourSlide = { id: string; emoji: string; title: string; text: string; example: string };
+// The live tour: a list of steps. Each one switches to a real tab and points at a real control (a CoachTarget id, or the tab icon itself).
+// tests/native-tour.test.ts checks that every tab id is a real tab in Tabs.tsx and every targetId is registered by a CoachTarget in the source.
+export type TourStep = {
+  tab: string;
+  targetId: string;
+  title: string;
+  text: string;
+  emptyText?: string; // shown instead of `text` while the pointed-at thing does not exist yet (an empty list)
+};
 
-export const TOUR: TourSlide[] = [
+export const TOUR: TourStep[] = [
+  { tab: 'home', targetId: 'tab:home', title: 'Home', text: 'This is Home, your money at a glance. Tap this tab any time to come back.' },
+  { tab: 'home', targetId: 'home:total', title: 'Total balance', text: 'All your accounts added up, minus what you owe.' },
   {
-    id: 'home',
-    emoji: '🏠',
-    title: 'Home',
-    text: 'Your money at a glance: a Total balance card, then tiles for Spendable, Savings and two of your accounts. Tap a tile to open Accounts. The floating ＋ Add button is how you record money in or out.',
-    example: 'Bought lunch? Tap ＋ Add, type 150, pick Food, save.',
+    tab: 'home',
+    targetId: 'home:tiles',
+    title: 'Spendable, Savings and accounts',
+    text: 'Spendable, Savings and your first accounts. Tap one to open Accounts.',
   },
   {
-    id: 'activity',
-    emoji: '🧾',
-    title: 'Activity',
-    text: 'Your latest entries, newest first. Tap one to edit it or delete it (you can undo right after). Filter, top right, narrows the list by Spent, Earned or Moved and by account.',
-    example: 'Tap Filter, choose Spent and one account to see only that spending.',
+    tab: 'home',
+    targetId: 'fab',
+    title: 'Add an entry',
+    text: 'The ＋ Add button records money you spent or earned. It floats here on every tab.',
   },
   {
-    id: 'accounts',
-    emoji: '👛',
-    title: 'Accounts',
-    text: 'Every place your money lives, with its balance. Tap an account to mark it as savings or choose whether it shows on Home. To rename an account or change its starting balance, use Manage at the top right.',
-    example: 'Cash balance looks off? Tap Manage, open Cash and fix its starting balance.',
+    tab: 'home',
+    targetId: 'home:recent',
+    title: 'Recent',
+    text: 'Your latest entries. Tap any of them to edit or delete it.',
+    emptyText: 'Your entries will appear here. Tap ＋ Add to log your first one.',
+  },
+  { tab: 'activity', targetId: 'tab:activity', title: 'Activity', text: 'This is Activity, every entry you have made, newest first.' },
+  {
+    tab: 'activity',
+    targetId: 'activity:filter',
+    title: 'Filter',
+    text: 'Filter narrows the list by Spent, Earned or Moved, and by account.',
   },
   {
-    id: 'budgets',
-    emoji: '🎯',
-    title: 'Budgets',
-    text: 'A monthly limit for a spending type. The bar fills as you spend and changes colour near the limit. Tap a budget to change or delete it, or tap New budget, top right, to add one.',
-    example: 'Set Food to 5,000 a month and watch the bar.',
+    tab: 'activity',
+    targetId: 'activity:rows',
+    title: 'Your entries',
+    text: 'Tap any entry to edit or delete it. You can undo a delete right after.',
+    emptyText: 'Your entries will appear here. Tap any entry to edit or delete it.',
+  },
+  { tab: 'activity', targetId: 'fab', title: 'Add entry', text: 'Add entry logs money in or out from this tab too.' },
+  { tab: 'accounts', targetId: 'tab:accounts', title: 'Accounts', text: 'This is Accounts, every place your money lives.' },
+  { tab: 'accounts', targetId: 'accounts:stats', title: 'Your totals', text: 'Spendable, Savings, Total and the debt already included.' },
+  {
+    tab: 'accounts',
+    targetId: 'accounts:manage',
+    title: 'Manage',
+    text: 'Manage is where you rename an account, change its starting balance or add a new one.',
   },
   {
-    id: 'goals',
-    emoji: '🏆',
-    title: 'Goals',
-    text: 'Savings goals with a target. A goal fills by itself: with a linked account it follows that account balance, and without one it counts your income minus expenses since the goal started. Tap a goal to change or delete it.',
-    example: 'Goal: New phone, 20,000, linked to Savings. Move 1,000 into Savings each payday and the goal fills up.',
+    tab: 'accounts',
+    targetId: 'accounts:rows',
+    title: 'An account',
+    text: 'Tap an account to choose whether it is savings and whether it shows on Home.',
+    emptyText: 'Your accounts will appear here. Tap ＋ Add account to create the first one.',
+  },
+  { tab: 'budgets', targetId: 'tab:budgets', title: 'Budgets', text: 'This is Budgets, a monthly limit for each kind of spending.' },
+  {
+    tab: 'budgets',
+    targetId: 'budgets:card',
+    title: 'A budget',
+    text: 'The bar fills as you spend. Tap a budget to change or delete it.',
+    emptyText: 'Your budgets will appear here. Tap ＋ New budget to set a limit.',
+  },
+  { tab: 'budgets', targetId: 'fab', title: 'New budget', text: 'Tap ＋ New budget to set a monthly limit.' },
+  { tab: 'goals', targetId: 'tab:goals', title: 'Goals', text: 'This is Goals, things you are saving up for.' },
+  {
+    tab: 'goals',
+    targetId: 'goals:card',
+    title: 'A goal',
+    text: 'A goal fills by itself from a linked account, or from your income minus expenses. Tap it to change or delete it.',
+    emptyText: 'Your goals will appear here. Tap ＋ New goal: a phone, an emergency fund, anything.',
+  },
+  { tab: 'goals', targetId: 'fab', title: 'New goal', text: 'Tap ＋ New goal to start saving for something.' },
+  { tab: 'more', targetId: 'tab:more', title: 'Settings', text: 'This is Settings. Everything about you and your data lives here.' },
+  {
+    tab: 'more',
+    targetId: 'settings:name',
+    title: 'Your name',
+    text: 'Set your name here. The Personalize card, with themes and your profile, is for making Zovix yours.',
   },
   {
-    id: 'more',
-    emoji: '⚙️',
-    title: 'Settings',
-    text: 'Your name and the tools: reports, recurring entries, CSV import and export, and accounts and categories. Under Your data, Delete data removes ALL of your entries, budgets or goals, real ones too, after you type DELETE. Help and this tour live here too.',
-    example:
-      'Starting fresh after the tutorial? Settings, then Delete data, pick what to delete and type DELETE. It removes everything of that kind, not just the samples.',
+    tab: 'more',
+    targetId: 'settings:tools',
+    title: 'Tools',
+    text: 'Reports, Recurring entries, Accounts and categories, and Import and export CSV.',
+  },
+  {
+    tab: 'more',
+    targetId: 'settings:delete',
+    title: 'Delete my records',
+    text: 'Delete my records removes ALL of your entries, budgets or goals, real ones too, after you type DELETE. Your login stays.',
+  },
+  {
+    tab: 'more',
+    targetId: 'settings:delete-account',
+    title: 'Delete my account',
+    text: 'Delete my account removes your login and every record for good. It cannot be undone.',
+  },
+  {
+    tab: 'more',
+    targetId: 'settings:help',
+    title: 'Help',
+    text: 'Take this tour again or replay the first-run tutorial here whenever you like.',
   },
 ];

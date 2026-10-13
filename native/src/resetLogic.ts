@@ -2,7 +2,11 @@
 export const RESET_KINDS = ['entries', 'budgets', 'goals'] as const;
 export type ResetKind = (typeof RESET_KINDS)[number];
 
-export const RESET_LABEL: Record<ResetKind, string> = {
+export type ResetChoice = ResetKind | 'all';
+export type Counts = Record<ResetKind, number | null>;
+
+export const RESET_LABEL: Record<ResetChoice, string> = {
+  all: 'Delete ALL my records',
   entries: 'Delete all entries',
   budgets: 'Delete all budgets',
   goals: 'Delete all savings goals',
@@ -10,7 +14,25 @@ export const RESET_LABEL: Record<ResetKind, string> = {
 
 const plural = (n: number, one: string, many: string) => (n === 1 ? `the 1 ${one}` : `all ${n} ${many}`);
 
-export function resetWarning(kind: ResetKind, count: number): string {
+// Sum of the three counts; null when any is unknown.
+export const sumCounts = (c: Counts): number | null =>
+  c.entries === null || c.budgets === null || c.goals === null ? null : c.entries + c.budgets + c.goals;
+
+export function allWarning(c: { entries: number; budgets: number; goals: number }): string {
+  return (
+    `Deletes ${plural(c.entries, 'entry', 'entries')}, ${plural(c.budgets, 'budget', 'budgets')} and ${plural(c.goals, 'savings goal', 'savings goals')} (including real ones, not just sample data). Your login, accounts and categories stay, and so do your recurring rules (they will keep adding new entries). ` +
+    'Account balances go back to their starting balances. Your streak, XP and level go back to the start. Budget and goal tracking is gone. ' +
+    'Deleted entries are kept for 30 days in a hidden trash, but the app cannot restore a whole batch. ' +
+    'This cannot be undone. It is not the same as deleting your account: you stay signed up and can start again.'
+  );
+}
+
+export function resetWarning(kind: ResetChoice, count: number | Counts): string {
+  if (kind === 'all') {
+    const c = typeof count === 'number' ? { entries: 0, budgets: 0, goals: 0 } : count;
+    return allWarning({ entries: c.entries ?? 0, budgets: c.budgets ?? 0, goals: c.goals ?? 0 });
+  }
+  if (typeof count !== 'number') return '';
   const all = '(including real ones, not just sample data)';
   if (kind === 'entries')
     return (
@@ -31,9 +53,9 @@ export function resetWarning(kind: ResetKind, count: number): string {
   );
 }
 
-export const confirmPhrase = (_kind: ResetKind): string => 'DELETE';
+export const confirmPhrase = (_kind: ResetChoice): string => 'DELETE';
 
-export const canConfirm = (typed: string, kind: ResetKind): boolean => typed.trim().toLowerCase() === confirmPhrase(kind).toLowerCase();
+export const canConfirm = (typed: string, kind: ResetChoice): boolean => typed.trim().toLowerCase() === confirmPhrase(kind).toLowerCase();
 
 // Never shows raw database text.
 export function resetError(error: unknown): string {
@@ -50,4 +72,15 @@ export function resetError(error: unknown): string {
   if (code === '42501' || /row-level security|permission denied/i.test(msg))
     return 'Zovix could not delete that. If you use two-step sign in, finish it first. Nothing was deleted.';
   return 'Could not delete right now. Either all of them were deleted or none were. Check the numbers below, then try again.';
+}
+
+const NAME: Record<ResetKind, string> = { entries: 'entries', budgets: 'budgets', goals: 'goals' };
+const list = (a: string[]) => (a.length > 1 ? `${a.slice(0, -1).join(', ')} and ${a[a.length - 1]}` : a[0]);
+const cap = (x: string) => x.charAt(0).toUpperCase() + x.slice(1);
+
+// Plain words about a delete-all that stopped part way. `reason` is already friendly text.
+export function partialMessage(done: ResetKind[], reason: string): string {
+  if (done.length === 0) return reason;
+  const left = (['budgets', 'goals', 'entries'] as ResetKind[]).filter((k) => !done.includes(k)).map((k) => NAME[k]);
+  return `${cap(list(done.map((k) => NAME[k])))} were deleted, ${list(left)} were not. Check the numbers below, then try again.`;
 }

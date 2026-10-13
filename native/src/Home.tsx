@@ -6,7 +6,11 @@ import type { Snapshot } from './data';
 import type { Tx } from './logic';
 import { gameView, homeTiles, homeView } from './logic';
 import { QuickAdd, sign } from './QuickAdd';
+import { Fab } from './Fab';
+import { CoachTarget, useCoachScroll } from './Coach';
 import { CountUp, XpPop } from './Motion';
+import { Avatar } from './Avatar';
+import { useProfile } from './profile';
 import { AccountsSheet } from './Settings';
 import { c, e, r, s, sp, t } from './ui';
 
@@ -24,11 +28,13 @@ export function Home({
   onOpenAccounts: () => void;
 }) {
   const { bottom } = useSafeAreaInsets();
+  const scroll = useCoachScroll();
   const [refreshing, setRefreshing] = useState(false);
   const [err, setErr] = useState('');
   const [adding, setAdding] = useState(false);
   const [pop, setPop] = useState(0);
   const [cfg, setCfg] = useState(false);
+  const prof = useProfile(); // the person's avatar, shown next to the greeting
   const v = homeView(snap);
   const tiles = homeTiles(snap);
   const g = gameView(snap.dates, snap.totalEntries, manilaToday());
@@ -42,6 +48,7 @@ export function Home({
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <ScrollView
+        {...scroll}
         style={s.screen}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ paddingBottom: bottom + sp.clear }}
@@ -49,23 +56,27 @@ export function Home({
       >
         {!!err && <Text style={s.err}>{err}</Text>}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: sp.m }}>
-          <Text style={s.h1}>{name ? `Hi, ${name} 👋` : 'Hi there 👋'}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: sp.m, flexShrink: 1 }}>
+            <Avatar size={44} name={prof.state?.name ?? name} email={prof.state?.email} meta={prof.state?.profile} />
+            <Text style={[s.h1, { flexShrink: 1 }]} numberOfLines={1}>
+              {name ? `Hi, ${name}` : 'Hi there'}
+            </Text>
+          </View>
           <Pressable accessibilityRole="button" accessibilityLabel="Home settings" onPress={() => setCfg(true)} style={s.chip}>
             <Text style={{ color: c.ink, fontSize: t.body }}>⚙︎ Edit</Text>
           </Pressable>
         </View>
 
-        <View
+        <CoachTarget
+          id="home:total"
           style={{ backgroundColor: c.hero.violet, borderRadius: r.l, paddingVertical: sp.l, paddingHorizontal: sp.xl, marginBottom: sp.m }}
         >
           <Text style={{ color: c.mute, fontSize: t.caption }}>Total balance</Text>
           <CountUp value={v.total} style={{ color: c.ink, fontSize: t.head, fontWeight: '800' }} />
-          {v.owed > 0 && (
-            <Text style={{ color: c.down, fontSize: t.caption }}>Includes {formatMinor(v.owed)} you owe (cards or overdrafts)</Text>
-          )}
-        </View>
+          {v.owed > 0 && <Text style={{ color: c.down, fontSize: t.caption }}>Spendable already counts {formatMinor(v.owed)} you owe</Text>}
+        </CoachTarget>
 
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: sp.s, marginBottom: sp.s }}>
+        <CoachTarget id="home:tiles" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: sp.s, marginBottom: sp.s }}>
           {tiles.map((x) => {
             const label = x.kind === 'account' ? x.name : x.kind === 'spendable' ? 'Spendable' : '🐷 Savings';
             const edge = x.kind === 'spendable' ? c.up : x.kind === 'savings' ? c.reward : c.line;
@@ -101,7 +112,7 @@ export function Home({
               </Pressable>
             );
           })}
-        </View>
+        </CoachTarget>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="See all accounts"
@@ -129,9 +140,11 @@ export function Home({
           </View>
         </View>
 
-        <Text style={s.h2}>Recent</Text>
-        {snap.recent.length > 0 && <Text style={[s.p, { marginBottom: sp.s }]}>Tap an entry to edit or delete it.</Text>}
-        {snap.recent.length === 0 && <Text style={s.p}>Nothing yet. Tap Add to log your first peso.</Text>}
+        <CoachTarget id="home:recent" empty={snap.recent.length === 0}>
+          <Text style={s.h2}>Recent</Text>
+          {snap.recent.length > 0 && <Text style={[s.p, { marginBottom: sp.s }]}>Tap an entry to edit or delete it.</Text>}
+          {snap.recent.length === 0 && <Text style={s.p}>Nothing yet. Tap Add to log your first peso.</Text>}
+        </CoachTarget>
         {snap.recent.slice(0, 6).map((x) => (
           <Pressable
             key={x.id}
@@ -157,23 +170,7 @@ export function Home({
         ))}
       </ScrollView>
 
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Add an entry"
-        onPress={() => setAdding(true)}
-        style={({ pressed }) => ({
-          position: 'absolute',
-          right: sp.l,
-          bottom: sp.l,
-          backgroundColor: c.primary,
-          borderRadius: r.pill,
-          paddingVertical: sp.l,
-          paddingHorizontal: sp.xl,
-          opacity: pressed ? 0.8 : 1,
-        })}
-      >
-        <Text style={{ color: c.onPrimary, fontSize: t.lead, fontWeight: '800' }}>＋ Add</Text>
-      </Pressable>
+      <Fab label="＋ Add" onPress={() => setAdding(true)} />
       <XpPop play={pop} label="+5 XP" />
       <AccountsSheet open={cfg} onClose={() => setCfg(false)} snap={snap} refresh={refresh} />
 
