@@ -9,3 +9,5 @@ export const WEB_APP_ENABLED = true;
 export function webAppEnabled(env: Record<string, string | undefined> = process.env): boolean {
   return env.WEB_APP_ENABLED === 'false' ? false : WEB_APP_ENABLED;
 }
+// The address the landing page answers on: "/" once the web tracker is retired, "/welcome" while it is still on (then "/" is the dashboard).
+export const landingPath = (env: Record<string, string | undefined> = process.env) => (webAppEnabled(env) ? '/welcome' : '/');

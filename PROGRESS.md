@@ -76,6 +76,8 @@
 
 - 2026-10-14 owner feedback on the landing (white text on light background, boring intro, no live demo): hero is now its own purple block that grows with content (no fixed 320px gradient), pain-led headline ("Your pesos keep disappearing. Catch them."), one yellow CTA "Get Zovix free" (APK) plus a sticky bottom CTA, and a LIVE DEMO in the hero (src/components/LiveDemo.tsx, reuses welcomeDemo.ts; nothing saved; wallet counts down, rows, food budget bar, spend chart, streak, confetti and a Get Zovix free prompt after 3 entries). Install steps moved to an Install in 3 taps card near the end. tests/prod/landing.mjs now clicks through the demo and checks text contrast at 320/360/375 and dark mode.
 
+- 2026-10-14 landing conversion pass: sections Sound familiar (pain), comparison vs Notes/spreadsheet (stacks into cards on phones), Made for, 3 more FAQ answers; sticky download bar now appears only after the hero button scrolls away and hides at the final CTA (StickyCta.tsx); sentence-case eyebrow. Discovery: robots.txt, sitemap.xml, opengraph-image (share card), JSON-LD SoftwareApplication (no invented ratings), canonical + metadataBase (src/lib/siteUrl.ts, landingPath() in site.ts). Middleware matcher now skips robots.txt, sitemap.xml, opengraph-image (judge review pending/see below). No fake testimonials or counts on purpose. Sitemap/robots are static: they use the constant, so they switch to / when WEB_APP_ENABLED becomes false.
+
 ## Next steps
 
 0. Owner: turn Supabase Confirm email back ON after any live-suite run. Provide the domain (with ending) to attach it in Vercel, then follow docs/play-store/PLAY_CONSOLE_GUIDE.md.

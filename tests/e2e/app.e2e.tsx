@@ -187,6 +187,42 @@ const count = (h: string, s: string) => h.split(s).length - 1;
         lo.includes('href="/zovix.apk" download=""'),
     );
     T(
+      'landing: conversion sections (pain, comparison table, who it is for, extra FAQ) and a hidden-until-scroll sticky bar',
+      [
+        'Sound familiar?',
+        'Why not just use Notes or a spreadsheet?',
+        'Made for people who track by feel',
+        'Can I try it before installing?',
+        'class="ld-sticky"',
+      ].every((x) => lh.includes(x)) &&
+        lh.includes('<table class="ld-cmp"') &&
+        lh.includes('id="get-hero"'),
+    );
+    {
+      const ld = lh.match(/<script type="application\/ld\+json">(.*?)<\/script>/)?.[1] ?? '{}',
+        j = JSON.parse(ld.replace(/&quot;/g, '"').replace(/&amp;/g, '&'));
+      T(
+        'landing: structured data is a free Android app with no invented ratings',
+        j['@type'] === 'SoftwareApplication' &&
+          j.offers?.price === '0' &&
+          j.operatingSystem === 'Android' &&
+          !('aggregateRating' in j) &&
+          !('review' in j),
+        ld.slice(0, 120),
+      );
+      const rb = (await import('@/app/robots')).default(),
+        sm = (await import('@/app/sitemap')).default(),
+        dis = JSON.stringify(rb.rules);
+      T(
+        'discovery: robots blocks the app and login, sitemap lists only the landing page and privacy',
+        dis.includes('/transactions') &&
+          dis.includes('/login') &&
+          sm.length === 2 &&
+          sm.some((x: { url: string }) => x.url.endsWith('/privacy')),
+        dis.slice(0, 120),
+      );
+    }
+    T(
       'landing: no email, password or sign-up fields (only the sample entry box)',
       !/type="(password|email)"|name="(password|email)"/.test(lo),
     );

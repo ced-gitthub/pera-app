@@ -6,7 +6,9 @@ import RegisterSW from '@/components/RegisterSW';
 import { Bricolage_Grotesque, Figtree } from 'next/font/google';
 const display = Bricolage_Grotesque({ subsets: ['latin'], variable: '--font-display', display: 'swap' });
 const body = Figtree({ subsets: ['latin'], variable: '--font-body', display: 'swap' });
+import { SITE_URL } from '@/lib/siteUrl';
 export const metadata = {
+  metadataBase: new URL(SITE_URL),
   title: 'Zovix — budget & money tracker',
   description: 'Budget and money tracker. Type it, done.',
   appleWebApp: { capable: true, title: 'Zovix', statusBarStyle: 'default' as const },

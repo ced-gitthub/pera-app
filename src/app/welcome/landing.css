@@ -278,3 +278,117 @@ html body .ld-demo .wl-win .btn {
   color: #fff;
   box-shadow: none;
 }
+
+/* sticky bar: only visible once the hero button has scrolled away */
+.ld-sticky {
+  transform: translateY(110%);
+  visibility: hidden;
+  transition:
+    transform 0.25s ease,
+    visibility 0.25s;
+}
+.ld-sticky.on {
+  transform: none;
+  visibility: visible;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ld-sticky {
+    transition: none;
+  }
+}
+.ld .wl-eyebrow {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 14px;
+}
+.ld-cmp {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  overflow: hidden;
+  font-size: 14.5px;
+}
+.ld-cmp th,
+.ld-cmp td {
+  padding: 12px 12px;
+  text-align: left;
+  vertical-align: top;
+  line-height: 1.4;
+  border-top: 1px solid var(--line);
+}
+.ld-cmp thead th {
+  border-top: 0;
+  font-weight: 800;
+  background: var(--ube-soft);
+}
+.ld-cmp thead th:last-child,
+.ld-cmp td:last-child {
+  color: var(--ink);
+  font-weight: 700;
+  background: color-mix(in srgb, var(--mango) 18%, var(--surface));
+}
+.ld-cmp td:nth-child(2) {
+  color: var(--mute);
+}
+.ld-cmp tbody th {
+  font-weight: 700;
+  width: 28%;
+}
+
+/* phones: each comparison row becomes a small card (a 3-column table does not fit 320px) */
+@media (max-width: 599px) {
+  .ld-cmp,
+  .ld-cmp tbody,
+  .ld-cmp tr,
+  .ld-cmp th,
+  .ld-cmp td {
+    display: block;
+    width: auto;
+  }
+  .ld-cmp {
+    background: none;
+    border: 0;
+    border-radius: 0;
+    overflow: visible;
+  }
+  .ld-cmp thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .ld-cmp tr {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    overflow: hidden;
+  }
+  .ld-cmp tbody th,
+  .ld-cmp td {
+    border: 0;
+    padding: 2px 0;
+    width: auto;
+    background: none;
+  }
+  .ld-cmp tbody th {
+    font-size: 16px;
+    margin-bottom: 6px;
+  }
+  .ld-cmp td::before {
+    content: attr(data-label) ': ';
+    font-weight: 800;
+    color: var(--mute);
+  }
+  .ld-cmp td:last-child {
+    background: color-mix(in srgb, var(--mango) 22%, var(--surface));
+    border-radius: 10px;
+    padding: 8px 10px;
+    margin-top: 6px;
+  }
+}

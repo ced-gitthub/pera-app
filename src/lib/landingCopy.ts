@@ -61,3 +61,32 @@ export const FAQ: [string, string][] = [
     'Apps installed outside the Play Store show that warning. It is normal for a file you downloaded yourself.',
   ],
 ];
+export const PAIN: [string, string, string][] = [
+  ['😵', '"Saan napunta ang sweldo ko?"', 'Paid on the 15th, broke by the 20th, and no idea where it went.'],
+  ['📝', 'Notes and sheets get abandoned', 'Too many steps, so you quit in a week. Zovix is one line per entry.'],
+  ['🙈', 'Not looking is not saving', 'Once you can see it, you spend differently. Budgets and goals do the nagging for you.'],
+];
+export const COMPARE: [string, string, string][] = [
+  ['Logging a purchase', 'Open the file, find the row, format it', 'Type one line: lunch 150 gcash'],
+  ['Categories', 'You sort every entry yourself', 'Picked for you from the words you type'],
+  ['Balances', 'Add them up by hand', 'Updated for every wallet automatically'],
+  ['Budgets and goals', 'Build the formulas first', 'Built in, with bars that fill up'],
+  ['Sticking with it', 'Easy to quit', 'Streaks, quests and levels pull you back'],
+];
+export const WHO: string[] = ['Students on allowance', 'First-jobbers', 'Freelancers', 'Side hustlers', 'Anyone with GCash and cash'];
+export const FAQ_MORE: [string, string][] = [
+  [
+    'Can I try it before installing?',
+    'Yes. The sample at the top of this page is the real thing running on sample money. Nothing you type is saved.',
+  ],
+  [
+    'Do I need an account?',
+    'You sign in once, with Google or an email code, so your entries are safe and stay yours. No password to remember.',
+  ],
+  [
+    'What if I lose or change my phone?',
+    'Your entries live in your account, not on the phone. Install Zovix on the new one, sign in, and everything is there.',
+  ],
+];
+export const SITE_NAME = 'Zovix Pera Tracker';
+export const TAGLINE = 'Type what you spent. Zovix does the rest.';

@@ -1,9 +1,11 @@
 import Link from 'next/link';
 import LiveDemo from '@/components/LiveDemo';
+import StickyCta from '@/components/StickyCta';
 import ZovixMark from '@/components/ZovixMark';
 import { APK_URL, webAppEnabled } from '@/lib/site';
 import { SAMPLES } from '@/lib/onboardingCopy';
-import { BENEFITS, FAQ, HOW, LEVELS, PRIVACY, QUESTS, SAMPLE_TITLES, WHAT } from '@/lib/landingCopy';
+import { BENEFITS, COMPARE, FAQ, FAQ_MORE, HOW, LEVELS, PAIN, PRIVACY, QUESTS, SAMPLE_TITLES, WHAT, WHO } from '@/lib/landingCopy';
+import { jsonLd } from '@/lib/jsonLd';
 // The website is the front door for the Zovix app: what it is, how it helps, worked examples, and one clear download button.
 // It never links to the web tracker (except a small "log in" line while the web app is still switched on, see WEB_APP_ENABLED).
 function Download({ id }: { id?: string }) {
@@ -32,6 +34,7 @@ export default function Landing({ ok }: { ok?: string }) {
   const web = webAppEnabled();
   return (
     <main className="wl ld">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd() }} />
       <div className="ld-top">
         <div className="ld-in">
           <header className="wl-top">
@@ -57,13 +60,25 @@ export default function Landing({ ok }: { ok?: string }) {
               Type <b>lunch 150 gcash</b>. Zovix does the rest. Try it right here, it takes 5 seconds.
             </p>
             <LiveDemo />
-            <div className="ld-cta-row">
+            <div className="ld-cta-row" id="get-hero">
               <Download />
               <small>Android · free · no ads · no bank login</small>
             </div>
           </section>
         </div>
       </div>
+      <section className="ld-sec" aria-label="Sound familiar?">
+        <h2>Sound familiar?</h2>
+        <div className="ld-what">
+          {PAIN.map(([ic, t, d]) => (
+            <article key={t} className="wl-card">
+              <span aria-hidden="true">{ic}</span>
+              <h3>{t}</h3>
+              <p>{d}</p>
+            </article>
+          ))}
+        </div>
+      </section>
       <section className="ld-sec" aria-label="About Zovix">
         <h2>Your pesos, finally clear</h2>
         <div className="ld-what">
@@ -121,6 +136,28 @@ export default function Landing({ ok }: { ok?: string }) {
           );
         })}
       </section>
+      <section className="ld-sec" aria-label="Zovix compared with notes and spreadsheets">
+        <h2>Why not just use Notes or a spreadsheet?</h2>
+        <table className="ld-cmp">
+          <caption className="sr-only">Notes or spreadsheet compared with Zovix</caption>
+          <thead>
+            <tr>
+              <th scope="col">&nbsp;</th>
+              <th scope="col">Notes or sheet</th>
+              <th scope="col">Zovix</th>
+            </tr>
+          </thead>
+          <tbody>
+            {COMPARE.map(([k, a, b]) => (
+              <tr key={k}>
+                <th scope="row">{k}</th>
+                <td data-label="Notes or sheet">{a}</td>
+                <td data-label="Zovix">{b}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
       <section className="wl-benefits" aria-label="What you get">
         <h2>What you get with Zovix</h2>
         <div className="wl-grid">
@@ -163,6 +200,14 @@ export default function Landing({ ok }: { ok?: string }) {
           <small>Set a goal, connect an account, and watch the bar fill up.</small>
         </div>
       </section>
+      <section className="ld-sec" aria-label="Who it is for">
+        <h2>Made for people who track by feel</h2>
+        <ul className="ld-quests" aria-label="Who Zovix is for">
+          {WHO.map((w) => (
+            <li key={w}>{w}</li>
+          ))}
+        </ul>
+      </section>
       <section className="ld-sec" aria-label="Privacy">
         <h2>Private by design</h2>
         <ul className="ld-priv">
@@ -176,7 +221,7 @@ export default function Landing({ ok }: { ok?: string }) {
       </section>
       <section className="ld-sec" aria-label="Questions">
         <h2>Questions</h2>
-        {FAQ.map(([q, a]) => (
+        {[...FAQ_MORE, ...FAQ].map(([q, a]) => (
           <details key={q} className="ld-faq">
             <summary>{q}</summary>
             <p>{a}</p>
@@ -202,9 +247,7 @@ export default function Landing({ ok }: { ok?: string }) {
           )}
         </p>
       </section>
-      <div className="ld-sticky">
-        <Download id="get-sticky" />
-      </div>
+      <StickyCta />
     </main>
   );
 }

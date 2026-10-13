@@ -56,6 +56,27 @@ for (const [label, vp, scheme] of [
     const miss = need.filter((x) => !t.includes(x.toLowerCase()));
     return miss.length ? miss : true;
   });
+  await step(
+    'conversion sections are there: pain, comparison table, who it is for; page has structured data and a share image',
+    async () => {
+      const need = ['Sound familiar?', 'Why not just use Notes or a spreadsheet?', 'Made for people who track by feel'];
+      const t = await q.locator('body').innerText();
+      const miss = need.filter((x) => !t.includes(x));
+      const ld = await q.locator('script[type="application/ld+json"]').count(),
+        og = await q.locator('meta[property="og:image"]').count(),
+        cmp = await q.locator('table.ld-cmp tbody tr').count();
+      return !miss.length && ld === 1 && og >= 1 && cmp === 5 ? true : { miss, ld, og, cmp };
+    },
+  );
+  await step('the sticky download bar is hidden at the top and appears after the hero button scrolls away', async () => {
+    await q.evaluate(() => window.scrollTo(0, 0));
+    await q.waitForTimeout(400);
+    const top = await q.locator('.ld-sticky.on').count();
+    await q.evaluate(() => window.scrollTo(0, document.getElementById('get-hero').getBoundingClientRect().bottom + window.scrollY + 400));
+    await q.waitForTimeout(700);
+    const mid = await q.locator('.ld-sticky.on').count();
+    return top === 0 && mid === 1 ? true : { top, mid };
+  });
   await step('a FAQ answer opens when tapped', async () => {
     const d = q.locator('details.ld-faq').first();
     await d.locator('summary').click();
@@ -141,6 +162,16 @@ G('landing: files and redirects');
     const x = await r.head(BASE + '/zovix.apk');
     return x.ok() ? true : x.status();
   });
+  for (const [p, type] of [
+    ['/robots.txt', /text\/plain/],
+    ['/sitemap.xml', /xml/],
+    ['/opengraph-image', /image\/png/],
+  ])
+    await step(`${p} is public (no login redirect) and the right type`, async () => {
+      const x = await r.get(BASE + p, { maxRedirects: 0 });
+      const t = x.headers()['content-type'] || '';
+      return x.status() === 200 && type.test(t) ? true : { status: x.status(), t };
+    });
   for (const p of ['/privacy', '/api/health', '/.well-known/assetlinks.json'])
     await step(`${p} still works`, async () => {
       const x = await r.get(BASE + p);
