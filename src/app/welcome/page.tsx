@@ -15,9 +15,11 @@ export const metadata: Metadata = {
     type: 'website',
     url: landingPath(),
     siteName: 'Zovix',
+    images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary_large_image',
+    images: ['/opengraph-image'],
     title: 'Zovix Pera Tracker',
     description: 'Type what you spent. Zovix does the rest. Free for Android.',
   },
