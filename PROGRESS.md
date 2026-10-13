@@ -69,6 +69,8 @@
 
 - 2026-10-13 DECISION (owner): website tutorial work stops; the mandatory sliding tutorial is rebuilt inside the native app (see docs/native-app/PLAN.md). Last website test commit a11d273 (live tour-path check) was pushed but its run was not read.
 
+- 2026-10-13 DECISION (owner): the website becomes the landing page for the app. Built: Download for Android (top and bottom, APK_URL in src/lib/site.ts = /zovix.apk hosted on this site: free, never expires, no ads, unlike MediaFire), install steps, iPhone Add to Home Screen note, demo kept under Try it here first. When the native app APK is ready: replace public/zovix.apk (or point APK_URL at a GitHub Release). The web app itself (login) stays until the native app has feature parity.
+
 ## Next steps
 
 0. Owner: turn Supabase Confirm email back ON after any live-suite run. Provide the domain (with ending) to attach it in Vercel, then follow docs/play-store/PLAY_CONSOLE_GUIDE.md.

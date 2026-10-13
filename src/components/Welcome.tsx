@@ -1,4 +1,5 @@
 'use client';
+import { APK_URL } from '@/lib/site';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import ZovixMark from '@/components/ZovixMark';
@@ -102,8 +103,24 @@ export default function Welcome({ google }: { google: React.ReactNode }) {
           Know where every <span className="wl-hl">peso</span> goes.
         </h1>
         <p className="wl-sub">Type it like a text. Zovix sorts it, adds it up and shows what is left. Try it below, no sign-up needed.</p>
+        <div className="wl-get">
+          <a className="btn p wl-big" href={APK_URL} download>
+            ⬇ Download for Android
+          </a>
+          <a className="btn wl-big" href="#try">
+            Try it here first
+          </a>
+        </div>
+        <p className="wl-get-note">
+          <b>iPhone?</b> Open this page in Safari, tap Share, then Add to Home Screen. Free, no ads, no bank login.
+        </p>
+        <ul className="wl-get-steps" aria-label="How to install on Android">
+          <li>Tap Download. Open the file when it finishes.</li>
+          <li>If Android asks, allow installs from your browser, then tap Install.</li>
+          <li>Open Zovix and sign in with Google.</li>
+        </ul>
       </section>
-      <section className="wl-demo" aria-label="Try Zovix">
+      <section className="wl-demo" id="try" aria-label="Try Zovix">
         <div className="wl-prog">
           <div className="wl-prog-row">
             <b>Step {tut.n} of 5</b>
@@ -349,6 +366,9 @@ export default function Welcome({ google }: { google: React.ReactNode }) {
         <p>Free forever. No ads. No bank login.</p>
         <div className="wl-cta">
           {google}
+          <a className="btn wl-big" href={APK_URL} download>
+            ⬇ Download for Android
+          </a>
           <Link href="/register" className="btn p wl-big">
             Create free account
           </Link>

@@ -154,6 +154,17 @@ const count = (h: string, s: string) => h.split(s).length - 1;
     h.includes('Total balance') && count(h, '₱23,750.00') >= 3 && !h.includes('>Income<') && !h.includes('Where your money went'),
     h.match(/₱[\d,.]+/g)?.slice(0, 6),
   );
+  // ---- landing page promotes the app
+  {
+    const W = (await import('@/components/Welcome')).default,
+      wh = await html(<W google={null} />);
+    T(
+      'landing: Download for Android link points at the APK and is a download, twice (top and bottom)',
+      wh.split('href="/zovix.apk" download=""').length - 1 === 2,
+    );
+    T('landing: install steps and the iPhone route are explained', wh.includes('allow installs') && wh.includes('Add to Home Screen'));
+    T('landing: still offers the try-it demo and sign in', wh.includes('id="try"') && wh.includes('I have an account'));
+  }
   // ---- required first-run wizard
   {
     const OV = (await import('@/components/OnboardingView')).default,
