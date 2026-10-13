@@ -2,11 +2,11 @@ import { useCallback, useEffect, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { formatMinor } from '../../src/core/money';
-import { supabase } from './supabase';
 import type { Snapshot } from './data';
 import { loadActivity, loadBudgets, loadGoals } from './extra';
 import { sign } from './QuickAdd';
 import { Btn } from './Btn';
+import { confirmSignOut } from './signout';
 import { c, s, sp, t, e, r } from './ui';
 
 // A small loader for the tab screens: loading, error (with retry) and empty states are handled once, here.
@@ -154,7 +154,7 @@ export function More({ onReplay }: { onReplay: () => void }) {
   return (
     <Page emoji="⚙️" title="Settings" line="Tutorial and account." tint={c.purple} busy={false} reload={() => {}} err="">
       <Btn label="Show the tutorial again" alt onPress={onReplay} />
-      <Btn label="Log out" onPress={() => supabase.auth.signOut()} />
+      <Btn label="Log out" onPress={confirmSignOut} />
       <Text style={[s.p, { textAlign: 'center', marginTop: sp.m }]}>Zovix native 0.5.1</Text>
     </Page>
   );

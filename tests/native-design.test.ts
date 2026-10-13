@@ -61,3 +61,14 @@ test('design: white text on a hero color passes 4.5:1', async () => {
   assert.ok(1.05 / (lum(c.green) + 0.05) >= 4.5, 'success green on white');
   assert.ok(1.05 / (lum(c.mute) + 0.05) >= 4.5, 'muted text on white');
 });
+
+test('safety: logging out always asks first (only signout.ts may call signOut)', () => {
+  const callers = fs
+    .readdirSync(DIR)
+    .filter((f) => /\.tsx?$/.test(f) && f !== 'signout.ts')
+    .filter((f) => /auth\.signOut\(/.test(fs.readFileSync(`${DIR}/${f}`, 'utf8')));
+  assert.deepEqual(callers, []);
+  const helper = fs.readFileSync(`${DIR}/signout.ts`, 'utf8');
+  assert.match(helper, /Alert\.alert\(/);
+  assert.match(helper, /style: 'cancel'/); // there is a clear way to back out
+});

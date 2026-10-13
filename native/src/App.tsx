@@ -10,6 +10,7 @@ import { Login, Totp } from './Login';
 import { Welcome } from './Welcome';
 import { Gate } from './Gate';
 import { Btn } from './Btn';
+import { confirmSignOut } from './signout';
 import { c, s, sp } from './ui';
 
 export default function App() {
@@ -65,7 +66,7 @@ export default function App() {
       <View style={s.screen}>
         <Text style={s.p}>Could not check your sign-in. Check your connection.</Text>
         <Btn label="Try again" onPress={() => check(session)} />
-        <Btn label="Sign out" alt onPress={() => supabase.auth.signOut()} />
+        <Btn label="Sign out" alt onPress={confirmSignOut} />
       </View>
     );
   else if (totp) body = <Totp onDone={() => check(session)} />;

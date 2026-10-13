@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { sendCode, verifyCode, signInWithGoogle, verifyTotp } from './auth';
-import { supabase } from './supabase';
 import { Btn } from './Btn';
+import { confirmSignOut } from './signout';
 import { c, s, sp, t, e, r } from './ui';
 
 // One screen for both: "Create account" (name + email, code, you are in) and "Sign in" (email, code).
@@ -152,7 +152,7 @@ export function Totp({ onDone }: { onDone: () => void }) {
       />
       {!!err && <Text style={s.err}>{err}</Text>}
       <Btn label="Verify" busy={busy} onPress={go} />
-      <Btn label="Sign out" alt onPress={() => supabase.auth.signOut()} />
+      <Btn label="Sign out" alt onPress={confirmSignOut} />
     </View>
   );
 }

@@ -6,11 +6,11 @@ import { minorToInput } from '../../src/lib/validate';
 import { GOAL_EMOJIS } from '../../src/lib/goals';
 import { COPY, SAMPLES } from '../../src/lib/onboardingCopy';
 import { GATE_STEPS, WIZARD_TOTAL, type GateStep } from '../../src/lib/onboarding';
-import { supabase } from './supabase';
 import type { Snapshot } from './data';
 import { saveBalances, saveBudget, saveGoal } from './wizardData';
 import { QuickAdd } from './QuickAdd';
 import { Btn } from './Btn';
+import { confirmSignOut } from './signout';
 import { c, s, sp, t, e, r } from './ui';
 
 export type Slide = GateStep | 'finish';
@@ -155,7 +155,7 @@ export function Wizard(p: {
             )}
           </>
         )}
-        {!p.tour && <Btn label="Log out" alt onPress={() => supabase.auth.signOut()} />}
+        {!p.tour && <Btn label="Log out" alt onPress={confirmSignOut} />}
       </Animated.View>
     </ScrollView>
   );
