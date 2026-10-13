@@ -102,7 +102,7 @@ export function patch(pg) {
 export async function newCtx(browser, vp = { width: 1280, height: 900 }, { wizard = false, ...extra } = {}) {
   const c = await browser.newContext({ viewport: vp, baseURL: BASE, ...extra });
   c.keepWizard = wizard;
-  if (!wizard) await c.addCookies([{ name: 'zovix_onboarded', value: '1', url: BASE }]);
+  if (!wizard) await c.addCookies([{ name: 'zovix_onboarded2', value: '1', url: BASE }]);
   c.setDefaultTimeout(20000);
   const np = c.newPage.bind(c);
   c.newPage = async () => patch(await np());
@@ -123,7 +123,7 @@ export const body = async (p) => {
 // Signing out clears the wizard cookies (by design), so every test sign-in/sign-up puts the "finished" cookie back, except in a wizard context.
 const finished = async (page) => {
   const c = page.context();
-  if (!c.keepWizard) await c.addCookies([{ name: 'zovix_onboarded', value: '1', url: BASE }]);
+  if (!c.keepWizard) await c.addCookies([{ name: 'zovix_onboarded2', value: '1', url: BASE }]);
 };
 export async function signup(page, email, password, name = 'QA Tester') {
   await finished(page);

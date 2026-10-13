@@ -73,8 +73,8 @@ T('typed 1000 with a -150 entry logged stores an opening balance of 1150', openi
 T('a balance with an existing opening and income counts the movement only', openingFromToday(50000, 30000, 10000) === 30000);
 T('an absurdly large amount is refused', openingFromToday(99_999_999_999 * 2, 0, 0) === null);
 T(
-  'accounts from before the wizard are not gated',
-  !needsWizard('2026-10-12T23:59:59Z') && needsWizard('2030-01-01T00:00:00Z') && !needsWizard(undefined),
+  'existing accounts are gated too until they finish the steps',
+  needsWizard('2020-01-01T00:00:00Z') && needsWizard('2030-01-01T00:00:00Z') && !needsWizard(undefined),
 );
 T(
   'typing exactly the current balance (opening stays 0) still moves step 2 on to step 3 once submitted',

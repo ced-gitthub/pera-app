@@ -57,6 +57,8 @@
 
 - 2026-10-13 BUILT: required sliding first-run wizard. `OnboardingGate` (server, mounted in `(app)/layout.tsx`) covers every app page with a full-screen dialog until 4 steps are done: log first entry (Quick Add embedded), real balances (`saveOpeningBalances`), a budget (`startBudget`), a savings goal (shared `GoalForm`). "Step N of 5" bar + dots, slide-in animation, glowing "Start here / Fill this in" box per step, no Skip, Log out on every slide. 5th slide ("You are all set", streak teaser) is shown once via cookie `zovix_wizard`; `zovix_onboarded` cookie skips the check (and its 3 count queries) afterwards. Existing users who already meet the 4 steps are let in silently. Fails open on DB errors. Rule is pure (`src/lib/onboarding.ts`, `tests/onboarding.test.ts`); e2e 389 pass; live step in qa.mjs (`newCtx` now pre-sets the finished cookie, `{wizard:true}` keeps the wizard). Judge round 1 REJECTED; fixed: (1) wizard only for accounts created on/after 2026-10-13 (`needsWizard`), older accounts keep the optional card; (2) balances step stores opening = typed - logged movement (`openingFromToday`), inputs pre-filled with the current balance; (3) accounts missing from the form are skipped, never reset to 0. Trade-off: step 2 needs a non-zero balance in at least one account.
 
+- 2026-10-13 DECISION (owner): the wizard applies to EVERY account that has not done the 4 steps, existing ones included (cutoff removed, cookie renamed zovix_onboarded2 so devices marked earlier are re-checked). Accounts that already have all four are let in silently.
+
 ## Next steps
 
 0. Owner: turn Supabase Confirm email back ON after any live-suite run. Provide the domain (with ending) to attach it in Vercel, then follow docs/play-store/PLAY_CONSOLE_GUIDE.md.

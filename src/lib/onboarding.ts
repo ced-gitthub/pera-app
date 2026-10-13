@@ -5,7 +5,7 @@ import { MAX_MINOR } from '../core/money.ts';
 export const GATE_STEPS = ['first', 'balance', 'budget', 'goal'] as const;
 export type GateStep = (typeof GATE_STEPS)[number];
 export const WIZARD_TOTAL = GATE_STEPS.length + 1;
-export const ONBOARDING_COOKIE = 'zovix_onboarded'; // set once finished: skips the check (and its queries) on this device
+export const ONBOARDING_COOKIE = 'zovix_onboarded2'; // set once finished: skips the check (and its queries) on this device
 export const BAL_COOKIE = 'zovix_wizard_bal'; // set when step 2 is submitted: typing exactly what the entries already add up to leaves every opening balance at 0, so the data alone cannot tell
 export const WIZARD_COOKIE = 'zovix_wizard'; // set while the wizard is on screen: tells a just-finished user apart from a long-time user on a new device
 
@@ -29,8 +29,8 @@ export function gateFor(i: MissionInput, cookies: { onboarded: boolean; wizard: 
   return { show: true, step: next.id as GateStep, number: doneIds.length + 1, total: WIZARD_TOTAL, doneIds };
 }
 
-// The wizard is for accounts made on or after this moment; people who were already using Zovix keep the optional "Getting started" card and are never locked out.
-export const WIZARD_SINCE = '2026-10-13T12:30:00Z';
+// Every account goes through the wizard until it has the four steps done (accounts that already have them are let in silently). Cookie name bumped to _2 so devices that were marked under the earlier cutoff are checked again.
+export const WIZARD_SINCE = '2000-01-01T00:00:00Z';
 export const needsWizard = (createdAt: string | undefined) => !!createdAt && Date.parse(createdAt) >= Date.parse(WIZARD_SINCE);
 
 // "What I have in this account today" -> the opening balance to store. The balance the app shows is opening + what was logged since, so the opening balance is
