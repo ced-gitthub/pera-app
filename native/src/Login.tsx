@@ -114,7 +114,7 @@ export function Login({ start }: { start: 'signup' | 'login' }) {
                 onPress={() =>
                   run(async () => {
                     const e = await verifyCode(email.trim(), code.trim());
-                    if (!e && signup) await markJustSignedUp(); // the next load starts this new account empty (see fresh.ts)
+                    if (!e && signup) await markJustSignedUp(email.trim()); // the next load asks about any data this email already has (see fresh.ts)
                     return e;
                   })
                 }

@@ -493,7 +493,6 @@ G('two-step verification is enforced by the database (migration 0006)');
 // The route ships with the next website deploy. Until then every step here is reported as SKIPPED (visible in the output, counted as a pass) so the suite stays green; afterwards they are real checks.
 // Only accounts created by this block are ever deleted.
 G('native app: delete account (/api/native/delete-account)');
-let skippedDelete = 0;
 {
   const EP = BASE + '/api/native/delete-account';
   const call = async (token, body, headers = {}) => {
@@ -506,16 +505,8 @@ let skippedDelete = 0;
     });
     return { s: r.status, j: await r.json().catch(() => null), cc: r.headers.get('cache-control') };
   };
-  const probe = await call(null, { confirm: 'DELETE' }).catch((e) => ({ s: -1, err: String(e.message || e) }));
-  const deployed = probe.s !== 404;
-  if (!deployed)
-    console.log('NOTE: /api/native/delete-account answered 404, so the delete-account group is SKIPPED (endpoint not deployed yet)');
-  // ds: a real step when the endpoint exists; otherwise a visible "skipped" pass.
-  const ds = async (name, fn) => {
-    if (deployed) return step(name, fn);
-    skippedDelete++;
-    T('SKIPPED (endpoint not deployed yet): ' + name, true);
-  };
+  // The route ships in the same merge that deploys it, and prod-qa runs after the deploy, so a 404 here means it is broken, renamed or blocked: that FAILS (no skipping).
+  const ds = step;
   const signedIn = async (u) => {
     const c = mk(),
       s = await c.auth.signInWithPassword({ email: u.email, password: PW });
@@ -752,6 +743,6 @@ await step('skeleton animation stops for people who prefer reduced motion', asyn
   await Mb.close();
 }
 await S.close();
-const out = done({ users: [A, M, em('d'), em('v'), em('x1'), em('x2'), em('x3'), em('x4')], skippedDeleteAccount: skippedDelete });
+const out = done({ users: [A, M, em('d'), em('v'), em('x1'), em('x2'), em('x3'), em('x4')] });
 await browser.close();
 process.exit(out.fail ? 1 : 0);

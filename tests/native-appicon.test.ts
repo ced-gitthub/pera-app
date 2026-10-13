@@ -137,3 +137,31 @@ test('appicon: assets map covers every icon with a static require, and app.json 
     for (const k of ['foregroundImage', 'backgroundImage', 'monochromeImage'])
       assert.ok(fs.existsSync('native/' + i.android[k]), i.android[k]);
 });
+
+test('the icon can be changed once per app session: a second change before a restart is refused (two launcher icons otherwise)', async () => {
+  const calls: string[] = [];
+  const api = createAppIconApi({
+    supported: true,
+    store: { getItem: async () => null, setItem: async () => {} },
+    setNative: async (n: string) => void calls.push(n),
+    getNative: () => null,
+  } as never);
+  assert.equal(await api.setAppIcon('Ocean'), null);
+  const second = await api.setAppIcon('Sunset');
+  assert.match(second ?? '', /restart/i);
+  assert.deepEqual(calls, ['Ocean']);
+});
+
+test('a failed change does not use up the one change', async () => {
+  let n = 0;
+  const api = createAppIconApi({
+    supported: true,
+    store: { getItem: async () => null, setItem: async () => {} },
+    setNative: async () => {
+      if (n++ === 0) throw new Error('boom');
+    },
+    getNative: () => null,
+  } as never);
+  assert.ok(await api.setAppIcon('Ocean'));
+  assert.equal(await api.setAppIcon('Ocean'), null);
+});

@@ -12,3 +12,8 @@ export function shouldAskAboutExistingData(
   if (!justSignedUp || !counts) return false;
   return counts.totalEntries + counts.budgetsCount + counts.goalsCount > 0;
 }
+
+// The flag carries the email it was set for, so a leftover flag can never fire for a different account.
+export const flagValueFor = (email: string): string => `1:${email.trim().toLowerCase()}`;
+export const flagMatches = (stored: string | null | undefined, email: string): boolean =>
+  !!stored && email.trim() !== '' && stored === flagValueFor(email);

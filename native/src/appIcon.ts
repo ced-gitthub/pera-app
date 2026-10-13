@@ -33,14 +33,18 @@ const FAILED = 'Could not change the app icon. Please try again.';
 
 /** Builds the icon API from injected parts. Nothing here throws; failures come back as a friendly message. */
 export function createAppIconApi(d: IconDeps) {
+  // Android only moves the 'current' launcher entry after a restart, so a second change in the same session could leave TWO Zovix icons. One change per session.
+  let changedThisSession = false;
   return {
     supported: d.supported,
     /** Returns null on success, otherwise a message to show. */
     async setAppIcon(name: unknown): Promise<string | null> {
       if (!d.supported) return UNSUPPORTED;
       if (!isAppIconName(name)) return 'That icon is not available.';
+      if (changedThisSession) return 'Restart Zovix to change the icon again.';
       try {
         await d.setNative(name);
+        changedThisSession = true;
       } catch {
         return FAILED;
       }

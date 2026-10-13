@@ -68,7 +68,7 @@ export function Gate() {
       const { data } = await supabase.auth.getSession();
       const id = data.session?.user.id;
       if (!id) return 'Session expired. Please sign in again.';
-      const wasSignUp = await takeSignUpFlag(); // read once; used below with this load's counts
+      const wasSignUp = await takeSignUpFlag(data.session?.user.email ?? ''); // read once; used below with this load's counts
       const sn = await load();
       const flags = await readFlags(id);
       const counts = await loadCounts().catch(() => null);
@@ -109,14 +109,14 @@ export function Gate() {
   }, [uid]);
   useEffect(() => {
     // the tab tour opens once per account, as soon as the first-run steps are out of the way
-    if (!snap || !gate || gate.show || !uid) return;
+    if (!snap || !gate || gate.show || !uid || ask) return; // the tour waits while the existing-data question is open
     void tabTourSeen(uid).then((seen) => {
       if (!seen) {
         startTour('home');
         void markTabTourSeen(uid);
       }
     });
-  }, [snap, gate, uid]);
+  }, [snap, gate, uid, ask]);
   useEffect(() => {
     // coming back to the app on a new day runs the day's recurring entries and reloads the numbers
     const sub = AppState.addEventListener('change', (st) => {
@@ -208,6 +208,15 @@ export function Gate() {
             await refresh();
           }}
         />
+        <ExistingDataPrompt
+          open={ask && !mine && tour === null}
+          onKeep={() => setAsk(false)}
+          onFresh={() => {
+            setAsk(false);
+            setFresh(true);
+          }}
+        />
+        <ResetData open={fresh} onClose={() => setFresh(false)} onDone={() => void refresh()} />
         {!!notice && <Text style={{ color: c.mute, fontSize: t.caption, textAlign: 'center', padding: sp.s }}>{notice}</Text>}
         <TabBar tab={tab} setTab={setTab} onHeight={setTabH} />
         {tour !== null && <TabTour index={tour} onIndex={setTour} onClose={endTour} />}

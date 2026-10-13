@@ -38,3 +38,35 @@ test('the sign-up flag is taken exactly once: removed before anything else can u
   assert.match(src, /removeItem\(JUST_SIGNED_UP_KEY\)/);
   assert.match(src, /takeSignUpFlag/);
 });
+
+import { flagValueFor, flagMatches } from '../native/src/freshLogic.ts';
+test('the sign-up flag belongs to one email, so a leftover flag can never fire for another account', () => {
+  const v = flagValueFor(' Ced@Example.COM ');
+  assert.equal(flagMatches(v, 'ced@example.com'), true);
+  assert.equal(flagMatches(v, 'other@example.com'), false);
+  assert.equal(flagMatches(null, 'ced@example.com'), false);
+  assert.equal(flagMatches('1', 'ced@example.com'), false); // the old flag format is ignored
+  assert.equal(flagMatches(v, ''), false);
+});
+
+test('Gate really renders the existing-data prompt and the typed-DELETE sheet, and holds the tour back while asking', () => {
+  const src = fs.readFileSync('native/src/Gate.tsx', 'utf8');
+  assert.match(src, /<ExistingDataPrompt/);
+  assert.match(src, /<ResetData/);
+  assert.match(src, /ask/);
+  assert.ok(src.includes('|| ask) return'), 'the tab tour must wait while the question is open');
+});
+
+test('signing out forgets a pending sign-up flag', () => {
+  assert.match(fs.readFileSync('native/src/signout.ts', 'utf8'), /JUST_SIGNED_UP_KEY/);
+});
+
+test('the live delete-account group no longer skips on 404 (a 404 after deploy means the route is broken)', () => {
+  const src = fs.readFileSync('tests/prod/security.mjs', 'utf8');
+  assert.doesNotMatch(src, /SKIPPED \(endpoint not deployed/);
+});
+
+test('the new native dependency is pinned exactly', () => {
+  const pkg = JSON.parse(fs.readFileSync('native/package.json', 'utf8'));
+  assert.equal(pkg.dependencies['expo-alternate-app-icons'], '8.0.0');
+});
