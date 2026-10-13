@@ -18,7 +18,7 @@
 - Leaked-password protection is a Supabase Pro feature (paid); not needed, the app checks HaveIBeenPwned itself on signup, reset and password change.
 - Live prod-qa suites create throwaway users, so they skip/fail while Confirm email is ON (expected). Re-verify the 9 qa.mjs steps fixed in 3ecabd3 only if Confirm email is turned OFF briefly.
 
-- 2026-10-14 FOUND BY LIVE TEST: the server key (SUPABASE_SECRET_KEY) is a new-style secret key that PostgREST accepts but the auth ADMIN API rejects ("401: This endpoint requires a valid Bearer token"). So the website's old Delete my account (auth.admin.deleteUser) never worked. Fixed for account deletion with migration 0013 (delete_user_account, execute for service_role only, applied to production 2026-10-14, permissions verified). STILL BROKEN, probably the same cause: src/lib/backup.ts auth.admin.getUserById and generateLink (backup-email recovery). Confirm with a live step, then either move to RPC/SQL or put the legacy service_role JWT in the Vercel env var (owner action).
+- 2026-10-14 FOUND BY LIVE TEST: the server key (SUPABASE_SECRET_KEY) is a new-style secret key that PostgREST accepts but the auth ADMIN API rejects ("401: This endpoint requires a valid Bearer token"). So the website's old Delete my account (auth.admin.deleteUser) never worked. Fixed for account deletion with migration 0013 (delete_user_account, execute for service_role only, applied to production 2026-10-14, permissions verified). STILL BROKEN, probably the same cause: src/lib/backup.ts auth.admin.getUserById and generateLink (backup-email recovery). Confirm with a live step, then either move to RPC/SQL or put the legacy service-role JWT in the Vercel env var (owner action).
 
 ## Decisions
 
