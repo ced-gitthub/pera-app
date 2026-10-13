@@ -1,0 +1,28 @@
+{
+  "expo": {
+    "name": "Zovix",
+    "slug": "zovix-native",
+    "version": "0.1.0",
+    "scheme": "zovix",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "android": {
+      "package": "com.zovixhub.pera",
+      "versionCode": 1,
+      "allowBackup": false,
+      "adaptiveIcon": {
+        "backgroundColor": "#5B2EE0",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "plugins": ["expo-web-browser", ["expo-build-properties", { "android": { "usesCleartextTraffic": false } }]],
+    "extra": {
+      "supabaseUrl": "https://vxhgkkzbmrhxayzryake.supabase.co",
+      "supabasePublishableKey": "sb_publishable_YGZgbXB3xS6tP2ssvT8pCA_c3i4hRL2"
+    }
+  }
+}

@@ -1,0 +1,36 @@
+import { StyleSheet } from 'react-native';
+export const c = {
+  bg: '#F7F5FF',
+  card: '#FFFFFF',
+  ink: '#1B1033',
+  mute: '#6B6486',
+  purple: '#5B2EE0',
+  yellow: '#FFD23F',
+  red: '#C62828',
+  green: '#1B8A4B',
+  line: '#E4DEF7',
+};
+export const s = StyleSheet.create({
+  screen: { flex: 1, paddingTop: 56, paddingHorizontal: 16 },
+  card: { backgroundColor: c.card, borderRadius: 18, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: c.line },
+  h1: { fontSize: 26, fontWeight: '800', color: c.ink },
+  h2: { fontSize: 17, fontWeight: '700', color: c.ink, marginBottom: 8 },
+  p: { fontSize: 15, color: c.mute },
+  input: {
+    borderWidth: 1,
+    borderColor: c.line,
+    borderRadius: 12,
+    padding: 14,
+    fontSize: 17,
+    color: c.ink,
+    backgroundColor: '#fff',
+    marginBottom: 10,
+  },
+  btn: { backgroundColor: c.purple, borderRadius: 14, paddingVertical: 14, alignItems: 'center', marginBottom: 10, minHeight: 48 },
+  btnAlt: { backgroundColor: c.yellow },
+  btnText: { color: '#fff', fontWeight: '800', fontSize: 16 },
+  btnAltText: { color: c.ink },
+  err: { color: c.red, fontSize: 14, marginBottom: 8 },
+  ok: { color: c.green, fontSize: 14, marginBottom: 8 },
+  row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8 },
+});

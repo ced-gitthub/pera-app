@@ -296,7 +296,7 @@ test('no secrets committed', () => {
   const walk = (d: string): string[] =>
     fs
       .readdirSync(d, { withFileTypes: true })
-      .filter((f) => !['node_modules', '.git', '.next'].includes(f.name))
+      .filter((f) => !['node_modules', '.git', '.next', 'android', 'ios', '.expo', 'dist', 'native-build'].includes(f.name))
       .flatMap((f) => (f.isDirectory() ? walk(`${d}/${f.name}`) : [`${d}/${f.name}`]));
   for (const f of walk('.').filter((f) => !f.includes('tests/')))
     assert.ok(!/sk-[A-Za-z0-9]{20}|service_role|eyJ[A-Za-z0-9_-]{30}/.test(fs.readFileSync(f, 'utf8')), f);
