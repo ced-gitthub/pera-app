@@ -101,6 +101,7 @@ export function patch(pg) {
 // `wizard: true` keeps the first-run wizard (it covers the whole app until done); every other test context has finished it, like a returning user.
 export async function newCtx(browser, vp = { width: 1280, height: 900 }, { wizard = false, ...extra } = {}) {
   const c = await browser.newContext({ viewport: vp, baseURL: BASE, ...extra });
+  c.keepWizard = wizard;
   if (!wizard) await c.addCookies([{ name: 'zovix_onboarded', value: '1', url: BASE }]);
   c.setDefaultTimeout(20000);
   const np = c.newPage.bind(c);
@@ -119,7 +120,13 @@ export const body = async (p) => {
   await settle(p);
   return p.locator('body').innerText();
 };
+// Signing out clears the wizard cookies (by design), so every test sign-in/sign-up puts the "finished" cookie back, except in a wizard context.
+const finished = async (page) => {
+  const c = page.context();
+  if (!c.keepWizard) await c.addCookies([{ name: 'zovix_onboarded', value: '1', url: BASE }]);
+};
 export async function signup(page, email, password, name = 'QA Tester') {
+  await finished(page);
   await page.goto('/register');
   await page.fill('input[name=name]', name);
   await page.fill('input[name=email]', email);
@@ -130,6 +137,7 @@ export async function signup(page, email, password, name = 'QA Tester') {
   ]);
 }
 export async function login(page, email, password) {
+  await finished(page);
   await page.goto('/login');
   if (new URL(page.url()).pathname !== '/login') {
     await logout(page);
@@ -142,6 +150,7 @@ export async function login(page, email, password) {
 }
 export async function logout(page) {
   await Promise.all([page.waitForURL(/\/login/, { timeout: 20000 }), page.locator('button:has-text("Log out"):visible').first().click()]);
+  await finished(page);
 }
 // Quick Add: reload first so the previous result message is gone, then wait for a definite outcome.
 export async function add(page, text, { settle = true } = {}) {
