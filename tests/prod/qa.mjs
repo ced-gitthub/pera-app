@@ -52,15 +52,20 @@ G('auth: logged-out');
       // Only the front door ('/') may land on the sample; every other protected page must still go to login (or the recovery page).
       return (r === '/' ? /^\/welcome$/ : /^\/(login|forgot)/).test(u) ? true : u;
     });
-  await step('landing page: Download for Android, worked sample "lunch 150 gcash", install steps; nothing to type into', async () => {
+  await step('landing page: Get Zovix free, worked sample "lunch 150 gcash", install steps, live demo, no login fields', async () => {
     await q.goto('/');
     if (new URL(q.url()).pathname !== '/welcome') return q.url();
     await q.locator('text=Private by design').waitFor({ timeout: 20000 });
     const t = (await q.locator('body').innerText()).replace(/\s+/g, ' ').toLowerCase();
-    const href = await q.locator('a:has-text("Download for Android")').first().getAttribute('href');
+    const href = await q.locator('a[href="/zovix.apk"]').first().getAttribute('href');
     const need = ['lunch 150 gcash', 'What Zovix does', 'Add to Home Screen', 'Broke Rookie', 'Private by design'];
     const miss = need.filter((x) => !t.includes(x.toLowerCase()));
-    return href === '/zovix.apk' && !miss.length && (await q.locator('#wl-in').count()) === 0 ? true : { href, miss };
+    return href === '/zovix.apk' &&
+      !miss.length &&
+      (await q.locator('#ld-in').count()) === 1 &&
+      (await q.locator('input[type=password], input[type=email]').count()) === 0
+      ? true
+      : { href, miss };
   });
   await step('dashboard tutorial: a new account sees "Getting started" with exactly one highlighted next step', async () => {
     const c3 = await newCtx(browser),

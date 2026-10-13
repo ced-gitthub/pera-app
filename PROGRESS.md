@@ -74,6 +74,8 @@
 
 - 2026-10-14 live result for 34bd142 (landing live): landing job pass; rls 49, db 15, responsive 242, security 66 (its job still exited non-zero with no failing test), qa 188/1. The one qa failure is "savings goal: a duplicate name and a bad amount are refused" (duplicate message came back empty, then the page landed on /?ok=Goal removed); it passed in one run and failed in two, and the landing change does not touch goals, so treat it as an existing flaky test to investigate. Earlier runs on overlapping pushes also showed 2FA/dashboard timeouts that disappeared when run alone: do not start prod-qa runs concurrently (shared TOTP users).
 
+- 2026-10-14 owner feedback on the landing (white text on light background, boring intro, no live demo): hero is now its own purple block that grows with content (no fixed 320px gradient), pain-led headline ("Your pesos keep disappearing. Catch them."), one yellow CTA "Get Zovix free" (APK) plus a sticky bottom CTA, and a LIVE DEMO in the hero (src/components/LiveDemo.tsx, reuses welcomeDemo.ts; nothing saved; wallet counts down, rows, food budget bar, spend chart, streak, confetti and a Get Zovix free prompt after 3 entries). Install steps moved to an Install in 3 taps card near the end. tests/prod/landing.mjs now clicks through the demo and checks text contrast at 320/360/375 and dark mode.
+
 ## Next steps
 
 0. Owner: turn Supabase Confirm email back ON after any live-suite run. Provide the domain (with ending) to attach it in Vercel, then follow docs/play-store/PLAY_CONSOLE_GUIDE.md.

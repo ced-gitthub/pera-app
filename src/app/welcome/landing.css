@@ -172,3 +172,109 @@
   min-height: 44px;
   line-height: 20px;
 }
+
+/* hero = its own purple block that grows with its content (no fixed height, so white text is never on a light background) */
+.ld {
+  background: var(--bg);
+  padding-bottom: calc(96px + env(safe-area-inset-bottom));
+}
+.ld > .ld-top {
+  max-width: none;
+  padding-inline: 0;
+  background:
+    radial-gradient(600px 320px at 90% -8%, rgba(255, 197, 61, 0.4), transparent),
+    linear-gradient(165deg, #7a52ff 0, #5b35e8 55%, #4526c4 100%);
+  border-radius: 0 0 34px 34px;
+  padding-bottom: 28px;
+  color: #fff;
+}
+.ld-in {
+  max-width: 720px;
+  margin-inline: auto;
+  padding-inline: max(18px, env(safe-area-inset-left));
+}
+.ld .wl-hero::before,
+.ld .wl-hero::after {
+  display: none;
+}
+.ld .wl-hero {
+  padding-top: 18px;
+  padding-bottom: 0;
+}
+.ld .wl-hero h1 {
+  font-size: clamp(32px, 9vw, 50px);
+}
+.ld .wl-sub {
+  max-width: 40ch;
+  margin-bottom: 18px;
+}
+.ld-demo {
+  color: var(--ink);
+  margin-bottom: 18px;
+}
+.ld-demo-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-display), sans-serif;
+  font-size: 17px;
+}
+.ld-cta-row {
+  display: grid;
+  gap: 8px;
+  justify-items: stretch;
+  text-align: center;
+}
+.ld-cta-row small {
+  color: rgba(255, 255, 255, 0.92);
+  font-weight: 600;
+}
+html body .ld .ld-cta.btn {
+  justify-content: center;
+  text-align: center;
+  background: var(--mango);
+  color: #3b2a00;
+  box-shadow: 0 5px 0 #e0a516;
+  font-size: 18px;
+}
+.ld .ld-top .wl-login {
+  color: #fff;
+}
+.ld-info h3 {
+  font-size: 19px;
+  font-weight: 800;
+  margin: 0 0 8px;
+}
+.ld-info .wl-get-steps {
+  list-style: decimal;
+  padding-left: 22px;
+  margin: 0 0 10px;
+}
+.ld-sticky {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 30;
+  padding: 10px max(14px, env(safe-area-inset-left)) calc(10px + env(safe-area-inset-bottom));
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(8px);
+  border-top: 1px solid var(--line);
+}
+.ld-sticky .ld-cta {
+  display: flex;
+  max-width: 720px;
+  margin-inline: auto;
+  width: 100%;
+}
+.ld .wl-final .ld-cta {
+  display: inline-flex;
+}
+html body .ld-demo .wl-win .btn {
+  display: inline-flex;
+  margin-top: 8px;
+  background: var(--ube);
+  color: #fff;
+  box-shadow: none;
+}

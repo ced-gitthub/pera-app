@@ -159,8 +159,8 @@ const count = (h: string, s: string) => h.split(s).length - 1;
     const L = (await import('@/components/Landing')).default,
       lh = await html(<L />);
     T(
-      'landing: Download for Android link points at the APK and is a download, twice (top and bottom)',
-      lh.split('href="/zovix.apk" download=""').length - 1 === 2,
+      'landing: Get Zovix free links to the APK as a download (header, hero, final CTA, sticky bar)',
+      lh.split('href="/zovix.apk" download=""').length - 1 >= 4 && lh.includes('Get Zovix free'),
     );
     T('landing: install steps and the iPhone route are explained', lh.includes('allow installs') && lh.includes('Add to Home Screen'));
     T(
@@ -186,7 +186,14 @@ const count = (h: string, s: string) => h.split(s).length - 1;
         lo.includes('Email confirmed.') &&
         lo.includes('href="/zovix.apk" download=""'),
     );
-    T('landing: no email, password or sign-up fields', !/<input|<form/.test(lo));
+    T(
+      'landing: no email, password or sign-up fields (only the sample entry box)',
+      !/type="(password|email)"|name="(password|email)"/.test(lo),
+    );
+    T(
+      'landing: live demo is on the page with a try-it chip and a clear pain-led headline',
+      lh.includes('id="ld-in"') && lh.includes('lunch 150 gcash') && lh.includes('Catch them.'),
+    );
   }
   // ---- required first-run wizard
   {
