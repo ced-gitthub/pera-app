@@ -94,3 +94,10 @@
 4. Optional: second Supabase project for staging; Turnstile CAPTCHA; scheduled database export to a private location.
 
 5. Native app: see "Open items" in docs/native-app/NATIVE.md (deploy the website for account deletion, Supabase Confirm-signup template needs {{ .Token }}, run the live suites on the next push, test the APK on a phone).
+
+## 2026-10-14: account deletion root cause (found in Supabase edge logs + Vercel runtime log)
+- prod-qa on 917fb91: security 71 pass / 4 fail (the delete-account steps still 500); rls 57/57 (incl. delete_user_account refused for signed-in and anonymous callers); qa 189/0, responsive 242/0, db 15/0.
+- Cause: the server's calls reach Supabase carrying the PUBLISHABLE key (edge log `apikey` prefix `sb_publishable_`), so the database sees an anonymous caller and answers `42501 permission denied for function delete_user_account`. The Vercel env var `SUPABASE_SECRET_KEY` does not hold a secret key. This also explains the earlier auth admin API 401, so the "new-style secret keys cannot call the admin API" theory was wrong.
+- Fix needed from Ced (only he can see the value): Vercel project pera-app > Settings > Environment Variables > `SUPABASE_SECRET_KEY` (Production) = the secret key from Supabase > Project Settings > API Keys (starts with `sb_secret_`), then redeploy.
+- Same key powers `src/lib/backup.ts`; it is affected too.
+- Next: add a guard so `adminConfigured()` is false when the value starts with `sb_publishable_`; re-run prod-qa after the env var is fixed.
