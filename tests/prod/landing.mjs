@@ -105,6 +105,7 @@ for (const [label, vp, scheme] of [
           if (e.classList.contains('ld-top')) return [91, 53, 232];
           const c = parse(cs.backgroundColor);
           if (c.length < 4 || c[3] > 0.95) return c.slice(0, 3);
+          if (cs.backgroundImage !== 'none') return null; // a designed gradient chip (badge, hero): colour is not a flat value, skip
         }
         return parse(getComputedStyle(document.body).backgroundColor).slice(0, 3);
       };
@@ -114,7 +115,9 @@ for (const [label, vp, scheme] of [
         const r = e.getBoundingClientRect();
         if (!r.height || getComputedStyle(e).visibility === 'hidden') continue;
         const a = lum(parse(getComputedStyle(e).color).slice(0, 3)),
-          b = lum(bgAt(e)),
+          bg = bgAt(e);
+        if (!bg) continue;
+        const b = lum(bg),
           cr = (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
         if (cr < 3.5) out.push([e.tagName, e.textContent.trim().slice(0, 28), cr.toFixed(2)]);
       }

@@ -274,7 +274,7 @@ html body .ld .ld-cta.btn {
 html body .ld-demo .wl-win .btn {
   display: inline-flex;
   margin-top: 8px;
-  background: var(--ube);
+  background: #5b35e8;
   color: #fff;
   box-shadow: none;
 }
