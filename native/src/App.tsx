@@ -5,7 +5,7 @@ import type { Session } from '@supabase/supabase-js';
 import { supabase } from './supabase';
 import { needsTotp, handleLink } from './auth';
 import { Login, Totp } from './Login';
-import { Home } from './Home';
+import { Gate } from './Gate';
 import { Btn } from './Btn';
 import { c, s } from './ui';
 
@@ -49,7 +49,7 @@ export default function App() {
       </View>
     );
   else if (totp) body = <Totp onDone={() => check(session)} />;
-  else body = <Home />;
+  else body = <Gate />;
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: c.bg }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <StatusBar barStyle="dark-content" backgroundColor={c.bg} />

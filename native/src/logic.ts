@@ -1,8 +1,10 @@
 // Pure logic (no React Native, no network) so the website's `npm test` can run it.
 import { parseInput, FEE_CATS, type Item, type Parsed } from '../../src/core/parser.ts';
 import { manilaToday } from '../../src/core/money.ts';
+import { parseOptionalMinor } from '../../src/lib/validate.ts';
+import { openingFromToday } from '../../src/lib/onboarding.ts';
 
-export type Account = { id: string; name: string; short_name: string | null; counts_as_savings: boolean };
+export type Account = { id: string; name: string; short_name: string | null; counts_as_savings: boolean; opening_balance_minor: number };
 export type Category = { id: string; name: string; type: 'income' | 'expense' };
 export type Tx = {
   id: string;
@@ -45,3 +47,35 @@ export const newRequestId = () =>
     const r = (Math.random() * 16) | 0;
     return (ch === 'x' ? r : (r & 3) | 8).toString(16);
   });
+
+// Wizard step 2: "what I have in each account today" -> opening balances to store (typed minus what is already logged). Accounts not on the form are never touched.
+export function planBalances(
+  typed: Record<string, string>,
+  s: Snapshot,
+): { ok: true; patch: { id: string; v: number }[] } | { ok: false; message: string } {
+  const patch: { id: string; v: number }[] = [];
+  let any = false;
+  for (const a of s.accounts) {
+    if (!(a.id in typed)) continue;
+    const v = parseOptionalMinor(typed[a.id]);
+    if (v === null)
+      return { ok: false, message: `"${typed[a.id].slice(0, 20)}" is not a valid amount for ${a.name}. Use numbers like 1500 or 1500.50.` };
+    if (v !== 0) any = true;
+    const o = openingFromToday(v, s.balances[a.id] ?? a.opening_balance_minor, a.opening_balance_minor);
+    if (o === null) return { ok: false, message: `That amount is too large for ${a.name}.` };
+    if (o !== a.opening_balance_minor) patch.push({ id: a.id, v: o });
+  }
+  if (!any)
+    return { ok: false, message: 'Type what you have in at least one account. A rough number is fine, you can change it any time.' };
+  return { ok: true, patch };
+}
+
+// Wizard step 3: one monthly limit for an expense category, this month (Manila).
+export function planBudget(categoryId: string, amount: string, s: Snapshot, today = manilaToday()) {
+  const c = s.categories.find((x) => x.id === categoryId && x.type === 'expense');
+  if (!c) return { ok: false as const, message: 'Pick a category first.' };
+  const amt = parseOptionalMinor(amount);
+  if (amt === null || amt <= 0) return { ok: false as const, message: 'Type the monthly limit as a number above 0, like 3000.' };
+  const [year, month] = today.slice(0, 7).split('-').map(Number);
+  return { ok: true as const, row: { category_id: c.id, amount_minor: amt, month, year } };
+}

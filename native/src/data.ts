@@ -7,7 +7,7 @@ export { preview, newRequestId, type Snapshot, type Preview } from './logic';
 
 export async function load(): Promise<Snapshot> {
   const [a, c, b, t] = await Promise.all([
-    supabase.from('accounts').select('id,name,short_name,counts_as_savings').order('sort_order').order('name'),
+    supabase.from('accounts').select('id,name,short_name,counts_as_savings,opening_balance_minor').order('sort_order').order('name'),
     supabase.from('categories').select('id,name,type').order('sort_order').order('name'),
     supabase.rpc('account_balances'),
     supabase
