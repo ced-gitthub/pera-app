@@ -1,14 +1,18 @@
 import { useState } from 'react';
-import { Pressable, Text, TextInput, View } from 'react-native';
+import { Modal, Pressable, Text, TextInput, View } from 'react-native';
 import type { Snapshot } from './data';
 import { setAccountFlag, saveName } from './config';
 import { Page } from './Tabs';
 import { Sheet, ToggleRow } from './Sheet';
 import { confirmSignOut } from './signout';
 import { Btn } from './Btn';
+import { Reports } from './Reports';
+import { Recurring } from './Recurring';
+import { Manage } from './Manage';
+import { Csv } from './Csv';
 import { c, s, sp, t } from './ui';
 
-export const APP_VERSION = '0.6.0';
+export const APP_VERSION = '0.7.0';
 
 // Which accounts are savings (they leave "You can spend") and which show as cards on Home. Both are saved on the account itself, so the website agrees.
 export function AccountsSheet({
@@ -75,6 +79,7 @@ export function Settings({
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ bad: boolean; t: string } | null>(null);
   const [accounts, setAccounts] = useState(false);
+  const [tool, setTool] = useState<'' | 'reports' | 'recurring' | 'manage' | 'csv'>('');
   const save = async () => {
     setBusy(true);
     setMsg(null);
@@ -104,6 +109,13 @@ export function Settings({
           <Btn label="Save name" busy={busy} onPress={save} />
         </View>
         <View style={s.card}>
+          <Text style={s.h2}>Tools</Text>
+          <Btn label="📊 Reports" alt onPress={() => setTool('reports')} />
+          <Btn label="🔁 Recurring entries" alt onPress={() => setTool('recurring')} />
+          <Btn label="🗂 Accounts and categories" alt onPress={() => setTool('manage')} />
+          <Btn label="📄 Import and export CSV" alt onPress={() => setTool('csv')} />
+        </View>
+        <View style={s.card}>
           <Text style={s.h2}>Accounts</Text>
           <Text style={[s.p, { marginBottom: sp.m }]}>Choose which accounts are savings and which show on Home.</Text>
           <Btn label="Manage accounts" alt onPress={() => setAccounts(true)} />
@@ -117,6 +129,20 @@ export function Settings({
         </Pressable>
         <Text style={{ color: c.mute, textAlign: 'center', fontSize: t.caption }}>Zovix native {APP_VERSION}</Text>
       </Page>
+      {tool === 'reports' && <Reports snap={snap} onClose={() => setTool('')} />}
+      {tool === 'recurring' && <Recurring snap={snap} onClose={() => setTool('')} onChanged={() => void refresh()} />}
+      {tool === 'csv' && <Csv snap={snap} onClose={() => setTool('')} onChanged={() => void refresh()} />}
+      <Modal
+        visible={tool === 'manage'}
+        statusBarTranslucent
+        navigationBarTranslucent
+        animationType="slide"
+        onRequestClose={() => setTool('')}
+      >
+        <View style={{ flex: 1, backgroundColor: c.bg }}>
+          {tool === 'manage' && <Manage snap={snap} onClose={() => setTool('')} onChanged={refresh} />}
+        </View>
+      </Modal>
       <AccountsSheet open={accounts} onClose={() => setAccounts(false)} snap={snap} refresh={refresh} />
     </>
   );

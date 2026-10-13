@@ -3,6 +3,7 @@ import { FlatList, KeyboardAvoidingView, Modal, Pressable, RefreshControl, Scrol
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { formatMinor, manilaToday } from '../../src/core/money';
 import type { Snapshot } from './data';
+import type { Tx } from './logic';
 import { gameView, homeView } from './logic';
 import { QuickAdd, sign } from './QuickAdd';
 import { CountUp, XpPop } from './Motion';
@@ -11,7 +12,17 @@ import { c, e, r, s, sp, t } from './ui';
 
 const CARD_W = 168;
 
-export function Home({ snap, refresh, name }: { snap: Snapshot; refresh: () => Promise<string>; name: string }) {
+export function Home({
+  snap,
+  refresh,
+  name,
+  onPick,
+}: {
+  snap: Snapshot;
+  refresh: () => Promise<string>;
+  name: string;
+  onPick: (t: Tx) => void;
+}) {
   const { bottom } = useSafeAreaInsets();
   const [refreshing, setRefreshing] = useState(false);
   const [err, setErr] = useState('');
@@ -104,7 +115,13 @@ export function Home({ snap, refresh, name }: { snap: Snapshot; refresh: () => P
         <Text style={s.h2}>Recent</Text>
         {snap.recent.length === 0 && <Text style={s.p}>Nothing yet. Tap Add to log your first peso.</Text>}
         {snap.recent.slice(0, 6).map((x) => (
-          <View key={x.id} style={s.row}>
+          <Pressable
+            key={x.id}
+            accessibilityRole="button"
+            accessibilityLabel={`Edit ${x.description || catName(x.category_id) || 'transfer'}`}
+            onPress={() => onPick(x)}
+            style={s.row}
+          >
             <View style={{ flex: 1 }}>
               <Text style={{ color: c.ink, fontSize: t.body }}>{x.description || catName(x.category_id) || 'Transfer'}</Text>
               <Text style={{ color: c.mute, fontSize: t.caption }}>
@@ -117,7 +134,7 @@ export function Home({ snap, refresh, name }: { snap: Snapshot; refresh: () => P
               {sign(x.type)}
               {formatMinor(x.amount_minor)}
             </Text>
-          </View>
+          </Pressable>
         ))}
       </ScrollView>
 

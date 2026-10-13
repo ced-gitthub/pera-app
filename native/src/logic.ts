@@ -1,6 +1,6 @@
 // Pure logic (no React Native, no network) so the website's `npm test` can run it.
 import { parseInput, FEE_CATS, type Item, type Parsed } from '../../src/core/parser.ts';
-import { manilaToday } from '../../src/core/money.ts';
+import { manilaToday, parseAmountMinor, isSaneDate } from '../../src/core/money.ts';
 import { parseOptionalMinor } from '../../src/lib/validate.ts';
 import { budgetStatus } from '../../src/core/aggregate.ts';
 import { homeNumbers } from '../../src/lib/balances.ts';
@@ -187,4 +187,70 @@ export function writeError(error: { message: string; code?: string } | null, wha
   if (error.code === 'PRLIM' || /PRLIM/.test(error.message)) return CAPS[what];
   if (error.code === '23505') return `You already have a ${what} called "${name}". Pick another name.`;
   return 'Not saved: the server refused it or could not be reached. Try again.';
+}
+
+// ---- editing and undoing a logged entry (same rules as the website's updateTx / restoreRow)
+export type TxEdit = {
+  type: 'income' | 'expense' | 'transfer';
+  amount: string;
+  date: string;
+  description: string;
+  accountId: string;
+  toId: string;
+  categoryId: string;
+};
+export type TxPatch = {
+  amount_minor: number;
+  transaction_date: string;
+  description: string;
+  account_id: string;
+  type: TxEdit['type'];
+  category_id: string | null;
+  transfer_account_id: string | null;
+};
+export function planTxEdit(i: TxEdit, s: Snapshot, today = manilaToday()): { ok: true; patch: TxPatch } | { ok: false; message: string } {
+  const amt = parseAmountMinor(i.amount.trim());
+  if (amt === null) return { ok: false, message: 'Amount must be 0.01 to 999,999,999.99, with at most 2 decimals.' };
+  if (!isSaneDate(i.date.trim(), today))
+    return { ok: false, message: 'Use a real date like 2026-10-14 (between the year 2000 and five years from now).' };
+  if (!s.accounts.some((a) => a.id === i.accountId)) return { ok: false, message: 'Pick one of your accounts.' };
+  const base = {
+    amount_minor: amt,
+    transaction_date: i.date.trim(),
+    description: i.description.slice(0, 120),
+    account_id: i.accountId,
+    type: i.type,
+  };
+  if (i.type === 'transfer') {
+    if (!s.accounts.some((a) => a.id === i.toId)) return { ok: false, message: 'Pick the account the money goes to.' };
+    if (i.toId === i.accountId) return { ok: false, message: 'Choose two different accounts.' };
+    return { ok: true, patch: { ...base, category_id: null, transfer_account_id: i.toId } };
+  }
+  const cat = s.categories.find((x) => x.id === i.categoryId);
+  if (!cat || cat.type !== i.type) return { ok: false, message: 'Pick a category that matches the type.' };
+  return { ok: true, patch: { ...base, category_id: cat.id, transfer_account_id: null } };
+}
+
+const RESTORE = [
+  'id',
+  'account_id',
+  'transfer_account_id',
+  'category_id',
+  'type',
+  'amount_minor',
+  'description',
+  'notes',
+  'transaction_date',
+  'import_hash',
+  'external_id',
+  'recurring_id',
+  'request_id',
+  'request_idx',
+  'created_at',
+];
+// The row to put back after a delete: only known columns, no nulls, always owned by the signed-in user.
+export function restoreRowOf(row: Record<string, unknown>, userId: string): Record<string, unknown> {
+  const r: Record<string, unknown> = { user_id: userId };
+  for (const k of RESTORE) if (row[k] !== undefined && row[k] !== null) r[k] = row[k];
+  return r;
 }

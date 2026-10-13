@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { formatMinor } from '../../src/core/money';
 import type { Snapshot } from './data';
 import { loadActivity } from './extra';
-import { filterActivity, type ActivityFilter } from './logic';
+import { filterActivity, type ActivityFilter, type Tx } from './logic';
 import { sign } from './QuickAdd';
 import { ListSkeleton } from './Skeleton';
 import { Sheet } from './Sheet';
@@ -127,8 +127,8 @@ const TYPES: [ActivityFilter['type'], string][] = [
   ['transfer', 'Moved'],
 ];
 
-export function Activity({ snap }: { snap: Snapshot }) {
-  const l = useList(loadActivity, []);
+export function Activity({ snap, onPick, ver }: { snap: Snapshot; onPick: (t: Tx) => void; ver: number }) {
+  const l = useList(loadActivity, [ver]);
   const [f, setF] = useState<ActivityFilter>({ type: 'all', accountId: '' });
   const [open, setOpen] = useState(false);
   const acc = (id: string | null) => snap.accounts.find((a) => a.id === id)?.name ?? '';
@@ -153,7 +153,13 @@ export function Activity({ snap }: { snap: Snapshot }) {
           </Text>
         )}
         {rows.map((x) => (
-          <View key={x.id} style={[s.card, { flexDirection: 'row', justifyContent: 'space-between', marginBottom: sp.s }]}>
+          <Pressable
+            key={x.id}
+            accessibilityRole="button"
+            accessibilityLabel={`Edit ${x.description || cat(x.category_id) || 'transfer'}`}
+            onPress={() => onPick(x)}
+            style={[s.card, { flexDirection: 'row', justifyContent: 'space-between', marginBottom: sp.s }]}
+          >
             <View style={{ flex: 1 }}>
               <Text style={{ color: c.ink, fontWeight: '700', fontSize: t.body }}>{x.description || cat(x.category_id) || 'Transfer'}</Text>
               <Text style={{ color: c.mute, fontSize: t.caption }}>
@@ -166,7 +172,7 @@ export function Activity({ snap }: { snap: Snapshot }) {
               {sign(x.type)}
               {formatMinor(x.amount_minor)}
             </Text>
-          </View>
+          </Pressable>
         ))}
       </Page>
       <Sheet open={open} title="Filter activity" onClose={() => setOpen(false)}>
