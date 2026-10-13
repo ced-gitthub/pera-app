@@ -10,9 +10,10 @@ import { Reports } from './Reports';
 import { Recurring } from './Recurring';
 import { Manage } from './Manage';
 import { Csv } from './Csv';
+import { ResetData } from './ResetData';
 import { c, s, sp, t } from './ui';
 
-export const APP_VERSION = '0.7.1';
+export const APP_VERSION = '0.8.0';
 
 // Which accounts are savings (they leave "You can spend") and which show as cards on Home. Both are saved on the account itself, so the website agrees.
 export function AccountsSheet({
@@ -69,16 +70,19 @@ export function Settings({
   name,
   refresh,
   onReplay,
+  onTour,
 }: {
   snap: Snapshot;
   name: string;
   refresh: () => Promise<string>;
   onReplay: () => void;
+  onTour: () => void;
 }) {
   const [nm, setNm] = useState(name);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ bad: boolean; t: string } | null>(null);
   const [accounts, setAccounts] = useState(false);
+  const [reset, setReset] = useState(false);
   const [tool, setTool] = useState<'' | 'reports' | 'recurring' | 'manage' | 'csv'>('');
   const save = async () => {
     setBusy(true);
@@ -121,12 +125,21 @@ export function Settings({
           <Btn label="Manage accounts" alt onPress={() => setAccounts(true)} />
         </View>
         <View style={s.card}>
+          <Text style={s.h2}>Your data</Text>
+          <Text style={[s.p, { marginBottom: sp.m }]}>
+            Clear the sample entries, budgets or goals from the tutorial and start fresh. You are asked to confirm.
+          </Text>
+          <Btn label="🗑 Delete data" alt onPress={() => setReset(true)} />
+        </View>
+        <View style={s.card}>
+          <Text style={s.h2}>Help</Text>
+          <Btn label="🧭 Take the tour of the tabs" alt onPress={onTour} />
+          <Btn label="Show the first-run tutorial again" alt onPress={onReplay} />
+        </View>
+        <View style={s.card}>
           <Text style={s.h2}>Account</Text>
           <Btn label="Log out" alt onPress={confirmSignOut} />
         </View>
-        <Pressable accessibilityRole="button" accessibilityLabel="Show the tutorial again" onPress={onReplay} style={{ padding: sp.m }}>
-          <Text style={{ color: c.mute, textAlign: 'center', fontSize: t.body }}>Help: show the tutorial again</Text>
-        </Pressable>
         <Text style={{ color: c.mute, textAlign: 'center', fontSize: t.caption }}>Zovix native {APP_VERSION}</Text>
       </Page>
       {tool === 'reports' && <Reports snap={snap} onClose={() => setTool('')} />}
@@ -143,6 +156,7 @@ export function Settings({
           {tool === 'manage' && <Manage snap={snap} onClose={() => setTool('')} onChanged={refresh} />}
         </View>
       </Modal>
+      <ResetData open={reset} onClose={() => setReset(false)} onDone={() => void refresh()} />
       <AccountsSheet open={accounts} onClose={() => setAccounts(false)} snap={snap} refresh={refresh} />
     </>
   );

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { homeView, gameView, filterActivity, type Snapshot, type Tx } from '../native/src/logic.ts';
+import { homeView, homeTiles, accountsOverview, gameView, filterActivity, type Snapshot, type Tx } from '../native/src/logic.ts';
 import { startSandbox, runSandbox, sandboxStep, SANDBOX_GOAL_MINOR } from '../native/src/sandbox.ts';
 
 const acct = (id: string, name: string, saving: boolean) => ({
@@ -169,4 +169,68 @@ test('money text for an edit field is built from integers (no floats)', () => {
   assert.equal(minorToInput(123456), '1234.56');
   assert.equal(minorToInput(5), '0.05');
   assert.equal(minorToInput(300000), '3000.00');
+});
+
+const withCard = () =>
+  snap([
+    acct('a', 'Cash', false),
+    acct('b', 'GCash', false),
+    acct('c', 'Savings', true),
+    acct('d', 'Credit Card', false),
+    acct('e', 'BPI', false),
+  ]);
+test('spendable = positive balances of non-savings accounts; credit cards and other negatives are owed, not subtracted', () => {
+  const s = { ...withCard(), balances: { a: 100000, b: 250000, c: 400000, d: -50000, e: 30000 } };
+  const v = homeView(s);
+  assert.equal(v.spendable, 380000); // 100000 + 250000 + 30000
+  assert.equal(v.savings, 400000);
+  assert.equal(v.owed, 50000);
+  assert.equal(v.total, 730000); // net of everything, including what is owed (same as the website's Total)
+});
+
+test('a negative balance in a savings account is also owed, never added to savings', () => {
+  const s = { ...snap(), balances: { a: 100000, b: 250000, c: -20000 } };
+  const v = homeView(s);
+  assert.deepEqual({ sp: v.spendable, sv: v.savings, ow: v.owed }, { sp: 350000, sv: 0, ow: 20000 });
+});
+
+test('home tiles: Spendable and Savings first, then the first two other accounts shown on Home (4 fit without scrolling)', () => {
+  const s = { ...withCard(), balances: { a: 100000, b: 250000, c: 400000, d: -50000, e: 30000 } };
+  const t = homeTiles(s);
+  assert.deepEqual(
+    t.map((x) => x.kind),
+    ['spendable', 'savings', 'account', 'account'],
+  );
+  assert.deepEqual(
+    t.filter((x) => x.kind === 'account').map((x) => x.id),
+    ['a', 'b'],
+  );
+  assert.equal(t[0].amount, 380000);
+  assert.equal(t[1].amount, 400000);
+});
+
+test('home tiles: hidden accounts are skipped and fewer than two accounts still works', () => {
+  const accounts = [{ ...acct('a', 'Cash', false), show_on_home: false }, acct('b', 'GCash', false), acct('c', 'Savings', true)];
+  const t = homeTiles(snap(accounts));
+  assert.deepEqual(
+    t.filter((x) => x.kind === 'account').map((x) => x.id),
+    ['b'],
+  );
+  assert.equal(t.length, 3);
+});
+
+test('accounts overview groups every account as spendable, savings or owed and sums to the total', () => {
+  const s = { ...withCard(), balances: { a: 100000, b: 250000, c: 400000, d: -50000, e: 30000 } };
+  const o = accountsOverview(s);
+  assert.deepEqual(
+    o.rows.map((r) => [r.id, r.group]),
+    [
+      ['a', 'spendable'],
+      ['b', 'spendable'],
+      ['c', 'savings'],
+      ['d', 'owed'],
+      ['e', 'spendable'],
+    ],
+  );
+  assert.equal(o.spendable + o.savings - o.owed, o.total);
 });

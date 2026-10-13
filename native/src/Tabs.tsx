@@ -147,6 +147,7 @@ export function Activity({ snap, onPick, ver }: { snap: Snapshot; onPick: (t: Tx
         gearLabel={filtered ? 'Filter on' : 'Filter'}
         {...l}
       >
+        {rows.length > 0 && <Text style={[s.p, { marginBottom: sp.s }]}>Tap an entry to edit or delete it.</Text>}
         {rows.length === 0 && (
           <Text style={s.p}>
             {filtered ? 'Nothing matches this filter. Open Filter to change it.' : 'Nothing yet. Add your first entry on Home.'}
@@ -172,6 +173,7 @@ export function Activity({ snap, onPick, ver }: { snap: Snapshot; onPick: (t: Tx
               {sign(x.type)}
               {formatMinor(x.amount_minor)}
             </Text>
+            <Text style={{ color: c.mute, fontSize: t.title, marginLeft: sp.s }}>›</Text>
           </Pressable>
         ))}
       </Page>
@@ -199,6 +201,7 @@ export function TabBar({ tab, setTab, onHeight }: { tab: string; setTab: (t: str
   const items = [
     ['home', '🏠', 'Home'],
     ['activity', '🧾', 'Activity'],
+    ['accounts', '👛', 'Accounts'],
     ['budgets', '🎯', 'Budgets'],
     ['goals', '🏆', 'Goals'],
     ['more', '⚙️', 'Settings'],

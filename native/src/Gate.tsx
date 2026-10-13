@@ -5,7 +5,8 @@ import type { Gate as GateResult } from '../../src/lib/onboarding';
 import { supabase } from './supabase';
 import { load, type Snapshot } from './data';
 import { loadCounts } from './wizardData';
-import { readFlags, setFlags } from './flags';
+import { readFlags, setFlags, tabTourSeen, markTabTourSeen } from './flags';
+import { TabTour } from './TabTour';
 import { type Tx, decideGate, firstName, FINISH_FLAGS, REPLAY_FLAGS } from './logic';
 import { Home } from './Home';
 import { EntrySheet, UndoBar } from './EntrySheet';
@@ -17,6 +18,7 @@ import { manilaToday } from '../../src/core/money';
 import { Activity, TabBar } from './Tabs';
 import { Budgets, Goals } from './Planning';
 import { Settings } from './Settings';
+import { AccountsTab } from './AccountsTab';
 import { HomeSkeleton } from './Skeleton';
 import { Wizard } from './Wizard';
 import { Btn } from './Btn';
@@ -34,6 +36,7 @@ export function Gate() {
   const [undo, setUndo] = useState<UndoState | null>(null);
   const [tabH, setTabH] = useState(0);
   const [notice, setNotice] = useState('');
+  const [tour, setTour] = useState(false);
   const lastTry = useRef<number | null>(null);
   const lastDue = useRef<string | null>(null); // Manila day when due recurring rules last ran; they run again when the day changes, like the website does on each Home load
   const [ver, setVer] = useState(0); // bumps when an entry changes, so lists reload
@@ -78,6 +81,16 @@ export function Gate() {
     refresh();
   }, [refresh]);
   useEffect(() => {
+    // the tab tour opens once per account, as soon as the first-run steps are out of the way
+    if (!snap || !gate || gate.show || !uid) return;
+    void tabTourSeen(uid).then((seen) => {
+      if (!seen) {
+        setTour(true);
+        void markTabTourSeen(uid);
+      }
+    });
+  }, [snap, gate, uid]);
+  useEffect(() => {
     // coming back to the app on a new day runs the day's recurring entries and reloads the numbers
     const sub = AppState.addEventListener('change', (st) => {
       if (st === 'active' && shouldRunDue(lastDue.current, manilaToday())) void refresh();
@@ -118,11 +131,14 @@ export function Gate() {
   return (
     <View style={{ flex: 1 }}>
       <View style={{ flex: 1 }}>
-        {tab === 'home' && <Home snap={snap} refresh={refresh} name={firstName(name)} onPick={setPicked} />}
+        {tab === 'home' && (
+          <Home snap={snap} refresh={refresh} name={firstName(name)} onPick={setPicked} onOpenAccounts={() => setTab('accounts')} />
+        )}
         {tab === 'activity' && <Activity snap={snap} onPick={setPicked} ver={ver} />}
+        {tab === 'accounts' && <AccountsTab snap={snap} refresh={refresh} />}
         {tab === 'budgets' && <Budgets snap={snap} />}
         {tab === 'goals' && <Goals snap={snap} />}
-        {tab === 'more' && <Settings snap={snap} name={name} refresh={refresh} onReplay={replay} />}
+        {tab === 'more' && <Settings snap={snap} name={name} refresh={refresh} onReplay={replay} onTour={() => setTour(true)} />}
       </View>
       <UndoBar
         row={undo?.row ?? null}
@@ -151,6 +167,7 @@ export function Gate() {
         }}
       />
       {!!notice && <Text style={{ color: c.mute, fontSize: t.caption, textAlign: 'center', padding: sp.s }}>{notice}</Text>}
+      <TabTour open={tour} onClose={() => setTour(false)} />
       <TabBar tab={tab} setTab={setTab} onHeight={setTabH} />
     </View>
   );

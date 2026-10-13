@@ -63,6 +63,7 @@ export function Budgets({ snap }: { snap: Snapshot }) {
         gearLabel="New budget"
         {...l}
       >
+        {!!l.rows?.length && <Text style={[s.p, { marginBottom: sp.s }]}>Tap a budget to change or delete it.</Text>}
         {l.rows?.length === 0 && <Text style={s.p}>No budgets this month. Tap New budget to set a limit for something you spend on.</Text>}
         {l.rows?.map((b) => (
           <Pressable
@@ -77,6 +78,7 @@ export function Budgets({ snap }: { snap: Snapshot }) {
               <Text style={{ color: b.over ? c.down : c.ink, fontWeight: '800', fontSize: t.body }}>
                 {b.over ? `Over by ${formatMinor(b.overBy)}` : `${formatMinor(b.left)} left`}
               </Text>
+              <Text style={{ color: c.mute, fontSize: t.title }}> ›</Text>
             </View>
             <Bar pct={b.pct} color={b.over ? c.down : b.state === 'near' ? c.warn : c.up} />
             <Text style={s.p}>
@@ -157,6 +159,7 @@ export function Goals({ snap }: { snap: Snapshot }) {
         gearLabel="New goal"
         {...l}
       >
+        {!!l.rows?.length && <Text style={[s.p, { marginBottom: sp.s }]}>Tap a goal to change or delete it.</Text>}
         {l.rows?.length === 0 && <Text style={s.p}>No goals yet. Tap New goal: a phone, an emergency fund, anything.</Text>}
         {l.rows?.map((g) => (
           <Pressable

@@ -1,27 +1,27 @@
 import { useState } from 'react';
-import { FlatList, KeyboardAvoidingView, Modal, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { KeyboardAvoidingView, Modal, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { formatMinor, manilaToday } from '../../src/core/money';
 import type { Snapshot } from './data';
 import type { Tx } from './logic';
-import { gameView, homeView } from './logic';
+import { gameView, homeTiles, homeView } from './logic';
 import { QuickAdd, sign } from './QuickAdd';
 import { CountUp, XpPop } from './Motion';
 import { AccountsSheet } from './Settings';
 import { c, e, r, s, sp, t } from './ui';
-
-const CARD_W = 168;
 
 export function Home({
   snap,
   refresh,
   name,
   onPick,
+  onOpenAccounts,
 }: {
   snap: Snapshot;
   refresh: () => Promise<string>;
   name: string;
   onPick: (t: Tx) => void;
+  onOpenAccounts: () => void;
 }) {
   const { bottom } = useSafeAreaInsets();
   const [refreshing, setRefreshing] = useState(false);
@@ -30,6 +30,7 @@ export function Home({
   const [pop, setPop] = useState(0);
   const [cfg, setCfg] = useState(false);
   const v = homeView(snap);
+  const tiles = homeTiles(snap);
   const g = gameView(snap.dates, snap.totalEntries, manilaToday());
   const catName = (id: string | null) => snap.categories.find((x) => x.id === id)?.name ?? '';
   const accName = (id: string | null) => snap.accounts.find((a) => a.id === id)?.name ?? '';
@@ -54,45 +55,56 @@ export function Home({
           </Pressable>
         </View>
 
-        <View style={{ backgroundColor: c.hero.violet, borderRadius: r.l, padding: sp.xl, marginBottom: sp.l }}>
-          <Text style={{ color: c.mute, fontSize: t.body }}>{v.hero === 'spendable' ? 'You can spend' : 'Total balance'}</Text>
-          <CountUp
-            value={v.hero === 'spendable' ? v.spendable : v.total}
-            style={{ color: c.ink, fontSize: t.display, fontWeight: '800' }}
-          />
-          {v.hero === 'spendable' && (
-            <View style={{ flexDirection: 'row', gap: sp.l, marginTop: sp.s }}>
-              <Text style={{ color: c.reward, fontSize: t.body }}>🐷 Savings {formatMinor(v.savings)}</Text>
-              <Text style={{ color: c.mute, fontSize: t.body }}>Total {formatMinor(v.total)}</Text>
-            </View>
+        <View
+          style={{ backgroundColor: c.hero.violet, borderRadius: r.l, paddingVertical: sp.l, paddingHorizontal: sp.xl, marginBottom: sp.m }}
+        >
+          <Text style={{ color: c.mute, fontSize: t.caption }}>Total balance</Text>
+          <CountUp value={v.total} style={{ color: c.ink, fontSize: t.head, fontWeight: '800' }} />
+          {v.owed > 0 && (
+            <Text style={{ color: c.down, fontSize: t.caption }}>Includes {formatMinor(v.owed)} you owe (cards or overdrafts)</Text>
           )}
         </View>
 
-        <Text style={s.h2}>Your accounts</Text>
-        <FlatList
-          data={v.cards}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          keyExtractor={(a) => a.id}
-          snapToInterval={CARD_W + sp.m}
-          decelerationRate="fast"
-          style={{ marginBottom: sp.l, flexGrow: 0 }}
-          ItemSeparatorComponent={() => <View style={{ width: sp.m }} />}
-          renderItem={({ item }) => (
-            <View style={[s.card, { width: CARD_W, marginBottom: 0 }]}>
-              <Text style={{ color: c.mute, fontSize: t.caption }}>{item.counts_as_savings ? '🐷 Savings' : 'Spendable'}</Text>
-              <Text style={{ color: c.ink, fontSize: t.lead, fontWeight: '700', marginTop: sp.xs }} numberOfLines={1}>
-                {item.name}
-              </Text>
-              <Text
-                style={{ color: (snap.balances[item.id] ?? 0) < 0 ? c.down : c.ink, fontSize: t.title, fontWeight: '800', marginTop: sp.s }}
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: sp.s, marginBottom: sp.s }}>
+          {tiles.map((x) => {
+            const label = x.kind === 'account' ? x.name : x.kind === 'spendable' ? 'Spendable' : '🐷 Savings';
+            const edge = x.kind === 'spendable' ? c.up : x.kind === 'savings' ? c.reward : c.line;
+            return (
+              <Pressable
+                key={x.kind === 'account' ? x.id : x.kind}
+                accessibilityRole="button"
+                accessibilityLabel={`${label} ${formatMinor(x.amount)}. Open accounts`}
+                onPress={onOpenAccounts}
+                style={({ pressed }) => ({
+                  width: '48%',
+                  flexGrow: 1,
+                  backgroundColor: c.card,
+                  borderRadius: r.s,
+                  borderWidth: 1,
+                  borderColor: edge,
+                  paddingVertical: sp.m,
+                  paddingHorizontal: sp.m,
+                  opacity: pressed ? 0.7 : 1,
+                })}
               >
-                {formatMinor(snap.balances[item.id] ?? 0)}
-              </Text>
-            </View>
-          )}
-          ListEmptyComponent={<Text style={s.p}>No accounts to show. Tap Edit to choose some.</Text>}
-        />
+                <Text style={{ color: c.mute, fontSize: t.caption }} numberOfLines={1}>
+                  {label}
+                </Text>
+                <Text style={{ color: x.amount < 0 ? c.down : c.ink, fontSize: t.lead, fontWeight: '800' }} numberOfLines={1}>
+                  {formatMinor(x.amount)}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="See all accounts"
+          onPress={onOpenAccounts}
+          style={{ alignSelf: 'flex-end', paddingVertical: sp.xs, marginBottom: sp.m }}
+        >
+          <Text style={{ color: c.primary, fontSize: t.body, fontWeight: '700' }}>See all accounts ›</Text>
+        </Pressable>
 
         <View style={[s.card, { flexDirection: 'row', alignItems: 'center', gap: sp.m }]}>
           <Text style={{ fontSize: e.s }}>{g.level.emoji}</Text>
@@ -113,6 +125,7 @@ export function Home({
         </View>
 
         <Text style={s.h2}>Recent</Text>
+        {snap.recent.length > 0 && <Text style={[s.p, { marginBottom: sp.s }]}>Tap an entry to edit or delete it.</Text>}
         {snap.recent.length === 0 && <Text style={s.p}>Nothing yet. Tap Add to log your first peso.</Text>}
         {snap.recent.slice(0, 6).map((x) => (
           <Pressable
@@ -134,6 +147,7 @@ export function Home({
               {sign(x.type)}
               {formatMinor(x.amount_minor)}
             </Text>
+            <Text style={{ color: c.mute, fontSize: t.title, marginLeft: sp.s }}>›</Text>
           </Pressable>
         ))}
       </ScrollView>

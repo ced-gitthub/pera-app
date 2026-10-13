@@ -32,3 +32,14 @@ export async function setFlags(uid: string, change: Partial<Flags>): Promise<boo
     return false;
   }
 }
+
+// The tour of the tabs is shown once per account, right after the first-run steps. Stored apart from the wizard flags so replaying the wizard never re-triggers it.
+const tourKey = (uid: string) => `zv_tab_tour:${uid}`;
+export async function tabTourSeen(uid: string): Promise<boolean> {
+  try {
+    return (await AsyncStorage.getItem(tourKey(uid))) === '1';
+  } catch {
+    return true; // if storage is broken, never nag
+  }
+}
+export const markTabTourSeen = (uid: string) => AsyncStorage.setItem(tourKey(uid), '1').catch(() => {});

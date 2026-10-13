@@ -3,7 +3,6 @@ import { parseInput, FEE_CATS, type Item, type Parsed } from '../../src/core/par
 import { manilaToday, parseAmountMinor, isSaneDate } from '../../src/core/money.ts';
 import { parseOptionalMinor } from '../../src/lib/validate.ts';
 import { budgetStatus } from '../../src/core/aggregate.ts';
-import { homeNumbers } from '../../src/lib/balances.ts';
 import { streak } from '../../src/lib/vibe.ts';
 import { xpFor, levelInfo, buildQuests } from '../../src/lib/quests.ts';
 import { openingFromToday, gateFor, type Gate } from '../../src/lib/onboarding.ts';
@@ -146,13 +145,58 @@ export function sendCodeError(error: { message: string; status?: number } | null
 }
 
 // ---- Home: the same numbers as the website (homeNumbers), plus which accounts get a card and which number is the hero
+// Spendable = money you can spend now: the positive balances of accounts that are not savings. Savings = positive balances of savings accounts.
+// A negative balance anywhere (a credit card, an overdrawn account) is "owed", not subtracted from spendable. Total is the net of everything, as on the website.
 export function homeView(s: Snapshot) {
-  const n = homeNumbers(s.accounts, (id) => s.balances[id] ?? 0, s.noAccount);
+  let spendable = 0,
+    savings = 0,
+    owed = 0;
+  for (const a of s.accounts) {
+    const b = s.balances[a.id] ?? 0;
+    if (b < 0) owed -= b;
+    else if (a.counts_as_savings) savings += b;
+    else spendable += b;
+  }
+  if (s.noAccount < 0)
+    owed -= s.noAccount; // legacy entries with no account
+  else spendable += s.noAccount;
   return {
-    ...n,
+    spendable,
+    savings,
+    owed,
+    total: spendable + savings - owed,
     hero: s.accounts.some((a) => a.counts_as_savings) ? ('spendable' as const) : ('total' as const),
     cards: s.accounts.filter((a) => a.show_on_home),
   };
+}
+
+export type HomeTile = { kind: 'spendable' | 'savings'; amount: number } | { kind: 'account'; id: string; name: string; amount: number };
+// Four tiles fit on Home without scrolling: Spendable, Savings, then the first two other accounts shown on Home.
+export function homeTiles(s: Snapshot): HomeTile[] {
+  const v = homeView(s);
+  const others = v.cards.filter((a) => !a.counts_as_savings).slice(0, 2);
+  return [
+    { kind: 'spendable', amount: v.spendable },
+    { kind: 'savings', amount: v.savings },
+    ...others.map((a) => ({ kind: 'account' as const, id: a.id, name: a.name, amount: s.balances[a.id] ?? 0 })),
+  ];
+}
+
+export type OverviewRow = { id: string; name: string; balance: number; group: 'spendable' | 'savings' | 'owed'; showOnHome: boolean };
+// Every account (hidden ones too) grouped the same way the Home numbers are, so the groups always add up to the total.
+export function accountsOverview(s: Snapshot) {
+  const rows: OverviewRow[] = s.accounts.map((a) => {
+    const balance = s.balances[a.id] ?? 0;
+    return {
+      id: a.id,
+      name: a.name,
+      balance,
+      group: balance < 0 ? 'owed' : a.counts_as_savings ? 'savings' : 'spendable',
+      showOnHome: a.show_on_home,
+    };
+  });
+  const v = homeView(s);
+  return { rows, spendable: v.spendable, savings: v.savings, owed: v.owed, total: v.total };
 }
 
 // ---- the game strip: streak, XP and level, all derived from entries (website rules)
