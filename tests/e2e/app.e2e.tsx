@@ -154,6 +154,96 @@ const count = (h: string, s: string) => h.split(s).length - 1;
     h.includes('Total balance') && count(h, '₱23,750.00') >= 3 && !h.includes('>Income<') && !h.includes('Where your money went'),
     h.match(/₱[\d,.]+/g)?.slice(0, 6),
   );
+  // ---- landing page promotes the app
+  {
+    const L = (await import('@/components/Landing')).default,
+      lh = await html(<L />);
+    T(
+      'landing: Get Zovix free links to the APK as a download (header, hero, final CTA, sticky bar)',
+      lh.split('href="/zovix.apk" download=""').length - 1 >= 4 && lh.includes('Get Zovix free'),
+    );
+    T(
+      'landing: install steps and the iPhone route are explained',
+      lh.includes('payagan ang installs') && lh.includes('Add to Home Screen'),
+    );
+    T(
+      'landing: worked samples show what each part means (lunch 150 gcash, balances, budget, goal)',
+      ['lunch 150 gcash', 'GCash 1500', 'Food', 'New phone', 'Ito ang ginagawa ng Zovix', 'Ano ito', 'Paano ito nakakatulong'].every((x) =>
+        lh.includes(x),
+      ),
+    );
+    T(
+      'landing: level ladder, quests, privacy, FAQ and the privacy link are there',
+      ['Broke Rookie', 'Money Master', '7-day streak', 'Pribado ang pera mo', 'Libre ba talaga ang Zovix?', 'href="/privacy"'].every((x) =>
+        lh.includes(x),
+      ),
+    );
+    T(
+      'landing: web version on -> a small web login line; no register/dashboard links',
+      lh.includes('href="/login"') && !lh.includes('/register'),
+    );
+    process.env.WEB_APP_ENABLED = 'false';
+    const lo = await html(<L ok="Email confirmed." />);
+    delete process.env.WEB_APP_ENABLED;
+    T(
+      'landing: web app off -> no tracker links at all (login, register, security, transactions), and the email-confirmed note shows',
+      !/href="\/(login|register|code|forgot|transactions|accounts|budgets|reports|settings|security|assistant)/.test(lo) &&
+        lo.includes('Email confirmed.') &&
+        lo.includes('href="/zovix.apk" download=""'),
+    );
+    T(
+      'landing: conversion sections (pain, comparison table, who it is for, extra FAQ) and a hidden-until-scroll sticky bar',
+      [
+        'Sound familiar?',
+        'Bakit hindi na lang Notes o spreadsheet?',
+        'Para kanino ang Zovix',
+        'Pwede ko bang subukan bago mag-install?',
+        'class="ld-sticky"',
+      ].every((x) => lh.includes(x)) &&
+        lh.includes('<table class="ld-cmp"') &&
+        lh.includes('id="get-hero"'),
+    );
+    {
+      const ld = lh.match(/<script type="application\/ld\+json">(.*?)<\/script>/)?.[1] ?? '{}',
+        j = JSON.parse(ld.replace(/&quot;/g, '"').replace(/&amp;/g, '&'));
+      T(
+        'landing: structured data is a free Android app with no invented ratings',
+        j['@type'] === 'SoftwareApplication' &&
+          j.offers?.price === '0' &&
+          j.operatingSystem === 'Android' &&
+          !('aggregateRating' in j) &&
+          !('review' in j),
+        ld.slice(0, 120),
+      );
+      const { escapeJsonForHtml } = await import('@/lib/jsonLd'),
+        hostile = { t: '</script><script>alert(1)</script> & ' + String.fromCharCode(0x2028) },
+        esc = escapeJsonForHtml(JSON.stringify(hostile));
+      T(
+        'json-ld escaping: nothing can close the script tag, and the value survives a round trip',
+        !/[<>&]/.test(esc) && !esc.includes(String.fromCharCode(0x2028)) && JSON.parse(esc).t === hostile.t,
+        esc,
+      );
+      const rb = (await import('@/app/robots')).default(),
+        sm = (await import('@/app/sitemap')).default(),
+        dis = JSON.stringify(rb.rules);
+      T(
+        'discovery: robots blocks the app and login, sitemap lists only the landing page and privacy',
+        dis.includes('/transactions') &&
+          dis.includes('/login') &&
+          sm.length === 2 &&
+          sm.some((x: { url: string }) => x.url.endsWith('/privacy')),
+        dis.slice(0, 120),
+      );
+    }
+    T(
+      'landing: no email, password or sign-up fields (only the sample entry box)',
+      !/type="(password|email)"|name="(password|email)"/.test(lo),
+    );
+    T(
+      'landing: live demo is on the page with a try-it chip and a clear pain-led headline',
+      lh.includes('id="ld-in"') && lh.includes('lunch 150 gcash') && lh.includes('Catch them.'),
+    );
+  }
   // ---- required first-run wizard
   {
     const OV = (await import('@/components/OnboardingView')).default,
@@ -1185,6 +1275,50 @@ const count = (h: string, s: string) => h.split(s).length - 1;
     ]) {
       const got = await mw(path);
       T(`gate: logged out at ${path} -> ${want}`, got === want, got);
+    }
+    // landing-only mode (tracker retired): only landing, privacy, health and the recovery pages stay
+    {
+      process.env.WEB_APP_ENABLED = 'false';
+      const mo = async (path: string) => {
+        const r = await updateSession(new NextRequest('https://pera.example' + path + (path === '/' ? '?ok=hi' : '')));
+        const rw = r.headers.get('x-middleware-rewrite');
+        return rw
+          ? 'rewrite:' + new URL(rw).pathname + new URL(rw).search
+          : decodeURIComponent((r.headers.get('location') ?? 'pass').replace('https://pera.example', ''));
+      };
+      for (const [path, want] of [
+        ['/', 'rewrite:/welcome?ok=hi'],
+        ['/welcome', '/'],
+        ['/login', '/'],
+        ['/register', '/'],
+        ['/code', '/'],
+        ['/transactions', '/'],
+        ['/settings', '/'],
+        ['/budgets', '/'],
+        ['/privacy', 'pass'],
+        ['/api/health', 'pass'],
+        ['/forgot', 'pass'],
+        ['/verify', 'pass'],
+        ['/auth/callback', 'pass'],
+        ['/export', '/'], // logged out
+      ]) {
+        const got = await mo(path);
+        T(`landing-only: logged out at ${path} -> ${want}`, got === want, got);
+      }
+      login('a@x.com');
+      D.aal2.add(D.cur);
+      for (const [path, want] of [
+        ['/', 'rewrite:/welcome?ok=hi'],
+        ['/transactions', '/'],
+        ['/login', '/'],
+        ['/export', 'pass'],
+      ]) {
+        const got = await mo(path);
+        T(`landing-only: logged in at ${path} -> ${want}`, got === want, got);
+      }
+      D.cur = null;
+      delete process.env.WEB_APP_ENABLED;
+      T('landing-only: the switch defaults to the web app staying on', (await mw('/transactions')) === '/login');
     }
     // security page
     login('m@x.com');

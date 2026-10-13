@@ -1,0 +1,436 @@
+/* ---------- landing (website = front door for the app). Builds on welcome.css (.wl-*). Tokens only, so dark mode follows. ---------- */
+.ld {
+  padding-bottom: calc(40px + env(safe-area-inset-bottom));
+}
+.ld-sec {
+  padding-top: 34px;
+}
+.ld-sec h2 {
+  font-size: 26px;
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+.ld-lead {
+  color: var(--mute);
+  margin: 0 0 14px;
+}
+.ld-ok {
+  margin-top: 12px;
+}
+.ld-what {
+  display: grid;
+  gap: 12px;
+}
+.ld-sample {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  padding: 18px;
+  box-shadow: var(--shadow);
+  margin-bottom: 14px;
+}
+.ld-sample h3 {
+  font-size: 19px;
+  font-weight: 800;
+  margin: 0 0 10px;
+}
+.ld-you {
+  display: grid;
+  gap: 4px;
+  margin: 0 0 12px;
+}
+.ld-you small,
+.ld-res-t {
+  font-weight: 800;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mute);
+}
+.ld-you code {
+  display: block;
+  font:
+    700 18px/1.3 ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    monospace;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--ube-soft);
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.ld-parts {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+.ld-parts div {
+  display: grid;
+  grid-template-columns: minmax(0, 96px) minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+.ld-parts dt {
+  font-weight: 800;
+  color: var(--ink);
+  background: var(--mango);
+  color: #3b2a00;
+  padding: 3px 10px;
+  border-radius: 10px;
+  justify-self: start;
+  overflow-wrap: anywhere;
+}
+.ld-parts dd {
+  margin: 0;
+  color: var(--mute);
+  font-size: 14.5px;
+  line-height: 1.45;
+}
+.ld-res-t {
+  margin: 0 0 6px;
+}
+.ld-res,
+.ld-priv {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+}
+.ld-res li,
+.ld-priv li {
+  position: relative;
+  padding-left: 26px;
+  line-height: 1.45;
+}
+.ld-res li::before,
+.ld-priv li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-weight: 800;
+  color: var(--inc);
+}
+.ld-priv {
+  margin-bottom: 14px;
+}
+.ld-quests {
+  list-style: none;
+  padding: 0;
+  margin: 14px 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.ld-quests li {
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: var(--ube-soft);
+  font-weight: 700;
+  font-size: 14px;
+}
+.ld-faq {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 0 16px;
+  margin-bottom: 10px;
+}
+.ld-faq summary {
+  cursor: pointer;
+  font-weight: 700;
+  padding: 14px 0;
+  min-height: 44px;
+}
+.ld-faq p {
+  margin: 0 0 14px;
+  color: var(--mute);
+  line-height: 1.5;
+}
+@media (min-width: 640px) {
+  .ld-what {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+.ld-info {
+  margin-top: 18px;
+  padding: 14px 16px;
+  border-radius: 20px;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow);
+}
+.ld-info .wl-get-note {
+  margin: 0;
+}
+.ld .ld-sec p a,
+.ld .wl-small a {
+  display: inline-block;
+  padding: 12px 6px;
+  min-height: 44px;
+  line-height: 20px;
+}
+
+/* hero = its own purple block that grows with its content (no fixed height, so white text is never on a light background) */
+.ld {
+  background: var(--bg);
+  padding-bottom: calc(96px + env(safe-area-inset-bottom));
+}
+.ld > .ld-top {
+  max-width: none;
+  padding-inline: 0;
+  background:
+    radial-gradient(600px 320px at 90% -8%, rgba(255, 197, 61, 0.4), transparent),
+    linear-gradient(165deg, #7a52ff 0, #5b35e8 55%, #4526c4 100%);
+  border-radius: 0 0 34px 34px;
+  padding-bottom: 28px;
+  color: #fff;
+}
+.ld-in {
+  max-width: 720px;
+  margin-inline: auto;
+  padding-inline: max(18px, env(safe-area-inset-left));
+}
+.ld .wl-hero::before,
+.ld .wl-hero::after {
+  display: none;
+}
+.ld .wl-hero {
+  padding-top: 18px;
+  padding-bottom: 0;
+}
+.ld .wl-hero h1 {
+  font-size: clamp(32px, 9vw, 50px);
+}
+.ld .wl-sub {
+  max-width: 40ch;
+  margin-bottom: 18px;
+}
+.ld-demo {
+  color: var(--ink);
+  margin-bottom: 18px;
+}
+.ld-demo-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-display), sans-serif;
+  font-size: 17px;
+}
+.ld-cta-row {
+  display: grid;
+  gap: 8px;
+  justify-items: stretch;
+  text-align: center;
+}
+.ld-cta-row small {
+  color: rgba(255, 255, 255, 0.92);
+  font-weight: 600;
+}
+html body .ld .ld-cta.btn {
+  justify-content: center;
+  text-align: center;
+  background: var(--mango);
+  color: #3b2a00;
+  box-shadow: 0 5px 0 #e0a516;
+  font-size: 18px;
+}
+.ld .ld-top .wl-login {
+  color: #fff;
+}
+.ld-info h3 {
+  font-size: 19px;
+  font-weight: 800;
+  margin: 0 0 8px;
+}
+.ld-info .wl-get-steps {
+  list-style: decimal;
+  padding-left: 22px;
+  margin: 0 0 10px;
+}
+.ld-sticky {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 30;
+  padding: 10px max(14px, env(safe-area-inset-left)) calc(10px + env(safe-area-inset-bottom));
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(8px);
+  border-top: 1px solid var(--line);
+}
+.ld-sticky .ld-cta {
+  display: flex;
+  max-width: 720px;
+  margin-inline: auto;
+  width: 100%;
+}
+.ld .wl-final .ld-cta {
+  display: inline-flex;
+}
+html body .ld-demo .wl-win .btn {
+  display: inline-flex;
+  margin-top: 8px;
+  background: #5b35e8;
+  color: #fff;
+  box-shadow: none;
+}
+
+/* sticky bar: only visible once the hero button has scrolled away */
+.ld-sticky {
+  transform: translateY(110%);
+  visibility: hidden;
+  transition:
+    transform 0.25s ease,
+    visibility 0.25s;
+}
+.ld-sticky.on {
+  transform: none;
+  visibility: visible;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ld-sticky {
+    transition: none;
+  }
+}
+.ld .wl-eyebrow {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 14px;
+}
+.ld-cmp {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  overflow: hidden;
+  font-size: 14.5px;
+}
+.ld-cmp th,
+.ld-cmp td {
+  padding: 12px 12px;
+  text-align: left;
+  vertical-align: top;
+  line-height: 1.4;
+  border-top: 1px solid var(--line);
+}
+.ld-cmp thead th {
+  border-top: 0;
+  font-weight: 800;
+  background: var(--ube-soft);
+}
+.ld-cmp thead th:last-child,
+.ld-cmp td:last-child {
+  color: var(--ink);
+  font-weight: 700;
+  background: color-mix(in srgb, var(--mango) 18%, var(--surface));
+}
+.ld-cmp td:nth-child(2) {
+  color: var(--mute);
+}
+.ld-cmp tbody th {
+  font-weight: 700;
+  width: 28%;
+}
+
+/* phones: each comparison row becomes a small card (a 3-column table does not fit 320px) */
+@media (max-width: 599px) {
+  .ld-cmp,
+  .ld-cmp tbody,
+  .ld-cmp tr,
+  .ld-cmp th,
+  .ld-cmp td {
+    display: block;
+    width: auto;
+  }
+  .ld-cmp {
+    background: none;
+    border: 0;
+    border-radius: 0;
+    overflow: visible;
+  }
+  .ld-cmp thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .ld-cmp tr {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    overflow: hidden;
+  }
+  .ld-cmp tbody th,
+  .ld-cmp td {
+    border: 0;
+    padding: 2px 0;
+    width: auto;
+    background: none;
+  }
+  .ld-cmp tbody th {
+    font-size: 16px;
+    margin-bottom: 6px;
+  }
+  .ld-cmp td::before {
+    content: attr(data-label) ': ';
+    font-weight: 800;
+    color: var(--mute);
+  }
+  .ld-cmp td:last-child {
+    background: color-mix(in srgb, var(--mango) 22%, var(--surface));
+    border-radius: 10px;
+    padding: 8px 10px;
+    margin-top: 6px;
+  }
+}
+
+/* shortcuts row at the very top */
+html {
+  scroll-behavior: smooth;
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+.ld [id] {
+  scroll-margin-top: 14px;
+}
+.ld-nav {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 0 8px;
+  margin: 0 -2px;
+  scrollbar-width: none;
+}
+.ld-nav::-webkit-scrollbar {
+  display: none;
+}
+.ld-nav a {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+  white-space: nowrap;
+  text-decoration: none;
+}
+.ld-nav a:hover,
+.ld-nav a:focus-visible {
+  background: rgba(255, 255, 255, 0.3);
+}

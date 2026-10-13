@@ -1,8 +1,26 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { webAppEnabled } from '@/lib/site';
+import { landingOnlyRoute } from '@/lib/webRoutes';
 export async function updateSession(request: NextRequest) {
   if (/^\/api\/health(\/|$)/.test(request.nextUrl.pathname)) return NextResponse.next(); // public health check, no session needed
   if (request.nextUrl.pathname.startsWith('/api/native/')) return NextResponse.next(); // the native app sends its own bearer token; each route checks it itself
+  // Landing-only mode (tracker retired): the landing page, privacy and health need no session; retired routes go to "/".
+  const landingOnly = !webAppEnabled();
+  if (landingOnly) {
+    const route = landingOnlyRoute(request.nextUrl.pathname);
+    const u = request.nextUrl.clone();
+    if (route.kind === 'landing') {
+      u.pathname = '/welcome'; // keeps ?ok= from the email-confirmed redirect
+      return NextResponse.rewrite(u);
+    }
+    if (route.kind === 'public') return NextResponse.next();
+    if (route.kind === 'redirect') {
+      u.pathname = route.to;
+      u.search = '';
+      return NextResponse.redirect(u);
+    }
+  }
   let res = NextResponse.next({ request });
   const sb = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!, {
     cookies: {
@@ -35,7 +53,7 @@ export async function updateSession(request: NextRequest) {
     }
     // First-time visitors land on the interactive sample; people who have been in the app before (cookie set by MarkReturning) go straight to log in.
     if (path === '/') return to(request.cookies.get('zovix_seen') ? '/login' : '/welcome');
-    return to('/login');
+    return to(landingOnly ? '/' : '/login');
   }
   // Two-step gate: a password-only session (aal1) of a user who turned on an authenticator app can reach nothing but the code screen, the email-link callback and the public recovery pages.
   if (user && user.factors?.some((f) => f.factor_type === 'totp' && f.status === 'verified')) {

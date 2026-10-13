@@ -572,3 +572,24 @@
     transform: translateX(5px);
   }
 }
+
+.wl-get {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+}
+.wl-get .btn {
+  text-decoration: none;
+}
+.wl-get-note {
+  margin: 12px 0 0;
+  font-size: 14px;
+}
+.wl-get-steps {
+  margin: 10px 0 0;
+  padding-left: 20px;
+  font-size: 14px;
+  display: grid;
+  gap: 4px;
+}

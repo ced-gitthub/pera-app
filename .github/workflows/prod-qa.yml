@@ -84,3 +84,40 @@ jobs:
           git push -f origin qa-${{ matrix.suite }} 2>&1 | sed "s/${GH_TOKEN}/***/g" || echo "::error title=publish::push failed"
       - name: Fail if the suite failed
         run: '[ "${{ steps.run.outcome }}" = success ]'
+  landing:
+    # The landing page needs no account, so this runs even while Confirm email is ON (the user-creating suites above are skipped then).
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Wait until production serves this commit
+        run: |
+          want="${GITHUB_SHA::7}"
+          for i in $(seq 1 50); do
+            got=$(curl -s "$BASE_URL/api/health" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{console.log(JSON.parse(s).commit)}catch{console.log('?')}})")
+            echo "prod commit=$got want=$want"
+            [ "$got" = "$want" ] && exit 0
+            sleep 15
+          done
+          echo "::warning title=prod-qa::production did not report commit $want in time; testing whatever is live ($got)"
+      - run: npm ci
+      - name: Install Playwright
+        working-directory: tests/prod
+        run: |
+          npm install --no-save --no-package-lock --ignore-scripts playwright@1.49.1
+          npx playwright install --with-deps chromium
+      - name: Run landing
+        id: run
+        working-directory: tests/prod
+        continue-on-error: true
+        run: node --experimental-strip-types landing.mjs
+      - name: Summarise
+        if: always()
+        run: |
+          f="$OUT_DIR/landing.json"
+          [ -f "$f" ] || { echo "::error title=landing::no result file (crashed)"; exit 0; }
+          node -e "const r=require('$f'); console.log('::notice title=landing summary::pass '+r.pass+' fail '+r.fail); for (const x of r.failed.slice(0,40)) console.log('::error title=landing FAIL::['+x.group+'] '+x.name+' :: '+String(typeof x.detail==='string'?x.detail:JSON.stringify(x.detail)).replace(/[\r\n%]/g,' ').slice(0,300));"
+      - name: Fail if the suite failed
+        run: '[ "${{ steps.run.outcome }}" = success ]'

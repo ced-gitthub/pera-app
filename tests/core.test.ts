@@ -292,11 +292,11 @@ test('AI: optional, validated, never trusted', async () => {
   assert.equal((await parseWithFallback('John 500', ctx, v.categories, boom))[0].kind, 'ask');
   assert.equal((await parseWithFallback('John 500', ctx, v.categories, null))[0].kind, 'ask');
 });
-test('no secrets committed', () => {
+test('no secrets committed (other checkouts under .claude/worktrees are scanned in their own repo)', () => {
   const walk = (d: string): string[] =>
     fs
       .readdirSync(d, { withFileTypes: true })
-      .filter((f) => !['node_modules', '.git', '.next', 'android', 'ios', '.expo', 'dist', 'native-build'].includes(f.name))
+      .filter((f) => !['node_modules', '.git', '.next', 'worktrees', 'android', 'ios', '.expo', 'dist', 'native-build'].includes(f.name))
       .flatMap((f) => (f.isDirectory() ? walk(`${d}/${f.name}`) : [`${d}/${f.name}`]));
   for (const f of walk('.').filter((f) => !f.includes('tests/')))
     assert.ok(!/sk-[A-Za-z0-9]{20}|service_role|eyJ[A-Za-z0-9_-]{30}/.test(fs.readFileSync(f, 'utf8')), f);
