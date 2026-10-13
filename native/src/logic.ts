@@ -93,3 +93,20 @@ export function decideGate(counts: Counts | null, accounts: Account[], flags: Fl
   if (!gate.show && gate.mark && !flags.onboarded) set.onboarded = true;
   return { gate, set };
 }
+
+// ---- budgets: first and last day of the Manila month, and the bar maths (integer centavos; a limit of 0 never divides)
+export function monthRange(today: string) {
+  const [y, m] = today.split('-').map(Number);
+  const last = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  const mm = String(m).padStart(2, '0');
+  return { from: `${y}-${mm}-01`, to: `${y}-${mm}-${String(last).padStart(2, '0')}`, month: m, year: y };
+}
+export function budgetProgress(limit: number, spent: number) {
+  const over = spent > limit;
+  return {
+    over,
+    left: over ? 0 : limit - spent,
+    overBy: over ? spent - limit : 0,
+    pct: limit <= 0 ? (spent > 0 ? 100 : 0) : Math.min(100, Math.floor((spent * 100) / limit)),
+  };
+}

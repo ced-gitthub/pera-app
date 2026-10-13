@@ -1,6 +1,15 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { preview, missingFeeCategories, newRequestId, planBalances, planBudget, type Snapshot } from '../native/src/logic.ts';
+import {
+  preview,
+  missingFeeCategories,
+  newRequestId,
+  planBalances,
+  planBudget,
+  monthRange,
+  budgetProgress,
+  type Snapshot,
+} from '../native/src/logic.ts';
 
 const snap: Snapshot = {
   accounts: [
@@ -121,4 +130,13 @@ test('wizard balances: negative, too large, untouched accounts and a non-zero ex
   assert.ok(!huge.ok);
   const typedNeg = planBalances({ a1: '-50', a2: '10' }, snap);
   assert.ok(typedNeg.ok && !typedNeg.patch.some((p) => p.id === 'a3'));
+});
+
+test('budgets: month range handles February and leap years; bars never divide by zero and cap at 100', () => {
+  assert.deepEqual(monthRange('2028-02-10'), { from: '2028-02-01', to: '2028-02-29', month: 2, year: 2028 });
+  assert.equal(monthRange('2026-10-31').to, '2026-10-31');
+  assert.deepEqual(budgetProgress(300000, 120000), { over: false, left: 180000, overBy: 0, pct: 40 });
+  assert.deepEqual(budgetProgress(100000, 130000), { over: true, left: 0, overBy: 30000, pct: 100 });
+  assert.equal(budgetProgress(0, 0).pct, 0);
+  assert.equal(budgetProgress(0, 500).pct, 100);
 });

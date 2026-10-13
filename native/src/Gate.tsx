@@ -7,6 +7,7 @@ import { loadCounts } from './wizardData';
 import { readFlags, setFlags } from './flags';
 import { decideGate, FINISH_FLAGS, REPLAY_FLAGS } from './logic';
 import { Home } from './Home';
+import { Activity, Budgets, Goals, More, TabBar } from './Tabs';
 import { Wizard } from './Wizard';
 import { Btn } from './Btn';
 import { s } from './ui';
@@ -17,6 +18,8 @@ export function Gate() {
   const [snap, setSnap] = useState<Snapshot | null>(null);
   const [gate, setGate] = useState<GateResult | null>(null);
   const [uid, setUid] = useState('');
+  const [name, setName] = useState('');
+  const [tab, setTab] = useState('home');
   const [err, setErr] = useState('');
   // Returns '' on success, or the message to show. A failed re-read is shown, never hidden.
   const refresh = useCallback(async (): Promise<string> => {
@@ -30,6 +33,7 @@ export function Gate() {
       const d = decideGate(counts, sn.accounts, flags);
       await setFlags(id, d.set);
       setUid(id);
+      setName(String(data.session?.user.user_metadata?.name ?? '').split(' ')[0]);
       setSnap(sn);
       setGate(d.gate);
       setErr('');
@@ -67,14 +71,21 @@ export function Gate() {
         }}
       />
     );
+  const replay = async () => {
+    await setFlags(uid, REPLAY_FLAGS);
+    setTab('home');
+    await refresh();
+  };
   return (
-    <Home
-      snap={snap}
-      refresh={refresh}
-      onReplay={async () => {
-        await setFlags(uid, REPLAY_FLAGS);
-        await refresh();
-      }}
-    />
+    <View style={{ flex: 1 }}>
+      <View style={{ flex: 1 }}>
+        {tab === 'home' && <Home snap={snap} refresh={refresh} name={name} />}
+        {tab === 'activity' && <Activity snap={snap} />}
+        {tab === 'budgets' && <Budgets snap={snap} />}
+        {tab === 'goals' && <Goals snap={snap} />}
+        {tab === 'more' && <More onReplay={replay} />}
+      </View>
+      <TabBar tab={tab} setTab={setTab} />
+    </View>
   );
 }

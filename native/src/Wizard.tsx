@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Animated, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { formatMinor } from '../../src/core/money';
 import { minorToInput } from '../../src/lib/validate';
 import { GOAL_EMOJIS } from '../../src/lib/goals';
@@ -13,6 +13,7 @@ import { Btn } from './Btn';
 import { c, s } from './ui';
 
 export type Slide = GateStep | 'finish';
+const HERO: Record<Slide, string> = { first: '#5B2EE0', balance: '#1B8A4B', budget: '#D9480F', goal: '#B8860B', finish: '#5B2EE0' };
 const ORDER: Slide[] = [...GATE_STEPS, 'finish'];
 
 function Dots({ now, done }: { now: number; done: string[] }) {
@@ -78,38 +79,76 @@ export function Wizard(p: {
   const slide: Slide = p.tour ? ORDER[i] : p.slide;
   const number = p.tour ? i + 1 : Math.max(ORDER.indexOf(slide), 0) + 1;
   const c0 = COPY[slide];
+  const slideIn = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    slideIn.setValue(0);
+    Animated.spring(slideIn, { toValue: 1, useNativeDriver: true, friction: 7 }).start();
+  }, [slide, slideIn]);
+  const tint = HERO[slide];
   return (
-    <ScrollView style={s.screen} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 60 }}>
-      <Dots now={number} done={p.tour ? ORDER.slice(0, i) : p.doneIds} />
-      <Text style={{ fontSize: 44 }}>{c0.emoji}</Text>
-      <Text style={s.h1}>{slide === 'finish' ? (p.tour ? 'That is Zovix!' : c0.title) : c0.title}</Text>
-      {slide === 'finish' ? (
-        <View style={{ marginTop: 12 }}>
-          <Text style={[s.p, { marginBottom: 12 }]}>Log it, track it, budget it, save for it. Everything is on your Home screen.</Text>
-          <Text style={{ color: c.ink, marginBottom: 16 }}>🔥 Tip: log something 3 days in a row to light your streak.</Text>
-          <Btn label="Open my Zovix" onPress={p.onFinish} />
-          {p.tour && <Btn label="Back" alt onPress={() => setI(i - 1)} />}
+    <ScrollView
+      style={{ flex: 1 }}
+      keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="on-drag"
+      contentContainerStyle={{ paddingBottom: 80 }}
+    >
+      <View
+        style={{
+          backgroundColor: tint,
+          paddingTop: 56,
+          paddingHorizontal: 16,
+          paddingBottom: 26,
+          borderBottomLeftRadius: 32,
+          borderBottomRightRadius: 32,
+        }}
+      >
+        <View style={{ backgroundColor: '#ffffffee', borderRadius: 16, padding: 12 }}>
+          <Dots now={number} done={p.tour ? ORDER.slice(0, i) : p.doneIds} />
         </View>
-      ) : (
-        <>
-          {c0.todo.map((t, k) => (
-            <Text key={t} style={{ color: c.ink, marginTop: 6 }}>
-              {k + 1}. {t}
-            </Text>
-          ))}
-          <View style={{ height: 12 }} />
-          <SampleBox step={slide} />
-          {p.tour ? (
-            <View>
-              <Btn label="Next" onPress={() => setI(i + 1)} />
-              {i > 0 && <Btn label="Back" alt onPress={() => setI(i - 1)} />}
-            </View>
-          ) : (
-            <Action step={slide} {...p} />
-          )}
-        </>
-      )}
-      {!p.tour && <Btn label="Log out" alt onPress={() => supabase.auth.signOut()} />}
+        <Animated.View
+          style={{ opacity: slideIn, transform: [{ translateX: slideIn.interpolate({ inputRange: [0, 1], outputRange: [60, 0] }) }] }}
+        >
+          <Text style={{ fontSize: 64, marginTop: 14 }}>{c0.emoji}</Text>
+          <Text style={{ color: '#fff', fontSize: 28, fontWeight: '800' }}>
+            {slide === 'finish' ? (p.tour ? 'That is Zovix!' : c0.title) : c0.title}
+          </Text>
+        </Animated.View>
+      </View>
+      <Animated.View
+        style={{
+          padding: 16,
+          opacity: slideIn,
+          transform: [{ translateX: slideIn.interpolate({ inputRange: [0, 1], outputRange: [80, 0] }) }],
+        }}
+      >
+        {slide === 'finish' ? (
+          <View style={{ marginTop: 12 }}>
+            <Text style={[s.p, { marginBottom: 12 }]}>Log it, track it, budget it, save for it. Everything is on your Home screen.</Text>
+            <Text style={{ color: c.ink, marginBottom: 16 }}>🔥 Tip: log something 3 days in a row to light your streak.</Text>
+            <Btn label="Open my Zovix" onPress={p.onFinish} />
+            {p.tour && <Btn label="Back" alt onPress={() => setI(i - 1)} />}
+          </View>
+        ) : (
+          <>
+            {c0.todo.map((t, k) => (
+              <Text key={t} style={{ color: c.ink, marginTop: 6 }}>
+                {k + 1}. {t}
+              </Text>
+            ))}
+            <View style={{ height: 12 }} />
+            <SampleBox step={slide} />
+            {p.tour ? (
+              <View>
+                <Btn label="Next" onPress={() => setI(i + 1)} />
+                {i > 0 && <Btn label="Back" alt onPress={() => setI(i - 1)} />}
+              </View>
+            ) : (
+              <Action step={slide} {...p} />
+            )}
+          </>
+        )}
+        {!p.tour && <Btn label="Log out" alt onPress={() => supabase.auth.signOut()} />}
+      </Animated.View>
     </ScrollView>
   );
 }
