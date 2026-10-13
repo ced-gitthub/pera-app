@@ -20,7 +20,7 @@ const SKIP = 'skipped: isolation canary failed (no delete was sent)';
 // Nothing but RLS stops them touching other people's rows, so prove it: B wipes transactions, budgets and savings_goals while A keeps everything.
 // SAFETY: these tables are PRODUCTION tables. An unfiltered delete is only ever sent when `bulk.ready` is true, i.e. setup passed AND an
 // unfiltered select as B returned only B's own rows in each table. If the canary fails, every destructive step reports FAILED and sends nothing.
-export async function bulkDeleteSteps({ A, B, step, cnt, other, d }: Ctx): Promise<void> {
+export async function bulkDeleteSteps({ A, B, step, cnt, other, d, mk }: Ctx): Promise<void> {
   const wipe = (c: Sb, t: string, opts?: { count: 'exact' }) => c.from(t).delete(opts).not('id', 'is', null);
   const idsOf = async (c: Sb, t: string, col = 'id') => {
     const r = await c.from(t).select(col);
@@ -188,4 +188,21 @@ export async function bulkDeleteSteps({ A, B, step, cnt, other, d }: Ctx): Promi
           };
     },
   );
+
+  // Migration 0013: delete_user_account(uuid) deletes ANY user by id, so only the server role may run it. A signed-in user and an anonymous caller must both be refused,
+  // and the target (user A, a throwaway account made by this suite) must be untouched. If the grant were ever wrong this would delete only that throwaway user.
+  await step('delete_user_account: refused for a signed-in user (B) and for an anonymous caller, and user A is untouched', async () => {
+    const asB = await B.c.rpc('delete_user_account', { p_user: A.id });
+    const asAnon = await mk().rpc('delete_user_account', { p_user: A.id });
+    const aStill = await A.c.auth.getUser();
+    const aRows = await A.c.from('accounts').select('id');
+    return asB.error && asAnon.error && !aStill.error && !!aStill.data.user && !aRows.error && (aRows.data ?? []).length > 0
+      ? true
+      : {
+          asB: asB.error?.message ?? 'ALLOWED',
+          asAnon: asAnon.error?.message ?? 'ALLOWED',
+          aUser: aStill.error?.message ?? 'ok',
+          aRows: aRows.data?.length ?? aRows.error?.message,
+        };
+  });
 }

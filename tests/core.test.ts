@@ -298,7 +298,8 @@ test('no secrets committed (other checkouts under .claude/worktrees are scanned 
       .readdirSync(d, { withFileTypes: true })
       .filter((f) => !['node_modules', '.git', '.next', 'worktrees', 'android', 'ios', '.expo', 'dist', 'native-build'].includes(f.name))
       .flatMap((f) => (f.isDirectory() ? walk(`${d}/${f.name}`) : [`${d}/${f.name}`]));
-  for (const f of walk('.').filter((f) => !f.includes('tests/')))
+  // SQL migrations name the database role service_role in GRANT statements (a role name, not a key), so they are not scanned; keys never belong in them either, and the key patterns below still catch sk- and eyJ strings elsewhere.
+  for (const f of walk('.').filter((f) => !f.includes('tests/') && !f.includes('supabase/migrations/')))
     assert.ok(!/sk-[A-Za-z0-9]{20}|service_role|eyJ[A-Za-z0-9_-]{30}/.test(fs.readFileSync(f, 'utf8')), f);
   assert.ok(/NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=\r?\n/.test(fs.readFileSync('.env.example', 'utf8')));
 });

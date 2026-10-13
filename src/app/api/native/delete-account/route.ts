@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { admin, adminConfigured } from '@/lib/admin';
-import { bearerToken, checkDeleteRequest, hasVerifiedFactor, tokenAal } from '@/lib/deleteAccount';
+import { bearerToken, checkDeleteRequest, deleteViaRpc, hasVerifiedFactor, tokenAal } from '@/lib/deleteAccount';
 import { sessionSignInAt } from '@/lib/session';
 import { logErr } from '@/lib/safe';
 
@@ -29,10 +29,10 @@ export async function POST(req: Request) {
     now: Date.now(),
   });
   if (!verdict.ok) return reply(verdict.status, { error: verdict.error });
-  const { error: delErr } = await admin().auth.admin.deleteUser(user.id);
-  if (delErr) {
-    logErr('native.deleteAccount', delErr);
-    return reply(500, { error: 'We could not delete your account. Nothing was removed. Please try again.' });
+  const failed = await deleteViaRpc(admin(), user.id); // database function from migration 0013; the user id is the validated token's, never the request's
+  if (failed) {
+    logErr('native.deleteAccount', failed);
+    return reply(500, { error: failed });
   }
   // tx_trash deliberately has no foreign key (so the undo trigger can run during deletes), so purge this user's trash by hand.
   const { error: trashErr } = await admin().from('tx_trash').delete().eq('user_id', user.id);

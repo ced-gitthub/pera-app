@@ -39,3 +39,18 @@ export function bearerToken(header: string | null | undefined): string | null {
 // Any verified second factor (authenticator app, phone, security key, or a type added later) means the account uses two-step verification.
 export const hasVerifiedFactor = (factors: { factor_type?: string; status?: string }[] | null | undefined): boolean =>
   (factors ?? []).some((f) => f.status === 'verified');
+
+// Deletes the user through the database function from migration 0013 (the auth admin API rejects the server's key). Returns null on success, else a safe message.
+// `client` is the secret-key Supabase client: execute on the function is granted to the server role only.
+export async function deleteViaRpc(
+  client: { rpc: (fn: string, args: Record<string, unknown>) => PromiseLike<{ error: unknown }> },
+  userId: string,
+): Promise<string | null> {
+  if (!userId) return 'We could not delete your account. Nothing was removed. Please try again.';
+  try {
+    const { error } = await client.rpc('delete_user_account', { p_user: userId });
+    return error ? 'We could not delete your account. Nothing was removed. Please try again.' : null;
+  } catch {
+    return 'We could not delete your account. Nothing was removed. Please try again.';
+  }
+}

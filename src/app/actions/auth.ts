@@ -9,6 +9,7 @@ import { passwordProblem, isPwned, isEmail, safeNext, PWNED } from '@/lib/passwo
 import { authMessage, logErr } from '@/lib/safe';
 import { admin, adminConfigured } from '@/lib/admin';
 import { recentSignIn, sessionSignInAt } from '@/lib/session';
+import { deleteViaRpc } from '@/lib/deleteAccount';
 import { go, str, siteUrl, verifyUrl, errCode, code6, authed, needsSecondStep, done } from './shared';
 
 // Google sign-in: Supabase sends the user to Google, then back to /auth/callback (PKCE). Google has already verified the address, so no confirmation email is needed.
@@ -178,9 +179,9 @@ export async function deleteMyAccount(fd: FormData) {
     // Google-only accounts have no password: require a sign-in within the last 10 minutes instead.
     go('/security', 'err', 'For your safety, log out, sign in with Google again, then delete your account within 10 minutes.');
   }
-  const { error } = await admin().auth.admin.deleteUser(user.id);
-  if (error) {
-    logErr('deleteMyAccount', error);
+  const failed = await deleteViaRpc(admin(), user.id); // database function from migration 0013 (the auth admin API rejects the server's key)
+  if (failed) {
+    logErr('deleteMyAccount', failed);
     go('/security', 'err', 'We could not delete your account. Nothing was removed. Please try again.');
   }
   // tx_trash deliberately has no foreign key (so the undo trigger can run during deletes), so purge this user's trash by hand.

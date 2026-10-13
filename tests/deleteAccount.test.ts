@@ -66,3 +66,37 @@ test('delete account: ANY verified factor (totp, phone, webauthn) counts as two-
   for (const factor_type of ['totp', 'phone', 'webauthn', 'something-new'])
     assert.equal(hasVerifiedFactor([{ factor_type, status: 'verified' }]), true, factor_type);
 });
+
+import fs from 'node:fs';
+import { deleteViaRpc } from '../src/lib/deleteAccount.ts';
+test('delete account: deleting goes through the database function, once, and reports a failure', async () => {
+  const calls: [string, unknown][] = [];
+  const ok = { rpc: async (fn: string, args: unknown) => (calls.push([fn, args]), { error: null }) };
+  assert.equal(await deleteViaRpc(ok, 'u-1'), null);
+  assert.deepEqual(calls, [['delete_user_account', { p_user: 'u-1' }]]);
+  const bad = { rpc: async () => ({ error: { message: 'boom (raw)' } }) };
+  const msg = await deleteViaRpc(bad, 'u-1');
+  assert.ok(msg && !/boom|raw/.test(msg));
+  const none = { rpc: async () => assert.fail('must not be called') };
+  assert.ok(await deleteViaRpc(none as never, ''));
+  const thrown = { rpc: async () => Promise.reject(new Error('net')) };
+  assert.ok(await deleteViaRpc(thrown as never, 'u-1'));
+});
+
+test('delete account: neither the web action nor the native route uses the auth admin API that the server key cannot call', () => {
+  for (const f of ['src/app/actions/auth.ts', 'src/app/api/native/delete-account/route.ts']) {
+    const src = fs.readFileSync(f, 'utf8');
+    assert.doesNotMatch(src, /auth\.admin\.deleteUser/, f);
+    assert.match(src, /deleteViaRpc/, f);
+  }
+});
+
+test('migration 0013 grants the delete function to service_role only', () => {
+  const sql = fs.readFileSync('supabase/migrations/0013_delete_user_account.sql', 'utf8');
+  assert.match(sql, /revoke all on function public\.delete_user_account\(uuid\) from public, anon, authenticated/);
+  assert.match(sql, /grant execute on function public\.delete_user_account\(uuid\) to service_role/);
+  const grants = [...sql.matchAll(/grant execute on function [^;]*? to ([^;]*);/g)].map((m) => m[1].trim());
+  assert.deepEqual(grants, ['service_role']); // nobody else is ever granted
+  assert.match(sql, /security definer/);
+  assert.match(sql, /set search_path = ''/);
+});
