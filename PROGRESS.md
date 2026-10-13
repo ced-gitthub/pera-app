@@ -59,6 +59,8 @@
 
 - 2026-10-13 DECISION (owner): the wizard applies to EVERY account that has not done the 4 steps, existing ones included (cutoff removed, cookie renamed zovix_onboarded2 so devices marked earlier are re-checked). Accounts that already have all four are let in silently.
 
+- 2026-10-13 owner feedback on the wizard: not sliding enough, could still skip, no examples. Fixed: every action slide now has a worked Example (You type -> what Zovix does; src/lib/onboardingCopy.ts); accounts that already have all 4 steps get a one-time Next/Back walkthrough (TourView, cookie zovix_toured) instead of being let straight in; sign-out clears the cookies. e2e 391, unit 88.
+
 ## Next steps
 
 0. Owner: turn Supabase Confirm email back ON after any live-suite run. Provide the domain (with ending) to attach it in Vercel, then follow docs/play-store/PLAY_CONSOLE_GUIDE.md.

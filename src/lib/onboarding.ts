@@ -7,12 +7,13 @@ export type GateStep = (typeof GATE_STEPS)[number];
 export const WIZARD_TOTAL = GATE_STEPS.length + 1;
 export const ONBOARDING_COOKIE = 'zovix_onboarded2'; // set once finished: skips the check (and its queries) on this device
 export const BAL_COOKIE = 'zovix_wizard_bal'; // set when step 2 is submitted: typing exactly what the entries already add up to leaves every opening balance at 0, so the data alone cannot tell
+export const TOUR_COOKIE = 'zovix_toured'; // set when the walkthrough was seen to the end on this device
 export const WIZARD_COOKIE = 'zovix_wizard'; // set while the wizard is on screen: tells a just-finished user apart from a long-time user on a new device
 
 export type Gate =
-  { show: false; mark: boolean } | { show: true; step: GateStep | 'finish'; number: number; total: number; doneIds: string[] };
+  { show: false; mark: boolean } | { show: true; step: GateStep | 'finish' | 'tour'; number: number; total: number; doneIds: string[] };
 
-export function gateFor(i: MissionInput, cookies: { onboarded: boolean; wizard: boolean; balances?: boolean }): Gate {
+export function gateFor(i: MissionInput, cookies: { onboarded: boolean; wizard: boolean; balances?: boolean; toured?: boolean }): Gate {
   if (cookies.onboarded) return { show: false, mark: false };
   const { missions } = buildMissions(i),
     gating = missions
@@ -21,10 +22,12 @@ export function gateFor(i: MissionInput, cookies: { onboarded: boolean; wizard: 
     doneIds = gating.filter((m) => m.done).map((m) => m.id),
     next = gating.find((m) => !m.done);
   if (!next) {
-    // everything required is done: a person who just finished sees the closing slide once; anyone else (existing user, new device) is simply let in
+    // everything required is done: a person who just finished sees the closing slide; anyone else sees the example walkthrough once per device
     return cookies.wizard
       ? { show: true, step: 'finish', number: WIZARD_TOTAL, total: WIZARD_TOTAL, doneIds }
-      : { show: false, mark: true };
+      : cookies.toured
+        ? { show: false, mark: true }
+        : { show: true, step: 'tour', number: 1, total: WIZARD_TOTAL, doneIds }; // already set up: see the walkthrough with examples once
   }
   return { show: true, step: next.id as GateStep, number: doneIds.length + 1, total: WIZARD_TOTAL, doneIds };
 }

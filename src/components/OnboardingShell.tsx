@@ -1,7 +1,7 @@
 'use client';
 import { Suspense, useEffect, useRef, type ReactNode } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ONBOARDING_COOKIE, WIZARD_COOKIE } from '@/lib/onboarding';
+import { ONBOARDING_COOKIE, TOUR_COOKIE, WIZARD_COOKIE } from '@/lib/onboarding';
 const setCookie = (name: string, v: string, maxAge: number) => {
   try {
     document.cookie = `${name}=${v}; Max-Age=${maxAge}; Path=/; SameSite=Lax${location.protocol === 'https:' ? '; Secure' : ''}`;
@@ -60,6 +60,7 @@ export function FinishButton() {
       className="btn p ob-go"
       onClick={() => {
         setCookie(ONBOARDING_COOKIE, '1', 86400 * 365);
+        setCookie(TOUR_COOKIE, '1', 86400 * 365);
         setCookie(WIZARD_COOKIE, '', 0);
         r.replace('/');
         r.refresh();

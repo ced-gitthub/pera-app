@@ -1,9 +1,10 @@
 import { cookies } from 'next/headers';
 import { ctx, balanceMap } from '@/lib/data';
 import { logErr } from '@/lib/safe';
-import { gateFor, needsWizard, BAL_COOKIE, ONBOARDING_COOKIE, WIZARD_COOKIE } from '@/lib/onboarding';
+import { gateFor, needsWizard, BAL_COOKIE, TOUR_COOKIE, ONBOARDING_COOKIE, WIZARD_COOKIE } from '@/lib/onboarding';
 import Quick from '@/components/Quick';
 import OnboardingShell, { MarkOnboarded } from '@/components/OnboardingShell';
+import TourView from '@/components/TourView';
 import OnboardingView from '@/components/OnboardingView';
 // The required first-run wizard, mounted once in the app layout so it covers every page. People who finished it carry a cookie and cost nothing here.
 // If the counts cannot be read the wizard stays out of the way: a database hiccup must never lock someone out of their own money.
@@ -25,9 +26,15 @@ export default async function OnboardingGate() {
   }
   const gate = gateFor(
     { totalEntries: te.count ?? 0, accounts, budgetsCount: bc.count ?? 0, goalsCount: gc.count ?? 0, streak: 0 },
-    { onboarded, wizard: jar.has(WIZARD_COOKIE), balances: jar.has(BAL_COOKIE) },
+    { onboarded, wizard: jar.has(WIZARD_COOKIE), balances: jar.has(BAL_COOKIE), toured: jar.has(TOUR_COOKIE) },
   );
   if (!gate.show) return gate.mark ? <MarkOnboarded /> : null;
+  if (gate.step === 'tour')
+    return (
+      <OnboardingShell>
+        <TourView />
+      </OnboardingShell>
+    );
   const bal = gate.step === 'balance' ? await balanceMap(sb) : new Map<string, number>(); // only that slide shows balances
   return (
     <OnboardingShell>

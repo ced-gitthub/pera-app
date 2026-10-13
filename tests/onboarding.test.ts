@@ -49,10 +49,10 @@ T(
   })(),
 );
 T(
-  'all four done without the wizard cookie (existing user): let in and remember',
+  'all four done, never toured on this device: the example walkthrough shows once',
   (() => {
     const r = g(all);
-    return !r.show && r.mark;
+    return r.show && r.step === 'tour' && r.number === 1;
   })(),
 );
 T(
@@ -65,7 +65,7 @@ T(
 T(
   'the streak never blocks',
   (() => {
-    const r = g({ ...all, streak: 0 });
+    const r = g({ ...all, streak: 0 }, { onboarded: false, wizard: false, toured: true });
     return !r.show;
   })(),
 );
@@ -83,5 +83,12 @@ T(
       stuck = g(i),
       moved = g(i, { onboarded: false, wizard: false, balances: true } as typeof fresh);
     return stuck.show && stuck.step === 'balance' && moved.show && moved.step === 'budget' && moved.number === 3;
+  })(),
+);
+T(
+  'all four done and already toured: let in and remember',
+  (() => {
+    const r = g(all, { onboarded: false, wizard: false, toured: true });
+    return !r.show && r.mark;
   })(),
 );

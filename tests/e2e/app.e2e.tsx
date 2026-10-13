@@ -196,6 +196,22 @@ const count = (h: string, s: string) => h.split(s).length - 1;
       'wizard: closing slide is 5 of 5 and points at the streak',
       v5.includes('Step 5 of 5') && v5.includes('Open my Zovix') && v5.includes('3 days in a row'),
     );
+    {
+      const TV = (await import('@/components/TourView')).default,
+        th = await html(<TV />);
+      T(
+        'tour: slide 1 of 5 has an example (you type -> result), Next, and no skip',
+        th.includes('Step 1 of 5') &&
+          th.includes('You type') &&
+          th.includes('lunch 150 gcash') &&
+          th.includes('>Next<') &&
+          !/skip/i.test(th),
+      );
+    }
+    T(
+      'wizard: every action slide shows a worked example',
+      [v1, v2, v3, v4].every((h) => h.includes('Example') && h.includes('You type')),
+    );
     T(
       'wizard: every slide has a Log out way out',
       [v1, v2, v3, v4, v5].every((h) => h.includes('Log out')),

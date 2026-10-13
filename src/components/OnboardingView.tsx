@@ -1,46 +1,15 @@
 import type { ReactNode } from 'react';
-import { signOut, saveOpeningBalances, startBudget } from '@/app/actions';
+import { saveOpeningBalances, startBudget } from '@/app/actions';
+import OnboardingHead, { Sample } from '@/components/OnboardingHead';
+import { COPY, SAMPLES } from '@/lib/onboardingCopy';
 import { Btn } from '@/components/Btn';
 import MoneyInput from '@/components/MoneyInput';
 import GoalForm from '@/components/GoalForm';
 import { FinishButton } from '@/components/OnboardingShell';
-import { MarkSvg } from '@/components/ZovixMark';
 import { minorToInput } from '@/lib/validate';
-import { GATE_STEPS, WIZARD_TOTAL, type GateStep } from '@/lib/onboarding';
+import { GATE_STEPS, type GateStep } from '@/lib/onboarding';
 type Acct = { id: string; name: string; opening_balance_minor: number; current_minor?: number };
 type Cat = { id: string; name: string };
-const COPY: Record<GateStep | 'finish', { emoji: string; label: string; title: string; todo: string[] }> = {
-  first: {
-    emoji: '🪙',
-    label: 'First peso',
-    title: 'Log your first peso',
-    todo: ['Tap the glowing box below.', 'Type what you spent, like “lunch 150 gcash”.', 'Tap the button to save it.'],
-  },
-  balance: {
-    emoji: '👛',
-    label: 'Balances',
-    title: 'How much do you have right now?',
-    todo: ['Type what is in each account today.', 'Skip the ones that are empty. A rough number is fine.', 'Tap “Save balances”.'],
-  },
-  budget: {
-    emoji: '🎯',
-    label: 'Budget',
-    title: 'Set your first budget',
-    todo: ['Pick something you spend on.', 'Type the most you want to spend on it each month.', 'Tap “Set budget”.'],
-  },
-  goal: {
-    emoji: '🏆',
-    label: 'Goal',
-    title: 'Start a savings goal',
-    todo: ['Name what you are saving for.', 'Pick an icon and type how much it costs.', 'Tap “Add goal”.'],
-  },
-  finish: {
-    emoji: '🎉',
-    label: 'Done',
-    title: 'You are all set!',
-    todo: [],
-  },
-};
 // The required first-run wizard: one slide per step, "Step N of 5", the thing to do glowing with a pointer. Display only; the page gate decides which step is shown.
 export default function OnboardingView({
   step,
@@ -61,40 +30,11 @@ export default function OnboardingView({
     all = [...GATE_STEPS, 'finish'] as const;
   return (
     <>
-      <header className="ob-top">
-        <span className="ob-logo" aria-hidden="true">
-          <MarkSvg size={22} color="currentColor" />
-        </span>
-        <b>Zovix setup</b>
-        <form action={signOut} className="ob-out">
-          <button className="linkbtn">Log out</button>
-        </form>
-      </header>
-      <div className="ob-prog">
-        <div className="ob-count">
-          <b>
-            Step {number} of {WIZARD_TOTAL}
-          </b>
-          <span>{c.label}</span>
-        </div>
-        <div
-          className="mbar"
-          role="progressbar"
-          aria-label="Setup progress"
-          aria-valuemin={1}
-          aria-valuemax={WIZARD_TOTAL}
-          aria-valuenow={number}
-        >
-          <i style={{ width: `${Math.round((number * 100) / WIZARD_TOTAL)}%` }} />
-        </div>
-        <ol className="ob-dots" aria-hidden="true">
-          {all.map((s, i) => (
-            <li key={s} className={doneIds.includes(s) || (step === 'finish' && s !== 'finish') ? 'done' : s === step ? 'now' : ''}>
-              {doneIds.includes(s) || (step === 'finish' && s !== 'finish') ? '✓' : i + 1}
-            </li>
-          ))}
-        </ol>
-      </div>
+      <OnboardingHead
+        number={number}
+        label={c.label}
+        state={all.map((s) => (doneIds.includes(s) || (step === 'finish' && s !== 'finish') ? 'done' : s === step ? 'now' : ''))}
+      />
       <section key={step} className="ob-slide" aria-labelledby="ob-h">
         <div className="ob-emoji" aria-hidden="true">
           {c.emoji}
@@ -107,6 +47,7 @@ export default function OnboardingView({
             ))}
           </ol>
         )}
+        {step !== 'finish' && <Sample {...SAMPLES[step]} />}
         {step === 'first' && (
           <div className="ob-spot">
             <span className="ob-point">👉 Start here</span>

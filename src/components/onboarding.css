@@ -171,3 +171,40 @@ html body .ob .log {
     animation: none;
   }
 }
+
+html body .ob-sample {
+  margin-top: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-md);
+  background: var(--pop-bg);
+  color: var(--pop-ink);
+}
+html body .ob-sample-tag {
+  display: inline-block;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 4px;
+}
+html body .ob-you {
+  margin: 0 0 6px;
+  font-weight: 700;
+}
+html body .ob-you span {
+  font-weight: 500;
+  opacity: 0.85;
+  margin-right: 4px;
+}
+html body .ob-res {
+  margin: 0;
+  padding-left: 20px;
+  list-style: '✓ ';
+}
+html body .ob-nav {
+  display: flex;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+html body .ob-nav .ob-go {
+  flex: 1;
+}
