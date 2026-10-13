@@ -63,6 +63,8 @@
 
 - 2026-10-13 owner could not see the tour on the website: an intermediate deploy had marked their browser finished. Cookie bumped to zovix_onboarded3; Settings now has a "Show the tutorial again" button (ReplayTour) that clears the cookies.
 
+- 2026-10-13 owner: app still scrollable behind the wizard (iOS ignores body overflow:hidden). Fixed in CSS: html:has(.ob) hides .shell entirely and locks html/body; overlay has overscroll-behavior: contain. Live qa asserts .shell is display:none while the wizard shows.
+
 ## Next steps
 
 0. Owner: turn Supabase Confirm email back ON after any live-suite run. Provide the domain (with ending) to attach it in Vercel, then follow docs/play-store/PLAY_CONSOLE_GUIDE.md.

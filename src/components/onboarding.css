@@ -230,3 +230,16 @@ html body .ob-parts dt {
 html body .ob-parts dd {
   margin: 2px 0 0;
 }
+
+/* While the wizard is open the app behind it is removed from the page entirely: nothing underneath can be seen, scrolled to or tapped (iOS ignores overflow:hidden on the body). */
+html:has(.ob),
+html:has(.ob) body {
+  overflow: hidden;
+  height: 100%;
+}
+html:has(.ob) body .shell {
+  display: none;
+}
+html body .ob {
+  overscroll-behavior: contain;
+}

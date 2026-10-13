@@ -110,7 +110,10 @@ G('auth: logged-out');
       seen.push(await stepTxt());
       await w.goto('/accounts'); // trying to walk around it
       await w.locator('.ob').waitFor({ timeout: 20000 });
-      const inert = await w.evaluate(() => document.querySelector('.shell')?.hasAttribute('inert'));
+      const inert = await w.evaluate(() => {
+        const s = document.querySelector('.shell');
+        return !!s && s.hasAttribute('inert') && getComputedStyle(s).display === 'none';
+      });
       const noSkip = (await w.locator('.ob').innerText()).toLowerCase().includes('skip') === false;
       await w.goto('/');
       const i = w.locator('.ob input[aria-label=Transaction]');
