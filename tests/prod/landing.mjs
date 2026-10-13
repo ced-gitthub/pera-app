@@ -67,7 +67,7 @@ for (const [label, vp, scheme] of [
       : 'has a login field',
   );
   await step('live demo: tapping a chip adds a row and lowers the wallet; three entries show the Get Zovix free prompt', async () => {
-    const wallet = async () => (await q.locator('.ld-demo .wl-total b').innerText()).replace(/s+/g, ' ');
+    const wallet = async () => (await q.locator('.ld-demo .wl-total b').innerText()).replace(/\s+/g, ' ');
     const before = await wallet();
     await q.locator('.ld-demo button.wl-chip', { hasText: 'lunch 150 gcash' }).click();
     await q.locator('.ld-demo .wl-row').first().waitFor({ timeout: 10000 });
@@ -89,7 +89,11 @@ for (const [label, vp, scheme] of [
   });
   await step('every piece of visible text has readable contrast against what is actually behind it', async () => {
     const bad = await q.evaluate(() => {
-      const parse = (c) => c.match(/[d.]+/g).map(Number);
+      const parse = (c) => {
+        const n = (c.match(/[\d.]+/g) || ['0', '0', '0', '0']).map(Number);
+        if (c.startsWith('color(')) return [n[0] * 255, n[1] * 255, n[2] * 255, n[3] ?? 1]; // color-mix() computes to color(srgb r g b / a)
+        return n.length < 3 ? [0, 0, 0, 0] : n;
+      };
       const lum = ([r, g, b]) => {
         const f = (v) => ((v /= 255) <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
         return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
@@ -98,7 +102,7 @@ for (const [label, vp, scheme] of [
         // sample the real pixel colour behind the text by walking up to the first opaque background; gradients are solid purple here
         for (let e = el; e; e = e.parentElement) {
           const cs = getComputedStyle(e);
-          if (cs.backgroundImage !== 'none' && e.closest('.ld-top')) return [91, 53, 232];
+          if (e.classList.contains('ld-top')) return [91, 53, 232];
           const c = parse(cs.backgroundColor);
           if (c.length < 4 || c[3] > 0.95) return c.slice(0, 3);
         }
