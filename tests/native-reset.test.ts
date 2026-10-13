@@ -87,14 +87,31 @@ test('resetError is friendly for network, expired session, two-step and unknown 
   }
 });
 
-test('a statement timeout has its own message, checked before the generic timeout', () => {
-  const want = /took too long to delete that many rows.*nothing is half-deleted/i;
-  assert.match(resetError({ message: 'canceling statement due to statement timeout', code: '57014' }), want);
-  assert.match(resetError({ message: 'x', code: '57014' }), want);
-  assert.match(resetError({ message: 'canceling statement due to user request' }), want);
-  assert.match(resetError({ message: 'statement timeout' }), want);
+test('a statement timeout (57014 + "statement timeout") says too many rows, not "try again"', () => {
+  const want = /too many rows to delete in one go, so nothing was deleted.*smaller parts/i;
+  const m = resetError({ message: 'canceling statement due to statement timeout', code: '57014' });
+  assert.match(m, want);
+  assert.doesNotMatch(m, /took too long|nothing is half-deleted/i);
+  assert.doesNotMatch(m, /57014|canceling|statement timeout/i);
   assert.doesNotMatch(resetError({ message: 'Request timed out' }), want);
   assert.match(resetError({ message: 'Request timed out' }), /could not confirm/i);
+});
+
+test('a user-cancelled statement is NOT reported as a timeout', () => {
+  const want = /too many rows/i;
+  assert.doesNotMatch(resetError({ message: 'canceling statement due to user request', code: '57014' }), want);
+  assert.doesNotMatch(resetError({ message: 'canceling statement due to user request' }), want);
+});
+
+test('network message points at the numbers once they load', () => {
+  assert.equal(resetError({ message: 'Failed to fetch' }), 'Could not confirm that. Check the numbers below once they load.');
+});
+
+test('ResetData clears the counts before reloading and shows a could-not-count state', () => {
+  const src = fs.readFileSync(new URL('../native/src/ResetData.tsx', import.meta.url), 'utf8');
+  const load = src.slice(src.indexOf('const load = useCallback'), src.indexOf('useEffect('));
+  assert.ok(load.includes('setCounts(null)') && load.indexOf('setCounts(null)') < load.indexOf('await'), 'load clears counts first');
+  assert.match(src, /Could not count right now\. Close and reopen to check\./);
 });
 
 test('the unknown-error message is atomic and does not say items may be gone', () => {

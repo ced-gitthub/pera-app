@@ -1,4 +1,5 @@
 import { test } from 'node:test';
+import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import { homeView, homeTiles, accountsOverview, gameView, filterActivity, type Snapshot, type Tx } from '../native/src/logic.ts';
 import { startSandbox, runSandbox, sandboxStep, SANDBOX_GOAL_MINOR } from '../native/src/sandbox.ts';
@@ -262,4 +263,15 @@ test('the welcome sandbox uses the same rule: a negative spendable account does 
   const n = sandboxNumbers({ ...s, balances: { Cash: -5000, GCash: 320000, Savings: 500000 } });
   assert.equal(n.spendable, 320000);
   assert.equal(n.savings, 500000);
+});
+
+test('sandbox: Savings below zero is owed, and total is the net of everything', () => {
+  const n = sandboxNumbers({ ...startSandbox(), balances: { Cash: -5000, GCash: 320000, Savings: -2000 } });
+  assert.deepEqual({ sp: n.spendable, sv: n.savings, ow: n.owed, tot: n.total }, { sp: 320000, sv: 0, ow: 7000, tot: 313000 });
+});
+
+test('accounts tab: the older-entries row is not tappable and an empty list says so', () => {
+  const src = fs.readFileSync('native/src/AccountsTab.tsx', 'utf8');
+  assert.match(src, /snap\.accounts\.length === 0/);
+  assert.match(src, /x\.id === 'none'/); // that row is drawn without the edit chevron
 });

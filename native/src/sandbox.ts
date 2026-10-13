@@ -12,9 +12,18 @@ export type SandboxLine = { text: string; kind: 'expense' | 'income' | 'transfer
 export type Sandbox = { balances: Record<string, number>; log: SandboxLine[] };
 
 export const startSandbox = (): Sandbox => ({ balances: { Cash: 150000, GCash: 320000, Savings: 500000 }, log: [] });
+// Same rule as the real app: a negative balance is owed (not subtracted from spendable or savings), and total is the net of everything.
 export const sandboxNumbers = (s: Sandbox) => {
-  const spendable = Math.max(0, s.balances.Cash) + Math.max(0, s.balances.GCash); // same rule as the real app: a negative balance is owed, not subtracted
-  return { spendable, savings: s.balances.Savings, total: spendable + s.balances.Savings };
+  let spendable = 0,
+    savings = 0,
+    owed = 0;
+  for (const a of SANDBOX_ACCOUNTS) {
+    const b = s.balances[a.name];
+    if (b < 0) owed -= b;
+    else if (a.saving) savings += b;
+    else spendable += b;
+  }
+  return { spendable, savings, owed, total: spendable + savings - owed };
 };
 const HELP = 'Try "lunch 150 gcash" or "transfer 500 from gcash to savings".';
 export type SandboxResult = { ok: true; state: Sandbox; line: SandboxLine } | { ok: false; message: string };

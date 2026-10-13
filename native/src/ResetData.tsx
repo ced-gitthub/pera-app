@@ -20,6 +20,7 @@ export function ResetData({ open, onClose, onDone }: { open: boolean; onClose: (
   const lock = useRef(false); // a second tap in the same moment must not send a second delete
 
   const load = useCallback(async () => {
+    setCounts(null); // never leave old counts on screen while the new ones load
     const list = await Promise.all(RESET_KINDS.map((k) => countFor(k).catch(() => null)));
     setCounts({ entries: list[0], budgets: list[1], goals: list[2] });
   }, []);
@@ -102,7 +103,15 @@ export function ResetData({ open, onClose, onDone }: { open: boolean; onClose: (
                 <Text style={{ fontSize: t.title, marginRight: sp.m }}>{EMOJI[k]}</Text>
                 <View style={{ flex: 1 }}>
                   <Text style={{ color: c.ink, fontSize: t.body, fontWeight: '700' }}>{RESET_LABEL[k]}</Text>
-                  <Text style={s.p}>{n === null ? 'Counting...' : empty ? 'Nothing to delete' : `${n} to delete`}</Text>
+                  <Text style={s.p}>
+                    {n === null
+                      ? counts
+                        ? 'Could not count right now. Close and reopen to check.'
+                        : 'Counting...'
+                      : empty
+                        ? 'Nothing to delete'
+                        : `${n} to delete`}
+                  </Text>
                 </View>
                 {!empty && n !== null && <Text style={{ color: c.down, fontSize: t.lead }}>›</Text>}
               </Pressable>

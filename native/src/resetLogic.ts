@@ -41,10 +41,10 @@ export function resetError(error: unknown): string {
   const msg = typeof e.message === 'string' ? e.message : '';
   const code = typeof e.code === 'string' ? e.code : '';
   // Checked first: a database statement timeout is its own case, not a lost connection.
-  if (code === '57014' || /statement timeout|canceling statement/i.test(msg))
-    return 'The server took too long to delete that many rows. Try again; nothing is half-deleted because it is one statement.';
+  if (code === '57014' && /statement timeout/i.test(msg))
+    return 'That is too many rows to delete in one go, so nothing was deleted. Delete them in smaller parts (open Activity and delete entries, or use Reports/CSV to export first), then try again.';
   // The request may have reached the server and only the answer was lost, so never claim nothing was deleted.
-  if (/fetch|network|timed? ?out|offline/i.test(msg)) return 'Could not confirm that. Check the numbers below: they are up to date.';
+  if (/fetch|network|timed? ?out|offline/i.test(msg)) return 'Could not confirm that. Check the numbers below once they load.';
   if (/jwt|expired|not authenticated/i.test(msg) || code === 'PGRST301' || code === 'PGRST303')
     return 'Your session ended. Nothing was deleted. Please sign in again.';
   if (code === '42501' || /row-level security|permission denied/i.test(msg))

@@ -46,38 +46,53 @@ export function AccountsTab({ snap, refresh }: { snap: Snapshot; refresh: () => 
           {stat('You owe', o.owed, o.owed > 0 ? c.down : c.mute)}
           {stat('Net total', o.total, c.ink)}
         </View>
-        {o.rows.length === 0 && <Text style={s.p}>No accounts yet. Tap Manage to add your first one.</Text>}
-        <Text style={[s.p, { marginBottom: sp.m }]}>Tap an account to choose whether it is savings or shows on Home.</Text>
+        {snap.accounts.length === 0 ? (
+          <Text style={s.p}>No accounts yet. Tap Manage to add your first one.</Text>
+        ) : (
+          <Text style={[s.p, { marginBottom: sp.m }]}>Tap an account to choose whether it is savings or shows on Home.</Text>
+        )}
         {GROUPS.map((g) => {
           const rows = o.rows.filter((x) => x.group === g.id);
           if (!rows.length) return null;
           return (
             <View key={g.id} style={{ marginBottom: sp.m }}>
               <Text style={s.h2}>{g.title}</Text>
-              {rows.map((x) => (
-                <Pressable
-                  key={x.id}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${x.name} ${formatMinor(x.balance)}. Tap to edit`}
-                  onPress={() => setEdit(true)}
-                  style={({ pressed }) => [
-                    s.card,
-                    { flexDirection: 'row', alignItems: 'center', marginBottom: sp.s, opacity: pressed ? 0.7 : 1 },
-                  ]}
-                >
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ color: c.ink, fontSize: t.body, fontWeight: '700' }}>{x.name}</Text>
-                    <Text style={{ color: c.mute, fontSize: t.caption }}>
-                      {g.hint}
-                      {x.showOnHome ? '' : ' · hidden on Home'}
+              {rows.map((x) =>
+                x.id === 'none' ? (
+                  <View key={x.id} style={[s.card, { flexDirection: 'row', alignItems: 'center', marginBottom: sp.s }]}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ color: c.ink, fontSize: t.body, fontWeight: '700' }}>{x.name}</Text>
+                      <Text style={{ color: c.mute, fontSize: t.caption }}>Entries saved without an account</Text>
+                    </View>
+                    <Text style={{ color: x.balance < 0 ? c.down : c.ink, fontSize: t.lead, fontWeight: '800' }}>
+                      {formatMinor(x.balance)}
                     </Text>
                   </View>
-                  <Text style={{ color: x.balance < 0 ? c.down : c.ink, fontSize: t.lead, fontWeight: '800' }}>
-                    {formatMinor(x.balance)}
-                  </Text>
-                  <Text style={{ color: c.mute, fontSize: t.title, marginLeft: sp.s }}>›</Text>
-                </Pressable>
-              ))}
+                ) : (
+                  <Pressable
+                    key={x.id}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${x.name} ${formatMinor(x.balance)}. Tap to edit`}
+                    onPress={() => setEdit(true)}
+                    style={({ pressed }) => [
+                      s.card,
+                      { flexDirection: 'row', alignItems: 'center', marginBottom: sp.s, opacity: pressed ? 0.7 : 1 },
+                    ]}
+                  >
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ color: c.ink, fontSize: t.body, fontWeight: '700' }}>{x.name}</Text>
+                      <Text style={{ color: c.mute, fontSize: t.caption }}>
+                        {g.hint}
+                        {x.showOnHome ? '' : ' · hidden on Home'}
+                      </Text>
+                    </View>
+                    <Text style={{ color: x.balance < 0 ? c.down : c.ink, fontSize: t.lead, fontWeight: '800' }}>
+                      {formatMinor(x.balance)}
+                    </Text>
+                    <Text style={{ color: c.mute, fontSize: t.title, marginLeft: sp.s }}>›</Text>
+                  </Pressable>
+                ),
+              )}
             </View>
           );
         })}

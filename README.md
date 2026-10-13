@@ -10,7 +10,7 @@ Everything below was executed, not assumed. Numbers are from the latest runs of 
 | Layer | Where it runs | What it proves |
 |---|---|---|
 | Typecheck, unit/logic tests, app tests, production build | `ci` (every push) | Parser, money, CSV, aggregates, safe-error layer; real server actions + pages against an in-memory Supabase stand-in; `next build`; `npm audit --audit-level=high` |
-| Real database suite (`tests/prod/rls-suite.ts`) | `prod-qa` → real Supabase | 54 checks: RLS cross-user isolation, composite ownership FKs, constraints, idempotent saves, transfers, recurring, aggregates, anonymous access |
+| Real database suite (`tests/prod/rls-suite.ts`) | `prod-qa` → real Supabase | 55 checks: RLS cross-user isolation, composite ownership FKs, constraints, idempotent saves, transfers, recurring, aggregates, anonymous access |
 | Real database regressions (`tests/prod/db.mjs`) | `prod-qa` → real Supabase | 15 checks: undo storage (`tx_trash`), recurring occurrence deletion never resurrects, rule deletion keeps history, month-end/leap-day no-drift |
 | Real browser, functional (`tests/prod/qa.mjs`) | `prod-qa` → Chromium → live Vercel app → live Supabase | Auth, recovery, dashboard, commands, transactions, accounts, budgets, reports, settings, recurring, CSV, assistant, cross-user isolation |
 | Real browser, security (`tests/prod/security.mjs`) | `prod-qa` → Chromium → live app → live Supabase | Email-link handling, password rules (length, repeats, breached), security page (change password, log out other/all devices), two-step verification with real authenticator codes (setup, login gate, turn-off), database-level 2FA enforcement, loading skeletons (streamed first, nav stays, reduced motion), mobile fit |
