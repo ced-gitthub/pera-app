@@ -109,14 +109,14 @@ export function Gate() {
   }, [uid]);
   useEffect(() => {
     // the tab tour opens once per account, as soon as the first-run steps are out of the way
-    if (!snap || !gate || gate.show || !uid || ask) return; // the tour waits while the existing-data question is open
+    if (!snap || !gate || gate.show || !uid || ask || fresh) return; // the tour waits while the existing-data question is open
     void tabTourSeen(uid).then((seen) => {
       if (!seen) {
         startTour('home');
         void markTabTourSeen(uid);
       }
     });
-  }, [snap, gate, uid, ask]);
+  }, [snap, gate, uid, ask, fresh]);
   useEffect(() => {
     // coming back to the app on a new day runs the day's recurring entries and reloads the numbers
     const sub = AppState.addEventListener('change', (st) => {

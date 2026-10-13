@@ -54,7 +54,7 @@ test('Gate really renders the existing-data prompt and the typed-DELETE sheet, a
   assert.match(src, /<ExistingDataPrompt/);
   assert.match(src, /<ResetData/);
   assert.match(src, /ask/);
-  assert.ok(src.includes('|| ask) return'), 'the tab tour must wait while the question is open');
+  assert.ok(src.includes('|| ask || fresh) return'), 'the tab tour must wait while the question is open');
 });
 
 test('signing out forgets a pending sign-up flag', () => {
@@ -69,4 +69,16 @@ test('the live delete-account group no longer skips on 404 (a 404 after deploy m
 test('the new native dependency is pinned exactly', () => {
   const pkg = JSON.parse(fs.readFileSync('native/package.json', 'utf8'));
   assert.equal(pkg.dependencies['expo-alternate-app-icons'], '8.0.0');
+});
+
+test('the lockfile agrees with the pinned icon dependency', () => {
+  const lock = JSON.parse(fs.readFileSync('native/package-lock.json', 'utf8'));
+  assert.equal(lock.packages[''].dependencies['expo-alternate-app-icons'], '8.0.0');
+  assert.equal(lock.packages['node_modules/expo-alternate-app-icons'].version, '8.0.0');
+});
+
+test('the tab tour also waits while the start-fresh sheet is open', () => {
+  const src = fs.readFileSync('native/src/Gate.tsx', 'utf8');
+  assert.ok(src.includes('|| ask || fresh) return'), 'guard must include fresh');
+  assert.ok(src.includes('[snap, gate, uid, ask, fresh]'), 'effect deps must include fresh');
 });

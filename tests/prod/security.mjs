@@ -490,7 +490,7 @@ G('two-step verification is enforced by the database (migration 0006)');
 }
 
 // ---------------------------------------------------------------- native app account deletion (POST /api/native/delete-account)
-// The route ships with the next website deploy. Until then every step here is reported as SKIPPED (visible in the output, counted as a pass) so the suite stays green; afterwards they are real checks.
+// The route ships in the same merge that deploys it and prod-qa runs after the deploy, so every step here is a real check: a 404 fails the run.
 // Only accounts created by this block are ever deleted.
 G('native app: delete account (/api/native/delete-account)');
 {
