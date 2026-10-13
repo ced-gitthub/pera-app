@@ -39,7 +39,7 @@ for (const [label, vp, scheme] of [
     return o.sw <= o.cw + 1 ? true : o;
   });
   await step('has the introduction, how it works, worked samples, benefits, levels, privacy and FAQ', async () => {
-    const t = (await q.locator('body').innerText()).replace(/\s+/g, ' ');
+    const t = (await q.locator('body').innerText()).replace(/\s+/g, ' ').toLowerCase();
     const need = [
       'What it is',
       'How it works',
