@@ -208,3 +208,25 @@ html body .ob-nav {
 html body .ob-nav .ob-go {
   flex: 1;
 }
+
+html body .ob-parts-h {
+  margin: var(--sp-2) 0 4px;
+  font-weight: 800;
+  font-size: 13px;
+}
+html body .ob-parts {
+  margin: 0;
+  display: grid;
+  gap: 6px;
+}
+html body .ob-parts dt {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 8px;
+  background: var(--mango);
+  color: var(--mango-ink);
+  font-weight: 800;
+}
+html body .ob-parts dd {
+  margin: 2px 0 0;
+}

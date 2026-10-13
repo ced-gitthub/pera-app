@@ -42,12 +42,22 @@ export default function OnboardingHead({ number, label, state }: { number: numbe
     </>
   );
 }
-export const Sample = ({ you, result }: { you: string; result: string[] }) => (
+export const Sample = ({ you, parts, result }: { you: string; parts: { text: string; what: string }[]; result: string[] }) => (
   <div className="ob-sample">
     <b className="ob-sample-tag">Example</b>
     <p className="ob-you">
       <span>You type</span> “{you}”
     </p>
+    <p className="ob-parts-h">What each part means</p>
+    <dl className="ob-parts">
+      {parts.map((x) => (
+        <div key={x.text}>
+          <dt>{x.text}</dt>
+          <dd>{x.what}</dd>
+        </div>
+      ))}
+    </dl>
+    <p className="ob-parts-h">What Zovix does</p>
     <ul className="ob-res">
       {result.map((r) => (
         <li key={r}>{r}</li>

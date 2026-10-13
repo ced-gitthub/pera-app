@@ -32,22 +32,49 @@ export const COPY: Record<GateStep | 'finish', { emoji: string; label: string; t
     todo: [],
   },
 };
-export type Sample = { you: string; result: string[] };
+export type Part = { text: string; what: string };
+export type Sample = { you: string; parts: Part[]; result: string[] };
 export const SAMPLES: Record<GateStep, Sample> = {
   first: {
     you: 'lunch 150 gcash',
+    parts: [
+      {
+        text: 'lunch',
+        what: 'What it was for. Zovix reads the word and picks a category (lunch becomes Food). A word it does not know goes to Other, and you can change it later.',
+      },
+      { text: '150', what: 'The amount in pesos. Just the number, no ₱ needed.' },
+      {
+        text: 'gcash',
+        what: 'Which of your accounts it came from. It must match an account name on your Accounts page (GCash, Cash, BPI...). Leave it out and Zovix uses Cash.',
+      },
+    ],
     result: ['Saved as an expense: Food, ₱150.00', 'Your GCash balance goes down by ₱150', 'Your streak starts 🔥'],
   },
   balance: {
     you: 'GCash 1500 · Cash 300',
+    parts: [
+      {
+        text: 'GCash',
+        what: 'One of your accounts. Zovix already made some for you (Cash, GCash, Maya, BPI...), and you can add more later on the Accounts page.',
+      },
+      { text: '1500', what: 'How much is in it right now, as best you know.' },
+    ],
     result: ['Your total balance shows ₱1,800.00', 'Every entry from now on adds to or takes from these'],
   },
   budget: {
     you: 'Food · ₱3,000 a month',
+    parts: [
+      { text: 'Food', what: 'A spending category. Anything you log as Food (like lunch) counts against this budget.' },
+      { text: '₱3,000', what: 'The most you want to spend on it this month.' },
+    ],
     result: ['After ₱1,200 of food spending it says ₱1,800 left', 'The bar turns red if you go over'],
   },
   goal: {
     you: 'New phone · ₱15,000',
+    parts: [
+      { text: 'New phone', what: 'Whatever you are saving for. Pick any name and icon.' },
+      { text: '₱15,000', what: 'How much it costs. You can connect it to an account so its balance fills the bar.' },
+    ],
     result: ['With ₱6,000 saved it shows 40%', '₱9,000 to go, and a 🎉 when you get there'],
   },
 };
