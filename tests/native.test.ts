@@ -1,4 +1,5 @@
 import { test } from 'node:test';
+import { budgetStatus } from '../src/core/aggregate.ts';
 import assert from 'node:assert/strict';
 import {
   preview,
@@ -8,6 +9,8 @@ import {
   planBudget,
   monthRange,
   budgetProgress,
+  netFromSummary,
+  sendCodeError,
   type Snapshot,
 } from '../native/src/logic.ts';
 
@@ -132,11 +135,46 @@ test('wizard balances: negative, too large, untouched accounts and a non-zero ex
   assert.ok(typedNeg.ok && !typedNeg.patch.some((p) => p.id === 'a3'));
 });
 
-test('budgets: month range handles February and leap years; bars never divide by zero and cap at 100', () => {
+test('budgets: month range handles February and leap years', () => {
   assert.deepEqual(monthRange('2028-02-10'), { from: '2028-02-01', to: '2028-02-29', month: 2, year: 2028 });
   assert.equal(monthRange('2026-10-31').to, '2026-10-31');
-  assert.deepEqual(budgetProgress(300000, 120000), { over: false, left: 180000, overBy: 0, pct: 40 });
-  assert.deepEqual(budgetProgress(100000, 130000), { over: true, left: 0, overBy: 30000, pct: 100 });
-  assert.equal(budgetProgress(0, 0).pct, 0);
-  assert.equal(budgetProgress(0, 500).pct, 100);
+});
+
+test('budgets: the app uses the website rule (rounded tenths), so both always agree', () => {
+  for (const [limit, spent] of [
+    [300000, 120000],
+    [100000, 130000],
+    [1000000, 1000400],
+    [0, 0],
+    [0, 500],
+    [100000, 80000],
+  ]) {
+    const a = budgetProgress(limit, spent),
+      w = budgetStatus(limit, spent);
+    assert.equal(a.state, w.state);
+    assert.equal(a.over, w.state === 'over');
+  }
+  assert.equal(budgetProgress(1000000, 1000400).over, false); // 100.04% rounds to 100.0%: not over
+  assert.equal(budgetProgress(0, 500).over, false); // a 0 budget is not 'over' on the website
+  assert.deepEqual({ ...budgetProgress(300000, 120000) }, { over: false, left: 180000, overBy: 0, pct: 40, state: 'ok' });
+});
+
+test('goals: net since start = income minus expense from period_summary rows, as integers', () => {
+  assert.equal(
+    netFromSummary([
+      { type: 'income', total_minor: '600000' },
+      { type: 'expense', total_minor: 150000 },
+      { type: 'transfer', total_minor: 9 },
+    ]),
+    450000,
+  );
+  assert.equal(netFromSummary([]), 0);
+});
+
+test('sign-up errors: shown when creating, hidden when signing in (no account enumeration)', () => {
+  assert.match(sendCodeError({ message: 'Signups not allowed for otp', status: 422 }, true) ?? '', /not available/);
+  assert.equal(sendCodeError({ message: 'Signups not allowed for otp', status: 422 }, false), null);
+  assert.match(sendCodeError({ message: 'fetch failed' }, false) ?? '', /Could not reach/);
+  assert.match(sendCodeError({ message: 'email rate limit exceeded', status: 429 }, true) ?? '', /Too many/);
+  assert.equal(sendCodeError(null, true), null);
 });

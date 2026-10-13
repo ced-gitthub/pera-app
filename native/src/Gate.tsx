@@ -33,7 +33,9 @@ export function Gate() {
       const d = decideGate(counts, sn.accounts, flags);
       await setFlags(id, d.set);
       setUid(id);
-      setName(String(data.session?.user.user_metadata?.name ?? '').split(' ')[0]);
+      const prof = await supabase.from('profiles').select('name').eq('id', id).maybeSingle();
+      const nm = String(prof.data?.name || data.session?.user.user_metadata?.name || data.session?.user.email?.split('@')[0] || '');
+      setName(nm.split(' ')[0]);
       setSnap(sn);
       setGate(d.gate);
       setErr('');

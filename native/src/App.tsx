@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ActivityIndicator, KeyboardAvoidingView, StatusBar, Text, View } from 'react-native';
 import * as Linking from 'expo-linking';
 import type { Session } from '@supabase/supabase-js';
@@ -70,9 +71,11 @@ export default function App() {
   else if (totp) body = <Totp onDone={() => check(session)} />;
   else body = <Gate />;
   return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: c.bg }} behavior="padding">
-      <StatusBar barStyle="dark-content" backgroundColor={c.bg} />
-      {body}
-    </KeyboardAvoidingView>
+    <SafeAreaProvider>
+      <KeyboardAvoidingView style={{ flex: 1, backgroundColor: c.bg }} behavior="padding">
+        <StatusBar barStyle="dark-content" backgroundColor={c.bg} />
+        {body}
+      </KeyboardAvoidingView>
+    </SafeAreaProvider>
   );
 }

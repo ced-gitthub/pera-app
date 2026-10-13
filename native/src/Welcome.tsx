@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Animated, FlatList, Pressable, Text, useWindowDimensions, View } from 'react-native';
 import { Btn } from './Btn';
 import { c, s } from './ui';
@@ -37,6 +38,7 @@ const SLIDES = [
 
 export function Welcome({ onDone }: { onDone: (mode: 'signup' | 'login') => void }) {
   const { width } = useWindowDimensions();
+  const { top, bottom } = useSafeAreaInsets();
   const [i, setI] = useState(0);
   const pop = useRef(new Animated.Value(1)).current;
   const bounce = () => {
@@ -56,7 +58,7 @@ export function Welcome({ onDone }: { onDone: (mode: 'signup' | 'login') => void
           bounce();
         }}
         renderItem={({ item }) => (
-          <View style={{ width, paddingHorizontal: 28, paddingTop: 90, alignItems: 'center' }}>
+          <View style={{ width, paddingHorizontal: 28, paddingTop: top + 60, alignItems: 'center' }}>
             <Animated.Text style={{ fontSize: 84, transform: [{ scale: pop }] }}>{item.emoji}</Animated.Text>
             <Text style={{ color: '#fff', fontSize: 30, fontWeight: '800', textAlign: 'center', marginTop: 18 }}>{item.title}</Text>
             <Text style={{ color: '#fff', opacity: 0.9, fontSize: 17, textAlign: 'center', marginTop: 12, lineHeight: 24 }}>
@@ -81,7 +83,7 @@ export function Welcome({ onDone }: { onDone: (mode: 'signup' | 'login') => void
           />
         ))}
       </View>
-      <View style={{ paddingHorizontal: 20, paddingBottom: 36 }}>
+      <View style={{ paddingHorizontal: 20, paddingBottom: bottom + 24 }}>
         <Btn label="Create my account" alt onPress={() => onDone('signup')} />
         <Pressable
           accessibilityRole="button"

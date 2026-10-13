@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { sendCode, verifyCode, signInWithGoogle, verifyTotp } from './auth';
 import { supabase } from './supabase';
@@ -8,6 +9,7 @@ import { c, s } from './ui';
 // One screen for both: "Create account" (name + email, code, you are in) and "Sign in" (email, code).
 export function Login({ start }: { start: 'signup' | 'login' }) {
   const [signup, setSignup] = useState(start === 'signup');
+  const { top, bottom } = useSafeAreaInsets();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
@@ -47,7 +49,7 @@ export function Login({ start }: { start: 'signup' | 'login' }) {
       <View
         style={{
           backgroundColor: c.purple,
-          paddingTop: 70,
+          paddingTop: top + 30,
           paddingBottom: 34,
           paddingHorizontal: 20,
           borderBottomLeftRadius: 32,
@@ -62,7 +64,7 @@ export function Login({ start }: { start: 'signup' | 'login' }) {
           {signup ? 'Free forever. Takes under a minute.' : 'Sign in to pick up where you left off.'}
         </Text>
       </View>
-      <View style={{ padding: 16 }}>
+      <View style={{ padding: 16, paddingBottom: bottom + 16 }}>
         <View style={s.card}>
           {signup && !sent && (
             <TextInput

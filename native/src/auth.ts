@@ -1,6 +1,7 @@
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import { supabase } from './supabase';
+import { sendCodeError } from './logic';
 
 const isEmail = (s: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
 
@@ -13,10 +14,7 @@ export async function sendCode(email: string, create?: { name: string }): Promis
     email,
     options: create ? { shouldCreateUser: true, data: { name: create.name.trim().slice(0, 40) } } : { shouldCreateUser: false },
   });
-  if (error && /rate/i.test(error.message)) return 'Too many tries. Wait a minute and ask for a new code.';
-  // Only a server reply (4xx) is hidden so the answer never reveals whether an account exists; network and 5xx errors are shown.
-  if (error && (!error.status || error.status >= 500)) return 'Could not reach the server. Check your connection.';
-  return null;
+  return sendCodeError(error, !!create);
 }
 
 export async function verifyCode(email: string, token: string): Promise<string | null> {

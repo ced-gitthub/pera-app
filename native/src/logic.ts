@@ -2,6 +2,7 @@
 import { parseInput, FEE_CATS, type Item, type Parsed } from '../../src/core/parser.ts';
 import { manilaToday } from '../../src/core/money.ts';
 import { parseOptionalMinor } from '../../src/lib/validate.ts';
+import { budgetStatus } from '../../src/core/aggregate.ts';
 import { openingFromToday, gateFor, type Gate } from '../../src/lib/onboarding.ts';
 
 export type Account = { id: string; name: string; short_name: string | null; counts_as_savings: boolean; opening_balance_minor: number };
@@ -102,11 +103,26 @@ export function monthRange(today: string) {
   return { from: `${y}-${mm}-01`, to: `${y}-${mm}-${String(last).padStart(2, '0')}`, month: m, year: y };
 }
 export function budgetProgress(limit: number, spent: number) {
-  const over = spent > limit;
+  const st = budgetStatus(limit, spent); // the website's own rule (rounded tenths of a percent), so both apps agree
+  const over = st.state === 'over';
   return {
     over,
     left: over ? 0 : limit - spent,
     overBy: over ? spent - limit : 0,
-    pct: limit <= 0 ? (spent > 0 ? 100 : 0) : Math.min(100, Math.floor((spent * 100) / limit)),
+    pct: Math.min(100, Math.floor(st.usageTenths / 10)),
+    state: st.state,
   };
+}
+
+// Savings goal not tied to an account: income minus expenses over the period, from the period_summary rows.
+export function netFromSummary(rows: { type: string; total_minor: number | string }[]) {
+  return rows.reduce((n, x) => n + (x.type === 'income' ? Number(x.total_minor) : x.type === 'expense' ? -Number(x.total_minor) : 0), 0);
+}
+
+// What to tell the person when the code could not be sent. Sign-in hides server replies (no account enumeration); sign-up has nothing to hide.
+export function sendCodeError(error: { message: string; status?: number } | null, creating: boolean): string | null {
+  if (!error) return null;
+  if (/rate/i.test(error.message)) return 'Too many tries. Wait a minute and ask for a new code.';
+  if (!error.status || error.status >= 500) return 'Could not reach the server. Check your connection.';
+  return creating ? 'Sign-up is not available for that email right now. Check the address, or try again later.' : null;
 }

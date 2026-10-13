@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { formatMinor } from '../../src/core/money';
 import { supabase } from './supabase';
@@ -40,12 +41,13 @@ function Page(p: {
   err: string;
   children: React.ReactNode;
 }) {
+  const { top } = useSafeAreaInsets();
   return (
     <ScrollView style={{ flex: 1 }} refreshControl={<RefreshControl refreshing={p.busy} onRefresh={p.reload} />}>
       <View
         style={{
           backgroundColor: p.tint,
-          paddingTop: 56,
+          paddingTop: top + 16,
           paddingHorizontal: 16,
           paddingBottom: 22,
           borderBottomLeftRadius: 28,
@@ -138,7 +140,9 @@ export function Goals({ snap }: { snap: Snapshot }) {
           </Text>
           <Bar pct={g.pct} color={g.reached ? c.green : c.purple} />
           <Text style={s.p}>
-            {formatMinor(g.have)} of {formatMinor(g.target)} · {g.pct}%{g.reached ? '' : ` · ${formatMinor(g.remaining)} to go`}
+            {g.unavailable
+              ? 'Progress unavailable right now. Pull down to retry.'
+              : `${formatMinor(g.have)} of ${formatMinor(g.target)} · ${g.pct}%${g.reached ? '' : ` · ${formatMinor(g.remaining)} to go`}`}
           </Text>
         </View>
       ))}
@@ -151,12 +155,13 @@ export function More({ onReplay }: { onReplay: () => void }) {
     <Page emoji="⚙️" title="Settings" line="Tutorial and account." tint={c.purple} busy={false} reload={() => {}} err="">
       <Btn label="Show the tutorial again" alt onPress={onReplay} />
       <Btn label="Log out" onPress={() => supabase.auth.signOut()} />
-      <Text style={[s.p, { textAlign: 'center', marginTop: 12 }]}>Zovix native 0.4</Text>
+      <Text style={[s.p, { textAlign: 'center', marginTop: 12 }]}>Zovix native 0.5</Text>
     </Page>
   );
 }
 
 export function TabBar({ tab, setTab }: { tab: string; setTab: (t: string) => void }) {
+  const { bottom } = useSafeAreaInsets();
   const items = [
     ['home', '🏠', 'Home'],
     ['activity', '🧾', 'Activity'],
@@ -166,7 +171,14 @@ export function TabBar({ tab, setTab }: { tab: string; setTab: (t: string) => vo
   ];
   return (
     <View
-      style={{ flexDirection: 'row', backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: c.line, paddingBottom: 14, paddingTop: 6 }}
+      style={{
+        flexDirection: 'row',
+        backgroundColor: '#fff',
+        borderTopWidth: 1,
+        borderTopColor: c.line,
+        paddingBottom: bottom + 8,
+        paddingTop: 6,
+      }}
     >
       {items.map(([id, e, label]) => (
         <Pressable

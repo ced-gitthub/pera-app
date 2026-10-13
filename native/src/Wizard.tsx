@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Animated, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { formatMinor } from '../../src/core/money';
 import { minorToInput } from '../../src/lib/validate';
@@ -79,6 +80,7 @@ export function Wizard(p: {
   const slide: Slide = p.tour ? ORDER[i] : p.slide;
   const number = p.tour ? i + 1 : Math.max(ORDER.indexOf(slide), 0) + 1;
   const c0 = COPY[slide];
+  const { top, bottom } = useSafeAreaInsets();
   const slideIn = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     slideIn.setValue(0);
@@ -90,12 +92,12 @@ export function Wizard(p: {
       style={{ flex: 1 }}
       keyboardShouldPersistTaps="handled"
       keyboardDismissMode="on-drag"
-      contentContainerStyle={{ paddingBottom: 80 }}
+      contentContainerStyle={{ paddingBottom: bottom + 80 }}
     >
       <View
         style={{
           backgroundColor: tint,
-          paddingTop: 56,
+          paddingTop: top + 16,
           paddingHorizontal: 16,
           paddingBottom: 26,
           borderBottomLeftRadius: 32,
