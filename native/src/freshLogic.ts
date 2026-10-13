@@ -1,12 +1,14 @@
-// A brand-new in-app account must start EMPTY: the hands-on tutorial before sign-up is the sample, so nothing left over should confuse the first real entries.
-// Safety: this only ever runs right after a sign-up on THIS phone (a flag set by the sign-up screen) and only for an account created in the last day,
-// so signing in to an existing account can never wipe anything.
+// "Create account" with an email that already has an account just signs that person in, so a new sign-up can land in an account that already has data.
+// The app never deletes anything on its own: it ASKS. A truly new account has no rows, so nothing is asked.
 export const JUST_SIGNED_UP_KEY = 'zv_just_signed_up';
-const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
-export function shouldCleanNewAccount(justSignedUp: boolean, createdAt: string | undefined, now: number): boolean {
-  if (!justSignedUp || !createdAt) return false;
-  const made = Date.parse(createdAt);
-  if (!Number.isFinite(made)) return false;
-  return now - made >= 0 && now - made < ONE_DAY_MS;
+export const EXISTING_DATA_TEXT =
+  'This email already has data in Zovix (entries, budgets or goals from before). Nothing has been deleted. You can keep it, or start fresh and clear your records. Starting fresh asks you to type DELETE first.';
+
+export function shouldAskAboutExistingData(
+  justSignedUp: boolean,
+  counts: { totalEntries: number; budgetsCount: number; goalsCount: number } | null,
+): boolean {
+  if (!justSignedUp || !counts) return false;
+  return counts.totalEntries + counts.budgetsCount + counts.goalsCount > 0;
 }

@@ -78,3 +78,6 @@ export function paletteProblems(c: Colors): string[] {
   for (const [k, v] of Object.entries(c.hero)) need(c.ink, v, `ink on hero.${k}`);
   return out;
 }
+
+// A theme saved on another phone is adopted when this phone signs in, never in the middle of use: a token refresh must not remount the whole screen.
+export const shouldAdoptTheme = (authEvent: string): boolean => authEvent === 'SIGNED_IN' || authEvent === 'INITIAL_SESSION';

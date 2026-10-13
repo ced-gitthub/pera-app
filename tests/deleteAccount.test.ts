@@ -57,3 +57,12 @@ test('delete account: reads the aal claim and the bearer token safely', () => {
   assert.equal(bearerToken(null), null);
   assert.equal(bearerToken('Bearer '), null);
 });
+
+import { hasVerifiedFactor } from '../src/lib/deleteAccount.ts';
+test('delete account: ANY verified factor (totp, phone, webauthn) counts as two-step', () => {
+  assert.equal(hasVerifiedFactor(undefined), false);
+  assert.equal(hasVerifiedFactor([]), false);
+  assert.equal(hasVerifiedFactor([{ factor_type: 'totp', status: 'unverified' }]), false);
+  for (const factor_type of ['totp', 'phone', 'webauthn', 'something-new'])
+    assert.equal(hasVerifiedFactor([{ factor_type, status: 'verified' }]), true, factor_type);
+});

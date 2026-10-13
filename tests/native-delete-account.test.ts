@@ -53,8 +53,8 @@ test('a network failure is reported as not confirmed, never as deleted', async (
     throw new TypeError('Network request failed');
   }) as unknown as typeof fetch;
   const r = await requestAccountDeletion(down, 'https://example.test', 't', 'DELETE');
-  assert.ok(r.kind === 'error' && /could not confirm|check your connection/i.test(r.message));
-  assert.ok(r.kind === 'error' && !/Network request failed/.test(r.message));
+  assert.ok(r.kind === 'unconfirmed' && /could not confirm|check your connection/i.test(r.message));
+  assert.ok(r.kind === 'unconfirmed' && !/Network request failed/.test(r.message));
 });
 
 test('the delete is never retried by the client, and an empty token is refused before any request', async () => {
@@ -68,4 +68,19 @@ test('the delete is never retried by the client, and an empty token is refused b
   const none = await requestAccountDeletion(f, 'https://example.test', '', 'DELETE');
   assert.equal(none.kind, 'error');
   assert.equal(calls, 1);
+});
+
+test('a lost answer is "unconfirmed" (the account may already be gone), and a gone account is recognised on retry', async () => {
+  const down = (async () => {
+    throw new TypeError('Network request failed');
+  }) as unknown as typeof fetch;
+  const r = await requestAccountDeletion(down, 'https://example.test', 't', 'DELETE');
+  assert.equal(r.kind, 'unconfirmed');
+  const { sessionGone } = await import('../native/src/deleteAccountLogic.ts');
+  assert.equal(sessionGone({ status: 401 }), true);
+  assert.equal(sessionGone({ status: 403 }), true);
+  assert.equal(sessionGone({ status: 404 }), true);
+  assert.equal(sessionGone({ status: 500 }), false);
+  assert.equal(sessionGone({}), false); // a plain network error says nothing
+  assert.equal(sessionGone(null), false);
 });

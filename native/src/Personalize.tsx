@@ -5,6 +5,7 @@ import { Sheet } from './Sheet';
 import { Btn } from './Btn';
 import { ThemePicker, appliedStyle } from './ThemePicker';
 import { AvatarPicker } from './AvatarPicker';
+import { AppIconSection } from './AppIconSection';
 import { commitTheme, setTheme } from './themeStore';
 import { saveName, saveProfile, useProfile } from './profile';
 import { STATUS_MAX, cleanStatus, type Profile } from './profileLogic';
@@ -60,6 +61,7 @@ function ThemeSection({ onChanged }: { onChanged: () => void }) {
         </Text>
       )}
       {!!err && <Text style={s.err}>{err}</Text>}
+      <AppIconSection />
     </View>
   );
 }

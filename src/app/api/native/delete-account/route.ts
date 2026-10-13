@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { admin, adminConfigured } from '@/lib/admin';
-import { bearerToken, checkDeleteRequest, tokenAal } from '@/lib/deleteAccount';
+import { bearerToken, checkDeleteRequest, hasVerifiedFactor, tokenAal } from '@/lib/deleteAccount';
 import { sessionSignInAt } from '@/lib/session';
 import { logErr } from '@/lib/safe';
 
@@ -23,7 +23,7 @@ export async function POST(req: Request) {
   const verdict = checkDeleteRequest({
     confirm: typeof body.confirm === 'string' ? body.confirm : '',
     adminReady: true,
-    hasVerifiedFactor: (user.factors ?? []).some((f) => f.factor_type === 'totp' && f.status === 'verified'),
+    hasVerifiedFactor: hasVerifiedFactor(user.factors),
     aal: tokenAal(token),
     signedInAt: sessionSignInAt(token),
     now: Date.now(),

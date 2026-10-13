@@ -20,6 +20,7 @@ export const canDeleteAccount = (typed: string) => typed.trim().toUpperCase() ==
 export type DeleteOutcome =
   | { kind: 'deleted' }
   | { kind: 'unavailable'; message: string } // the server does not have this feature yet
+  | { kind: 'unconfirmed'; message: string } // the answer was lost: the account may already be gone
   | { kind: 'error'; message: string };
 
 const TRY_AGAIN = 'Could not delete your account. Nothing was removed. Check your connection and try again.';
@@ -35,3 +36,7 @@ export function interpretDeleteResponse(status: number, body: unknown): DeleteOu
     return { kind: 'error', message: msg };
   return { kind: 'error', message: TRY_AGAIN };
 }
+
+// After a lost answer a retry first asks "am I still signed in?": a 401/403/404 from the server means the account no longer exists. A plain network error says nothing.
+export const sessionGone = (error: { status?: number } | null | undefined): boolean =>
+  !!error && typeof error.status === 'number' && [401, 403, 404].includes(error.status);

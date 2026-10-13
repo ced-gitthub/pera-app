@@ -15,7 +15,10 @@ import { EntrySheet, UndoBar } from './EntrySheet';
 import { restoreEntry } from './entries';
 import { afterRestore, type UndoState } from './entriesLogic';
 import { runDue } from './recurringApi';
-import { cleanIfNewlySignedUp } from './fresh';
+import { takeSignUpFlag } from './fresh';
+import { shouldAskAboutExistingData } from './freshLogic';
+import { ExistingDataPrompt } from './ExistingDataPrompt';
+import { ResetData } from './ResetData';
 import { MakeItYours } from './MakeItYours';
 import { makeItYoursSeen } from './profile';
 import { shouldRunDue } from './recurringLogic';
@@ -42,6 +45,8 @@ export function Gate() {
   const [undo, setUndo] = useState<UndoState | null>(null);
   const [tabH, setTabH] = useState(0);
   const [notice, setNotice] = useState('');
+  const [ask, setAsk] = useState(false); // sign-up landed in an account that already has data: ask, never delete silently
+  const [fresh, setFresh] = useState(false);
   const [mine, setMine] = useState(false); // 'Make it yours' (theme + profile), once per account
   const [tour, setTour] = useState<number | null>(null); // index of the live-tour step, or null when it is closed
   const tourFrom = useRef('home'); // the tab the person was on, restored when the tour ends
@@ -63,14 +68,13 @@ export function Gate() {
       const { data } = await supabase.auth.getSession();
       const id = data.session?.user.id;
       if (!id) return 'Session expired. Please sign in again.';
-      // A brand-new in-app account starts empty: the tutorial before sign-up was the sample. Runs once, only right after a sign-up on this phone.
-      const cleanMsg = await cleanIfNewlySignedUp(data.session?.user.created_at);
-      if (cleanMsg) return cleanMsg;
+      const wasSignUp = await takeSignUpFlag(); // read once; used below with this load's counts
       const sn = await load();
       const flags = await readFlags(id);
       const counts = await loadCounts().catch(() => null);
       const d = decideGate(counts, sn.accounts, flags);
       await setFlags(id, d.set);
+      if (shouldAskAboutExistingData(wasSignUp, counts)) setAsk(true);
       setUid(id);
       const prof = await supabase.from('profiles').select('name').eq('id', id).maybeSingle();
       const nm = String(prof.data?.name || data.session?.user.user_metadata?.name || data.session?.user.email?.split('@')[0] || '');
@@ -159,7 +163,12 @@ export function Gate() {
   return (
     <CoachProvider>
       <View style={{ flex: 1 }}>
-        <View style={{ flex: 1 }}>
+        {/* while the tour is open, screen readers (TalkBack) must not reach the controls under the dim layer */}
+        <View
+          style={{ flex: 1 }}
+          importantForAccessibility={tour !== null ? 'no-hide-descendants' : 'auto'}
+          accessibilityElementsHidden={tour !== null}
+        >
           {tab === 'home' && (
             <Home snap={snap} refresh={refresh} name={firstName(name)} onPick={setPicked} onOpenAccounts={() => setTab('accounts')} />
           )}

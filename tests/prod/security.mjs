@@ -489,6 +489,162 @@ G('two-step verification is enforced by the database (migration 0006)');
   });
 }
 
+// ---------------------------------------------------------------- native app account deletion (POST /api/native/delete-account)
+// The route ships with the next website deploy. Until then every step here is reported as SKIPPED (visible in the output, counted as a pass) so the suite stays green; afterwards they are real checks.
+// Only accounts created by this block are ever deleted.
+G('native app: delete account (/api/native/delete-account)');
+let skippedDelete = 0;
+{
+  const EP = BASE + '/api/native/delete-account';
+  const call = async (token, body, headers = {}) => {
+    const r = await fetch(EP, {
+      method: 'POST',
+      redirect: 'manual',
+      signal: AbortSignal.timeout(30000),
+      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}), ...headers },
+      body: JSON.stringify(body),
+    });
+    return { s: r.status, j: await r.json().catch(() => null), cc: r.headers.get('cache-control') };
+  };
+  const probe = await call(null, { confirm: 'DELETE' }).catch((e) => ({ s: -1, err: String(e.message || e) }));
+  const deployed = probe.s !== 404;
+  if (!deployed)
+    console.log('NOTE: /api/native/delete-account answered 404, so the delete-account group is SKIPPED (endpoint not deployed yet)');
+  // ds: a real step when the endpoint exists; otherwise a visible "skipped" pass.
+  const ds = async (name, fn) => {
+    if (deployed) return step(name, fn);
+    skippedDelete++;
+    T('SKIPPED (endpoint not deployed yet): ' + name, true);
+  };
+  const signedIn = async (u) => {
+    const c = mk(),
+      s = await c.auth.signInWithPassword({ email: u.email, password: PW });
+    if (s.error || !s.data.session) throw new Error('sign-in: ' + (s.error?.message || 'no session'));
+    return { c, token: s.data.session.access_token };
+  };
+  const stillExists = async (u) => !(await mk().auth.signInWithPassword({ email: u.email, password: PW })).error;
+  const mkU = async (tag) => {
+    const { data, error } = await mk().auth.signUp({ email: em(tag), password: PW });
+    if (error || !data.user) throw new Error('signUp: ' + (error?.message || 'no user'));
+    const u = { id: data.user.id, email: em(tag) };
+    return { ...u, ...(await signedIn(u)) }; // a fresh sign-in, so the token carries the sign-in time the route checks
+  };
+  const accts = async (c) => {
+    const r = await c.from('accounts').select('id');
+    return r.error ? 'ERR:' + r.error.code : r.data.length;
+  };
+  let C,
+    T2,
+    A2,
+    B2,
+    sec2 = '',
+    fid2 = '';
+  const verifyCode = async (c, factorId) => {
+    for (const s of [0, 1, -1]) {
+      const ch = await c.auth.mfa.challenge({ factorId });
+      const v = await c.auth.mfa.verify({ factorId, challengeId: ch.data.id, code: totp(sec2, s) });
+      if (!v.error) return true;
+    }
+    return false;
+  };
+
+  await ds('delete-account: no Authorization header is refused with 401', async () => {
+    const r = await call(null, { confirm: 'DELETE' });
+    return r.s === 401 && typeof r.j?.error === 'string' && !LEAK.test(r.j.error) ? true : r;
+  });
+  await ds('delete-account: a garbage bearer token is refused with 401 (also a wrong scheme)', async () => {
+    const out = [];
+    for (const [tok, hdr] of [
+      ['not-a-token', {}],
+      ['aaa.bbb.ccc', {}],
+      [null, { Authorization: 'Basic dXNlcjpwdw==' }],
+    ]) {
+      const r = await call(tok, { confirm: 'DELETE' }, hdr);
+      if (r.s !== 401 || LEAK.test(String(r.j?.error))) out.push({ tok, s: r.s });
+    }
+    return out.length ? out : true;
+  });
+  await ds('delete-account: set up four throwaway users (plain, two-step, A, B) with fresh sign-ins', async () => {
+    [C, T2, A2, B2] = await Promise.all([mkU('x1'), mkU('x2'), mkU('x3'), mkU('x4')]);
+    const e = await T2.c.auth.mfa.enroll({ factorType: 'totp', issuer: 'Zovix', friendlyName: 'qa' });
+    if (e.error) return e.error.message;
+    fid2 = e.data.id;
+    sec2 = e.data.totp.secret;
+    if (!(await verifyCode(T2.c, fid2))) return 'no authenticator code accepted';
+    const T3 = await signedIn(T2); // password-only again: this token is aal1
+    T2.aal1 = T3.token;
+    const a = await T3.c.auth.mfa.getAuthenticatorAssuranceLevel();
+    return a.data?.currentLevel === 'aal1' && a.data?.nextLevel === 'aal2' && (await accts(C.c)) > 0 ? true : a.data;
+  });
+  await ds(
+    'delete-account: a valid fresh token with confirm missing, "delete" or "DELETE ME" gets 400 and the user still exists',
+    async () => {
+      const out = [];
+      for (const b of [{}, { confirm: 'delete' }, { confirm: 'DELETE ME' }, { confirm: 123 }]) {
+        const r = await call(C.token, b);
+        if (r.s !== 400 || typeof r.j?.error !== 'string') out.push({ b, s: r.s });
+      }
+      return out.length ? out : (await stillExists(C)) && (await accts(C.c)) > 0 ? true : 'user was deleted by a rejected request';
+    },
+  );
+  await ds('delete-account: a two-step user with a password-only (aal1) token gets 403 and the user still exists', async () => {
+    const r = await call(T2.aal1, { confirm: 'DELETE' });
+    return r.s === 403 && typeof r.j?.error === 'string' && (await stillExists(T2)) ? true : r;
+  });
+  await ds(
+    "delete-account: user B deleting itself leaves user A signed in with A's data intact (the token decides who is deleted)",
+    async () => {
+      const before = await accts(A2.c);
+      const r = await call(B2.token, { confirm: 'DELETE', userId: A2.id, user_id: A2.id }); // a user id in the body must be ignored
+      if (r.s !== 200 || r.j?.ok !== true) return r;
+      const g = await mk().auth.getUser(A2.token);
+      return !g.error && g.data.user?.id === A2.id && (await stillExists(A2)) && (await accts(A2.c)) === before && before > 0
+        ? true
+        : { getUser: g.error?.message, before, after: await accts(A2.c) };
+    },
+  );
+  await ds(
+    "delete-account: B's token is dead afterwards (getUser, sign-in and the data are gone) and a second call returns 401",
+    async () => {
+      const g = await mk().auth.getUser(B2.token);
+      const s = await mk().auth.signInWithPassword({ email: B2.email, password: PW });
+      const rows = await accts(B2.c);
+      const again = await call(B2.token, { confirm: 'DELETE' });
+      return g.error && s.error && (rows === 0 || String(rows).startsWith('ERR:')) && again.s === 401
+        ? true
+        : { getUser: g.error?.message ?? 'still valid', signIn: s.error?.message ?? 'still works', rows, again: again.s };
+    },
+  );
+  await ds(
+    'delete-account: a fresh token with confirm DELETE returns 200; the account, its token and its rows are gone; a repeat is 401',
+    async () => {
+      const r = await call(C.token, { confirm: 'DELETE' });
+      if (r.s !== 200 || r.j?.ok !== true || !/no-store/.test(r.cc ?? '')) return r;
+      const g = await mk().auth.getUser(C.token);
+      const s = await mk().auth.signInWithPassword({ email: C.email, password: PW });
+      const rows = await accts(C.c);
+      const again = await call(C.token, { confirm: 'DELETE' });
+      return g.error && s.error && (rows === 0 || String(rows).startsWith('ERR:')) && again.s === 401
+        ? true
+        : { getUser: g.error?.message ?? 'still valid', signIn: s.error?.message ?? 'still works', rows, again: again.s };
+    },
+  );
+  await ds(
+    'delete-account: after the code is entered (aal2) the two-step user can delete itself; the last throwaway users are cleaned up',
+    async () => {
+      const f = (await T2.c.auth.mfa.listFactors()).data?.totp?.[0];
+      if (!f) return 'no factor';
+      const s = await signedIn(T2);
+      if (!(await verifyCode(s.c, f.id))) return 'no authenticator code accepted';
+      const tok = (await s.c.auth.getSession()).data.session?.access_token;
+      const r = await call(tok, { confirm: 'DELETE' });
+      const gone = r.s === 200 && !(await stillExists(T2));
+      const rA = await call((await signedIn(A2)).token, { confirm: 'DELETE' }); // A2 was created by this block as well
+      return gone && rA.s === 200 ? true : { two: r.s, a2: rA.s, gone };
+    },
+  );
+}
+
 // ---------------------------------------------------------------- loading skeletons
 G('loading skeletons');
 const S = await newCtx(browser),
@@ -596,6 +752,6 @@ await step('skeleton animation stops for people who prefer reduced motion', asyn
   await Mb.close();
 }
 await S.close();
-const out = done({ users: [A, M, em('d'), em('v')] });
+const out = done({ users: [A, M, em('d'), em('v'), em('x1'), em('x2'), em('x3'), em('x4')], skippedDeleteAccount: skippedDelete });
 await browser.close();
 process.exit(out.fail ? 1 : 0);

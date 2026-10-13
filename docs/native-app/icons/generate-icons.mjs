@@ -16,9 +16,8 @@ export const VARIANTS = {
   rose:   ['#FDA4AF', '#BE123C'],
   mint:   ['#6EE7B7', '#0F766E'],
 };
-// "Z" glyph, centred, inside the 66% adaptive-icon safe zone (centre 676px square).
-const Z = 'M352 352 H672 Q700 352 700 380 V396 Q700 414 686 430 L468 672 H672 Q700 672 700 700 V716 Q700 744 672 744 H352 Q324 744 324 716 V700 Q324 682 338 666 L556 424 H352 Q324 424 324 396 V380 Q324 352 352 352 Z';
-const fgSvg = (fill) => `<svg xmlns="http://www.w3.org/2000/svg" width="${SIZE}" height="${SIZE}" viewBox="0 0 1024 1024"><g transform="translate(0,-58)"><path d="${Z}" fill="${fill}"/></g></svg>`;
+// The website logo (src/components/ZovixMark.tsx): a bold Z crossed by two bars, as strokes in a 48 unit box, scaled into the 66% adaptive safe zone.
+const fgSvg = (fill) => `<svg xmlns="http://www.w3.org/2000/svg" width="${SIZE}" height="${SIZE}" viewBox="0 0 1024 1024"><g transform="translate(512,512) scale(19) translate(-24,-24)" fill="none" stroke="${fill}" stroke-linecap="round" stroke-linejoin="round"><polyline points="13,13 35,13 13,35 35,35" stroke-width="5.5"/><line x1="10" y1="20.5" x2="38" y2="20.5" stroke-width="3.4"/><line x1="10" y1="26.5" x2="38" y2="26.5" stroke-width="3.4"/></g></svg>`;
 const bgSvg = (a, b) => `<svg xmlns="http://www.w3.org/2000/svg" width="${SIZE}" height="${SIZE}" viewBox="0 0 1024 1024"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs><rect width="1024" height="1024" fill="url(#g)"/></svg>`;
 for (const [name, [a, b]] of Object.entries(VARIANTS)) {
   const dir = path.join(out, name); mkdirSync(dir, { recursive: true });

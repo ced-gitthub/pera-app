@@ -13,6 +13,7 @@ import { Btn } from './Btn';
 import { confirmSignOut } from './signout';
 import { c, s, sp, themeState } from './ui';
 import { adoptAccountTheme, useThemeKey } from './themeStore';
+import { shouldAdoptTheme } from './themeLogic';
 
 export default function App() {
   const themeKey = useThemeKey(); // changes after a theme is chosen: the tree below remounts so every c.x is read again
@@ -25,7 +26,7 @@ export default function App() {
       .catch(() => setWelcome('login'));
   }, []);
   const [unsure, setUnsure] = useState(false); // could not tell whether two-step is needed: never show (empty) data
-  const check = useCallback(async (sess: Session | null) => {
+  const check = useCallback(async (sess: Session | null, authEvent = 'INITIAL_SESSION') => {
     try {
       setTotp(sess ? await needsTotp() : false);
       setUnsure(false);
@@ -33,12 +34,12 @@ export default function App() {
       setUnsure(true);
     }
     setSession(sess);
-    if (sess) adoptAccountTheme(sess.user.user_metadata?.theme).catch(() => {}); // a theme chosen on another phone
+    if (sess && shouldAdoptTheme(authEvent)) adoptAccountTheme(sess.user.user_metadata?.theme).catch(() => {}); // a theme chosen on another phone, only at sign-in
   }, []);
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => check(data.session));
-    const { data } = supabase.auth.onAuthStateChange((_e, sess) => {
-      setTimeout(() => check(sess), 0); // never await supabase calls inside this callback
+    const { data } = supabase.auth.onAuthStateChange((ev, sess) => {
+      setTimeout(() => check(sess, ev), 0); // never await supabase calls inside this callback
     });
     Linking.getInitialURL()
       .then(handleLink)

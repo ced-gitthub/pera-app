@@ -5,7 +5,7 @@ import { supabase } from './supabase';
 import { Sheet } from './Sheet';
 import { Btn } from './Btn';
 import { finishAfterDeletion } from './signout';
-import { ACCOUNT_DELETES, canDeleteAccount } from './deleteAccountLogic';
+import { ACCOUNT_DELETES, canDeleteAccount, sessionGone } from './deleteAccountLogic';
 import { requestAccountDeletion } from './deleteAccountCore';
 import { c, r, s, sp, t } from './ui';
 
@@ -18,20 +18,37 @@ export function DeleteAccount({ open, onClose }: { open: boolean; onClose: () =>
   const [err, setErr] = useState('');
   const sent = useRef(false); // one request only: a second tap must never send a second delete
 
+  const unconfirmed = useRef(false); // the last answer was lost: the account may already be gone
+
   const go = async () => {
     if (sent.current || !canDeleteAccount(typed)) return;
     sent.current = true;
     setBusy(true);
     setErr('');
-    const { data } = await supabase.auth.getSession();
-    const res = await requestAccountDeletion(fetch, siteUrl, data.session?.access_token ?? '', typed);
-    if (res.kind === 'deleted') {
-      await finishAfterDeletion(); // the account is gone; leave this phone signed out
-      return;
+    try {
+      if (unconfirmed.current) {
+        // Check first: if the server already deleted it, the old token no longer works and we are done.
+        const { error } = await supabase.auth.getUser();
+        if (sessionGone(error)) {
+          await finishAfterDeletion();
+          return;
+        }
+      }
+      const { data } = await supabase.auth.getSession();
+      const res = await requestAccountDeletion(fetch, siteUrl, data.session?.access_token ?? '', typed);
+      if (res.kind === 'deleted') {
+        await finishAfterDeletion(); // the account is gone; leave this phone signed out
+        return;
+      }
+      unconfirmed.current = res.kind === 'unconfirmed';
+      setErr(res.message);
+    } catch {
+      unconfirmed.current = true;
+      setErr('Could not confirm that. Check your connection and try again.');
+    } finally {
+      sent.current = false; // always released, so the button can never stay stuck on busy
+      setBusy(false);
     }
-    setErr(res.message);
-    sent.current = false;
-    setBusy(false);
   };
 
   return (

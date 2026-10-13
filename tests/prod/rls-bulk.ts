@@ -144,4 +144,48 @@ export async function bulkDeleteSteps({ A, B, step, cnt, other, d }: Ctx): Promi
       ? true
       : { b: bRows.length, a: aRows.length, aSeesB: cnt(aSeesB), bSeesA: cnt(bSeesA), err: bt.error?.message ?? at.error?.message };
   });
+  // The native app's "Delete ALL my records" (native/src/resetCore.ts resetAllWith) sends the same unfiltered deletes in this exact order. Earlier steps emptied B, so B is re-seeded first.
+  await step(
+    "bulk delete in the native app's order (budgets, savings_goals, transactions): B ends with none left and A's rows in all three tables are untouched",
+    async () => {
+      if (!bulk.ready) return SKIP;
+      const bAcct = ((await B.c.from('accounts').select('id,name')).data ?? []).find((x: { name: string }) => x.name === 'Cash')?.id,
+        bFood = ((await B.c.from('categories').select('id,name,type')).data ?? []).find(
+          (x: { name: string; type: string }) => x.name === 'Food' && x.type === 'expense',
+        )?.id;
+      if (!bAcct || !bFood) return 'could not read the second test user defaults';
+      const tx = (n: number) => ({
+        user_id: B.id,
+        type: 'expense',
+        category_id: bFood,
+        account_id: bAcct,
+        amount_minor: 2000 + n,
+        transaction_date: d + '21',
+        description: 'QA-BULK-ORDER',
+      });
+      const s1 = await B.c.from('transactions').insert([tx(1), tx(2)]),
+        s2 = await B.c.from('budgets').insert({ user_id: B.id, category_id: bFood, amount_minor: 70000, month: 4, year: 2020 }),
+        s3 = await B.c.from('savings_goals').insert({ user_id: B.id, name: 'QA-B-ORDER', target_minor: 3000 });
+      if (s1.error || s2.error || s3.error) return { reseed: [s1.error?.message, s2.error?.message, s3.error?.message] };
+      const seeded = await Promise.all(['budgets', 'savings_goals', 'transactions'].map((t) => idsOf(B.c, t)));
+      if (seeded.map((x) => x?.length).join() !== '1,1,2') return { seeded: seeded.map((x) => x?.length ?? 'error') };
+      const order = ['budgets', 'savings_goals', 'transactions'];
+      const r = [] as { error: { message: string } | null; count: number | null }[];
+      for (const t of order) r.push(await wipe(B.c, t, { count: 'exact' }));
+      const left = await Promise.all(WIPE_TABLES.map((t) => idsOf(B.c, t)));
+      const aNow = await Promise.all(WIPE_TABLES.map((t) => idsOf(A.c, t)));
+      const aSame = WIPE_TABLES.every((t, i) => JSON.stringify(aNow[i]) === JSON.stringify(bulk.aIds[t]));
+      return r.every((x) => !x.error) &&
+        r.map((x) => x.count).join() === '1,1,2' &&
+        left.every((x) => x !== null && x.length === 0) &&
+        aSame
+        ? true
+        : {
+            deletes: r.map((x) => ({ err: x.error?.message, count: x.count })),
+            bLeft: left.map((x) => x?.length ?? 'error'),
+            aBefore: WIPE_TABLES.map((t) => bulk.aIds[t]?.length ?? 'error'),
+            aAfter: aNow.map((x) => x?.length ?? 'error'),
+          };
+    },
+  );
 }

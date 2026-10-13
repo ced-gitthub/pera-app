@@ -19,7 +19,7 @@ export async function requestAccountDeletion(
     return interpretDeleteResponse(res.status, body);
   } catch {
     return {
-      kind: 'error',
+      kind: 'unconfirmed',
       message: 'Could not confirm that. Check your connection, then sign in to see whether the account still exists.',
     };
   }

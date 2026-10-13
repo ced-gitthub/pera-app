@@ -78,3 +78,11 @@ test('themes: screens never hold hex colours (only the palette files may)', () =
   for (const f of fs.readdirSync('native/src').filter((f) => /\.tsx?$/.test(f) && !allowed.has(f)))
     assert.ok(!/['"]#[0-9a-fA-F]{3,8}['"]/.test(fs.readFileSync(`native/src/${f}`, 'utf8').replace(/\/\/.*$/gm, '')), f);
 });
+
+import { shouldAdoptTheme } from '../native/src/themeLogic.ts';
+test('a theme saved on another phone is adopted only at sign-in, never mid-use (token refreshes must not remount the screen)', () => {
+  assert.equal(shouldAdoptTheme('SIGNED_IN'), true);
+  assert.equal(shouldAdoptTheme('INITIAL_SESSION'), true);
+  for (const ev of ['TOKEN_REFRESHED', 'USER_UPDATED', 'SIGNED_OUT', 'PASSWORD_RECOVERY', 'MFA_CHALLENGE_VERIFIED'])
+    assert.equal(shouldAdoptTheme(ev), false, ev);
+});

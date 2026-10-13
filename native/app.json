@@ -5,21 +5,95 @@
     "version": "0.9.0",
     "scheme": "zovix",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/icons/lime/preview.png",
     "userInterfaceStyle": "dark",
     "android": {
       "package": "com.zovixhub.pera",
       "versionCode": 11,
       "allowBackup": false,
       "adaptiveIcon": {
-        "backgroundColor": "#5B2EE0",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+        "backgroundColor": "#4D7C0F",
+        "foregroundImage": "./assets/icons/lime/foreground.png",
+        "backgroundImage": "./assets/icons/lime/background.png",
+        "monochromeImage": "./assets/icons/lime/monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "category": ["DEFAULT", "BROWSABLE"],
+          "data": [
+            {
+              "scheme": "zovix"
+            }
+          ]
+        }
+      ]
     },
-    "plugins": ["expo-web-browser", ["expo-build-properties", { "android": { "usesCleartextTraffic": false } }]],
+    "plugins": [
+      "expo-web-browser",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": false
+          }
+        }
+      ],
+      [
+        "expo-alternate-app-icons",
+        [
+          {
+            "name": "Lime",
+            "android": {
+              "foregroundImage": "./assets/icons/lime/foreground.png",
+              "backgroundImage": "./assets/icons/lime/background.png",
+              "monochromeImage": "./assets/icons/lime/monochrome.png"
+            }
+          },
+          {
+            "name": "Ocean",
+            "android": {
+              "foregroundImage": "./assets/icons/ocean/foreground.png",
+              "backgroundImage": "./assets/icons/ocean/background.png",
+              "monochromeImage": "./assets/icons/ocean/monochrome.png"
+            }
+          },
+          {
+            "name": "Sunset",
+            "android": {
+              "foregroundImage": "./assets/icons/sunset/foreground.png",
+              "backgroundImage": "./assets/icons/sunset/background.png",
+              "monochromeImage": "./assets/icons/sunset/monochrome.png"
+            }
+          },
+          {
+            "name": "Grape",
+            "android": {
+              "foregroundImage": "./assets/icons/grape/foreground.png",
+              "backgroundImage": "./assets/icons/grape/background.png",
+              "monochromeImage": "./assets/icons/grape/monochrome.png"
+            }
+          },
+          {
+            "name": "Rose",
+            "android": {
+              "foregroundImage": "./assets/icons/rose/foreground.png",
+              "backgroundImage": "./assets/icons/rose/background.png",
+              "monochromeImage": "./assets/icons/rose/monochrome.png"
+            }
+          },
+          {
+            "name": "Mint",
+            "android": {
+              "foregroundImage": "./assets/icons/mint/foreground.png",
+              "backgroundImage": "./assets/icons/mint/background.png",
+              "monochromeImage": "./assets/icons/mint/monochrome.png"
+            }
+          }
+        ]
+      ]
+    ],
     "extra": {
       "siteUrl": "https://pera-app-beta.vercel.app",
       "supabaseUrl": "https://vxhgkkzbmrhxayzryake.supabase.co",

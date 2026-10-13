@@ -35,3 +35,7 @@ export function bearerToken(header: string | null | undefined): string | null {
   const m = /^Bearer\s+(\S+)$/i.exec(header ?? '');
   return m ? m[1] : null;
 }
+
+// Any verified second factor (authenticator app, phone, security key, or a type added later) means the account uses two-step verification.
+export const hasVerifiedFactor = (factors: { factor_type?: string; status?: string }[] | null | undefined): boolean =>
+  (factors ?? []).some((f) => f.status === 'verified');
