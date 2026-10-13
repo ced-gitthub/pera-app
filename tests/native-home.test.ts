@@ -234,3 +234,32 @@ test('accounts overview groups every account as spendable, savings or owed and s
   );
   assert.equal(o.spendable + o.savings - o.owed, o.total);
 });
+
+test('accounts overview shows older no-account entries as their own row so the groups add up', () => {
+  const pos = accountsOverview({ ...withCard(), balances: { a: 100000, b: 250000, c: 400000, d: -50000, e: 30000 }, noAccount: 12345 });
+  const row = pos.rows.find((r) => r.id === 'none');
+  assert.deepEqual([row?.group, row?.balance], ['spendable', 12345]);
+  const sum = (g: string) => pos.rows.filter((r) => r.group === g).reduce((a, r) => a + Math.abs(r.balance), 0);
+  assert.equal(sum('spendable'), pos.spendable);
+  assert.equal(sum('savings'), pos.savings);
+  assert.equal(sum('owed'), pos.owed);
+  const neg = accountsOverview({ ...withCard(), balances: { a: 100000, b: 250000, c: 400000, d: -50000, e: 30000 }, noAccount: -7000 });
+  assert.equal(neg.rows.find((r) => r.id === 'none')?.group, 'owed');
+  assert.equal(neg.owed, 57000);
+  assert.equal(
+    neg.total,
+    neg.rows.reduce((a, r) => a + r.balance, 0),
+  );
+  assert.equal(
+    accountsOverview(withCard()).rows.some((r) => r.id === 'none'),
+    false,
+  ); // no row when it is zero
+});
+
+import { sandboxNumbers } from '../native/src/sandbox.ts';
+test('the welcome sandbox uses the same rule: a negative spendable account does not lower what you can spend', () => {
+  const s = startSandbox();
+  const n = sandboxNumbers({ ...s, balances: { Cash: -5000, GCash: 320000, Savings: 500000 } });
+  assert.equal(n.spendable, 320000);
+  assert.equal(n.savings, 500000);
+});

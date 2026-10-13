@@ -50,7 +50,7 @@ export function XpPop({ play, label }: { play: number; label: string }) {
       style={{
         position: 'absolute',
         alignSelf: 'center',
-        top: 120,
+        top: sp.clear,
         opacity: a,
         transform: [{ translateY: a.interpolate({ inputRange: [0, 1], outputRange: [20, -10] }) }, { scale: a }],
       }}

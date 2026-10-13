@@ -47,14 +47,19 @@ export function ResetData({ open, onClose, onDone }: { open: boolean; onClose: (
     lock.current = true;
     setBusy(true);
     setErr('');
-    const msg = await resetData(kind);
+    const res = await resetData(kind);
     lock.current = false;
     setBusy(false);
-    if (msg) {
-      setErr(msg);
+    if (res.error) {
+      // Show the real numbers again, on the list where they are.
+      setErr(res.error);
+      setKind(null);
+      setTyped('');
+      load();
       return;
     }
-    setDone(`Deleted ${count} ${count === 1 ? 'item' : 'items'}: all your ${NOUN[kind]}.`);
+    const n = res.deleted; // what the server says it removed, not the earlier count
+    setDone(n === null ? `Deleted all your ${NOUN[kind]}.` : `Deleted ${n} ${n === 1 ? 'item' : 'items'}: all your ${NOUN[kind]}.`);
     setKind(null);
     setTyped('');
     onDone();
@@ -66,6 +71,11 @@ export function ResetData({ open, onClose, onDone }: { open: boolean; onClose: (
       {!!done && (
         <Text accessibilityLiveRegion="polite" style={s.ok}>
           {done}
+        </Text>
+      )}
+      {!kind && !!err && (
+        <Text accessibilityLiveRegion="polite" style={s.err}>
+          {err}
         </Text>
       )}
       {!kind && (
@@ -121,11 +131,6 @@ export function ResetData({ open, onClose, onDone }: { open: boolean; onClose: (
             placeholderTextColor={c.mute}
             style={s.input}
           />
-          {!!err && (
-            <Text accessibilityLiveRegion="polite" style={s.err}>
-              {err}
-            </Text>
-          )}
           {ready ? (
             <Btn label={`Delete all ${NOUN[kind]}`} danger busy={busy} onPress={run} />
           ) : (

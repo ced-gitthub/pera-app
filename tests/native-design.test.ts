@@ -80,3 +80,7 @@ test('safety: logging out always asks first (only signout.ts may call signOut)',
   assert.match(helper, /Alert\.alert\(/);
   assert.match(helper, /style: 'cancel'/); // there is a clear way to back out
 });
+
+test('design: absolute positions (top, left, right, bottom) come from tokens or insets, not raw numbers', () => {
+  assert.deepEqual(offenders(/\b(?:top|left|right|bottom)\s*:\s*[1-9]\d*\b/), []);
+});

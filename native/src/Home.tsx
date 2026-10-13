@@ -90,7 +90,12 @@ export function Home({
                 <Text style={{ color: c.mute, fontSize: t.caption }} numberOfLines={1}>
                   {label}
                 </Text>
-                <Text style={{ color: x.amount < 0 ? c.down : c.ink, fontSize: t.lead, fontWeight: '800' }} numberOfLines={1}>
+                <Text
+                  style={{ color: x.amount < 0 ? c.down : c.ink, fontSize: t.lead, fontWeight: '800' }}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.7}
+                >
                   {formatMinor(x.amount)}
                 </Text>
               </Pressable>

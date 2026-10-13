@@ -7,7 +7,7 @@ type Res = { count?: number | null; error: DbError };
 export interface Db {
   from(table: string): {
     select(columns: string, opts: { count: 'exact'; head: true }): PromiseLike<Res>;
-    delete(): { not(column: string, op: string, value: unknown): PromiseLike<Res> };
+    delete(opts?: { count: 'exact' }): { not(column: string, op: string, value: unknown): PromiseLike<Res> };
   };
 }
 
@@ -21,13 +21,16 @@ export async function countRows(db: Db, kind: ResetKind): Promise<number | null>
   return error || typeof count !== 'number' ? null : count;
 }
 
-// Deletes ALL of the person's rows of that kind. Returns null on success, or a friendly message.
-export async function resetWith(db: Db, kind: ResetKind): Promise<string | null> {
-  if (!RESET_KINDS.includes(kind)) return 'That cannot be deleted from here. Nothing was deleted.';
+export type ResetResult = { error: string | null; deleted: number | null };
+
+// Deletes ALL of the person's rows of that kind in one statement. `deleted` is the number the server says it removed (null if unknown or on error).
+export async function resetWith(db: Db, kind: ResetKind): Promise<ResetResult> {
+  if (!RESET_KINDS.includes(kind)) return { error: 'That cannot be deleted from here. Nothing was deleted.', deleted: null };
   try {
-    const { error } = await db.from(RESET_TABLES[kind]).delete().not('id', 'is', null);
-    return error ? resetError(error) : null;
+    const { error, count } = await db.from(RESET_TABLES[kind]).delete({ count: 'exact' }).not('id', 'is', null);
+    if (error) return { error: resetError(error), deleted: null };
+    return { error: null, deleted: typeof count === 'number' ? count : null };
   } catch (x) {
-    return resetError(x);
+    return { error: resetError(x), deleted: null };
   }
 }

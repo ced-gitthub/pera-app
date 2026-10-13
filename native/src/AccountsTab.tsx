@@ -22,7 +22,7 @@ export function AccountsTab({ snap, refresh }: { snap: Snapshot; refresh: () => 
   const stat = (label: string, amount: number, color: string) => (
     <View style={[s.card, { flexGrow: 1, width: '48%', marginBottom: 0, padding: sp.m }]}>
       <Text style={{ color: c.mute, fontSize: t.caption }}>{label}</Text>
-      <Text style={{ color, fontSize: t.lead, fontWeight: '800' }} numberOfLines={1}>
+      <Text style={{ color, fontSize: t.lead, fontWeight: '800' }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
         {formatMinor(amount)}
       </Text>
     </View>
@@ -46,6 +46,7 @@ export function AccountsTab({ snap, refresh }: { snap: Snapshot; refresh: () => 
           {stat('You owe', o.owed, o.owed > 0 ? c.down : c.mute)}
           {stat('Net total', o.total, c.ink)}
         </View>
+        {o.rows.length === 0 && <Text style={s.p}>No accounts yet. Tap Manage to add your first one.</Text>}
         <Text style={[s.p, { marginBottom: sp.m }]}>Tap an account to choose whether it is savings or shows on Home.</Text>
         {GROUPS.map((g) => {
           const rows = o.rows.filter((x) => x.group === g.id);

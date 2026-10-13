@@ -253,7 +253,7 @@ export function ConfettiBurst({ burst, reduce }: { burst: { id: number; kind: Bu
   }, [burst, reduce, vals]);
   if (!parts.length) return null;
   return (
-    <View pointerEvents="none" style={{ position: 'absolute', top: 220, left: 0, right: 0, alignItems: 'center' }}>
+    <View pointerEvents="none" style={{ position: 'absolute', top: sp.clear * 2, left: 0, right: 0, alignItems: 'center' }}>
       {parts.map((p, i) => (
         <Animated.Text
           key={`${burst.id}-${i}`}

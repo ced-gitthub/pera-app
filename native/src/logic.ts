@@ -144,7 +144,7 @@ export function sendCodeError(error: { message: string; status?: number } | null
   return creating ? 'Sign-up is not available for that email right now. Check the address, or try again later.' : null;
 }
 
-// ---- Home: the same numbers as the website (homeNumbers), plus which accounts get a card and which number is the hero
+// ---- Home numbers. Total is the net of everything, like the website; Spendable and Savings follow the owner's rule below (negatives are owed, not subtracted).
 // Spendable = money you can spend now: the positive balances of accounts that are not savings. Savings = positive balances of savings accounts.
 // A negative balance anywhere (a credit card, an overdrawn account) is "owed", not subtracted from spendable. Total is the net of everything, as on the website.
 export function homeView(s: Snapshot) {
@@ -195,6 +195,15 @@ export function accountsOverview(s: Snapshot) {
       showOnHome: a.show_on_home,
     };
   });
+  // older entries with no account have no row of their own, so they get one: the groups then always add up to the numbers above them
+  if (s.noAccount !== 0)
+    rows.push({
+      id: 'none',
+      name: 'No account (older entries)',
+      balance: s.noAccount,
+      group: s.noAccount < 0 ? 'owed' : 'spendable',
+      showOnHome: false,
+    });
   const v = homeView(s);
   return { rows, spendable: v.spendable, savings: v.savings, owed: v.owed, total: v.total };
 }

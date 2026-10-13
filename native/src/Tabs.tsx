@@ -228,7 +228,12 @@ export function TabBar({ tab, setTab, onHeight }: { tab: string; setTab: (t: str
           style={{ flex: 1, alignItems: 'center', paddingVertical: sp.s }}
         >
           <Text style={{ fontSize: t.title, opacity: tab === id ? 1 : 0.55 }}>{em}</Text>
-          <Text style={{ fontSize: t.caption, fontWeight: tab === id ? '800' : '500', color: tab === id ? c.primary : c.mute }}>
+          <Text
+            style={{ fontSize: t.caption, fontWeight: tab === id ? '800' : '500', color: tab === id ? c.primary : c.mute }}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.8}
+          >
             {label}
           </Text>
         </Pressable>

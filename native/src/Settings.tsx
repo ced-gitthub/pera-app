@@ -127,7 +127,8 @@ export function Settings({
         <View style={s.card}>
           <Text style={s.h2}>Your data</Text>
           <Text style={[s.p, { marginBottom: sp.m }]}>
-            Clear the sample entries, budgets or goals from the tutorial and start fresh. You are asked to confirm.
+            Deletes ALL of your entries, budgets or goals (including real ones, not just the tutorial samples). You are asked to type DELETE
+            to confirm.
           </Text>
           <Btn label="🗑 Delete data" alt onPress={() => setReset(true)} />
         </View>

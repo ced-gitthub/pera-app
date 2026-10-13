@@ -11,15 +11,24 @@ export const RESET_LABEL: Record<ResetKind, string> = {
 const plural = (n: number, one: string, many: string) => (n === 1 ? `the 1 ${one}` : `all ${n} ${many}`);
 
 export function resetWarning(kind: ResetKind, count: number): string {
+  const all = '(including real ones, not just sample data)';
   if (kind === 'entries')
     return (
-      `Deletes ${plural(count, 'entry', 'entries')}. Your accounts, categories, budgets and goals stay. ` +
-      'Account balances go back to their starting balances. Deleted entries are kept for 30 days in a hidden trash, ' +
-      'but the app cannot restore a whole batch.'
+      `Deletes ${plural(count, 'entry', 'entries')} ${all}. Your accounts, categories, budgets and goals stay. ` +
+      'Account balances go back to their starting balances. Your streak, XP and level go back to the start, because they are worked out from entries. ' +
+      'Progress of goals that are not linked to an account drops, because it is income minus expenses. ' +
+      'Recurring rules stay and will keep adding new entries. ' +
+      'Deleted entries are kept for 30 days in a hidden trash, but the app cannot restore a whole batch.'
     );
   if (kind === 'budgets')
-    return `Deletes ${plural(count, 'budget', 'budgets')}. Your entries, accounts, categories and goals stay. This cannot be undone.`;
-  return `Deletes ${plural(count, 'savings goal', 'savings goals')}. Your entries, accounts, categories and budgets stay. This cannot be undone.`;
+    return (
+      `Deletes ${plural(count, 'budget', 'budgets')} ${all}. Your entries, accounts, categories and goals stay. ` +
+      'Your spending is no longer tracked against a limit until you make new budgets. This cannot be undone.'
+    );
+  return (
+    `Deletes ${plural(count, 'savings goal', 'savings goals')} ${all}. Your entries, accounts, categories and budgets stay. ` +
+    'You will no longer see their progress. This cannot be undone.'
+  );
 }
 
 export const confirmPhrase = (_kind: ResetKind): string => 'DELETE';
@@ -31,10 +40,14 @@ export function resetError(error: unknown): string {
   const e = (error ?? {}) as { message?: unknown; code?: unknown };
   const msg = typeof e.message === 'string' ? e.message : '';
   const code = typeof e.code === 'string' ? e.code : '';
-  if (/fetch|network|timed? ?out|offline/i.test(msg)) return 'No connection. Nothing was deleted. Check your internet and try again.';
+  // Checked first: a database statement timeout is its own case, not a lost connection.
+  if (code === '57014' || /statement timeout|canceling statement/i.test(msg))
+    return 'The server took too long to delete that many rows. Try again; nothing is half-deleted because it is one statement.';
+  // The request may have reached the server and only the answer was lost, so never claim nothing was deleted.
+  if (/fetch|network|timed? ?out|offline/i.test(msg)) return 'Could not confirm that. Check the numbers below: they are up to date.';
   if (/jwt|expired|not authenticated/i.test(msg) || code === 'PGRST301' || code === 'PGRST303')
     return 'Your session ended. Nothing was deleted. Please sign in again.';
   if (code === '42501' || /row-level security|permission denied/i.test(msg))
     return 'Zovix could not delete that. If you use two-step sign in, finish it first. Nothing was deleted.';
-  return 'Could not delete right now. Some items may be gone, so reopen this screen to check, then try again.';
+  return 'Could not delete right now. Either all of them were deleted or none were. Check the numbers below, then try again.';
 }

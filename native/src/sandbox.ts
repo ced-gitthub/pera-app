@@ -13,7 +13,7 @@ export type Sandbox = { balances: Record<string, number>; log: SandboxLine[] };
 
 export const startSandbox = (): Sandbox => ({ balances: { Cash: 150000, GCash: 320000, Savings: 500000 }, log: [] });
 export const sandboxNumbers = (s: Sandbox) => {
-  const spendable = s.balances.Cash + s.balances.GCash;
+  const spendable = Math.max(0, s.balances.Cash) + Math.max(0, s.balances.GCash); // same rule as the real app: a negative balance is owed, not subtracted
   return { spendable, savings: s.balances.Savings, total: spendable + s.balances.Savings };
 };
 const HELP = 'Try "lunch 150 gcash" or "transfer 500 from gcash to savings".';
