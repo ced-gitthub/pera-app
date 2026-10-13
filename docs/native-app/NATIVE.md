@@ -30,7 +30,7 @@ Expo SDK 57 / React Native 0.86 Android app in `native/`, package `com.zovixhub.
 Fix the whole list, not part of it ("fix it ALL"). Explain causes plainly, no excuses. Uniform UI (same button style/place on every tab). Say exactly which click is needed only when blocked. Final report as Problem / Solution / Outcome. TDD red-green; parallel agents only on disjoint files; judge review for auth, money, deletes, deploy config. No push to `main` without his yes (it deploys the website).
 
 ## Open items (honest list)
-- **Website not deployed.** The delete-account route and its 9 live steps in `tests/prod/security.mjs` wait for a push to `main`; until then the app says deletion is not available yet and points to the website. After deploy, a 404 FAILS the live run (no skip).
+- **Website deployed (4c39ed7) but account deletion failed live (500)** because the server key cannot call the auth admin API; fixed by migration 0013 (applied to production, verified) and the route/action now call it. Needs the next push + a green prod-qa security run to confirm.
 - **Supabase dashboard**: Authentication > Email Templates > "Confirm signup" needs `{{ .Token }}` for in-app sign-up to send a code; keep "Allow new users to sign up" on; consider OTP rate limits.
 - **Never run live**: rls-suite (56 checks incl. bulk-delete steps with an isolation canary) and the new security.mjs group run in `prod-qa` on the next push (needs Confirm email OFF).
 - **Never run on a phone** (all of it): keyboard inside sheets, safe-area/Done position, tour spotlight measuring after tab switches, Fab vs tab bar, welcome animation load on low-end Android, theme remount, icon change (launcher delay, Samsung/Xiaomi behaviour), Google deep link after an icon change.

@@ -179,7 +179,7 @@ export async function deleteMyAccount(fd: FormData) {
     // Google-only accounts have no password: require a sign-in within the last 10 minutes instead.
     go('/security', 'err', 'For your safety, log out, sign in with Google again, then delete your account within 10 minutes.');
   }
-  const failed = await deleteViaRpc(admin(), user.id); // database function from migration 0013 (the auth admin API rejects the server's key)
+  const failed = await deleteViaRpc(admin(), user.id, (e) => logErr('deleteMyAccount.db', e)); // database function from migration 0013 (the auth admin API rejects the server's key)
   if (failed) {
     logErr('deleteMyAccount', failed);
     go('/security', 'err', 'We could not delete your account. Nothing was removed. Please try again.');

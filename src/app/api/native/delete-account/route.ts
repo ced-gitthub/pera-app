@@ -29,7 +29,7 @@ export async function POST(req: Request) {
     now: Date.now(),
   });
   if (!verdict.ok) return reply(verdict.status, { error: verdict.error });
-  const failed = await deleteViaRpc(admin(), user.id); // database function from migration 0013; the user id is the validated token's, never the request's
+  const failed = await deleteViaRpc(admin(), user.id, (e) => logErr('native.deleteAccount.db', e)); // database function from migration 0013; the user id is the validated token's, never the request's
   if (failed) {
     logErr('native.deleteAccount', failed);
     return reply(500, { error: failed });

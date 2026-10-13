@@ -45,12 +45,15 @@ export const hasVerifiedFactor = (factors: { factor_type?: string; status?: stri
 export async function deleteViaRpc(
   client: { rpc: (fn: string, args: Record<string, unknown>) => PromiseLike<{ error: unknown }> },
   userId: string,
+  log: (cause: unknown) => void = () => {},
 ): Promise<string | null> {
   if (!userId) return 'We could not delete your account. Nothing was removed. Please try again.';
   try {
     const { error } = await client.rpc('delete_user_account', { p_user: userId });
+    if (error) log(error); // the real database error goes to the server log, never to the person
     return error ? 'We could not delete your account. Nothing was removed. Please try again.' : null;
-  } catch {
+  } catch (e) {
+    log(e);
     return 'We could not delete your account. Nothing was removed. Please try again.';
   }
 }
