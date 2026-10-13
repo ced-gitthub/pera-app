@@ -1,6 +1,6 @@
 # Zovix native app: redesign (dark, game-like, spendable-first)
 
-Status: DRAFT for Ced's review. Nothing in this document is built yet.
+Status: implemented in native 0.6 to 0.9 (see docs/native-app/CHANGELOG.md). Kept for the reasoning.
 Branch: `claude/musing-mclean-26141c` (native 0.5.1 is the starting point).
 
 ## Why

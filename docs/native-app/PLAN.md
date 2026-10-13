@@ -1,29 +1,16 @@
-# Zovix native app (Expo / React Native): plan and handoff
+# Zovix native app: roadmap
 
-Owner decision (2026-10-13): build a REAL native app, not a wrapper around the website. Keep the website working. Start with Android.
+Handbook: [NATIVE.md](NATIVE.md). History: [CHANGELOG.md](CHANGELOG.md).
 
-## Goal
-Native Android APK first (free, no Play Store needed), then iPhone later (App Store needs Apple's $99/yr; until then only a limited test-build route).
+## Done (0.1 to 0.9.0)
+Scaffold, sign-in (email code, Google, two-step), sign-up in the app, Home + Quick Add, first-run wizard, live tab tour, Activity / Accounts / Budgets / Goals / Settings, edit-delete-undo, recurring, reports, accounts and categories manager, CSV, delete records / account, themes + profile + app icon colour, dark design system with tests.
 
-## Reuse (do not rebuild)
-- Supabase project `vxhgkkzbmrhxayzryake`: database, RLS, MFA policy, RPCs (`period_summary`, `account_balances`, `run_recurring`, ...). The app talks to it with the publishable key + the user's session; never a secret key.
-- Pure TypeScript logic: `src/core/money.ts`, `src/core/parser.ts`, `src/lib/{missions,quests,goals,onboarding,onboardingCopy,vibe,validate}.ts`. Share by moving into a `packages/core` folder (or copying with tests) so web and native run the same tests.
-- Rules from CLAUDE.md still apply: money is integer centavos, dates Asia/Manila, cost stays $0, no secrets in the repo.
+## Next
+1. Owner: try the APK on a phone and report what breaks (nothing has been run on a device yet).
+2. Deploy the website (push to main, needs Ced's yes) so account deletion works and the new live steps run in prod-qa.
+3. Fix what the phone test finds; add a Maestro/Detox-style smoke test only if it can stay free.
+4. Quests detail and streak calendar, category reorder, backup/restore, CSV account auto-create (parity gaps).
 
-## Rebuild (native screens)
-Login (Google + email code) -> Home (balance, Quick Add, accounts, history) -> Transactions -> Accounts -> Budgets -> Reports -> Settings -> savings goals -> quests -> first-run wizard/tutorial (4 steps with worked examples, see `src/lib/onboardingCopy.ts`).
-
-## Order of work
-1. Scaffold `native/` (Expo, TypeScript), env via `app.config` + `EXPO_PUBLIC_*` (publishable values only).
-2. Auth: email code + Google (Supabase OAuth with a deep link `zovix://auth/callback`; add it to Supabase redirect URLs - owner action).
-3. Home + Quick Add (parser reused) -> first installable Android APK (EAS free tier or local `expo run:android`) for the owner to try.
-4. Remaining screens, then wizard, goals, quests.
-5. Tests: unit tests for shared logic stay in `npm run verify`; add native smoke tests; keep the website suites green.
-
-## Owner actions that may be needed (ask only when truly blocked)
-- Add the native deep-link redirect URL in Supabase Auth URL configuration.
-- Google OAuth: an Android client / SHA-1 for the new app if native Google sign-in is used.
-- Install the APK from the build link.
-
-## State at handoff
-Website at commit c5e2483 on main, all five live suites green (qa 190, rls 49, security 66, responsive 242, db 15). Existing Android wrapper APK (Bubblewrap) stays available at `/zovix.apk` until the native app replaces it.
+## Ideas to discuss (owner mentioned making some personalization paid)
+- Free: 8 themes, avatar, status, 6 icon colours (built). Possible paid later: extra themes/icon packs, animated avatar frames, profile banners. Needs a payment path that keeps cost at $0 until it earns (Play Billing takes a cut, no upfront fee).
+- iPhone build (needs Apple developer account, 99 USD a year) and Play Store release (see docs/play-store).

@@ -53,5 +53,10 @@ Pushing to `main` deploys to Vercel (100/day limit). Batch changes; put `[skip c
 ## Tests
 Any behaviour change needs: a unit/e2e test, and a live step in `tests/prod/` for user-visible features. The UI uses per-tab Edit mode: controls are hidden until Edit is pressed, so live tests must click Edit first.
 
+## Native app (`native/`, Expo Android)
+- Read `docs/native-app/NATIVE.md` before touching it (map, rules, build recipe, open items). History in `CHANGELOG.md`, roadmap in `PLAN.md`.
+- Screens use only design tokens (`native/src/uiTokens.ts`); `tests/native-design.test.ts` enforces it. `npm run verify` does not type-check `native/`: also run `cd native && npx tsc --noEmit`.
+- Release: replace `Zovix-native-latest.apk` on the existing GitHub release `native-0.3` (Ced has that page saved); never make per-version releases. Publish ONLY after the judge approves. Never push to `main` without Ced's yes (it deploys the website).
+
 ## Reporting (user preference)
 Final message only: `Problem:` / `Solution:` / `Outcome:` — one line each, with pass counts. No process narration, no recaps, no restating the request. Ask at most one short question, only if truly blocked. User goes by Ced.
