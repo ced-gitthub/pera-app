@@ -2,7 +2,7 @@
 import { parseInput, FEE_CATS, type Item, type Parsed } from '../../src/core/parser.ts';
 import { manilaToday } from '../../src/core/money.ts';
 import { parseOptionalMinor } from '../../src/lib/validate.ts';
-import { openingFromToday } from '../../src/lib/onboarding.ts';
+import { openingFromToday, gateFor, type Gate } from '../../src/lib/onboarding.ts';
 
 export type Account = { id: string; name: string; short_name: string | null; counts_as_savings: boolean; opening_balance_minor: number };
 export type Category = { id: string; name: string; type: 'income' | 'expense' };
@@ -78,4 +78,18 @@ export function planBudget(categoryId: string, amount: string, s: Snapshot, toda
   if (amt === null || amt <= 0) return { ok: false as const, message: 'Type the monthly limit as a number above 0, like 3000.' };
   const [year, month] = today.slice(0, 7).split('-').map(Number);
   return { ok: true as const, row: { category_id: c.id, amount_minor: amt, month, year } };
+}
+
+// ---- first-run gate: pure decision + the flag changes that go with it (flags only remember what was SEEN; progress always comes from data)
+export type Flags = { onboarded: boolean; wizard: boolean; balances: boolean; toured: boolean };
+export type Counts = { totalEntries: number; budgetsCount: number; goalsCount: number };
+export const FINISH_FLAGS: Partial<Flags> = { onboarded: true, toured: true, wizard: false };
+export const REPLAY_FLAGS: Partial<Flags> = { onboarded: false, toured: false, wizard: false }; // balances is kept, as on the website
+export function decideGate(counts: Counts | null, accounts: Account[], flags: Flags): { gate: Gate; set: Partial<Flags> } {
+  if (!counts) return { gate: { show: false, mark: false }, set: {} }; // could not read the counts: fail open
+  const gate = gateFor({ ...counts, accounts, streak: 0 }, flags);
+  const set: Partial<Flags> = {};
+  if (gate.show && gate.step !== 'tour' && gate.step !== 'finish' && !flags.wizard) set.wizard = true;
+  if (!gate.show && gate.mark && !flags.onboarded) set.onboarded = true;
+  return { gate, set };
 }

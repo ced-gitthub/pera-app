@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { parseGoalForm, type GoalInput } from '../../src/lib/goals';
+import { load } from './data';
 import { planBalances, planBudget, type Snapshot } from './logic';
 
 // Real counts decide which wizard steps are done. Any read error throws, and the caller then lets the person in (fail open).
@@ -15,8 +16,11 @@ export async function loadCounts() {
 
 const FAIL = 'Not saved: the server refused it or could not be reached. Try again.';
 
-export async function saveBalances(typed: Record<string, string>, s: Snapshot): Promise<string | null> {
-  const plan = planBalances(typed, s);
+export async function saveBalances(typed: Record<string, string>): Promise<string | null> {
+  // Re-read just before computing: the stored opening is typed minus the movement logged so far, and an entry may have landed since the screen loaded.
+  const fresh = await load().catch(() => null);
+  if (!fresh) return FAIL;
+  const plan = planBalances(typed, fresh);
   if (!plan.ok) return plan.message;
   for (const p of plan.patch) {
     const { error } = await supabase.from('accounts').update({ opening_balance_minor: p.v }).eq('id', p.id);

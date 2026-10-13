@@ -7,14 +7,15 @@ import { QuickAdd, sign } from './QuickAdd';
 import { Btn } from './Btn';
 import { c, s } from './ui';
 
-export function Home({ snap, refresh, onReplay }: { snap: Snapshot; refresh: () => Promise<void>; onReplay: () => void }) {
+export function Home({ snap, refresh, onReplay }: { snap: Snapshot; refresh: () => Promise<string>; onReplay: () => void }) {
   const [refreshing, setRefreshing] = useState(false);
+  const [err, setErr] = useState('');
   const total = Object.values(snap.balances).reduce((a, b) => a + b, 0);
   const accName = (id: string | null) => snap.accounts.find((a) => a.id === id)?.name ?? '';
   const catName = (id: string | null) => snap.categories.find((x) => x.id === id)?.name ?? '';
   const pull = async () => {
     setRefreshing(true);
-    await refresh();
+    setErr(await refresh());
     setRefreshing(false);
   };
 
@@ -24,6 +25,7 @@ export function Home({ snap, refresh, onReplay }: { snap: Snapshot; refresh: () 
       keyboardShouldPersistTaps="handled"
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={pull} />}
     >
+      {!!err && <Text style={s.err}>{err}</Text>}
       <View style={[s.card, { backgroundColor: c.purple }]}>
         <Text style={{ color: '#fff', opacity: 0.8 }}>Total balance</Text>
         <Text accessibilityLabel={`Total balance ${formatMinor(total)}`} style={{ color: '#fff', fontSize: 34, fontWeight: '800' }}>

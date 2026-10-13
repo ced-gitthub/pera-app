@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { formatMinor } from '../../src/core/money';
+import { minorToInput } from '../../src/lib/validate';
 import { GOAL_EMOJIS } from '../../src/lib/goals';
 import { COPY, SAMPLES } from '../../src/lib/onboardingCopy';
 import { GATE_STEPS, WIZARD_TOTAL, type GateStep } from '../../src/lib/onboarding';
@@ -69,9 +70,9 @@ export function Wizard(p: {
   doneIds: string[];
   snap: Snapshot;
   tour: boolean;
-  refresh: () => Promise<void>;
+  refresh: () => Promise<string>;
   onFinish: () => void;
-  onBalances: () => void;
+  onBalances: () => Promise<boolean>;
 }) {
   const [i, setI] = useState(0); // tour position
   const slide: Slide = p.tour ? ORDER[i] : p.slide;
@@ -121,24 +122,24 @@ function Action({
 }: {
   step: GateStep;
   snap: Snapshot;
-  refresh: () => Promise<void>;
-  onBalances: () => void;
+  refresh: () => Promise<string>;
+  onBalances: () => Promise<boolean>;
 }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
-  const run = async (f: () => Promise<string | null>, after?: () => void) => {
+  const run = async (f: () => Promise<string | null>, after?: () => Promise<boolean>) => {
     setBusy(true);
     setErr('');
     const e = await f().catch(() => 'Not saved: could not reach the server. Try again.');
     if (e) setErr(e);
+    else if (after && !(await after())) setErr('Saved, but this phone could not remember the step. Try again.');
     else {
-      after?.();
-      await refresh(); // the gate re-reads real data and moves to the next slide
+      setErr(await refresh()); // the gate re-reads real data and moves to the next slide; a failed re-read is shown, not hidden
     }
     setBusy(false);
   };
   const [bal, setBal] = useState<Record<string, string>>(() =>
-    Object.fromEntries(snap.accounts.map((a) => [a.id, snap.balances[a.id] ? (snap.balances[a.id] / 100).toFixed(2) : ''])),
+    Object.fromEntries(snap.accounts.map((a) => [a.id, minorToInput(snap.balances[a.id] ?? 0)])),
   );
   const [cat, setCat] = useState('');
   const [amount, setAmount] = useState('');
@@ -180,7 +181,7 @@ function Action({
               {field(bal[a.id] ?? '', (x) => setBal({ ...bal, [a.id]: x }), `${a.name} balance`, 'decimal-pad')}
             </View>
           ))}
-          <Btn label="Save balances" busy={busy} onPress={() => run(() => saveBalances(bal, snap), onBalances)} />
+          <Btn label="Save balances" busy={busy} onPress={() => run(() => saveBalances(bal), onBalances)} />
         </>
       )}
       {step === 'budget' && (

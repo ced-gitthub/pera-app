@@ -67,3 +67,58 @@ test('wizard budget: expense category and a positive limit, stored for the Manil
   assert.ok(!planBudget('nope', '3000', snap).ok);
   assert.ok(!planBudget('c1', '0', snap).ok);
 });
+
+import { decideGate, FINISH_FLAGS, REPLAY_FLAGS, type Flags } from '../native/src/logic.ts';
+const off: Flags = { onboarded: false, wizard: false, balances: false, toured: false };
+const none = { totalEntries: 0, budgetsCount: 0, goalsCount: 0 };
+const all = { totalEntries: 3, budgetsCount: 1, goalsCount: 1 };
+const withBalance = snap.accounts.map((a, i) => ({ ...a, opening_balance_minor: i === 0 ? 5000 : 0 }));
+
+test('gate: a new account is blocked on the first step and the wizard flag is set', () => {
+  const d = decideGate(none, snap.accounts, off);
+  assert.ok(d.gate.show && d.gate.step === 'first');
+  assert.deepEqual(d.set, { wizard: true });
+});
+
+test('gate: a read error fails open and changes nothing', () => {
+  const d = decideGate(null, snap.accounts, off);
+  assert.deepEqual(d, { gate: { show: false, mark: false }, set: {} });
+});
+
+test('gate: finished data + wizard flag shows the closing slide; finishing sets onboarded and toured and clears wizard', () => {
+  const d = decideGate(all, withBalance, { ...off, wizard: true });
+  assert.ok(d.gate.show && d.gate.step === 'finish');
+  assert.deepEqual(FINISH_FLAGS, { onboarded: true, toured: true, wizard: false });
+  assert.equal(decideGate(all, withBalance, { ...off, onboarded: true, toured: true }).gate.show, false);
+});
+
+test('gate: an already set-up account sees the tour once, then onboarded is stored', () => {
+  const d = decideGate(all, withBalance, off);
+  assert.ok(d.gate.show && d.gate.step === 'tour');
+  const after = decideGate(all, withBalance, { ...off, toured: true });
+  assert.ok(!after.gate.show);
+  assert.deepEqual(after.set, { onboarded: true });
+});
+
+test('replay clears the tutorial flags but keeps the balances flag (as the website does)', () => {
+  assert.deepEqual(REPLAY_FLAGS, { onboarded: false, toured: false, wizard: false });
+  assert.ok(!('balances' in REPLAY_FLAGS));
+  // typed balances equal to what is logged leave every opening at 0; the balances flag alone marks step 2 done
+  const d = decideGate(all, snap.accounts, { ...off, balances: true });
+  assert.ok(d.gate.show && d.gate.step === 'tour');
+});
+
+test('wizard balances: negative, too large, untouched accounts and a non-zero existing opening', () => {
+  const s2: Snapshot = {
+    ...snap,
+    accounts: snap.accounts.map((a) => (a.id === 'a2' ? { ...a, opening_balance_minor: 20000 } : a)),
+    balances: { a1: 100000, a2: 150000, a3: 100000 },
+  };
+  // GCash: opening 200.00, balance 1,500.00 (movement 1,300.00); the person has 1,000.00 today -> opening -300.00
+  const neg = planBalances({ a2: '1000' }, s2);
+  assert.deepEqual(neg.ok && neg.patch, [{ id: 'a2', v: -30000 }]);
+  const huge = planBalances({ a1: '99999999999' }, snap);
+  assert.ok(!huge.ok);
+  const typedNeg = planBalances({ a1: '-50', a2: '10' }, snap);
+  assert.ok(typedNeg.ok && !typedNeg.patch.some((p) => p.id === 'a3'));
+});
