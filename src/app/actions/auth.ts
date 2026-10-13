@@ -1,4 +1,6 @@
 'use server';
+import { cookies } from 'next/headers';
+import { ONBOARDING_COOKIE, WIZARD_COOKIE, BAL_COOKIE } from '@/lib/onboarding';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { supabaseServer } from '@/lib/supabase/server';
@@ -107,6 +109,8 @@ export async function updatePassword(fd: FormData) {
 export async function signOut() {
   const sb = await supabaseServer();
   await sb.auth.signOut();
+  const jar = await cookies();
+  for (const k of [ONBOARDING_COOKIE, WIZARD_COOKIE, BAL_COOKIE]) jar.delete(k); // wizard progress belongs to the account, not the device: the next person to sign up here gets the wizard
   done(); // forget every remembered screen so the next person on this device never sees them
   redirect('/login');
 }
