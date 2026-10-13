@@ -20,6 +20,9 @@ Login (Google + email code) -> Home (balance, Quick Add, accounts, history) -> T
 4. Remaining screens, then wizard, goals, quests.
 5. Tests: unit tests for shared logic stay in `npm run verify`; add native smoke tests; keep the website suites green.
 
+## Mandatory tutorial in the native app (owner request)
+Full-screen sliding wizard (Step N of 5, progress bar, dots, no Skip, nothing behind it scrollable or tappable): 1 first entry, 2 real balances (opening = typed minus entries already logged), 3 first budget, 4 first savings goal, 5 closing slide. Every slide has a worked example (You type / What each part means / What Zovix does), see src/lib/onboardingCopy.ts. Accounts with all four steps get a one-time Next/Back walkthrough. Settings has a Show the tutorial again button. Gate on real data, fail open on read errors. Build right after Home + Quick Add.
+
 ## Owner actions that may be needed (ask only when truly blocked)
 - Add the native deep-link redirect URL in Supabase Auth URL configuration.
 - Google OAuth: an Android client / SHA-1 for the new app if native Google sign-in is used.

@@ -67,6 +67,8 @@
 
 - 2026-10-13 DECISION (owner): build a real native Android app (Expo / React Native) reusing Supabase and the shared TypeScript logic; the website stays. Plan and handoff: docs/native-app/PLAN.md. Work continues in a fresh session.
 
+- 2026-10-13 DECISION (owner): website tutorial work stops; the mandatory sliding tutorial is rebuilt inside the native app (see docs/native-app/PLAN.md). Last website test commit a11d273 (live tour-path check) was pushed but its run was not read.
+
 ## Next steps
 
 0. Owner: turn Supabase Confirm email back ON after any live-suite run. Provide the domain (with ending) to attach it in Vercel, then follow docs/play-store/PLAY_CONSOLE_GUIDE.md.
