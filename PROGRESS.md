@@ -65,6 +65,8 @@
 
 - 2026-10-13 owner: app still scrollable behind the wizard (iOS ignores body overflow:hidden). Fixed in CSS: html:has(.ob) hides .shell entirely and locks html/body; overlay has overscroll-behavior: contain. Live qa asserts .shell is display:none while the wizard shows.
 
+- 2026-10-13 DECISION (owner): build a real native Android app (Expo / React Native) reusing Supabase and the shared TypeScript logic; the website stays. Plan and handoff: docs/native-app/PLAN.md. Work continues in a fresh session.
+
 ## Next steps
 
 0. Owner: turn Supabase Confirm email back ON after any live-suite run. Provide the domain (with ending) to attach it in Vercel, then follow docs/play-store/PLAY_CONSOLE_GUIDE.md.
