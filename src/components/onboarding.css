@@ -1,0 +1,173 @@
+/* Required first-run wizard: a full-screen cover, one slide per step, the thing to do glowing with a pointer. Uses the shared tokens so dark mode works. */
+html body .ob {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  overflow-y: auto;
+  background: var(--bg);
+  color: var(--ink);
+  -webkit-overflow-scrolling: touch;
+}
+html body .ob-in {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: var(--sp-3) var(--sp-3) 48px;
+  outline: none;
+}
+html body .ob-top {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: var(--sp-1) 0 var(--sp-2);
+}
+html body .ob-logo {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  color: var(--mango-ink);
+  background: linear-gradient(145deg, var(--mango-hi), var(--mango));
+  box-shadow: 0 3px 0 var(--mango-edge);
+}
+html body .ob-out {
+  margin-left: auto;
+}
+html body .ob-prog {
+  margin-bottom: var(--sp-3);
+}
+html body .ob-count {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+html body .ob-count span {
+  color: var(--mute);
+}
+html body .ob-dots {
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  margin: 0;
+  padding: 0;
+}
+html body .ob-dots li {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-weight: 800;
+  font-size: 14px;
+  background: var(--ube-soft);
+  color: var(--mute);
+  border: 2px solid transparent;
+}
+html body .ob-dots li.done {
+  background: var(--inc-soft);
+  color: var(--inc);
+  border-color: var(--inc);
+}
+html body .ob-dots li.now {
+  background: var(--mango);
+  color: var(--mango-ink);
+  border-color: var(--mango-edge);
+}
+html body .ob-slide {
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  padding: var(--sp-4) var(--sp-3);
+  box-shadow: var(--shadow-lg);
+  animation: obslide 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.1);
+}
+html body .ob-emoji {
+  font-size: 44px;
+  line-height: 1;
+}
+html body .ob-slide h1 {
+  font-size: 24px;
+  font-weight: 800;
+  margin: var(--sp-1) 0 var(--sp-2);
+}
+html body .ob-todo {
+  margin: 0 0 var(--sp-3);
+  padding-left: 22px;
+  list-style: decimal;
+  color: var(--mute);
+  display: grid;
+  gap: 4px;
+}
+/* the thing to do: a pulsing yellow ring and a pointer tag */
+html body .ob-spot {
+  position: relative;
+  margin-top: var(--sp-3);
+  padding: var(--sp-3);
+  border-radius: var(--r-md);
+  border: 3px solid var(--mango);
+  background: var(--bg);
+  animation: obpulse 1.8s ease-out infinite;
+}
+html body .ob-point {
+  position: absolute;
+  top: -14px;
+  left: 14px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--mango);
+  color: var(--mango-ink);
+  font-weight: 800;
+  font-size: 13px;
+}
+html body .ob-form {
+  display: grid;
+  gap: var(--sp-2);
+}
+html body .ob-field {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+html body .ob-field > span:first-child {
+  font-weight: 700;
+}
+html body .ob-form .btn.p,
+html body .ob-go {
+  min-height: 48px;
+}
+html body .ob-done p {
+  margin: 0 0 var(--sp-2);
+}
+html body .ob-next {
+  padding: var(--sp-2);
+  border-radius: var(--r-md);
+  background: var(--pop-bg);
+  color: var(--pop-ink);
+}
+html body .ob .log {
+  margin: 0;
+  box-shadow: none;
+}
+@keyframes obslide {
+  from {
+    opacity: 0;
+    transform: translateX(48px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes obpulse {
+  70% {
+    box-shadow: 0 0 0 12px rgba(255, 197, 61, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 197, 61, 0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html body .ob-slide,
+  html body .ob-spot {
+    animation: none;
+  }
+}

@@ -154,6 +154,99 @@ const count = (h: string, s: string) => h.split(s).length - 1;
     h.includes('Total balance') && count(h, '₱23,750.00') >= 3 && !h.includes('>Income<') && !h.includes('Where your money went'),
     h.match(/₱[\d,.]+/g)?.slice(0, 6),
   );
+  // ---- required first-run wizard
+  {
+    const OV = (await import('@/components/OnboardingView')).default,
+      mine = D.t.accounts.filter((a: { user_id: string }) => a.user_id === D.cur),
+      cats = D.t.categories.filter((c: { user_id: string; type: string }) => c.user_id === D.cur && c.type === 'expense'),
+      view = (step: string, n: number, done: string[] = []) =>
+        html(<OV step={step as 'first'} number={n} doneIds={done} accounts={mine} categories={cats} quick={<p>QUICKBOX</p>} />);
+    const v1 = await view('first', 1),
+      v2 = await view('balance', 2, ['first']),
+      v3 = await view('budget', 3, ['first', 'balance']),
+      v4 = await view('goal', 4, ['first', 'balance', 'budget']),
+      v5 = await view('finish', 5, ['first', 'balance', 'budget', 'goal']);
+    if (process.env.PREVIEW_DIR)
+      for (const [n, h] of [
+        ['ob1', v1],
+        ['ob2', v2],
+        ['ob3', v3],
+        ['ob4', v4],
+        ['ob5', v5],
+      ])
+        (await import('node:fs')).writeFileSync(`${process.env.PREVIEW_DIR}/${n}.html`, h);
+    T(
+      'wizard: slide 1 says Step 1 of 5, points at the quick-add box, and has no skip',
+      v1.includes('Step 1 of 5') && v1.includes('Start here') && v1.includes('QUICKBOX') && !/skip/i.test(v1),
+    );
+    T(
+      'wizard: progress bar and dots follow the step',
+      v2.includes('aria-valuenow="2"') && v2.includes('Step 2 of 5') && v2.includes('class="done"') && v2.includes('class="now"'),
+    );
+    T(
+      'wizard: balances slide has one labelled field per account',
+      mine.every((a: { id: string; name: string }) => v2.includes(`name="open_${a.id}"`) && v2.includes(`${a.name} balance`)),
+    );
+    T(
+      'wizard: budget slide lists expense categories and a limit field',
+      v3.includes('Monthly limit') && v3.includes(`value="${cats[0].id}"`),
+    );
+    T('wizard: goal slide embeds the goal form', v4.includes('What are you saving for?') && v4.includes('Step 4 of 5'));
+    T(
+      'wizard: closing slide is 5 of 5 and points at the streak',
+      v5.includes('Step 5 of 5') && v5.includes('Open my Zovix') && v5.includes('3 days in a row'),
+    );
+    T(
+      'wizard: every slide has a Log out way out',
+      [v1, v2, v3, v4, v5].every((h) => h.includes('Log out')),
+    );
+    const cash = mine[0],
+      was = cash.opening_balance_minor;
+    T(
+      'wizard: empty balances are refused with what to do',
+      (await red(() => A.saveOpeningBalances(fd(Object.fromEntries(mine.map((a: { id: string }) => [`open_${a.id}`, ''])))))).includes(
+        'err=Type what you have in at least one account',
+      ),
+    );
+    T(
+      'wizard: a non-number balance is refused and names the account',
+      (await red(() => A.saveOpeningBalances(fd({ [`open_${cash.id}`]: 'abc' })))).includes('is not a valid amount for'),
+    );
+    const others = mine
+        .filter((a: { id: string }) => a.id !== cash.id)
+        .map((a: { opening_balance_minor: number }) => a.opening_balance_minor),
+      sb1 = await red(() => A.saveOpeningBalances(fd({ [`open_${cash.id}`]: '123.50' })));
+    const { ctx: ctx0, balanceMap: bm0 } = await import('@/lib/data');
+    T(
+      'wizard: typed balance is what the account shows afterwards (logged entries are accounted for), other accounts untouched',
+      sb1.startsWith('/?ok=Balances saved') &&
+        (await bm0((await ctx0()).sb)).get(cash.id) === 12350 &&
+        mine
+          .filter((a: { id: string }) => a.id !== cash.id)
+          .every((a: { opening_balance_minor: number }, i: number) => a.opening_balance_minor === others[i]),
+      sb1,
+    );
+    cash.opening_balance_minor = was; // put it back so the numbers asserted further down stay exact
+    T(
+      'wizard: a budget without a category is refused',
+      (await red(() => A.startBudget(fd({ amount: '500' })))).includes('err=Pick a category'),
+    );
+    T(
+      'wizard: a zero or bad limit is refused',
+      (await red(() => A.startBudget(fd({ category_id: cats[0].id, amount: '0' })))).includes('err=Type the monthly limit') &&
+        (await red(() => A.startBudget(fd({ category_id: cats[0].id, amount: 'x' })))).includes('err=Type the monthly limit'),
+    );
+    T(
+      'wizard: a category that is not yours is refused',
+      (await red(() => A.startBudget(fd({ category_id: '00000000-0000-4000-8000-000000000000', amount: '500' })))).includes(
+        'err=Pick a category',
+      ),
+    );
+    const nb = D.t.budgets.length,
+      sb2 = await red(() => A.startBudget(fd({ category_id: cats[0].id, amount: '2500' })));
+    T('wizard: a valid budget is saved for this month', sb2.startsWith('/?ok=Budget set') && D.t.budgets.length === nb + 1, sb2);
+    D.t.budgets.splice(nb, D.t.budgets.length - nb); // remove it again
+  }
   // ---- savings goals (migration 0011)
   {
     const mine = D.t.accounts.filter((a: { user_id: string }) => a.user_id === D.cur),

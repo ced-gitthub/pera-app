@@ -1,7 +1,8 @@
-import { createGoal, deleteGoal } from '@/app/actions';
+import { deleteGoal } from '@/app/actions';
+import GoalForm from '@/components/GoalForm';
 import { Btn } from '@/components/Btn';
 import { formatMinor } from '@/core/money';
-import { GOAL_EMOJIS, GOAL_NAME_MAX, goalProgress } from '@/lib/goals';
+import { goalProgress } from '@/lib/goals';
 // Savings goals card: progress bars, an optional connected account, and a small form to add a goal. Display only: numbers arrive already computed.
 export type GoalView = {
   id: string;
@@ -72,37 +73,7 @@ export default function GoalsCard({ goals, accounts }: { goals: GoalView[]; acco
       })}
       <details className="gadd">
         <summary className="btn">+ New goal</summary>
-        <form action={createGoal} className="grid gap-3">
-          <label>
-            <span className="m">What are you saving for?</span>
-            <input className="inp" name="name" maxLength={GOAL_NAME_MAX} placeholder="New phone" required autoComplete="off" />
-          </label>
-          <fieldset className="gemos">
-            <legend className="m">Pick an icon</legend>
-            {GOAL_EMOJIS.map((e, i) => (
-              <label key={e} className="gemo">
-                <input type="radio" name="emoji" value={e} defaultChecked={i === 0} aria-label={`Icon ${e}`} />
-                <span aria-hidden="true">{e}</span>
-              </label>
-            ))}
-          </fieldset>
-          <label>
-            <span className="m">How much? (₱)</span>
-            <input className="inp" name="amount" inputMode="decimal" placeholder="5000" required autoComplete="off" />
-          </label>
-          <label>
-            <span className="m">Count savings from</span>
-            <select className="inp" name="account" defaultValue="">
-              <option value="">Not connected (counts from today)</option>
-              {accounts.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.name}: use its balance
-                </option>
-              ))}
-            </select>
-          </label>
-          <Btn className="btn p">Add goal</Btn>
-        </form>
+        <GoalForm accounts={accounts} />
       </details>
     </section>
   );

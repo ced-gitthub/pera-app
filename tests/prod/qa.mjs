@@ -97,6 +97,55 @@ G('auth: logged-out');
       ? true
       : { next, t: t.slice(0, 200) };
   });
+  await step(
+    'required wizard: a new account is walked through all 4 steps (Step N of 5) and cannot reach the app before finishing',
+    async () => {
+      const cw = await newCtx(browser, undefined, { wizard: true }),
+        w = await cw.newPage();
+      await signup(w, `pera-qa-${stamp}-wiz@example.com`, PW, 'Wizard');
+      await w.goto('/');
+      const stepTxt = async () => (await w.locator('.ob-count b').first().innerText()).trim();
+      const seen = [];
+      await w.locator('.ob').waitFor({ timeout: 20000 });
+      seen.push(await stepTxt());
+      await w.goto('/accounts'); // trying to walk around it
+      await w.locator('.ob').waitFor({ timeout: 20000 });
+      const inert = await w.evaluate(() => document.querySelector('.shell')?.hasAttribute('inert'));
+      const noSkip = (await w.locator('.ob').innerText()).toLowerCase().includes('skip') === false;
+      await w.goto('/');
+      const i = w.locator('.ob input[aria-label=Transaction]');
+      await i.fill('lunch 150 cash');
+      await i.press('Enter');
+      await w.locator('.ob-count b:has-text("Step 2 of 5")').waitFor({ timeout: 25000 });
+      seen.push(await stepTxt());
+      for (const f of await w.locator('.ob input[aria-label$="balance"]').all()) await f.fill(''); // pre-filled with what the entries add up to; clearing them all must be refused
+      await w.locator('.ob button:has-text("Save balances")').click();
+      await w.locator('.ob .flash.bad').waitFor({ timeout: 15000 });
+      const refused = /at least one account/.test(await w.locator('.ob .flash.bad').innerText());
+      await w.locator('.ob input[aria-label$="balance"]').first().fill('1500');
+      await w.locator('.ob button:has-text("Save balances")').click();
+      await w.locator('.ob-count b:has-text("Step 3 of 5")').waitFor({ timeout: 25000 });
+      seen.push(await stepTxt());
+      await w.locator('.ob select[name=category_id]').selectOption({ index: 1 });
+      await w.locator('.ob input[name=amount]').fill('3000');
+      await w.locator('.ob button:has-text("Set budget")').click();
+      await w.locator('.ob-count b:has-text("Step 4 of 5")').waitFor({ timeout: 25000 });
+      seen.push(await stepTxt());
+      await w.locator('.ob input[name=name]').fill('Wizard goal');
+      await w.locator('.ob input[name=amount]').fill('5000');
+      await w.locator('.ob button:has-text("Add goal")').click();
+      await w.locator('.ob-count b:has-text("Step 5 of 5")').waitFor({ timeout: 25000 });
+      seen.push(await stepTxt());
+      await w.locator('button:has-text("Open my Zovix")').click();
+      await w.locator('.ob').waitFor({ state: 'detached', timeout: 20000 });
+      await w.goto('/accounts');
+      const free = (await w.locator('.ob').count()) === 0;
+      await cw.close();
+      return seen.join('|') === 'Step 1 of 5|Step 2 of 5|Step 3 of 5|Step 4 of 5|Step 5 of 5' && inert && noSkip && refused && free
+        ? true
+        : { seen, inert, noSkip, refused, free };
+    },
+  );
   await step('/api/health is public and healthy', async () => {
     const r = await c.request.get('/api/health');
     const j = await r.json();

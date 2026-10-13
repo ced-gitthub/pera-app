@@ -98,8 +98,10 @@ export function patch(pg) {
   }
   return pg;
 }
-export async function newCtx(browser, vp = { width: 1280, height: 900 }, extra = {}) {
+// `wizard: true` keeps the first-run wizard (it covers the whole app until done); every other test context has finished it, like a returning user.
+export async function newCtx(browser, vp = { width: 1280, height: 900 }, { wizard = false, ...extra } = {}) {
   const c = await browser.newContext({ viewport: vp, baseURL: BASE, ...extra });
+  if (!wizard) await c.addCookies([{ name: 'zovix_onboarded', value: '1', url: BASE }]);
   c.setDefaultTimeout(20000);
   const np = c.newPage.bind(c);
   c.newPage = async () => patch(await np());

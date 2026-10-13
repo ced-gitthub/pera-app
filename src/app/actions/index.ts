@@ -9,3 +9,4 @@ export * from './assistant';
 export * from './imports';
 export * from './customize';
 export * from './goals';
+export * from './onboarding';
