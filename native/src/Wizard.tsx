@@ -7,6 +7,8 @@ import { GOAL_EMOJIS } from '../../src/lib/goals';
 import { COPY, SAMPLES } from '../../src/lib/onboardingCopy';
 import { GATE_STEPS, WIZARD_TOTAL, type GateStep } from '../../src/lib/onboarding';
 import type { Snapshot } from './data';
+import { ToggleRow } from './Sheet';
+import { setAccountFlag } from './config';
 import { saveBalances, saveBudget, saveGoal } from './wizardData';
 import { QuickAdd } from './QuickAdd';
 import { Btn } from './Btn';
@@ -15,11 +17,11 @@ import { c, s, sp, t, e, r } from './ui';
 
 export type Slide = GateStep | 'finish';
 const HERO: Record<Slide, string> = {
-  first: c.hero.purple,
-  balance: c.hero.green,
-  budget: c.hero.orange,
-  goal: c.hero.gold,
-  finish: c.hero.purple,
+  first: c.hero.violet,
+  balance: c.hero.teal,
+  budget: c.hero.plum,
+  goal: c.hero.amber,
+  finish: c.hero.violet,
 };
 const ORDER: Slide[] = [...GATE_STEPS, 'finish'];
 
@@ -30,7 +32,7 @@ function Dots({ now, done }: { now: number; done: string[] }) {
         Step {now} of {WIZARD_TOTAL}
       </Text>
       <View style={{ height: 8, borderRadius: r.pill, backgroundColor: c.line, marginVertical: sp.s, overflow: 'hidden' }}>
-        <View style={{ height: 8, width: `${(now / WIZARD_TOTAL) * 100}%`, backgroundColor: c.purple }} />
+        <View style={{ height: 8, width: `${(now / WIZARD_TOTAL) * 100}%`, backgroundColor: c.primary }} />
       </View>
       <View style={{ flexDirection: 'row', gap: sp.s }}>
         {ORDER.map((id, i) => (
@@ -40,7 +42,7 @@ function Dots({ now, done }: { now: number; done: string[] }) {
               width: 12,
               height: 12,
               borderRadius: r.pill,
-              backgroundColor: done.includes(id) || i < now - 1 ? c.green : i === now - 1 ? c.purple : c.line,
+              backgroundColor: done.includes(id) || i < now - 1 ? c.up : i === now - 1 ? c.primary : c.line,
             }}
           />
         ))}
@@ -52,7 +54,7 @@ function Dots({ now, done }: { now: number; done: string[] }) {
 function SampleBox({ step }: { step: GateStep }) {
   const x = SAMPLES[step];
   return (
-    <View style={[s.card, { borderColor: c.yellow, borderWidth: 2 }]}>
+    <View style={[s.card, { borderColor: c.primary, borderWidth: 2 }]}>
       <Text style={s.p}>You type</Text>
       <Text style={[s.h2, { marginTop: sp.xs }]}>{x.you}</Text>
       <Text style={s.p}>What each part means</Text>
@@ -110,14 +112,14 @@ export function Wizard(p: {
           borderBottomRightRadius: r.l,
         }}
       >
-        <View style={{ backgroundColor: c.glass, borderRadius: r.s, padding: sp.m }}>
+        <View style={{ backgroundColor: c.card, borderRadius: r.s, padding: sp.m }}>
           <Dots now={number} done={p.tour ? ORDER.slice(0, i) : p.doneIds} />
         </View>
         <Animated.View
           style={{ opacity: slideIn, transform: [{ translateX: slideIn.interpolate({ inputRange: [0, 1], outputRange: [60, 0] }) }] }}
         >
           <Text style={{ fontSize: e.m, marginTop: sp.m }}>{c0.emoji}</Text>
-          <Text style={{ color: c.white, fontSize: t.head, fontWeight: '800' }}>
+          <Text style={{ color: c.ink, fontSize: t.head, fontWeight: '800' }}>
             {slide === 'finish' ? (p.tour ? 'That is Zovix!' : c0.title) : c0.title}
           </Text>
         </Animated.View>
@@ -188,13 +190,29 @@ function Action({
   const [bal, setBal] = useState<Record<string, string>>(() =>
     Object.fromEntries(snap.accounts.map((a) => [a.id, minorToInput(snap.balances[a.id] ?? 0)])),
   );
+  const [flagBusy, setFlagBusy] = useState('');
+  const flip = async (id: string, on: boolean) => {
+    setFlagBusy(id);
+    setErr('');
+    const m = await setAccountFlag(id, 'counts_as_savings', on).catch(() => 'Not saved: could not reach the server. Try again.');
+    setErr(m ?? (await refresh()));
+    setFlagBusy('');
+  };
   const [cat, setCat] = useState('');
   const [amount, setAmount] = useState('');
   const [name, setName] = useState('');
   const [emoji, setEmoji] = useState(GOAL_EMOJIS[0]);
   const [account, setAccount] = useState('');
   const field = (v: string, set: (x: string) => void, label: string, kb: 'default' | 'decimal-pad' = 'default') => (
-    <TextInput style={s.input} value={v} onChangeText={set} placeholder={label} accessibilityLabel={label} keyboardType={kb} />
+    <TextInput
+      style={s.input}
+      value={v}
+      onChangeText={set}
+      placeholder={label}
+      placeholderTextColor={c.mute}
+      accessibilityLabel={label}
+      keyboardType={kb}
+    />
   );
   const chip = (label: string, on: boolean, press: () => void) => (
     <Pressable
@@ -208,17 +226,17 @@ function Action({
         borderRadius: r.m,
         marginRight: sp.s,
         marginBottom: sp.s,
-        backgroundColor: on ? c.purple : c.white,
+        backgroundColor: on ? c.primary : c.raised,
         borderWidth: 1,
         borderColor: c.line,
       }}
     >
-      <Text style={{ color: on ? c.white : c.ink }}>{label}</Text>
+      <Text style={{ color: on ? c.onPrimary : c.ink }}>{label}</Text>
     </Pressable>
   );
   return (
-    <View style={[s.card, { borderColor: c.yellow, borderWidth: 2, marginTop: sp.s }]}>
-      <Text style={[s.h2, { color: c.purple }]}>👉 Start here</Text>
+    <View style={[s.card, { borderColor: c.primary, borderWidth: 2, marginTop: sp.s }]}>
+      <Text style={[s.h2, { color: c.primary }]}>👉 Start here</Text>
       {step === 'first' && <QuickAdd snap={snap} onSaved={refresh} />}
       {step === 'balance' && (
         <>
@@ -226,6 +244,13 @@ function Action({
             <View key={a.id}>
               <Text style={s.p}>{a.name} (₱)</Text>
               {field(bal[a.id] ?? '', (x) => setBal({ ...bal, [a.id]: x }), `${a.name} balance`, 'decimal-pad')}
+              <ToggleRow
+                label={`${a.name} is savings`}
+                hint="Kept out of what you can spend"
+                on={a.counts_as_savings}
+                busy={flagBusy === a.id}
+                onChange={(v) => flip(a.id, v)}
+              />
             </View>
           ))}
           <Btn label="Save balances" busy={busy} onPress={() => run(() => saveBalances(bal), onBalances)} />

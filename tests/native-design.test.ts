@@ -49,7 +49,7 @@ test('design: every scale is ascending', async () => {
   }
 });
 
-test('design: white text on a hero color passes 4.5:1', async () => {
+test('design: the dark palette is readable (every text/background pair >= 4.5:1)', async () => {
   const { c } = await import('../native/src/uiTokens.ts');
   const lum = (hex: string) => {
     const n = [1, 3, 5]
@@ -57,9 +57,17 @@ test('design: white text on a hero color passes 4.5:1', async () => {
       .map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
     return 0.2126 * n[0] + 0.7152 * n[1] + 0.0722 * n[2];
   };
-  for (const [name, bg] of Object.entries(c.hero)) assert.ok(1.05 / (lum(bg as string) + 0.05) >= 4.5, `${name} ${bg}`);
-  assert.ok(1.05 / (lum(c.green) + 0.05) >= 4.5, 'success green on white');
-  assert.ok(1.05 / (lum(c.mute) + 0.05) >= 4.5, 'muted text on white');
+  const ratio = (a: string, b: string) => {
+    const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p);
+    return (x + 0.05) / (y + 0.05);
+  };
+  const surfaces = { bg: c.bg, card: c.card, raised: c.raised };
+  for (const [sn, s] of Object.entries(surfaces))
+    for (const tn of ['ink', 'mute', 'up', 'down', 'warn'] as const) assert.ok(ratio(c[tn], s) >= 4.5, tn + ' on ' + sn);
+  assert.ok(ratio(c.onPrimary, c.primary) >= 4.5, 'text on the primary button');
+  assert.ok(ratio(c.onReward, c.reward) >= 4.5, 'text on the reward chip');
+  for (const [name, bg] of Object.entries(c.hero)) assert.ok(ratio(c.ink, bg as string) >= 4.5, 'hero ' + name);
+  assert.ok(lum(c.bg) < lum(c.card) && lum(c.card) < lum(c.raised), 'surfaces get lighter as they rise');
 });
 
 test('safety: logging out always asks first (only signout.ts may call signOut)', () => {

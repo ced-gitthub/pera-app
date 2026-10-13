@@ -48,9 +48,9 @@ export default function App() {
   }, [check]);
 
   let body;
-  if (session === undefined) body = <ActivityIndicator color={c.purple} size="large" style={{ marginTop: sp.xxl }} />;
+  if (session === undefined) body = <ActivityIndicator color={c.primary} size="large" style={{ marginTop: sp.xxl }} />;
   else if (!session) {
-    if (welcome === null) body = <ActivityIndicator color={c.purple} size="large" style={{ marginTop: sp.xxl }} />;
+    if (welcome === null) body = <ActivityIndicator color={c.primary} size="large" style={{ marginTop: sp.xxl }} />;
     else if (welcome === 'show')
       body = (
         <Welcome
@@ -74,7 +74,7 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <KeyboardAvoidingView style={{ flex: 1, backgroundColor: c.bg }} behavior="padding">
-        <StatusBar barStyle="dark-content" backgroundColor={c.bg} />
+        <StatusBar barStyle="light-content" backgroundColor={c.bg} />
         {body}
       </KeyboardAvoidingView>
     </SafeAreaProvider>

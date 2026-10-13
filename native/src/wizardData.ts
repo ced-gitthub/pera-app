@@ -1,7 +1,7 @@
 import { supabase } from './supabase';
 import { parseGoalForm, type GoalInput } from '../../src/lib/goals';
 import { load } from './data';
-import { planBalances, planBudget, type Snapshot } from './logic';
+import { planBalances, planBudget, writeError, type Snapshot } from './logic';
 
 // Real counts decide which wizard steps are done. Any read error throws, and the caller then lets the person in (fail open).
 export async function loadCounts() {
@@ -37,10 +37,11 @@ export async function saveBudget(categoryId: string, amount: string, s: Snapshot
   const { error } = await supabase
     .from('budgets')
     .upsert({ user_id: u.user.id, ...plan.row }, { onConflict: 'user_id,category_id,month,year' });
-  return error ? FAIL : null;
+  return writeError(error, 'budget');
 }
 
-export async function saveGoal(i: GoalInput, s: Snapshot): Promise<string | null> {
+// strict: a duplicate name is an error (adding from the Goals tab). The wizard step treats "already exists" as done, because the goal is there either way.
+export async function saveGoal(i: GoalInput, s: Snapshot, strict = false): Promise<string | null> {
   const p = parseGoalForm(
     i,
     s.accounts.map((a) => a.id),
@@ -49,6 +50,16 @@ export async function saveGoal(i: GoalInput, s: Snapshot): Promise<string | null
   const { data: u } = await supabase.auth.getUser();
   if (!u.user) return 'Session expired. Please sign in again.';
   const { error } = await supabase.from('savings_goals').insert({ user_id: u.user.id, ...p.goal });
-  if (error && (error as { code?: string }).code === '23505') return null; // a goal with that name already exists: the step is done either way
-  return error ? FAIL : null;
+  if (error && !strict && (error as { code?: string }).code === '23505') return null;
+  return writeError(error, 'goal', p.goal.name);
+}
+
+export async function updateGoal(id: string, i: GoalInput, s: Snapshot): Promise<string | null> {
+  const p = parseGoalForm(
+    i,
+    s.accounts.map((a) => a.id),
+  );
+  if (!p.ok) return p.message;
+  const { error } = await supabase.from('savings_goals').update(p.goal).eq('id', id);
+  return writeError(error, 'goal', p.goal.name);
 }

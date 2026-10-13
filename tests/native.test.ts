@@ -16,9 +16,9 @@ import {
 
 const snap: Snapshot = {
   accounts: [
-    { id: 'a1', name: 'Cash', short_name: null, counts_as_savings: false, opening_balance_minor: 0 },
-    { id: 'a2', name: 'GCash', short_name: null, counts_as_savings: false, opening_balance_minor: 0 },
-    { id: 'a3', name: 'BPI', short_name: null, counts_as_savings: false, opening_balance_minor: 0 },
+    { id: 'a1', name: 'Cash', short_name: null, counts_as_savings: false, opening_balance_minor: 0, show_on_home: true },
+    { id: 'a2', name: 'GCash', short_name: null, counts_as_savings: false, opening_balance_minor: 0, show_on_home: true },
+    { id: 'a3', name: 'BPI', short_name: null, counts_as_savings: false, opening_balance_minor: 0, show_on_home: true },
   ],
   categories: [{ id: 'c1', name: 'Food', type: 'expense' }],
   balances: { a1: 100000, a2: 100000, a3: 100000 },

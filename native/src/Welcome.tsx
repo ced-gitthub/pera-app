@@ -1,99 +1,120 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
+import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Animated, FlatList, Pressable, Text, useWindowDimensions, View } from 'react-native';
+import { formatMinor, manilaToday } from '../../src/core/money';
+import { runSandbox, sandboxNumbers, sandboxStep, SANDBOX_ACCOUNTS, SANDBOX_GOAL_MINOR, startSandbox } from './sandbox';
+import { CountUp, XpPop } from './Motion';
 import { Btn } from './Btn';
-import { c, s, sp, t, e, r } from './ui';
+import { c, e, r, s, sp, t } from './ui';
 
-// First thing a new visitor sees: four swipeable slides with a worked example each, then "Create my account" / "I already have one".
-const SLIDES = [
-  {
-    emoji: '👋',
-    bg: c.purple,
-    title: 'Welcome to Zovix',
-    text: 'The peso tracker that feels like a game. Know where every peso goes, in seconds.',
-    demo: null,
+// The first screen: a pretend wallet to play with BEFORE making an account. Three tiny missions, each one changes the numbers on screen.
+const MISSIONS = {
+  1: { title: 'Spend a little', text: 'Type what you spent, the way you would text a friend.', chip: 'lunch 150 gcash' },
+  2: {
+    title: 'Pay yourself first',
+    text: 'Move some money to Savings. Watch what you can spend change.',
+    chip: 'transfer 500 from gcash to savings',
   },
-  {
-    emoji: '🪙',
-    bg: c.hero.violet,
-    title: 'Log it in one line',
-    text: 'Just type what happened. Zovix works out the rest.',
-    demo: ['lunch 150 gcash', 'Food · GCash · -₱150.00'],
-  },
-  {
-    emoji: '🎯',
-    bg: c.hero.indigo,
-    title: 'Budgets that warn you',
-    text: 'Set a limit for Food, Transport, anything. The bar turns red before you overspend.',
-    demo: ['Food · ₱3,000 a month', '₱1,200 spent · ₱1,800 left'],
-  },
-  {
-    emoji: '🏆',
-    bg: c.hero.gold,
-    title: 'Save for what you want',
-    text: 'Start a goal, watch it fill up, earn levels and streaks along the way.',
-    demo: ['New phone · ₱15,000', '₱6,000 saved · 40% 🎉'],
-  },
-];
+  3: { title: 'You are in control', text: 'That is the whole idea. No formulas, no tabs: type a line, see what is left.', chip: '' },
+} as const;
 
 export function Welcome({ onDone }: { onDone: (mode: 'signup' | 'login') => void }) {
-  const { width } = useWindowDimensions();
   const { top, bottom } = useSafeAreaInsets();
-  const [i, setI] = useState(0);
-  const pop = useRef(new Animated.Value(1)).current;
-  const bounce = () => {
-    pop.setValue(0.9);
-    Animated.spring(pop, { toValue: 1, useNativeDriver: true, friction: 4 }).start();
+  const [sb, setSb] = useState(startSandbox);
+  const [text, setText] = useState('');
+  const [msg, setMsg] = useState('');
+  const [pop, setPop] = useState(0);
+  const step = sandboxStep(sb);
+  const n = sandboxNumbers(sb);
+  const goalPct = Math.min(100, Math.floor((sb.balances.Savings * 100) / SANDBOX_GOAL_MINOR));
+  const m = MISSIONS[step];
+  const go = (line: string) => {
+    const res = runSandbox(sb, line, manilaToday());
+    if (!res.ok) return setMsg(res.message);
+    setSb(res.state);
+    setText('');
+    setMsg('');
+    setPop(Date.now());
   };
   return (
-    <View style={{ flex: 1, backgroundColor: SLIDES[i].bg }}>
-      <FlatList
-        data={SLIDES}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        keyExtractor={(x) => x.title}
-        onMomentumScrollEnd={(e) => {
-          setI(Math.round(e.nativeEvent.contentOffset.x / width));
-          bounce();
-        }}
-        renderItem={({ item }) => (
-          <View style={{ width, paddingHorizontal: sp.xl, paddingTop: top + sp.xxl, alignItems: 'center' }}>
-            <Animated.Text style={{ fontSize: e.l, transform: [{ scale: pop }] }}>{item.emoji}</Animated.Text>
-            <Text style={{ color: c.white, fontSize: t.head, fontWeight: '800', textAlign: 'center', marginTop: sp.l }}>{item.title}</Text>
-            <Text style={{ color: c.white, opacity: 0.9, fontSize: t.lead, textAlign: 'center', marginTop: sp.m, lineHeight: 24 }}>
-              {item.text}
-            </Text>
-            {item.demo && (
-              <View style={{ marginTop: sp.xl, backgroundColor: c.white, borderRadius: r.m, padding: sp.l, width: '100%' }}>
-                <Text style={[s.p, { fontSize: t.caption }]}>You type</Text>
-                <Text style={{ color: c.ink, fontSize: t.lead, fontWeight: '800', marginBottom: sp.s }}>{item.demo[0]}</Text>
-                <Text style={[s.p, { fontSize: t.caption }]}>Zovix does</Text>
-                <Text style={{ color: c.green, fontSize: t.lead, fontWeight: '700' }}>{item.demo[1]}</Text>
+    <View style={{ flex: 1, backgroundColor: c.bg }}>
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        contentContainerStyle={{ padding: sp.l, paddingTop: top + sp.l, paddingBottom: bottom + sp.xxl }}
+      >
+        <Text style={{ color: c.reward, fontSize: t.body, fontWeight: '700' }}>ZOVIX · try it, no account needed</Text>
+        <Text style={[s.h1, { marginTop: sp.xs }]}>Type a line. See what is left.</Text>
+
+        <View style={{ backgroundColor: c.hero.violet, borderRadius: r.l, padding: sp.xl, marginVertical: sp.l }}>
+          <Text style={{ color: c.mute, fontSize: t.body }}>You can spend</Text>
+          <CountUp value={n.spendable} style={{ color: c.ink, fontSize: t.display, fontWeight: '800' }} />
+          <Text style={{ color: c.reward, fontSize: t.body, marginTop: sp.s }}>🐷 Savings {formatMinor(n.savings)}</Text>
+        </View>
+
+        <View style={{ flexDirection: 'row', gap: sp.s, marginBottom: sp.l }}>
+          {SANDBOX_ACCOUNTS.map((a) => (
+            <View key={a.name} style={[s.card, { flex: 1, marginBottom: 0, padding: sp.m }]}>
+              <Text style={{ color: c.mute, fontSize: t.caption }}>{a.saving ? '🐷 Savings' : a.name}</Text>
+              <Text style={{ color: c.ink, fontSize: t.body, fontWeight: '800' }}>{formatMinor(sb.balances[a.name])}</Text>
+            </View>
+          ))}
+        </View>
+
+        <View style={[s.card, { borderColor: c.primary, borderWidth: 2 }]}>
+          <Text style={{ color: c.primary, fontSize: t.caption, fontWeight: '800' }}>MISSION {step} OF 3</Text>
+          <Text style={[s.h2, { marginTop: sp.xs }]}>{m.title}</Text>
+          <Text style={[s.p, { marginBottom: sp.m }]}>{m.text}</Text>
+          {step < 3 && (
+            <>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Use the example ${m.chip}`}
+                onPress={() => setText(m.chip)}
+                style={[s.chip, { alignSelf: 'flex-start', marginBottom: sp.m }]}
+              >
+                <Text style={{ color: c.primary, fontSize: t.body }}>Tap to try: {m.chip}</Text>
+              </Pressable>
+              <TextInput
+                style={s.input}
+                value={text}
+                onChangeText={setText}
+                placeholder={m.chip}
+                placeholderTextColor={c.mute}
+                accessibilityLabel="Type an entry"
+                maxLength={120}
+                onSubmitEditing={() => go(text)}
+                returnKeyType="done"
+              />
+              {!!msg && <Text style={s.err}>{msg}</Text>}
+              <Btn label="Do it" onPress={() => go(text)} />
+            </>
+          )}
+          {step === 3 && (
+            <>
+              <Text style={{ color: c.ink, fontSize: t.body, marginBottom: sp.s }}>🏆 New phone · {formatMinor(SANDBOX_GOAL_MINOR)}</Text>
+              <View style={{ height: sp.m, borderRadius: r.pill, backgroundColor: c.raised, overflow: 'hidden' }}>
+                <View style={{ height: sp.m, width: `${goalPct}%`, backgroundColor: c.reward }} />
               </View>
-            )}
-          </View>
-        )}
-      />
-      <View style={{ flexDirection: 'row', justifyContent: 'center', gap: sp.s, marginBottom: sp.l }}>
-        {SLIDES.map((x, k) => (
-          <View
-            key={x.title}
-            style={{ width: k === i ? 26 : 8, height: 8, borderRadius: r.pill, backgroundColor: k === i ? c.yellow : c.dim }}
-          />
-        ))}
-      </View>
-      <View style={{ paddingHorizontal: sp.xl, paddingBottom: bottom + sp.xl }}>
-        <Btn label="Create my account" alt onPress={() => onDone('signup')} />
+              <Text style={[s.p, { marginTop: sp.s }]}>
+                {goalPct}% saved. Real goals fill from your real accounts, with levels, streaks and quests on top.
+              </Text>
+            </>
+          )}
+        </View>
+
+        {step === 3 && <Btn label="Create my free account" onPress={() => onDone('signup')} />}
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="I already have an account"
           onPress={() => onDone('login')}
           style={{ padding: sp.m }}
         >
-          <Text style={{ color: c.white, textAlign: 'center', fontWeight: '700', fontSize: t.body }}>I already have an account</Text>
+          <Text style={{ color: c.mute, textAlign: 'center', fontSize: t.body }}>I already have an account</Text>
         </Pressable>
-      </View>
+        <Text style={{ fontSize: e.s, textAlign: 'center' }}>{step === 3 ? '🎉' : '👆'}</Text>
+      </ScrollView>
+      <XpPop play={pop} label="+5 XP" />
     </View>
   );
 }

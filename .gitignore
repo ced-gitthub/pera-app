@@ -5,3 +5,4 @@ node_modules
 next-env.d.ts
 tsconfig.tsbuildinfo
 tests/browser/bundle.js
+native-build/

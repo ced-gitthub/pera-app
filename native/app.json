@@ -2,14 +2,14 @@
   "expo": {
     "name": "Zovix",
     "slug": "zovix-native",
-    "version": "0.5.1",
+    "version": "0.6.0",
     "scheme": "zovix",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
     "android": {
       "package": "com.zovixhub.pera",
-      "versionCode": 6,
+      "versionCode": 7,
       "allowBackup": false,
       "adaptiveIcon": {
         "backgroundColor": "#5B2EE0",

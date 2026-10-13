@@ -14,7 +14,7 @@ export async function loadActivity(): Promise<Tx[]> {
   return data as Tx[];
 }
 
-export type BudgetRow = { id: string; name: string; limit: number; spent: number } & ReturnType<typeof budgetProgress>;
+export type BudgetRow = { id: string; categoryId: string; name: string; limit: number; spent: number } & ReturnType<typeof budgetProgress>;
 export async function loadBudgets(s: Snapshot): Promise<BudgetRow[]> {
   const r = monthRange(manilaToday());
   const { data, error } = await supabase.from('budgets').select('id,category_id,amount_minor').eq('month', r.month).eq('year', r.year);
@@ -27,6 +27,7 @@ export async function loadBudgets(s: Snapshot): Promise<BudgetRow[]> {
         spent = Number(sum ?? 0);
       return {
         id: b.id,
+        categoryId: b.category_id as string,
         name: s.categories.find((c) => c.id === b.category_id)?.name ?? 'Category',
         limit,
         spent,
@@ -36,7 +37,9 @@ export async function loadBudgets(s: Snapshot): Promise<BudgetRow[]> {
   );
 }
 
-export type GoalRow = { id: string; name: string; emoji: string; target: number; unavailable: boolean } & ReturnType<typeof goalProgress>;
+export type GoalRow = { id: string; accountId: string; name: string; emoji: string; target: number; unavailable: boolean } & ReturnType<
+  typeof goalProgress
+>;
 export async function loadGoals(s: Snapshot): Promise<GoalRow[]> {
   const today = manilaToday();
   const { data, error } = await supabase
@@ -56,7 +59,15 @@ export async function loadGoals(s: Snapshot): Promise<GoalRow[]> {
         else have = netFromSummary((r.data ?? []) as { type: string; total_minor: number }[]);
       }
       const target = Number(g.target_minor);
-      return { id: g.id, name: g.name, emoji: g.emoji, target, unavailable, ...goalProgress(target, have) };
+      return {
+        id: g.id,
+        accountId: (g.account_id as string | null) ?? '',
+        name: g.name,
+        emoji: g.emoji,
+        target,
+        unavailable,
+        ...goalProgress(target, have),
+      };
     }),
   );
 }

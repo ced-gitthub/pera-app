@@ -5,9 +5,12 @@ import { supabase } from './supabase';
 import { load, type Snapshot } from './data';
 import { loadCounts } from './wizardData';
 import { readFlags, setFlags } from './flags';
-import { decideGate, FINISH_FLAGS, REPLAY_FLAGS } from './logic';
+import { decideGate, firstName, FINISH_FLAGS, REPLAY_FLAGS } from './logic';
 import { Home } from './Home';
-import { Activity, Budgets, Goals, More, TabBar } from './Tabs';
+import { Activity, TabBar } from './Tabs';
+import { Budgets, Goals } from './Planning';
+import { Settings } from './Settings';
+import { HomeSkeleton } from './Skeleton';
 import { Wizard } from './Wizard';
 import { Btn } from './Btn';
 import { s } from './ui';
@@ -35,7 +38,7 @@ export function Gate() {
       setUid(id);
       const prof = await supabase.from('profiles').select('name').eq('id', id).maybeSingle();
       const nm = String(prof.data?.name || data.session?.user.user_metadata?.name || data.session?.user.email?.split('@')[0] || '');
-      setName(nm.split(' ')[0]);
+      setName(nm);
       setSnap(sn);
       setGate(d.gate);
       setErr('');
@@ -51,11 +54,13 @@ export function Gate() {
   }, [refresh]);
 
   if (!snap || !gate)
-    return (
+    return err ? (
       <View style={s.screen}>
-        <Text style={s.p}>{err || 'Loading...'}</Text>
-        {!!err && <Btn label="Try again" onPress={refresh} />}
+        <Text style={s.err}>{err}</Text>
+        <Btn label="Try again" onPress={refresh} />
       </View>
+    ) : (
+      <HomeSkeleton />
     );
   if (gate.show)
     return (
@@ -81,11 +86,11 @@ export function Gate() {
   return (
     <View style={{ flex: 1 }}>
       <View style={{ flex: 1 }}>
-        {tab === 'home' && <Home snap={snap} refresh={refresh} name={name} />}
+        {tab === 'home' && <Home snap={snap} refresh={refresh} name={firstName(name)} />}
         {tab === 'activity' && <Activity snap={snap} />}
         {tab === 'budgets' && <Budgets snap={snap} />}
         {tab === 'goals' && <Goals snap={snap} />}
-        {tab === 'more' && <More onReplay={replay} />}
+        {tab === 'more' && <Settings snap={snap} name={name} refresh={refresh} onReplay={replay} />}
       </View>
       <TabBar tab={tab} setTab={setTab} />
     </View>

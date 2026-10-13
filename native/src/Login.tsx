@@ -48,7 +48,7 @@ export function Login({ start }: { start: 'signup' | 'login' }) {
     >
       <View
         style={{
-          backgroundColor: c.purple,
+          backgroundColor: c.hero.violet,
           paddingTop: top + sp.xl,
           paddingBottom: sp.xxl,
           paddingHorizontal: sp.xl,
@@ -57,10 +57,10 @@ export function Login({ start }: { start: 'signup' | 'login' }) {
         }}
       >
         <Text style={{ fontSize: e.s }}>{signup ? '🚀' : '👋'}</Text>
-        <Text style={{ color: c.white, fontSize: t.head, fontWeight: '800', marginTop: sp.s }}>
+        <Text style={{ color: c.ink, fontSize: t.head, fontWeight: '800', marginTop: sp.s }}>
           {signup ? 'Start your streak today' : 'Welcome back'}
         </Text>
-        <Text style={{ color: c.white, opacity: 0.9, fontSize: t.body, marginTop: sp.s }}>
+        <Text style={{ color: c.ink, opacity: 0.9, fontSize: t.body, marginTop: sp.s }}>
           {signup ? 'Free forever. Takes under a minute.' : 'Sign in to pick up where you left off.'}
         </Text>
       </View>
@@ -72,6 +72,7 @@ export function Login({ start }: { start: 'signup' | 'login' }) {
               value={name}
               onChangeText={setName}
               placeholder="Your name"
+              placeholderTextColor={c.mute}
               accessibilityLabel="Your name"
               maxLength={40}
             />
@@ -81,6 +82,7 @@ export function Login({ start }: { start: 'signup' | 'login' }) {
             value={email}
             onChangeText={setEmail}
             placeholder="you@email.com"
+            placeholderTextColor={c.mute}
             accessibilityLabel="Email"
             autoCapitalize="none"
             keyboardType="email-address"
@@ -100,6 +102,7 @@ export function Login({ start }: { start: 'signup' | 'login' }) {
                 value={code}
                 onChangeText={setCode}
                 placeholder="Code from the email"
+                placeholderTextColor={c.mute}
                 accessibilityLabel="Login code"
                 keyboardType="number-pad"
                 maxLength={10}
@@ -110,7 +113,7 @@ export function Login({ start }: { start: 'signup' | 'login' }) {
                 onPress={() => run(() => verifyCode(email.trim(), code.trim()))}
               />
               <Pressable onPress={() => setSent(false)} style={{ padding: sp.s }}>
-                <Text style={{ color: c.purple, textAlign: 'center', fontWeight: '700' }}>Wrong email? Go back</Text>
+                <Text style={{ color: c.primary, textAlign: 'center', fontWeight: '700' }}>Wrong email? Go back</Text>
               </Pressable>
             </>
           )}
@@ -118,7 +121,7 @@ export function Login({ start }: { start: 'signup' | 'login' }) {
         </View>
         <Btn label="Continue with Google" alt busy={busy} onPress={() => run(signInWithGoogle)} />
         <Pressable accessibilityRole="button" onPress={switchMode} style={{ padding: sp.m }}>
-          <Text style={{ color: c.purple, textAlign: 'center', fontWeight: '700', fontSize: t.body }}>
+          <Text style={{ color: c.primary, textAlign: 'center', fontWeight: '700', fontSize: t.body }}>
             {signup ? 'I already have an account' : 'New here? Create an account'}
           </Text>
         </Pressable>

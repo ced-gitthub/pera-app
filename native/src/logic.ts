@@ -3,9 +3,19 @@ import { parseInput, FEE_CATS, type Item, type Parsed } from '../../src/core/par
 import { manilaToday } from '../../src/core/money.ts';
 import { parseOptionalMinor } from '../../src/lib/validate.ts';
 import { budgetStatus } from '../../src/core/aggregate.ts';
+import { homeNumbers } from '../../src/lib/balances.ts';
+import { streak } from '../../src/lib/vibe.ts';
+import { xpFor, levelInfo, buildQuests } from '../../src/lib/quests.ts';
 import { openingFromToday, gateFor, type Gate } from '../../src/lib/onboarding.ts';
 
-export type Account = { id: string; name: string; short_name: string | null; counts_as_savings: boolean; opening_balance_minor: number };
+export type Account = {
+  id: string;
+  name: string;
+  short_name: string | null;
+  counts_as_savings: boolean;
+  opening_balance_minor: number;
+  show_on_home: boolean;
+};
 export type Category = { id: string; name: string; type: 'income' | 'expense' };
 export type Tx = {
   id: string;
@@ -16,7 +26,15 @@ export type Tx = {
   category_id: string | null;
   account_id: string | null;
 };
-export type Snapshot = { accounts: Account[]; categories: Category[]; balances: Record<string, number>; recent: Tx[] };
+export type Snapshot = {
+  accounts: Account[];
+  categories: Category[];
+  balances: Record<string, number>;
+  recent: Tx[];
+  dates: string[]; // dates of the last 60 days of entries, one per entry, for the streak
+  totalEntries: number;
+  noAccount: number; // balance of entries with no account (legacy), counted in Total like the website
+};
 
 // Same parser as the website. Only fully understood entries are saved; anything vague asks for a clearer line.
 export type Preview = { items: Item[]; problems: string[] };
@@ -125,4 +143,48 @@ export function sendCodeError(error: { message: string; status?: number } | null
   if (/rate/i.test(error.message)) return 'Too many tries. Wait a minute and ask for a new code.';
   if (!error.status || error.status >= 500) return 'Could not reach the server. Check your connection.';
   return creating ? 'Sign-up is not available for that email right now. Check the address, or try again later.' : null;
+}
+
+// ---- Home: the same numbers as the website (homeNumbers), plus which accounts get a card and which number is the hero
+export function homeView(s: Snapshot) {
+  const n = homeNumbers(s.accounts, (id) => s.balances[id] ?? 0, s.noAccount);
+  return {
+    ...n,
+    hero: s.accounts.some((a) => a.counts_as_savings) ? ('spendable' as const) : ('total' as const),
+    cards: s.accounts.filter((a) => a.show_on_home),
+  };
+}
+
+// ---- the game strip: streak, XP and level, all derived from entries (website rules)
+export function gameView(dates: string[], totalEntries: number, today: string) {
+  const st = streak(dates, today);
+  const xp = xpFor({ totalEntries, streak: st.n });
+  const quest = buildQuests({ today, dates, budgets: [], totalEntries, streak: st.n }).find((q) => !q.done) ?? null;
+  return { streak: st.n, loggedToday: st.loggedToday, week: st.week, xp, level: levelInfo(xp), quest };
+}
+
+export type ActivityFilter = { type: 'all' | 'income' | 'expense' | 'transfer'; accountId: string };
+export const filterActivity = (rows: Tx[], f: ActivityFilter) =>
+  rows.filter((r) => (f.type === 'all' || r.type === f.type) && (!f.accountId || r.account_id === f.accountId));
+
+// ---- settings: the display name (same limits as the website's profile name)
+export function cleanName(raw: string): { ok: true; name: string } | { ok: false; message: string } {
+  const name = raw.replace(/\s+/g, ' ').trim();
+  if (!name) return { ok: false, message: 'Type your name so we can greet you.' };
+  if (name.length > 40) return { ok: false, message: 'Keep your name to 40 characters or fewer.' };
+  return { ok: true, name };
+}
+
+export const firstName = (full: string) => full.trim().split(/\s+/)[0] ?? '';
+
+// What to tell the person when a create/update fails: a full list, a duplicate name, or a generic retry. Never the raw database text.
+const CAPS: Record<string, string> = {
+  goal: 'You can have at most 12 goals. Delete one to add another.',
+  budget: 'You have reached the limit of budgets. Delete one to add another.',
+};
+export function writeError(error: { message: string; code?: string } | null, what: 'goal' | 'budget', name = ''): string | null {
+  if (!error) return null;
+  if (error.code === 'PRLIM' || /PRLIM/.test(error.message)) return CAPS[what];
+  if (error.code === '23505') return `You already have a ${what} called "${name}". Pick another name.`;
+  return 'Not saved: the server refused it or could not be reached. Try again.';
 }

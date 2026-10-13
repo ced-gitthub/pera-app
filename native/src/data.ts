@@ -1,13 +1,19 @@
 import { supabase } from './supabase';
 import { validateItems } from '../../src/lib/validate';
 import type { Item } from '../../src/core/parser';
+import { addDays, manilaToday } from '../../src/core/money';
 import { missingFeeCategories, type Account, type Category, type Tx, type Snapshot } from './logic';
 
 export { preview, newRequestId, type Snapshot, type Preview } from './logic';
 
 export async function load(): Promise<Snapshot> {
-  const [a, c, b, t] = await Promise.all([
-    supabase.from('accounts').select('id,name,short_name,counts_as_savings,opening_balance_minor').order('sort_order').order('name'),
+  const since = addDays(manilaToday(), -60);
+  const [a, c, b, t, dts, cnt, na] = await Promise.all([
+    supabase
+      .from('accounts')
+      .select('id,name,short_name,counts_as_savings,opening_balance_minor,show_on_home')
+      .order('sort_order')
+      .order('name'),
     supabase.from('categories').select('id,name,type').order('sort_order').order('name'),
     supabase.rpc('account_balances'),
     supabase
@@ -16,12 +22,28 @@ export async function load(): Promise<Snapshot> {
       .order('transaction_date', { ascending: false })
       .order('created_at', { ascending: false })
       .limit(20),
+    supabase
+      .from('transactions')
+      .select('transaction_date')
+      .gte('transaction_date', since)
+      .order('transaction_date', { ascending: false })
+      .limit(1000),
+    supabase.from('transactions').select('id', { count: 'exact', head: true }),
+    supabase.rpc('no_account_summary'),
   ]);
-  const err = a.error ?? c.error ?? b.error ?? t.error;
+  const err = a.error ?? c.error ?? b.error ?? t.error ?? dts.error ?? cnt.error ?? na.error;
   if (err) throw new Error('Could not load your data. Check your connection.');
   const balances: Record<string, number> = {};
   for (const x of (b.data ?? []) as { account_id: string; balance_minor: number }[]) balances[x.account_id] = Number(x.balance_minor);
-  return { accounts: a.data as Account[], categories: c.data as Category[], balances, recent: t.data as unknown as Tx[] };
+  return {
+    accounts: a.data as Account[],
+    categories: c.data as Category[],
+    balances,
+    recent: t.data as unknown as Tx[],
+    dates: (dts.data ?? []).map((x) => x.transaction_date as string),
+    totalEntries: cnt.count ?? 0,
+    noAccount: Number((na.data as { balance_minor: number }[] | null)?.[0]?.balance_minor ?? 0),
+  };
 }
 
 // Retry-safe: the same requestId can be sent twice and saves once (unique user_id+request_id+request_idx).

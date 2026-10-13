@@ -1,16 +1,18 @@
-import { useCallback, useEffect, useState } from 'react';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { formatMinor } from '../../src/core/money';
 import type { Snapshot } from './data';
-import { loadActivity, loadBudgets, loadGoals } from './extra';
+import { loadActivity } from './extra';
+import { filterActivity, type ActivityFilter } from './logic';
 import { sign } from './QuickAdd';
+import { ListSkeleton } from './Skeleton';
+import { Sheet } from './Sheet';
 import { Btn } from './Btn';
-import { confirmSignOut } from './signout';
 import { c, s, sp, t, e, r } from './ui';
 
-// A small loader for the tab screens: loading, error (with retry) and empty states are handled once, here.
-function useList<T>(fetcher: () => Promise<T[]>, deps: unknown[]) {
+// A small loader for the tab screens: skeleton while loading, an error with Try again, and the rows. Empty states are drawn by each screen.
+export function useList<T>(fetcher: () => Promise<T[]>, deps: unknown[]) {
   const [rows, setRows] = useState<T[] | null>(null);
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
@@ -19,8 +21,8 @@ function useList<T>(fetcher: () => Promise<T[]>, deps: unknown[]) {
     try {
       setRows(await fetcher());
       setErr('');
-    } catch (e) {
-      setErr((e as Error).message);
+    } catch (x) {
+      setErr((x as Error).message);
     }
     setBusy(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -31,7 +33,8 @@ function useList<T>(fetcher: () => Promise<T[]>, deps: unknown[]) {
   return { rows, err, busy, reload };
 }
 
-function Page(p: {
+// The banner every tab shares: emoji, title, one friendly line, and the tab's own gear.
+export function Page(p: {
   emoji: string;
   title: string;
   line: string;
@@ -39,11 +42,17 @@ function Page(p: {
   busy: boolean;
   reload: () => void;
   err: string;
-  children: React.ReactNode;
+  onGear?: () => void;
+  gearLabel?: string;
+  loading?: boolean;
+  children: ReactNode;
 }) {
   const { top } = useSafeAreaInsets();
   return (
-    <ScrollView style={{ flex: 1 }} refreshControl={<RefreshControl refreshing={p.busy} onRefresh={p.reload} />}>
+    <ScrollView
+      style={{ flex: 1, backgroundColor: c.bg }}
+      refreshControl={<RefreshControl refreshing={p.busy && !p.loading} onRefresh={p.reload} tintColor={c.primary} />}
+    >
       <View
         style={{
           backgroundColor: p.tint,
@@ -54,9 +63,21 @@ function Page(p: {
           borderBottomRightRadius: r.l,
         }}
       >
-        <Text style={{ fontSize: e.s }}>{p.emoji}</Text>
-        <Text style={{ color: c.white, fontSize: t.head, fontWeight: '800' }}>{p.title}</Text>
-        <Text style={{ color: c.white, opacity: 0.9 }}>{p.line}</Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Text style={{ fontSize: e.s }}>{p.emoji}</Text>
+          {p.onGear && (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={p.gearLabel ?? 'Settings for this tab'}
+              onPress={p.onGear}
+              style={s.chip}
+            >
+              <Text style={{ color: c.ink, fontSize: t.body }}>⚙︎ {p.gearLabel ?? 'Edit'}</Text>
+            </Pressable>
+          )}
+        </View>
+        <Text style={{ color: c.ink, fontSize: t.head, fontWeight: '800' }}>{p.title}</Text>
+        <Text style={{ color: c.mute, fontSize: t.body }}>{p.line}</Text>
       </View>
       <View style={{ padding: sp.l }}>
         {!!p.err && (
@@ -65,98 +86,105 @@ function Page(p: {
             <Btn label="Try again" onPress={p.reload} />
           </>
         )}
-        {p.children}
+        {p.loading && !p.err && <ListSkeleton />}
+        {!p.loading && p.children}
       </View>
     </ScrollView>
   );
 }
 
-const Bar = ({ pct, color }: { pct: number; color: string }) => (
-  <View style={{ height: 12, borderRadius: r.pill, backgroundColor: c.line, overflow: 'hidden', marginVertical: sp.s }}>
-    <View style={{ height: 12, width: `${pct}%`, backgroundColor: color }} />
+export const Bar = ({ pct, color }: { pct: number; color: string }) => (
+  <View style={{ height: sp.m, borderRadius: r.pill, backgroundColor: c.raised, overflow: 'hidden', marginVertical: sp.s }}>
+    <View style={{ height: sp.m, width: `${pct}%`, backgroundColor: color }} />
   </View>
 );
 
+export const Chip = ({ label, on, press }: { label: string; on: boolean; press: () => void }) => (
+  <Pressable
+    accessibilityRole="button"
+    accessibilityLabel={label}
+    accessibilityState={{ selected: on }}
+    onPress={press}
+    style={{
+      paddingVertical: sp.m,
+      paddingHorizontal: sp.l,
+      borderRadius: r.pill,
+      marginRight: sp.s,
+      marginBottom: sp.s,
+      backgroundColor: on ? c.primary : c.raised,
+      borderWidth: 1,
+      borderColor: on ? c.primary : c.line,
+    }}
+  >
+    <Text style={{ color: on ? c.onPrimary : c.ink, fontSize: t.body, fontWeight: on ? '700' : '400' }}>{label}</Text>
+  </Pressable>
+);
+
+const TYPES: [ActivityFilter['type'], string][] = [
+  ['all', 'Everything'],
+  ['expense', 'Spent'],
+  ['income', 'Earned'],
+  ['transfer', 'Moved'],
+];
+
 export function Activity({ snap }: { snap: Snapshot }) {
   const l = useList(loadActivity, []);
+  const [f, setF] = useState<ActivityFilter>({ type: 'all', accountId: '' });
+  const [open, setOpen] = useState(false);
   const acc = (id: string | null) => snap.accounts.find((a) => a.id === id)?.name ?? '';
   const cat = (id: string | null) => snap.categories.find((x) => x.id === id)?.name ?? '';
+  const rows = l.rows ? filterActivity(l.rows, f) : [];
+  const filtered = f.type !== 'all' || f.accountId !== '';
   return (
-    <Page emoji="🧾" title="Activity" line="Your latest 200 entries." tint={c.hero.indigo} {...l}>
-      {l.rows === null && !l.err && <Text style={s.p}>Loading...</Text>}
-      {l.rows?.length === 0 && <Text style={s.p}>Nothing yet. Add your first entry on Home.</Text>}
-      {l.rows?.map((t) => (
-        <View key={t.id} style={[s.card, { flexDirection: 'row', justifyContent: 'space-between', marginBottom: sp.s }]}>
-          <View style={{ flex: 1 }}>
-            <Text style={{ color: c.ink, fontWeight: '700' }}>{t.description || cat(t.category_id) || 'Transfer'}</Text>
-            <Text style={s.p}>
-              {t.transaction_date} · {cat(t.category_id) || 'Transfer'} · {acc(t.account_id)}
+    <>
+      <Page
+        emoji="🧾"
+        title="Activity"
+        line={filtered ? `${rows.length} matching of your latest 200.` : 'Your latest 200 entries.'}
+        tint={c.hero.navy}
+        loading={l.rows === null}
+        onGear={() => setOpen(true)}
+        gearLabel={filtered ? 'Filter on' : 'Filter'}
+        {...l}
+      >
+        {rows.length === 0 && (
+          <Text style={s.p}>
+            {filtered ? 'Nothing matches this filter. Open Filter to change it.' : 'Nothing yet. Add your first entry on Home.'}
+          </Text>
+        )}
+        {rows.map((x) => (
+          <View key={x.id} style={[s.card, { flexDirection: 'row', justifyContent: 'space-between', marginBottom: sp.s }]}>
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: c.ink, fontWeight: '700', fontSize: t.body }}>{x.description || cat(x.category_id) || 'Transfer'}</Text>
+              <Text style={{ color: c.mute, fontSize: t.caption }}>
+                {x.transaction_date} · {cat(x.category_id) || 'Transfer'} · {acc(x.account_id)}
+              </Text>
+            </View>
+            <Text
+              style={{ color: x.type === 'income' ? c.up : x.type === 'expense' ? c.down : c.mute, fontWeight: '800', fontSize: t.body }}
+            >
+              {sign(x.type)}
+              {formatMinor(x.amount_minor)}
             </Text>
           </View>
-          <Text style={{ color: t.type === 'income' ? c.green : c.ink, fontWeight: '800' }}>
-            {sign(t.type)}
-            {formatMinor(t.amount_minor)}
-          </Text>
+        ))}
+      </Page>
+      <Sheet open={open} title="Filter activity" onClose={() => setOpen(false)}>
+        <Text style={s.p}>Show</Text>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginVertical: sp.s }}>
+          {TYPES.map(([id, label]) => (
+            <Chip key={id} label={label} on={f.type === id} press={() => setF({ ...f, type: id })} />
+          ))}
         </View>
-      ))}
-    </Page>
-  );
-}
-
-export function Budgets({ snap }: { snap: Snapshot }) {
-  const l = useList(() => loadBudgets(snap), [snap]);
-  return (
-    <Page emoji="🎯" title="Budgets" line="What is left to spend this month." tint={c.hero.orange} {...l}>
-      {l.rows === null && !l.err && <Text style={s.p}>Loading...</Text>}
-      {l.rows?.length === 0 && <Text style={s.p}>No budgets this month yet.</Text>}
-      {l.rows?.map((b) => (
-        <View key={b.id} style={s.card}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-            <Text style={s.h2}>{b.name}</Text>
-            <Text style={{ color: b.over ? c.red : c.ink, fontWeight: '800' }}>
-              {b.over ? `Over by ${formatMinor(b.overBy)}` : `${formatMinor(b.left)} left`}
-            </Text>
-          </View>
-          <Bar pct={b.pct} color={b.over ? c.red : b.pct >= 80 ? c.hero.gold : c.green} />
-          <Text style={s.p}>
-            {formatMinor(b.spent)} of {formatMinor(b.limit)}
-          </Text>
+        <Text style={s.p}>From account</Text>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginVertical: sp.s }}>
+          <Chip label="All accounts" on={f.accountId === ''} press={() => setF({ ...f, accountId: '' })} />
+          {snap.accounts.map((a) => (
+            <Chip key={a.id} label={a.name} on={f.accountId === a.id} press={() => setF({ ...f, accountId: a.id })} />
+          ))}
         </View>
-      ))}
-    </Page>
-  );
-}
-
-export function Goals({ snap }: { snap: Snapshot }) {
-  const l = useList(() => loadGoals(snap), [snap]);
-  return (
-    <Page emoji="🏆" title="Goals" line="Watch them fill up." tint={c.hero.gold} {...l}>
-      {l.rows === null && !l.err && <Text style={s.p}>Loading...</Text>}
-      {l.rows?.length === 0 && <Text style={s.p}>No goals yet.</Text>}
-      {l.rows?.map((g) => (
-        <View key={g.id} style={s.card}>
-          <Text style={s.h2}>
-            {g.emoji} {g.name} {g.reached ? '🎉' : ''}
-          </Text>
-          <Bar pct={g.pct} color={g.reached ? c.green : c.purple} />
-          <Text style={s.p}>
-            {g.unavailable
-              ? 'Progress unavailable right now. Pull down to retry.'
-              : `${formatMinor(g.have)} of ${formatMinor(g.target)} · ${g.pct}%${g.reached ? '' : ` · ${formatMinor(g.remaining)} to go`}`}
-          </Text>
-        </View>
-      ))}
-    </Page>
-  );
-}
-
-export function More({ onReplay }: { onReplay: () => void }) {
-  return (
-    <Page emoji="⚙️" title="Settings" line="Tutorial and account." tint={c.purple} busy={false} reload={() => {}} err="">
-      <Btn label="Show the tutorial again" alt onPress={onReplay} />
-      <Btn label="Log out" onPress={confirmSignOut} />
-      <Text style={[s.p, { textAlign: 'center', marginTop: sp.m }]}>Zovix native 0.5.1</Text>
-    </Page>
+      </Sheet>
+    </>
   );
 }
 
@@ -173,14 +201,14 @@ export function TabBar({ tab, setTab }: { tab: string; setTab: (t: string) => vo
     <View
       style={{
         flexDirection: 'row',
-        backgroundColor: c.white,
+        backgroundColor: c.card,
         borderTopWidth: 1,
         borderTopColor: c.line,
         paddingBottom: bottom + sp.s,
         paddingTop: sp.s,
       }}
     >
-      {items.map(([id, e, label]) => (
+      {items.map(([id, em, label]) => (
         <Pressable
           key={id}
           accessibilityRole="tab"
@@ -189,11 +217,10 @@ export function TabBar({ tab, setTab }: { tab: string; setTab: (t: string) => vo
           onPress={() => setTab(id)}
           style={{ flex: 1, alignItems: 'center', paddingVertical: sp.s }}
         >
-          <Text style={{ fontSize: t.title }}>{e}</Text>
-          <Text style={{ fontSize: t.caption, fontWeight: tab === id ? '800' : '500', color: tab === id ? c.purple : c.mute }}>
+          <Text style={{ fontSize: t.title, opacity: tab === id ? 1 : 0.55 }}>{em}</Text>
+          <Text style={{ fontSize: t.caption, fontWeight: tab === id ? '800' : '500', color: tab === id ? c.primary : c.mute }}>
             {label}
           </Text>
-          {tab === id && <View style={{ width: 6, height: 6, borderRadius: r.pill, backgroundColor: c.yellow, marginTop: sp.xs }} />}
         </Pressable>
       ))}
     </View>

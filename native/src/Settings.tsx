@@ -1,0 +1,123 @@
+import { useState } from 'react';
+import { Pressable, Text, TextInput, View } from 'react-native';
+import type { Snapshot } from './data';
+import { setAccountFlag, saveName } from './config';
+import { Page } from './Tabs';
+import { Sheet, ToggleRow } from './Sheet';
+import { confirmSignOut } from './signout';
+import { Btn } from './Btn';
+import { c, s, sp, t } from './ui';
+
+export const APP_VERSION = '0.6.0';
+
+// Which accounts are savings (they leave "You can spend") and which show as cards on Home. Both are saved on the account itself, so the website agrees.
+export function AccountsSheet({
+  open,
+  onClose,
+  snap,
+  refresh,
+}: {
+  open: boolean;
+  onClose: () => void;
+  snap: Snapshot;
+  refresh: () => Promise<string>;
+}) {
+  const [busy, setBusy] = useState('');
+  const [err, setErr] = useState('');
+  const flip = async (id: string, field: 'counts_as_savings' | 'show_on_home', on: boolean) => {
+    setBusy(id + field);
+    setErr('');
+    const m = await setAccountFlag(id, field, on).catch(() => 'Not saved: could not reach the server. Try again.');
+    if (m) setErr(m);
+    else setErr(await refresh());
+    setBusy('');
+  };
+  return (
+    <Sheet open={open} title="Your accounts" onClose={onClose}>
+      <Text style={[s.p, { marginBottom: sp.s }]}>
+        Savings accounts are kept out of "You can spend". Hidden accounts still count in your total.
+      </Text>
+      {!!err && <Text style={s.err}>{err}</Text>}
+      {snap.accounts.map((a) => (
+        <View key={a.id} style={[s.card, { marginBottom: sp.s }]}>
+          <Text style={s.h2}>{a.name}</Text>
+          <ToggleRow
+            label="This is savings"
+            hint="Not for everyday spending"
+            on={a.counts_as_savings}
+            busy={busy === a.id + 'counts_as_savings'}
+            onChange={(v) => flip(a.id, 'counts_as_savings', v)}
+          />
+          <ToggleRow
+            label="Show on Home"
+            on={a.show_on_home}
+            busy={busy === a.id + 'show_on_home'}
+            onChange={(v) => flip(a.id, 'show_on_home', v)}
+          />
+        </View>
+      ))}
+    </Sheet>
+  );
+}
+
+export function Settings({
+  snap,
+  name,
+  refresh,
+  onReplay,
+}: {
+  snap: Snapshot;
+  name: string;
+  refresh: () => Promise<string>;
+  onReplay: () => void;
+}) {
+  const [nm, setNm] = useState(name);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<{ bad: boolean; t: string } | null>(null);
+  const [accounts, setAccounts] = useState(false);
+  const save = async () => {
+    setBusy(true);
+    setMsg(null);
+    const m = await saveName(nm).catch(() => 'Not saved: could not reach the server. Try again.');
+    if (m) setMsg({ bad: true, t: m });
+    else {
+      setMsg({ bad: false, t: 'Saved.' });
+      await refresh();
+    }
+    setBusy(false);
+  };
+  return (
+    <>
+      <Page emoji="⚙️" title="Settings" line="Make Zovix yours." tint={c.hero.violet} busy={false} reload={() => {}} err="">
+        <View style={s.card}>
+          <Text style={s.h2}>Your name</Text>
+          <TextInput
+            style={s.input}
+            value={nm}
+            onChangeText={setNm}
+            placeholder="Your name"
+            placeholderTextColor={c.mute}
+            accessibilityLabel="Your name"
+            maxLength={60}
+          />
+          {msg && <Text style={msg.bad ? s.err : s.ok}>{msg.t}</Text>}
+          <Btn label="Save name" busy={busy} onPress={save} />
+        </View>
+        <View style={s.card}>
+          <Text style={s.h2}>Accounts</Text>
+          <Text style={[s.p, { marginBottom: sp.m }]}>Choose which accounts are savings and which show on Home.</Text>
+          <Btn label="Manage accounts" alt onPress={() => setAccounts(true)} />
+        </View>
+        <View style={s.card}>
+          <Text style={s.h2}>Account</Text>
+          <Btn label="Log out" alt onPress={confirmSignOut} />
+        </View>
+        <Pressable accessibilityRole="button" accessibilityLabel="Show the tutorial again" onPress={onReplay} style={{ padding: sp.m }}>
+          <Text style={{ color: c.mute, textAlign: 'center', fontSize: t.body }}>Help: show the tutorial again</Text>
+        </Pressable>
+        <Text style={{ color: c.mute, textAlign: 'center', fontSize: t.caption }}>Zovix native {APP_VERSION}</Text>
+      </Page>
+      <AccountsSheet open={accounts} onClose={() => setAccounts(false)} snap={snap} refresh={refresh} />
+    </>
+  );
+}

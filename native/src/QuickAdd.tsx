@@ -46,6 +46,7 @@ export function QuickAdd({ snap, onSaved }: { snap: Snapshot; onSaved: () => voi
           rid.current = newRequestId();
         }}
         placeholder="lunch 150 gcash"
+        placeholderTextColor={c.mute}
         accessibilityLabel="Transaction"
         maxLength={500}
         onSubmitEditing={check}
@@ -58,7 +59,7 @@ export function QuickAdd({ snap, onSaved }: { snap: Snapshot; onSaved: () => voi
               <Text style={{ color: c.ink, flex: 1 }}>
                 {i.type === 'transfer' ? `${i.account} → ${i.to_account}` : `${i.category} · ${i.account || 'Cash'}`} · {i.date}
               </Text>
-              <Text style={{ color: i.type === 'income' ? c.green : c.ink, fontWeight: '700' }}>
+              <Text style={{ color: i.type === 'income' ? c.up : i.type === 'expense' ? c.down : c.ink, fontWeight: '700' }}>
                 {sign(i.type)}
                 {formatMinor(i.amount_minor)}
               </Text>
