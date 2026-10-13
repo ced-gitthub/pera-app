@@ -10,7 +10,7 @@ import { Login, Totp } from './Login';
 import { Welcome } from './Welcome';
 import { Gate } from './Gate';
 import { Btn } from './Btn';
-import { c, s } from './ui';
+import { c, s, sp } from './ui';
 
 export default function App() {
   const [session, setSession] = useState<Session | null | undefined>(undefined);
@@ -47,9 +47,9 @@ export default function App() {
   }, [check]);
 
   let body;
-  if (session === undefined) body = <ActivityIndicator color={c.purple} size="large" style={{ marginTop: 120 }} />;
+  if (session === undefined) body = <ActivityIndicator color={c.purple} size="large" style={{ marginTop: sp.xxl }} />;
   else if (!session) {
-    if (welcome === null) body = <ActivityIndicator color={c.purple} size="large" style={{ marginTop: 120 }} />;
+    if (welcome === null) body = <ActivityIndicator color={c.purple} size="large" style={{ marginTop: sp.xxl }} />;
     else if (welcome === 'show')
       body = (
         <Welcome

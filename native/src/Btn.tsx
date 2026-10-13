@@ -11,7 +11,7 @@ export function Btn({ label, onPress, busy, alt }: { label: string; onPress: () 
       onPress={onPress}
       style={[s.btn, alt && s.btnAlt, busy && { opacity: 0.6 }]}
     >
-      {busy ? <ActivityIndicator color={alt ? c.ink : '#fff'} /> : <Text style={[s.btnText, alt && s.btnAltText]}>{label}</Text>}
+      {busy ? <ActivityIndicator color={alt ? c.ink : c.white} /> : <Text style={[s.btnText, alt && s.btnAltText]}>{label}</Text>}
     </Pressable>
   );
 }

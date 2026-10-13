@@ -7,7 +7,7 @@ import type { Snapshot } from './data';
 import { loadActivity, loadBudgets, loadGoals } from './extra';
 import { sign } from './QuickAdd';
 import { Btn } from './Btn';
-import { c, s } from './ui';
+import { c, s, sp, t, e, r } from './ui';
 
 // A small loader for the tab screens: loading, error (with retry) and empty states are handled once, here.
 function useList<T>(fetcher: () => Promise<T[]>, deps: unknown[]) {
@@ -47,18 +47,18 @@ function Page(p: {
       <View
         style={{
           backgroundColor: p.tint,
-          paddingTop: top + 16,
-          paddingHorizontal: 16,
-          paddingBottom: 22,
-          borderBottomLeftRadius: 28,
-          borderBottomRightRadius: 28,
+          paddingTop: top + sp.l,
+          paddingHorizontal: sp.l,
+          paddingBottom: sp.xl,
+          borderBottomLeftRadius: r.l,
+          borderBottomRightRadius: r.l,
         }}
       >
-        <Text style={{ fontSize: 40 }}>{p.emoji}</Text>
-        <Text style={{ color: '#fff', fontSize: 26, fontWeight: '800' }}>{p.title}</Text>
-        <Text style={{ color: '#fff', opacity: 0.9 }}>{p.line}</Text>
+        <Text style={{ fontSize: e.s }}>{p.emoji}</Text>
+        <Text style={{ color: c.white, fontSize: t.head, fontWeight: '800' }}>{p.title}</Text>
+        <Text style={{ color: c.white, opacity: 0.9 }}>{p.line}</Text>
       </View>
-      <View style={{ padding: 16 }}>
+      <View style={{ padding: sp.l }}>
         {!!p.err && (
           <>
             <Text style={s.err}>{p.err}</Text>
@@ -72,7 +72,7 @@ function Page(p: {
 }
 
 const Bar = ({ pct, color }: { pct: number; color: string }) => (
-  <View style={{ height: 12, borderRadius: 6, backgroundColor: c.line, overflow: 'hidden', marginVertical: 6 }}>
+  <View style={{ height: 12, borderRadius: r.pill, backgroundColor: c.line, overflow: 'hidden', marginVertical: sp.s }}>
     <View style={{ height: 12, width: `${pct}%`, backgroundColor: color }} />
   </View>
 );
@@ -82,11 +82,11 @@ export function Activity({ snap }: { snap: Snapshot }) {
   const acc = (id: string | null) => snap.accounts.find((a) => a.id === id)?.name ?? '';
   const cat = (id: string | null) => snap.categories.find((x) => x.id === id)?.name ?? '';
   return (
-    <Page emoji="🧾" title="Activity" line="Your latest 200 entries." tint="#3D2AB5" {...l}>
+    <Page emoji="🧾" title="Activity" line="Your latest 200 entries." tint={c.hero.indigo} {...l}>
       {l.rows === null && !l.err && <Text style={s.p}>Loading...</Text>}
       {l.rows?.length === 0 && <Text style={s.p}>Nothing yet. Add your first entry on Home.</Text>}
       {l.rows?.map((t) => (
-        <View key={t.id} style={[s.card, { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }]}>
+        <View key={t.id} style={[s.card, { flexDirection: 'row', justifyContent: 'space-between', marginBottom: sp.s }]}>
           <View style={{ flex: 1 }}>
             <Text style={{ color: c.ink, fontWeight: '700' }}>{t.description || cat(t.category_id) || 'Transfer'}</Text>
             <Text style={s.p}>
@@ -106,7 +106,7 @@ export function Activity({ snap }: { snap: Snapshot }) {
 export function Budgets({ snap }: { snap: Snapshot }) {
   const l = useList(() => loadBudgets(snap), [snap]);
   return (
-    <Page emoji="🎯" title="Budgets" line="What is left to spend this month." tint="#D9480F" {...l}>
+    <Page emoji="🎯" title="Budgets" line="What is left to spend this month." tint={c.hero.orange} {...l}>
       {l.rows === null && !l.err && <Text style={s.p}>Loading...</Text>}
       {l.rows?.length === 0 && <Text style={s.p}>No budgets this month yet.</Text>}
       {l.rows?.map((b) => (
@@ -117,7 +117,7 @@ export function Budgets({ snap }: { snap: Snapshot }) {
               {b.over ? `Over by ${formatMinor(b.overBy)}` : `${formatMinor(b.left)} left`}
             </Text>
           </View>
-          <Bar pct={b.pct} color={b.over ? c.red : b.pct >= 80 ? '#E0A800' : c.green} />
+          <Bar pct={b.pct} color={b.over ? c.red : b.pct >= 80 ? c.hero.gold : c.green} />
           <Text style={s.p}>
             {formatMinor(b.spent)} of {formatMinor(b.limit)}
           </Text>
@@ -130,7 +130,7 @@ export function Budgets({ snap }: { snap: Snapshot }) {
 export function Goals({ snap }: { snap: Snapshot }) {
   const l = useList(() => loadGoals(snap), [snap]);
   return (
-    <Page emoji="🏆" title="Goals" line="Watch them fill up." tint="#B8860B" {...l}>
+    <Page emoji="🏆" title="Goals" line="Watch them fill up." tint={c.hero.gold} {...l}>
       {l.rows === null && !l.err && <Text style={s.p}>Loading...</Text>}
       {l.rows?.length === 0 && <Text style={s.p}>No goals yet.</Text>}
       {l.rows?.map((g) => (
@@ -155,7 +155,7 @@ export function More({ onReplay }: { onReplay: () => void }) {
     <Page emoji="⚙️" title="Settings" line="Tutorial and account." tint={c.purple} busy={false} reload={() => {}} err="">
       <Btn label="Show the tutorial again" alt onPress={onReplay} />
       <Btn label="Log out" onPress={() => supabase.auth.signOut()} />
-      <Text style={[s.p, { textAlign: 'center', marginTop: 12 }]}>Zovix native 0.5</Text>
+      <Text style={[s.p, { textAlign: 'center', marginTop: sp.m }]}>Zovix native 0.5.1</Text>
     </Page>
   );
 }
@@ -173,11 +173,11 @@ export function TabBar({ tab, setTab }: { tab: string; setTab: (t: string) => vo
     <View
       style={{
         flexDirection: 'row',
-        backgroundColor: '#fff',
+        backgroundColor: c.white,
         borderTopWidth: 1,
         borderTopColor: c.line,
-        paddingBottom: bottom + 8,
-        paddingTop: 6,
+        paddingBottom: bottom + sp.s,
+        paddingTop: sp.s,
       }}
     >
       {items.map(([id, e, label]) => (
@@ -187,11 +187,13 @@ export function TabBar({ tab, setTab }: { tab: string; setTab: (t: string) => vo
           accessibilityLabel={label}
           accessibilityState={{ selected: tab === id }}
           onPress={() => setTab(id)}
-          style={{ flex: 1, alignItems: 'center', paddingVertical: 6 }}
+          style={{ flex: 1, alignItems: 'center', paddingVertical: sp.s }}
         >
-          <Text style={{ fontSize: 22 }}>{e}</Text>
-          <Text style={{ fontSize: 11, fontWeight: tab === id ? '800' : '500', color: tab === id ? c.purple : c.mute }}>{label}</Text>
-          {tab === id && <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: c.yellow, marginTop: 2 }} />}
+          <Text style={{ fontSize: t.title }}>{e}</Text>
+          <Text style={{ fontSize: t.caption, fontWeight: tab === id ? '800' : '500', color: tab === id ? c.purple : c.mute }}>
+            {label}
+          </Text>
+          {tab === id && <View style={{ width: 6, height: 6, borderRadius: r.pill, backgroundColor: c.yellow, marginTop: sp.xs }} />}
         </Pressable>
       ))}
     </View>

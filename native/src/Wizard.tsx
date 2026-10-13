@@ -11,29 +11,35 @@ import type { Snapshot } from './data';
 import { saveBalances, saveBudget, saveGoal } from './wizardData';
 import { QuickAdd } from './QuickAdd';
 import { Btn } from './Btn';
-import { c, s } from './ui';
+import { c, s, sp, t, e, r } from './ui';
 
 export type Slide = GateStep | 'finish';
-const HERO: Record<Slide, string> = { first: '#5B2EE0', balance: '#1B8A4B', budget: '#D9480F', goal: '#B8860B', finish: '#5B2EE0' };
+const HERO: Record<Slide, string> = {
+  first: c.hero.purple,
+  balance: c.hero.green,
+  budget: c.hero.orange,
+  goal: c.hero.gold,
+  finish: c.hero.purple,
+};
 const ORDER: Slide[] = [...GATE_STEPS, 'finish'];
 
 function Dots({ now, done }: { now: number; done: string[] }) {
   return (
-    <View style={{ marginBottom: 12 }}>
+    <View style={{ marginBottom: sp.m }}>
       <Text style={[s.p, { fontWeight: '700' }]}>
         Step {now} of {WIZARD_TOTAL}
       </Text>
-      <View style={{ height: 8, borderRadius: 4, backgroundColor: c.line, marginVertical: 8, overflow: 'hidden' }}>
+      <View style={{ height: 8, borderRadius: r.pill, backgroundColor: c.line, marginVertical: sp.s, overflow: 'hidden' }}>
         <View style={{ height: 8, width: `${(now / WIZARD_TOTAL) * 100}%`, backgroundColor: c.purple }} />
       </View>
-      <View style={{ flexDirection: 'row', gap: 8 }}>
+      <View style={{ flexDirection: 'row', gap: sp.s }}>
         {ORDER.map((id, i) => (
           <View
             key={id}
             style={{
               width: 12,
               height: 12,
-              borderRadius: 6,
+              borderRadius: r.pill,
               backgroundColor: done.includes(id) || i < now - 1 ? c.green : i === now - 1 ? c.purple : c.line,
             }}
           />
@@ -48,16 +54,16 @@ function SampleBox({ step }: { step: GateStep }) {
   return (
     <View style={[s.card, { borderColor: c.yellow, borderWidth: 2 }]}>
       <Text style={s.p}>You type</Text>
-      <Text style={[s.h2, { marginTop: 4 }]}>{x.you}</Text>
+      <Text style={[s.h2, { marginTop: sp.xs }]}>{x.you}</Text>
       <Text style={s.p}>What each part means</Text>
       {x.parts.map((p) => (
-        <Text key={p.text} style={{ color: c.ink, marginTop: 6 }}>
+        <Text key={p.text} style={{ color: c.ink, marginTop: sp.s }}>
           <Text style={{ fontWeight: '800' }}>{p.text}</Text> — {p.what}
         </Text>
       ))}
-      <Text style={[s.p, { marginTop: 10 }]}>What Zovix does</Text>
+      <Text style={[s.p, { marginTop: sp.s }]}>What Zovix does</Text>
       {x.result.map((r) => (
-        <Text key={r} style={{ color: c.ink, marginTop: 4 }}>
+        <Text key={r} style={{ color: c.ink, marginTop: sp.xs }}>
           • {r}
         </Text>
       ))}
@@ -92,48 +98,48 @@ export function Wizard(p: {
       style={{ flex: 1 }}
       keyboardShouldPersistTaps="handled"
       keyboardDismissMode="on-drag"
-      contentContainerStyle={{ paddingBottom: bottom + 80 }}
+      contentContainerStyle={{ paddingBottom: bottom + sp.xxl }}
     >
       <View
         style={{
           backgroundColor: tint,
-          paddingTop: top + 16,
-          paddingHorizontal: 16,
-          paddingBottom: 26,
-          borderBottomLeftRadius: 32,
-          borderBottomRightRadius: 32,
+          paddingTop: top + sp.l,
+          paddingHorizontal: sp.l,
+          paddingBottom: sp.xl,
+          borderBottomLeftRadius: r.l,
+          borderBottomRightRadius: r.l,
         }}
       >
-        <View style={{ backgroundColor: '#ffffffee', borderRadius: 16, padding: 12 }}>
+        <View style={{ backgroundColor: c.glass, borderRadius: r.s, padding: sp.m }}>
           <Dots now={number} done={p.tour ? ORDER.slice(0, i) : p.doneIds} />
         </View>
         <Animated.View
           style={{ opacity: slideIn, transform: [{ translateX: slideIn.interpolate({ inputRange: [0, 1], outputRange: [60, 0] }) }] }}
         >
-          <Text style={{ fontSize: 64, marginTop: 14 }}>{c0.emoji}</Text>
-          <Text style={{ color: '#fff', fontSize: 28, fontWeight: '800' }}>
+          <Text style={{ fontSize: e.m, marginTop: sp.m }}>{c0.emoji}</Text>
+          <Text style={{ color: c.white, fontSize: t.head, fontWeight: '800' }}>
             {slide === 'finish' ? (p.tour ? 'That is Zovix!' : c0.title) : c0.title}
           </Text>
         </Animated.View>
       </View>
       <Animated.View
         style={{
-          padding: 16,
+          padding: sp.l,
           opacity: slideIn,
           transform: [{ translateX: slideIn.interpolate({ inputRange: [0, 1], outputRange: [80, 0] }) }],
         }}
       >
         {slide === 'finish' ? (
-          <View style={{ marginTop: 12 }}>
-            <Text style={[s.p, { marginBottom: 12 }]}>Log it, track it, budget it, save for it. Everything is on your Home screen.</Text>
-            <Text style={{ color: c.ink, marginBottom: 16 }}>🔥 Tip: log something 3 days in a row to light your streak.</Text>
+          <View style={{ marginTop: sp.m }}>
+            <Text style={[s.p, { marginBottom: sp.m }]}>Log it, track it, budget it, save for it. Everything is on your Home screen.</Text>
+            <Text style={{ color: c.ink, marginBottom: sp.l }}>🔥 Tip: log something 3 days in a row to light your streak.</Text>
             <Btn label="Open my Zovix" onPress={p.onFinish} />
             {p.tour && <Btn label="Back" alt onPress={() => setI(i - 1)} />}
           </View>
         ) : (
           <>
             {c0.todo.map((t, k) => (
-              <Text key={t} style={{ color: c.ink, marginTop: 6 }}>
+              <Text key={t} style={{ color: c.ink, marginTop: sp.s }}>
                 {k + 1}. {t}
               </Text>
             ))}
@@ -197,21 +203,21 @@ function Action({
       accessibilityRole="button"
       accessibilityLabel={label}
       style={{
-        paddingVertical: 10,
-        paddingHorizontal: 14,
-        borderRadius: 20,
-        marginRight: 8,
-        marginBottom: 8,
-        backgroundColor: on ? c.purple : '#fff',
+        paddingVertical: sp.s,
+        paddingHorizontal: sp.m,
+        borderRadius: r.m,
+        marginRight: sp.s,
+        marginBottom: sp.s,
+        backgroundColor: on ? c.purple : c.white,
         borderWidth: 1,
         borderColor: c.line,
       }}
     >
-      <Text style={{ color: on ? '#fff' : c.ink }}>{label}</Text>
+      <Text style={{ color: on ? c.white : c.ink }}>{label}</Text>
     </Pressable>
   );
   return (
-    <View style={[s.card, { borderColor: c.yellow, borderWidth: 2, marginTop: 8 }]}>
+    <View style={[s.card, { borderColor: c.yellow, borderWidth: 2, marginTop: sp.s }]}>
       <Text style={[s.h2, { color: c.purple }]}>👉 Start here</Text>
       {step === 'first' && <QuickAdd snap={snap} onSaved={refresh} />}
       {step === 'balance' && (
@@ -228,7 +234,7 @@ function Action({
       {step === 'budget' && (
         <>
           <Text style={s.p}>Spending on</Text>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 6 }}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: sp.s }}>
             {snap.categories.filter((x) => x.type === 'expense').map((x) => chip(x.name, cat === x.id, () => setCat(x.id)))}
           </View>
           {field(amount, setAmount, 'Monthly limit (₱)', 'decimal-pad')}
@@ -241,7 +247,7 @@ function Action({
           <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>{GOAL_EMOJIS.map((e) => chip(e, emoji === e, () => setEmoji(e)))}</View>
           {field(amount, setAmount, 'How much it costs (₱)', 'decimal-pad')}
           <Text style={s.p}>Connect to an account (optional)</Text>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 6 }}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: sp.s }}>
             {snap.accounts.map((a) => chip(a.name, account === a.id, () => setAccount(account === a.id ? '' : a.id)))}
           </View>
           <Btn label="Add goal" busy={busy} onPress={() => run(() => saveGoal({ name, emoji, amount, account }, snap))} />

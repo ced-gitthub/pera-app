@@ -4,7 +4,7 @@ import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { sendCode, verifyCode, signInWithGoogle, verifyTotp } from './auth';
 import { supabase } from './supabase';
 import { Btn } from './Btn';
-import { c, s } from './ui';
+import { c, s, sp, t, e, r } from './ui';
 
 // One screen for both: "Create account" (name + email, code, you are in) and "Sign in" (email, code).
 export function Login({ start }: { start: 'signup' | 'login' }) {
@@ -49,22 +49,22 @@ export function Login({ start }: { start: 'signup' | 'login' }) {
       <View
         style={{
           backgroundColor: c.purple,
-          paddingTop: top + 30,
-          paddingBottom: 34,
-          paddingHorizontal: 20,
-          borderBottomLeftRadius: 32,
-          borderBottomRightRadius: 32,
+          paddingTop: top + sp.xl,
+          paddingBottom: sp.xxl,
+          paddingHorizontal: sp.xl,
+          borderBottomLeftRadius: r.l,
+          borderBottomRightRadius: r.l,
         }}
       >
-        <Text style={{ fontSize: 52 }}>{signup ? '🚀' : '👋'}</Text>
-        <Text style={{ color: '#fff', fontSize: 30, fontWeight: '800', marginTop: 6 }}>
+        <Text style={{ fontSize: e.s }}>{signup ? '🚀' : '👋'}</Text>
+        <Text style={{ color: c.white, fontSize: t.head, fontWeight: '800', marginTop: sp.s }}>
           {signup ? 'Start your streak today' : 'Welcome back'}
         </Text>
-        <Text style={{ color: '#fff', opacity: 0.9, fontSize: 16, marginTop: 6 }}>
+        <Text style={{ color: c.white, opacity: 0.9, fontSize: t.body, marginTop: sp.s }}>
           {signup ? 'Free forever. Takes under a minute.' : 'Sign in to pick up where you left off.'}
         </Text>
       </View>
-      <View style={{ padding: 16, paddingBottom: bottom + 16 }}>
+      <View style={{ padding: sp.l, paddingBottom: bottom + sp.l }}>
         <View style={s.card}>
           {signup && !sent && (
             <TextInput
@@ -109,7 +109,7 @@ export function Login({ start }: { start: 'signup' | 'login' }) {
                 busy={busy}
                 onPress={() => run(() => verifyCode(email.trim(), code.trim()))}
               />
-              <Pressable onPress={() => setSent(false)} style={{ padding: 8 }}>
+              <Pressable onPress={() => setSent(false)} style={{ padding: sp.s }}>
                 <Text style={{ color: c.purple, textAlign: 'center', fontWeight: '700' }}>Wrong email? Go back</Text>
               </Pressable>
             </>
@@ -117,8 +117,8 @@ export function Login({ start }: { start: 'signup' | 'login' }) {
           {msg && <Text style={msg.bad ? s.err : s.ok}>{msg.t}</Text>}
         </View>
         <Btn label="Continue with Google" alt busy={busy} onPress={() => run(signInWithGoogle)} />
-        <Pressable accessibilityRole="button" onPress={switchMode} style={{ padding: 12 }}>
-          <Text style={{ color: c.purple, textAlign: 'center', fontWeight: '700', fontSize: 16 }}>
+        <Pressable accessibilityRole="button" onPress={switchMode} style={{ padding: sp.m }}>
+          <Text style={{ color: c.purple, textAlign: 'center', fontWeight: '700', fontSize: t.body }}>
             {signup ? 'I already have an account' : 'New here? Create an account'}
           </Text>
         </Pressable>
@@ -141,7 +141,7 @@ export function Totp({ onDone }: { onDone: () => void }) {
   return (
     <View style={s.screen}>
       <Text style={s.h1}>Two-step check</Text>
-      <Text style={[s.p, { marginBottom: 16 }]}>Enter the 6-digit code from your authenticator app.</Text>
+      <Text style={[s.p, { marginBottom: sp.l }]}>Enter the 6-digit code from your authenticator app.</Text>
       <TextInput
         style={s.input}
         value={code}

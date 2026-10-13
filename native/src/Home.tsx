@@ -3,7 +3,7 @@ import { RefreshControl, ScrollView, Text, View } from 'react-native';
 import { formatMinor } from '../../src/core/money';
 import type { Snapshot } from './data';
 import { QuickAdd, sign } from './QuickAdd';
-import { c, s } from './ui';
+import { c, s, sp, t } from './ui';
 
 export function Home({ snap, refresh, name }: { snap: Snapshot; refresh: () => Promise<string>; name: string }) {
   const [refreshing, setRefreshing] = useState(false);
@@ -24,10 +24,10 @@ export function Home({ snap, refresh, name }: { snap: Snapshot; refresh: () => P
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={pull} />}
     >
       {!!err && <Text style={s.err}>{err}</Text>}
-      <Text style={[s.h1, { marginBottom: 12 }]}>{name ? `Hi, ${name} 👋` : 'Hi there 👋'}</Text>
+      <Text style={[s.h1, { marginBottom: sp.m }]}>{name ? `Hi, ${name} 👋` : 'Hi there 👋'}</Text>
       <View style={[s.card, { backgroundColor: c.purple }]}>
-        <Text style={{ color: '#fff', opacity: 0.8 }}>Total balance</Text>
-        <Text accessibilityLabel={`Total balance ${formatMinor(total)}`} style={{ color: '#fff', fontSize: 34, fontWeight: '800' }}>
+        <Text style={{ color: c.white, opacity: 0.8 }}>Total balance</Text>
+        <Text accessibilityLabel={`Total balance ${formatMinor(total)}`} style={{ color: c.white, fontSize: t.display, fontWeight: '800' }}>
           {formatMinor(total)}
         </Text>
       </View>
