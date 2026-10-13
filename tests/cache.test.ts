@@ -67,14 +67,13 @@ test('auth links are built from the pinned site address, never from the project 
 test('a pending Undo is forgotten when the app layout unmounts (logout), so the next user never sees it', () => {
   assert.match(read('src/components/UndoBar.tsx'), /useEffect\(\(\) => \(\) => clearUndo\(\), \[\]\)/);
 });
-test('the install card is offered on the welcome page, the dashboard and settings, and handles the browser install prompt', () => {
+test('the install card is offered on the dashboard and settings, and handles the browser install prompt', () => {
   const card = read('src/components/InstallApp.tsx');
   assert.match(card, /beforeinstallprompt/);
   assert.match(card, /display-mode: standalone/, 'hidden once Zovix is already installed');
   assert.match(card, /Add to Home Screen/, 'iPhone instructions');
   assert.ok(card.includes('/zovix.apk'), 'Android app download');
-  for (const f of ['src/components/Welcome.tsx', 'src/app/(app)/settings/page.tsx', 'src/app/(app)/(dash)/page.tsx'])
-    assert.match(read(f), /<InstallApp/, f);
+  for (const f of ['src/app/(app)/settings/page.tsx', 'src/app/(app)/(dash)/page.tsx']) assert.match(read(f), /<InstallApp/, f);
 });
 test('settings no longer shows the developer-only cards (prototype migration, AI configuration)', () => {
   const s = read('src/app/(app)/settings/page.tsx');

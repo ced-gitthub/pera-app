@@ -52,35 +52,14 @@ G('auth: logged-out');
       // Only the front door ('/') may land on the sample; every other protected page must still go to login (or the recovery page).
       return (r === '/' ? /^\/welcome$/ : /^\/(login|forgot)/).test(u) ? true : u;
     });
-  await step('welcome sample: a good entry shows a row and lowers the wallet; bad input shows an alert', async () => {
+  await step('landing page: Download for Android, worked sample "lunch 150 gcash", install steps; nothing to type into', async () => {
     await q.goto('/');
     if (new URL(q.url()).pathname !== '/welcome') return q.url();
-    const gcash = async () => (await q.locator('.wl-acct:has-text("GCash")').innerText()).replace(/\s+/g, ' ');
-    const before = await gcash();
-    await q.fill('#wl-in', 'lunch 150 gcash');
-    await q.click('button:has-text("Add")');
-    await q.locator('.wl-row').first().waitFor({ timeout: 10000 });
-    const after = await gcash();
-    await q.fill('#wl-in', 'hello there');
-    await q.click('button:has-text("Add")');
-    const bad = await q.locator('[role=alert]').first().innerText();
-    return /₱1,200\.00/.test(before) && /₱1,050\.00/.test(after) && bad.length > 5 && !LEAK.test(bad) ? true : { before, after, bad };
-  });
-  await step('welcome tutorial: five guided steps (entry, income, goal, budget, ready) with the next step highlighted', async () => {
-    await q.goto('/welcome');
-    const stepOf = async () => (await q.locator('.wl-prog-row b').innerText()).replace(/\s+/g, ' ');
-    const seen = [await stepOf()];
-    if ((await q.locator('.spot').count()) < 1) return 'nothing is highlighted on step 1';
-    await q.click('button.wl-chip:has-text("lunch 150 gcash")');
-    seen.push(await stepOf());
-    await q.click('button.wl-chip:has-text("salary 5000 bpi")');
-    seen.push(await stepOf());
-    await q.click('button:has-text("Start my goal")');
-    seen.push(await stepOf());
-    await q.click('button:has-text("Set my budget")');
-    seen.push(await stepOf());
-    const win = await q.locator('.wl-win').count();
-    return seen.join('|') === 'Step 1 of 5|Step 2 of 5|Step 3 of 5|Step 4 of 5|Step 5 of 5' && win === 1 ? true : { seen, win };
+    const t = (await q.locator('body').innerText()).replace(/s+/g, ' ');
+    const href = await q.locator('a:has-text("Download for Android")').first().getAttribute('href');
+    const need = ['lunch 150 gcash', 'What Zovix does', 'Add to Home Screen', 'Broke Rookie', 'Private by design'];
+    const miss = need.filter((x) => !t.includes(x));
+    return href === '/zovix.apk' && !miss.length && (await q.locator('#wl-in').count()) === 0 ? true : { href, miss };
   });
   await step('dashboard tutorial: a new account sees "Getting started" with exactly one highlighted next step', async () => {
     const c3 = await newCtx(browser),

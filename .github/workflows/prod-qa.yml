@@ -84,3 +84,20 @@ jobs:
           git push -f origin qa-${{ matrix.suite }} 2>&1 | sed "s/${GH_TOKEN}/***/g" || echo "::error title=publish::push failed"
       - name: Fail if the suite failed
         run: '[ "${{ steps.run.outcome }}" = success ]'
+  landing:
+    # The landing page needs no account, so this runs even while Confirm email is ON (the user-creating suites above are skipped then).
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm ci
+      - name: Install Playwright
+        working-directory: tests/prod
+        run: |
+          npm install --no-save --no-package-lock --ignore-scripts playwright@1.49.1
+          npx playwright install --with-deps chromium
+      - name: Run landing
+        working-directory: tests/prod
+        run: node --experimental-strip-types landing.mjs

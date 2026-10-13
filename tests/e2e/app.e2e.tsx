@@ -156,14 +156,37 @@ const count = (h: string, s: string) => h.split(s).length - 1;
   );
   // ---- landing page promotes the app
   {
-    const W = (await import('@/components/Welcome')).default,
-      wh = await html(<W google={null} />);
+    const L = (await import('@/components/Landing')).default,
+      lh = await html(<L />);
     T(
       'landing: Download for Android link points at the APK and is a download, twice (top and bottom)',
-      wh.split('href="/zovix.apk" download=""').length - 1 === 2,
+      lh.split('href="/zovix.apk" download=""').length - 1 === 2,
     );
-    T('landing: install steps and the iPhone route are explained', wh.includes('allow installs') && wh.includes('Add to Home Screen'));
-    T('landing: still offers the try-it demo and sign in', wh.includes('id="try"') && wh.includes('I have an account'));
+    T('landing: install steps and the iPhone route are explained', lh.includes('allow installs') && lh.includes('Add to Home Screen'));
+    T(
+      'landing: worked samples show what each part means (lunch 150 gcash, balances, budget, goal)',
+      ['lunch 150 gcash', 'GCash 1500', 'Food', 'New phone', 'What Zovix does', 'What it is', 'How it helps'].every((x) => lh.includes(x)),
+    );
+    T(
+      'landing: level ladder, quests, privacy, FAQ and the privacy link are there',
+      ['Broke Rookie', 'Money Master', '7-day streak', 'Private by design', 'Is Zovix really free?', 'href="/privacy"'].every((x) =>
+        lh.includes(x),
+      ),
+    );
+    T(
+      'landing: web version on -> a small web login line; no register/dashboard links',
+      lh.includes('href="/login"') && !lh.includes('/register'),
+    );
+    process.env.WEB_APP_ENABLED = 'false';
+    const lo = await html(<L ok="Email confirmed." />);
+    delete process.env.WEB_APP_ENABLED;
+    T(
+      'landing: web app off -> no tracker links at all (login, register, security, transactions), and the email-confirmed note shows',
+      !/href="\/(login|register|code|forgot|transactions|accounts|budgets|reports|settings|security|assistant)/.test(lo) &&
+        lo.includes('Email confirmed.') &&
+        lo.includes('href="/zovix.apk" download=""'),
+    );
+    T('landing: no email, password or sign-up fields', !/<input|<form/.test(lo));
   }
   // ---- required first-run wizard
   {
@@ -1196,6 +1219,50 @@ const count = (h: string, s: string) => h.split(s).length - 1;
     ]) {
       const got = await mw(path);
       T(`gate: logged out at ${path} -> ${want}`, got === want, got);
+    }
+    // landing-only mode (tracker retired): only landing, privacy, health and the recovery pages stay
+    {
+      process.env.WEB_APP_ENABLED = 'false';
+      const mo = async (path: string) => {
+        const r = await updateSession(new NextRequest('https://pera.example' + path + (path === '/' ? '?ok=hi' : '')));
+        const rw = r.headers.get('x-middleware-rewrite');
+        return rw
+          ? 'rewrite:' + new URL(rw).pathname + new URL(rw).search
+          : decodeURIComponent((r.headers.get('location') ?? 'pass').replace('https://pera.example', ''));
+      };
+      for (const [path, want] of [
+        ['/', 'rewrite:/welcome?ok=hi'],
+        ['/welcome', '/'],
+        ['/login', '/'],
+        ['/register', '/'],
+        ['/code', '/'],
+        ['/transactions', '/'],
+        ['/settings', '/'],
+        ['/budgets', '/'],
+        ['/privacy', 'pass'],
+        ['/api/health', 'pass'],
+        ['/forgot', 'pass'],
+        ['/verify', 'pass'],
+        ['/auth/callback', 'pass'],
+        ['/export', '/'], // logged out
+      ]) {
+        const got = await mo(path);
+        T(`landing-only: logged out at ${path} -> ${want}`, got === want, got);
+      }
+      login('a@x.com');
+      D.aal2.add(D.cur);
+      for (const [path, want] of [
+        ['/', 'rewrite:/welcome?ok=hi'],
+        ['/transactions', '/'],
+        ['/login', '/'],
+        ['/export', 'pass'],
+      ]) {
+        const got = await mo(path);
+        T(`landing-only: logged in at ${path} -> ${want}`, got === want, got);
+      }
+      D.cur = null;
+      delete process.env.WEB_APP_ENABLED;
+      T('landing-only: the switch defaults to the web app staying on', (await mw('/transactions')) === '/login');
     }
     // security page
     login('m@x.com');
