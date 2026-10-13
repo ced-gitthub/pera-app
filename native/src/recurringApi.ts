@@ -1,6 +1,6 @@
 import Constants from 'expo-constants';
 import { supabase } from './supabase';
-import { manilaToday } from '../../src/core/money';
+import { addDays, manilaToday } from '../../src/core/money';
 import { DATE_UNCONFIRMED, createRuleWith, deleteRuleWith, runDueWith, setRuleActiveWith, type Db } from './recurringCore';
 import { MAX_RULES, manilaDateFromHttpDate, type RuleRow } from './recurringLogic';
 
@@ -40,8 +40,11 @@ export async function createRule(row: RuleRow): Promise<string | null> {
 }
 
 // Pausing flips `active`. Resuming skips the dates missed while paused (see setRuleActiveWith).
-export function setRuleActive(id: string, active: boolean): Promise<string | null> {
-  return setRuleActiveWith(db, { id }, active, manilaToday());
+export async function setRuleActive(id: string, active: boolean): Promise<string | null> {
+  // Resuming uses the server date, capped at the phone's date + 1 day, so a wrong phone clock cannot rewind or skip a rule.
+  const server = active ? await serverToday() : null;
+  const cap = addDays(manilaToday(), 1);
+  return setRuleActiveWith(db, { id }, active, server === null ? null : server > cap ? cap : server);
 }
 
 export function deleteRule(id: string): Promise<string | null> {

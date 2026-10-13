@@ -1,7 +1,13 @@
 // Tiny in-memory stand-in for the chainable Supabase client, just enough for native/src/recurringCore.ts.
 type Err = { message: string; code?: string } | null;
 type Row = Record<string, unknown>;
-export type Call = { table: string; op: 'select' | 'insert' | 'update' | 'delete'; payload?: Row; filters: [string, unknown][] };
+export type Call = {
+  table: string;
+  op: 'select' | 'insert' | 'update' | 'delete';
+  payload?: Row;
+  filters: [string, unknown][];
+  columns?: string;
+};
 
 export function makeFakeDb(
   seed: Record<string, Row[]> = {},
@@ -35,12 +41,22 @@ export function makeFakeDb(
         tables[table] = rows.filter((r) => !match(r));
         return { data: null, error: null };
       }
-      const found = rows.filter(match).map((r) => ({ ...r }));
+      // a real database returns only the columns that were asked for, so the fake does too
+      const pick = (r: Row): Row => {
+        if (!call.columns || call.columns === '*') return { ...r };
+        const out: Row = {};
+        for (const k of call.columns.split(',').map((x) => x.trim())) out[k] = r[k];
+        return out;
+      };
+      const found = rows.filter(match).map(pick);
       if (wantOne) return found.length ? { data: found[0], error: null } : { data: null, error: { message: 'no rows', code: 'PGRST116' } };
       return { data: found, error: null };
     };
     const q = {
-      select: () => q,
+      select: (cols?: string) => {
+        if (call.op === 'select' && cols) call.columns = cols;
+        return q;
+      },
       eq: (c: string, v: unknown) => (call.filters.push([c, v]), q),
       single: () => ((wantOne = true), q),
       insert: (v: Row) => ((call.op = 'insert'), (call.payload = v), q),

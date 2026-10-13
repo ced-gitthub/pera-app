@@ -128,11 +128,12 @@ export function occurrence(rule: Schedule, k: number): string {
 
 // Resuming a paused rule: skip every date missed while it was paused. The first run is the first occurrence on or after today.
 export function resumePlan(
-  rule: Schedule & { end_date: string | null },
+  rule: Schedule & { end_date: string | null; run_count?: number },
   today: string,
 ): { run_count: number; next_run_date: string; active: boolean } {
-  let k = 0;
-  let d = occurrence(rule, 0);
+  // Never start before the rule's current position: that position only moves forward, so an entry the person deleted is never made again.
+  let k = Math.max(0, rule.run_count ?? 0);
+  let d = occurrence(rule, k);
   while (d < today) {
     k++;
     d = occurrence(rule, k);
@@ -156,6 +157,13 @@ export function manilaDateFromHttpDate(header: string): string | null {
 }
 
 // Run the due rules when we never have, or when the Manila day has changed since the last run.
-export function shouldRunDue(lastRunDate: string | null, today: string): boolean {
+export const RETRY_MS = 5 * 60 * 1000;
+export function shouldRunDue(
+  lastRunDate: string | null,
+  today: string,
+  lastTryAt: number | null = null,
+  now: number = Date.now(),
+): boolean {
+  if (lastTryAt !== null && now - lastTryAt < RETRY_MS) return false; // a failed attempt is not repeated on every refresh
   return lastRunDate === null || lastRunDate !== today;
 }

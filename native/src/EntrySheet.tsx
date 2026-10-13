@@ -232,6 +232,17 @@ export function UndoBar({
           {busy ? 'Restoring...' : error ? 'Try again' : 'Undo'}
         </Text>
       </Pressable>
+      {!!error && (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Dismiss"
+          onPress={onDismiss}
+          hitSlop={sp.m}
+          style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: sp.m }}
+        >
+          <Text style={{ color: c.mute, fontSize: t.body }}>Dismiss</Text>
+        </Pressable>
+      )}
     </View>
   );
 }

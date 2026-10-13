@@ -12,7 +12,7 @@ import { Manage } from './Manage';
 import { Csv } from './Csv';
 import { c, s, sp, t } from './ui';
 
-export const APP_VERSION = '0.7.0';
+export const APP_VERSION = '0.7.1';
 
 // Which accounts are savings (they leave "You can spend") and which show as cards on Home. Both are saved on the account itself, so the website agrees.
 export function AccountsSheet({

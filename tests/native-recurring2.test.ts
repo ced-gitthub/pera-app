@@ -53,10 +53,10 @@ test('resume writes active, run_count and next_run_date in ONE update (no backfi
   assert.equal(tables[TABLE][0].run_count, 9);
 });
 
-test('resume after the end date leaves the rule inactive', async () => {
+test('resume after the end date is refused with a reason and changes nothing', async () => {
   const { db, calls } = makeFakeDb({ [TABLE]: [{ ...seedRule, end_date: '2026-06-30' }] });
-  assert.equal(await setRuleActiveWith(db, { id: row.id }, true, '2026-10-14'), null);
-  assert.equal(calls.find((c) => c.op === 'update')?.payload?.active, false);
+  assert.match((await setRuleActiveWith(db, { id: row.id }, true, '2026-10-14')) ?? '', /ended on 2026-06-30/);
+  assert.equal(calls.filter((c) => c.op === 'update').length, 0);
 });
 
 test('pause only sets active=false and never touches run_count', async () => {
