@@ -61,6 +61,8 @@
 
 - 2026-10-13 owner feedback on the wizard: not sliding enough, could still skip, no examples. Fixed: every action slide now has a worked Example (You type -> what Zovix does; src/lib/onboardingCopy.ts); accounts that already have all 4 steps get a one-time Next/Back walkthrough (TourView, cookie zovix_toured) instead of being let straight in; sign-out clears the cookies. e2e 391, unit 88.
 
+- 2026-10-13 owner could not see the tour on the website: an intermediate deploy had marked their browser finished. Cookie bumped to zovix_onboarded3; Settings now has a "Show the tutorial again" button (ReplayTour) that clears the cookies.
+
 ## Next steps
 
 0. Owner: turn Supabase Confirm email back ON after any live-suite run. Provide the domain (with ending) to attach it in Vercel, then follow docs/play-store/PLAY_CONSOLE_GUIDE.md.

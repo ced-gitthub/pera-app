@@ -5,7 +5,7 @@ import { MAX_MINOR } from '../core/money.ts';
 export const GATE_STEPS = ['first', 'balance', 'budget', 'goal'] as const;
 export type GateStep = (typeof GATE_STEPS)[number];
 export const WIZARD_TOTAL = GATE_STEPS.length + 1;
-export const ONBOARDING_COOKIE = 'zovix_onboarded2'; // set once finished: skips the check (and its queries) on this device
+export const ONBOARDING_COOKIE = 'zovix_onboarded3'; // set once finished: skips the check (and its queries) on this device
 export const BAL_COOKIE = 'zovix_wizard_bal'; // set when step 2 is submitted: typing exactly what the entries already add up to leaves every opening balance at 0, so the data alone cannot tell
 export const TOUR_COOKIE = 'zovix_toured'; // set when the walkthrough was seen to the end on this device
 export const WIZARD_COOKIE = 'zovix_wizard'; // set while the wizard is on screen: tells a just-finished user apart from a long-time user on a new device

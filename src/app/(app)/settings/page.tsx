@@ -5,6 +5,7 @@ import { manilaToday, formatMinor } from '@/core/money';
 import ImportForm from '@/components/ImportForm';
 import InstallApp from '@/components/InstallApp';
 import PageBanner from '@/components/PageBanner';
+import ReplayTour from '@/components/ReplayTour';
 import Link from 'next/link';
 import { Flash, type SP } from '@/components/ui';
 export default async function Settings({ searchParams }: { searchParams: SP }) {
@@ -19,6 +20,7 @@ export default async function Settings({ searchParams }: { searchParams: SP }) {
     <>
       <PageBanner emoji="⚙️" title="Settings" sub="Make Zovix yours" />
       <InstallApp />
+      <ReplayTour />
       <Flash sp={sp} />
       <div className="card">
         <h2 className="font-semibold">Profile & currency</h2>
