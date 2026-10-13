@@ -392,3 +392,45 @@ html body .ld-demo .wl-win .btn {
     margin-top: 6px;
   }
 }
+
+/* shortcuts row at the very top */
+html {
+  scroll-behavior: smooth;
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+.ld [id] {
+  scroll-margin-top: 14px;
+}
+.ld-nav {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 0 8px;
+  margin: 0 -2px;
+  scrollbar-width: none;
+}
+.ld-nav::-webkit-scrollbar {
+  display: none;
+}
+.ld-nav a {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+  white-space: nowrap;
+  text-decoration: none;
+}
+.ld-nav a:hover,
+.ld-nav a:focus-visible {
+  background: rgba(255, 255, 255, 0.3);
+}

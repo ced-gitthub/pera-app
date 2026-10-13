@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { APK_URL } from '@/lib/site';
-// A bottom download bar that only appears once the hero button has scrolled away, and steps aside again when the final button is on screen.
+// A bottom download bar that only appears once the hero button has been scrolled past, and steps aside again when the final button is on screen.
 export default function StickyCta() {
   const [show, setShow] = useState(false);
   useEffect(() => {
@@ -11,12 +11,13 @@ export default function StickyCta() {
       setShow(true);
       return;
     }
-    let heroSeen = true,
+    let heroPast = false,
       endSeen = false;
-    const update = () => setShow(!heroSeen && !endSeen);
+    const update = () => setShow(heroPast && !endSeen);
     const io = new IntersectionObserver((es) => {
       for (const e of es) {
-        if (e.target === hero) heroSeen = e.isIntersecting;
+        if (e.target === hero)
+          heroPast = !e.isIntersecting && e.boundingClientRect.top < 0; // only once scrolled PAST it, not while it is still below the fold
         else endSeen = e.isIntersecting;
       }
       update();

@@ -55,10 +55,10 @@ G('auth: logged-out');
   await step('landing page: Get Zovix free, worked sample "lunch 150 gcash", install steps, live demo, no login fields', async () => {
     await q.goto('/');
     if (new URL(q.url()).pathname !== '/welcome') return q.url();
-    await q.locator('text=Private by design').waitFor({ timeout: 20000 });
+    await q.locator('text=Pribado ang pera mo').waitFor({ timeout: 20000 });
     const t = (await q.locator('body').innerText()).replace(/\s+/g, ' ').toLowerCase();
     const href = await q.locator('a[href="/zovix.apk"]').first().getAttribute('href');
-    const need = ['lunch 150 gcash', 'What Zovix does', 'Add to Home Screen', 'Broke Rookie', 'Private by design'];
+    const need = ['lunch 150 gcash', 'Ito ang ginagawa ng Zovix', 'Add to Home Screen', 'Broke Rookie', 'Pribado ang pera mo'];
     const miss = need.filter((x) => !t.includes(x.toLowerCase()));
     return href === '/zovix.apk' &&
       !miss.length &&

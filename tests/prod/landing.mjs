@@ -30,7 +30,7 @@ for (const [label, vp, scheme] of [
   const url = ONLY ? '/' : '/welcome';
   await step(`${url} shows the landing page with Get Zovix free buttons`, async () => {
     await q.goto(url);
-    await q.locator('text=Private by design').waitFor({ timeout: 20000 });
+    await q.locator('text=Pribado ang pera mo').waitFor({ timeout: 20000 });
     const a = q.locator('a[href="/zovix.apk"]');
     const n = await a.count(),
       href = await a.first().getAttribute('href');
@@ -43,14 +43,14 @@ for (const [label, vp, scheme] of [
   await step('has the introduction, how it works, worked samples, benefits, levels, privacy and FAQ', async () => {
     const t = (await q.locator('body').innerText()).replace(/\s+/g, ' ').toLowerCase();
     const need = [
-      'What it is',
-      'How it works',
+      'Ano ito',
+      'Paano gumagana',
       'lunch 150 gcash',
-      'What Zovix does',
-      'What you get',
+      'Ito ang ginagawa ng Zovix',
+      'Ano ang makukuha mo',
       'Broke Rookie',
-      'Private by design',
-      'Is Zovix really free?',
+      'Pribado ang pera mo',
+      'Libre ba talaga ang Zovix?',
       'iPhone',
     ];
     const miss = need.filter((x) => !t.includes(x.toLowerCase()));
@@ -59,7 +59,7 @@ for (const [label, vp, scheme] of [
   await step(
     'conversion sections are there: pain, comparison table, who it is for; page has structured data and a share image',
     async () => {
-      const need = ['Sound familiar?', 'Why not just use Notes or a spreadsheet?', 'Made for people who track by feel'];
+      const need = ['Sound familiar?', 'Bakit hindi na lang Notes o spreadsheet?', 'Para kanino ang Zovix'];
       const t = await q.locator('body').innerText();
       const miss = need.filter((x) => !t.includes(x));
       const ld = await q.locator('script[type="application/ld+json"]').count(),
@@ -77,6 +77,17 @@ for (const [label, vp, scheme] of [
     const mid = await q.locator('.ld-sticky.on').count();
     return top === 0 && mid === 1 ? true : { top, mid };
   });
+  await step('top shortcuts jump to Demo, Ano ito, Paano, Features, Privacy, FAQ and I-install', async () => {
+    const hrefs = await q.locator('nav.ld-nav a').evaluateAll((as) => as.map((a) => a.getAttribute('href')));
+    const want = ['#try', '#about', '#how', '#features', '#privacy', '#faq', '#install'];
+    const missing = want.filter((h) => !hrefs.includes(h));
+    const dead = [];
+    for (const h of want) if ((await q.locator(h).count()) !== 1) dead.push(h);
+    await q.locator('nav.ld-nav a[href="#faq"]').click();
+    await q.waitForTimeout(900);
+    const top = await q.evaluate(() => document.getElementById('faq').getBoundingClientRect().top);
+    return !missing.length && !dead.length && top < 300 ? true : { missing, dead, top };
+  });
   await step('a FAQ answer opens when tapped', async () => {
     const d = q.locator('details.ld-faq').first();
     await d.locator('summary').click();
@@ -87,21 +98,24 @@ for (const [label, vp, scheme] of [
       ? true
       : 'has a login field',
   );
-  await step('live demo: tapping a chip adds a row and lowers the wallet; three entries show the Get Zovix free prompt', async () => {
-    const wallet = async () => (await q.locator('.ld-demo .wl-total b').innerText()).replace(/\s+/g, ' ');
-    const before = await wallet();
-    await q.locator('.ld-demo button.wl-chip', { hasText: 'lunch 150 gcash' }).click();
-    await q.locator('.ld-demo .wl-row').first().waitFor({ timeout: 10000 });
-    await q.locator('.ld-demo button.wl-chip', { hasText: 'coffee 120' }).click();
-    await q.fill('#ld-in', 'grocery 800 cash');
-    await q.locator('.ld-demo button:has-text("Add")').click();
-    await q.locator('.ld-demo .wl-win').waitFor({ timeout: 10000 });
-    await q.waitForTimeout(900);
-    const after = await wallet(),
-      rows = await q.locator('.ld-demo .wl-row').count(),
-      cta = await q.locator('.ld-demo .wl-win a[href="/zovix.apk"]').count();
-    return before !== after && rows === 3 && cta === 1 ? true : { before, after, rows, cta };
-  });
+  await step(
+    'live demo: tapping a chip adds a row and lowers the wallet; three entries show a friendly message with no pushy button',
+    async () => {
+      const wallet = async () => (await q.locator('.ld-demo .wl-total b').innerText()).replace(/\s+/g, ' ');
+      const before = await wallet();
+      await q.locator('.ld-demo button.wl-chip', { hasText: 'lunch 150 gcash' }).click();
+      await q.locator('.ld-demo .wl-row').first().waitFor({ timeout: 10000 });
+      await q.locator('.ld-demo button.wl-chip', { hasText: 'coffee 120' }).click();
+      await q.fill('#ld-in', 'grocery 800 cash');
+      await q.locator('.ld-demo button:has-text("Add")').click();
+      await q.locator('.ld-demo .wl-win').waitFor({ timeout: 10000 });
+      await q.waitForTimeout(900);
+      const after = await wallet(),
+        rows = await q.locator('.ld-demo .wl-row').count(),
+        cta = await q.locator('.ld-demo .wl-win a[href="/zovix.apk"]').count();
+      return before !== after && rows === 3 && cta === 0 ? true : { before, after, rows, cta };
+    },
+  );
   await step('demo rejects nonsense with a plain message', async () => {
     await q.fill('#ld-in', 'hello there');
     await q.locator('.ld-demo button:has-text("Add")').click();

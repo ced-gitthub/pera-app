@@ -78,6 +78,8 @@
 
 - 2026-10-14 landing conversion pass: sections Sound familiar (pain), comparison vs Notes/spreadsheet (stacks into cards on phones), Made for, 3 more FAQ answers; sticky download bar now appears only after the hero button scrolls away and hides at the final CTA (StickyCta.tsx); sentence-case eyebrow. Discovery: robots.txt, sitemap.xml, opengraph-image (share card), JSON-LD SoftwareApplication (no invented ratings), canonical + metadataBase (src/lib/siteUrl.ts, landingPath() in site.ts). Middleware matcher now skips robots.txt, sitemap.xml, opengraph-image (judge review pending/see below). No fake testimonials or counts on purpose. Sitemap/robots are static: they use the constant, so they switch to / when WEB_APP_ENABLED becomes false.
 
+- 2026-10-14 owner feedback: too pushy and not Tagalog enough. Demo win card no longer has a download button (message only); the bottom sticky bar now appears only after the hero button has been scrolled PAST (not while it is still below the fold). Landing copy is now natural Taglish (src/lib/landingCopy.ts, headings in H; Sound familiar kept as the model). New top shortcut pills (Demo, Ano ito, Paano, Features, Privacy, FAQ, I-install) with smooth scroll and section ids. The live suite checks the shortcuts and that the win card has no button.
+
 ## Next steps
 
 0. Owner: turn Supabase Confirm email back ON after any live-suite run. Provide the domain (with ending) to attach it in Vercel, then follow docs/play-store/PLAY_CONSOLE_GUIDE.md.
