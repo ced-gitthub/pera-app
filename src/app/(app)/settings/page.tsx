@@ -4,6 +4,7 @@ import { updateProfile, createCategory, deleteCategory, createRecurring, deleteR
 import { manilaToday, formatMinor } from '@/core/money';
 import ImportForm from '@/components/ImportForm';
 import InstallApp from '@/components/InstallApp';
+import PageBanner from '@/components/PageBanner';
 import Link from 'next/link';
 import { Flash, type SP } from '@/components/ui';
 export default async function Settings({ searchParams }: { searchParams: SP }) {
@@ -16,6 +17,7 @@ export default async function Settings({ searchParams }: { searchParams: SP }) {
   const cn = new Map(categories.map((c) => [c.id, c.name]));
   return (
     <>
+      <PageBanner emoji="⚙️" title="Settings" sub="Make Zovix yours" />
       <InstallApp />
       <Flash sp={sp} />
       <div className="card">

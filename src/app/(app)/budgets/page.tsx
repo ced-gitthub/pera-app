@@ -47,7 +47,9 @@ export default async function Budgets({ searchParams }: { searchParams: SP }) {
                 <b className="w-40">
                   {emojiFor(c.name)} {c.name}
                 </b>
-                <span className="m">{b !== undefined ? `Budget ${formatMinor(b)}` : 'No budget set'}</span>
+                {(b !== undefined || s === 0) && (
+                  <span className="m">{b !== undefined ? `Budget ${formatMinor(b)}` : 'No budget set'}</span>
+                )}
               </div>
               <form className="edit-only editf" aria-label={`Edit ${c.name}`}>
                 <input type="hidden" name="ym" value={ym} />

@@ -325,10 +325,15 @@ export default async function Dashboard({ searchParams }: { searchParams: SP }) 
       <div id="quick">
         <Quick />
       </div>
+    </>
+  );
+  // Money first (balance, quick add, accounts, history); the fun cards (install, goals, quests) come after, so the main numbers are never buried.
+  const after = (
+    <>
       <InstallApp dismissible />
       <GoalsCard goals={goalViews} accounts={accounts.map((a) => ({ id: a.id, name: a.name }))} />
       <QuestBoard quests={quests} xp={xpFor({ totalEntries: entriesN, streak: st.n })} tip={tipFor(today)} />
     </>
   );
-  return <Tab tab="home" title="Home" init={layout.home} nodes={nodes} before={before} canCustomize />;
+  return <Tab tab="home" title="Home" init={layout.home} nodes={nodes} before={before} after={after} canCustomize />;
 }

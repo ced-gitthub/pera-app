@@ -128,6 +128,21 @@ const count = (h: string, s: string) => h.split(s).length - 1;
       h.includes('id="quick"') &&
       /\d\/5 done/.test(h),
   );
+  if (process.env.PREVIEW_DIR) {
+    // Visual review helper (not part of the normal run): writes the rendered pages to disk so they can be screenshotted with the built CSS.
+    const fsx = await import('node:fs');
+    fsx.mkdirSync(process.env.PREVIEW_DIR, { recursive: true });
+    for (const [name, P] of [
+      ['dash', Dashboard],
+      ['txs', Txs],
+      ['accounts', Accounts],
+      ['budgets', Budgets],
+      ['reports', Reports],
+      ['settings', Settings],
+      ['assistant', Assistant],
+    ] as [string, Parameters<typeof page>[0]][])
+      fsx.writeFileSync(`${process.env.PREVIEW_DIR}/${name}.html`, await page(P));
+  }
   T('home: has the joyful page banner', h.includes('Your money at a glance') && h.includes('class="th-emoji"'));
   T(
     'home: nine entries logged today completes both daily count quests',
