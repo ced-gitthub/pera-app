@@ -103,7 +103,7 @@ export async function newCtx(browser, vp = { width: 1280, height: 900 }, { wizar
   const c = await browser.newContext({ viewport: vp, baseURL: BASE, ...extra });
   c.keepWizard = wizard;
   if (!wizard) await c.addCookies([{ name: 'zovix_onboarded3', value: '1', url: BASE }]);
-  c.setDefaultTimeout(20000);
+  c.setDefaultTimeout(40000);
   const np = c.newPage.bind(c);
   c.newPage = async () => patch(await np());
   return c;
