@@ -68,13 +68,17 @@ export async function trashPolicySteps({ A, B, anon, step, other, d }: Ctx): Pro
   });
   await step('tx_trash: B cannot INSERT a trash row for itself or for A (42501), nor can anonymous', async () => {
     if (!t.ok) return SKIP;
+    // A may already have other trash rows from earlier steps: compare against A's rows right before the attempts, not against "none"
+    const aBefore = ((await A.c.from('tx_trash').select('id')).data ?? []).map((x: { id: string }) => x.id).sort();
     const own = await B.c.from('tx_trash').insert(fakeRow(B.id)),
       forA = await B.c.from('tx_trash').insert(fakeRow(A.id)),
       an = await anon.from('tx_trash').insert(fakeRow(A.id)),
-      extra = await A.c.from('tx_trash').select('id').neq('id', t.aId);
-    return code(own) === '42501' && code(forA) === '42501' && code(an) === '42501' && !extra.error && (extra.data ?? []).length === 0
+      aAfter = await A.c.from('tx_trash').select('id');
+    const sameForA =
+      !aAfter.error && JSON.stringify((aAfter.data ?? []).map((x: { id: string }) => x.id).sort()) === JSON.stringify(aBefore);
+    return code(own) === '42501' && code(forA) === '42501' && code(an) === '42501' && sameForA
       ? true
-      : { own: code(own), forA: code(forA), anon: code(an), extraRowsForA: extra.error?.message ?? extra.data?.length };
+      : { own: code(own), forA: code(forA), anon: code(an), aTrashUnchanged: sameForA };
   });
   await step("tx_trash: B cannot UPDATE its own or A's trash row (42501); deleted_at and ownership are unchanged", async () => {
     if (!t.ok) return SKIP;

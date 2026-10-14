@@ -420,8 +420,8 @@ G('two-step verification is enforced by the database (migration 0006)');
   let sec = '',
     fid = '';
   const n = async (c, t = 'accounts') => {
-    const r = await c.from(t).select('id');
-    return r.error ? 'ERR:' + r.error.code : r.data.length;
+    const r = await c.from(t).select('*', { count: 'exact', head: true }); // a head count works for every table (user_settings has no id column)
+    return r.error ? 'ERR:' + r.error.code : r.count;
   };
   await step('mfa_ok() exists: callable by signed-in users, not by anonymous', async () => {
     const a = await U.c.rpc('mfa_ok'),
@@ -594,7 +594,8 @@ G('two-step verification is enforced by the database (migration 0006)');
   });
   await step('cleanup: the seeded rows are deleted and read back as 0', async () => {
     const bad = {};
-    for (const t of ['tx_trash', 'transactions', 'budgets', 'recurring_transactions', 'savings_goals', 'user_settings']) {
+    // transactions BEFORE tx_trash (deleting a transaction writes a trash row); user_settings has no delete policy, so it is not part of the clean-up
+    for (const t of ['transactions', 'tx_trash', 'budgets', 'recurring_transactions', 'savings_goals']) {
       const d = await U.c.from(t).delete().eq('user_id', U.id);
       const left = await n(U.c, t);
       if (d.error || left !== 0) bad[t] = d.error?.message ?? left;
