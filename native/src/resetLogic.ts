@@ -19,7 +19,9 @@ const plural = (n: number, one: string, many: string) => (n === 1 ? `the 1 ${one
 
 // Sum of the three counts; null when any is unknown.
 export const sumCounts = (c: Counts): number | null =>
-  c.entries === null || c.budgets === null || c.goals === null || c.recurring === null ? null : c.entries + c.budgets + c.goals + c.recurring;
+  c.entries === null || c.budgets === null || c.goals === null || c.recurring === null
+    ? null
+    : c.entries + c.budgets + c.goals + c.recurring;
 
 export function allWarning(c: { entries: number; budgets: number; goals: number; recurring: number }): string {
   return (
@@ -83,7 +85,13 @@ export function resetError(error: unknown): string {
   return 'Could not delete right now. Either all of them were deleted or none were. Check the numbers below, then try again.';
 }
 
-const NAME: Record<ResetStep, string> = { recurring: 'recurring rules', budgets: 'budgets', goals: 'goals', entries: 'entries', balances: 'starting balances' };
+const NAME: Record<ResetStep, string> = {
+  recurring: 'recurring rules',
+  budgets: 'budgets',
+  goals: 'goals',
+  entries: 'entries',
+  balances: 'starting balances',
+};
 const list = (a: string[]) => (a.length > 1 ? `${a.slice(0, -1).join(', ')} and ${a[a.length - 1]}` : a[0]);
 const cap = (x: string) => x.charAt(0).toUpperCase() + x.slice(1);
 const ORDER: ResetStep[] = ['recurring', 'budgets', 'goals', 'entries', 'balances'];

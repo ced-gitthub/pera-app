@@ -42,7 +42,10 @@ export function buildSampleRows(accounts: Account[], categories: Category[], tod
 }
 
 // Offered only when the account has nothing yet, so sample entries never mix with real ones. Unknown counts: never offered.
-export function canOfferSample(counts: { totalEntries: number; budgetsCount: number; goalsCount: number } | null, accountCount: number): boolean {
+export function canOfferSample(
+  counts: { totalEntries: number; budgetsCount: number; goalsCount: number } | null,
+  accountCount: number,
+): boolean {
   return !!counts && counts.totalEntries === 0 && accountCount > 0;
 }
 

@@ -68,7 +68,8 @@ export const newRequestId = () =>
   });
 
 // The balance the setup form starts from: what the account shows, WITHOUT the sample entries (deleting them later must not change what the person typed).
-export const balancePrefill = (s: Snapshot, a: Account): number => (s.balances[a.id] ?? a.opening_balance_minor) - (s.sampleMovement?.[a.id] ?? 0);
+export const balancePrefill = (s: Snapshot, a: Account): number =>
+  (s.balances[a.id] ?? a.opening_balance_minor) - (s.sampleMovement?.[a.id] ?? 0);
 
 // Wizard step 2: "what I have in each account today" -> opening balances to store (typed minus what is already logged). Accounts not on the form are never touched.
 export function planBalances(

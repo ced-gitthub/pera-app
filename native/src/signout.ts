@@ -10,7 +10,14 @@ const forgetSignUpFlag = () => AsyncStorage.removeItem(JUST_SIGNED_UP_KEY).catch
 export function confirmSignOut() {
   Alert.alert('Log out of Zovix?', 'You can sign back in any time with an email code. Your data stays safe.', [
     { text: 'Stay signed in', style: 'cancel' },
-    { text: 'Log out', style: 'destructive', onPress: () => void forgetSignUpFlag().then(() => forgetProfile()).then(() => supabase.auth.signOut()) },
+    {
+      text: 'Log out',
+      style: 'destructive',
+      onPress: () =>
+        void forgetSignUpFlag()
+          .then(() => forgetProfile())
+          .then(() => supabase.auth.signOut()),
+    },
   ]);
 }
 

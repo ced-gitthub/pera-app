@@ -13,7 +13,12 @@ export interface Db {
 }
 
 // transactions: deleting copies each row to the hidden 30-day tx_trash (migration 0005). Balances are computed from entries, so they return to the starting balance.
-export const RESET_TABLES: Record<ResetKind, string> = { entries: 'transactions', budgets: 'budgets', goals: 'savings_goals', recurring: 'recurring_transactions' };
+export const RESET_TABLES: Record<ResetKind, string> = {
+  entries: 'transactions',
+  budgets: 'budgets',
+  goals: 'savings_goals',
+  recurring: 'recurring_transactions',
+};
 
 // How many rows would be deleted; null when it could not be counted.
 export async function countRows(db: Db, kind: ResetKind): Promise<number | null> {

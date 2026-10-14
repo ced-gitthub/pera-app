@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Flags } from './logic';
+import { markIntroDoneServer } from './introServer';
 
 // The website keeps these as cookies; here they are small flags on the device, one set PER ACCOUNT (wizard progress belongs to the account, not the phone).
 // They only remember what was SEEN. Whether a step is done always comes from real data.
@@ -42,7 +43,10 @@ export async function tabTourSeen(uid: string): Promise<boolean> {
     return true; // if storage is broken, never nag
   }
 }
-export const markTabTourSeen = (uid: string) => AsyncStorage.setItem(tourKey(uid), '1').catch(() => {});
+export const markTabTourSeen = (uid: string) => {
+  void markIntroDoneServer(); // remembered with the account too, so a reinstall does not start the intro again
+  return AsyncStorage.setItem(tourKey(uid), '1').catch(() => {});
+};
 
 // Sample entries added for the tour are remembered per account until the person chooses Keep or Clear, so the question survives closing the app mid-tour.
 const sampleKey = (uid: string) => `zv_sample_pending:${uid}`;
@@ -65,4 +69,5 @@ export async function askPending(uid: string): Promise<boolean> {
     return false;
   }
 }
-export const setAskPending = (uid: string, on: boolean) => (on ? AsyncStorage.setItem(askKey(uid), '1') : AsyncStorage.removeItem(askKey(uid))).catch(() => {});
+export const setAskPending = (uid: string, on: boolean) =>
+  (on ? AsyncStorage.setItem(askKey(uid), '1') : AsyncStorage.removeItem(askKey(uid))).catch(() => {});

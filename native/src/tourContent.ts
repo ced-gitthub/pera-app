@@ -9,7 +9,12 @@ export type TourStep = {
 };
 
 export const TOUR: TourStep[] = [
-  { tab: 'home', targetId: 'home:tiles', title: 'Home', text: 'This is Home: your Total, Spendable and Savings at a glance. Tap an account to open Accounts.' },
+  {
+    tab: 'home',
+    targetId: 'home:tiles',
+    title: 'Home',
+    text: 'This is Home: your Total, Spendable and Savings at a glance. Tap an account to open Accounts.',
+  },
   { tab: 'home', targetId: 'fab', title: 'Add an entry', text: 'Tap ＋ Add to log money you spent or earned. It floats on every tab.' },
   {
     tab: 'activity',
@@ -23,7 +28,12 @@ export const TOUR: TourStep[] = [
     title: 'Accounts',
     text: 'This is Accounts, where your money lives. Use Manage to rename an account, set its balance or add one.',
   },
-  { tab: 'budgets', targetId: 'tab:budgets', title: 'Budgets', text: 'This is Budgets, a monthly limit for each kind of spending. The bar fills as you spend.' },
+  {
+    tab: 'budgets',
+    targetId: 'tab:budgets',
+    title: 'Budgets',
+    text: 'This is Budgets, a monthly limit for each kind of spending. The bar fills as you spend.',
+  },
   {
     tab: 'goals',
     targetId: 'tab:goals',

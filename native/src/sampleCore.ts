@@ -8,7 +8,9 @@ export async function addSampleWith(db: Db, userId: string, rows: SampleRow[]): 
   try {
     if (!userId || !rows.length) return SAMPLE_FAIL;
     const payload = rows.map((r) => ({ ...r.patch, user_id: userId, request_id: r.requestId, request_idx: 0 }));
-    const { error } = await db.from('transactions').upsert(payload, { onConflict: 'user_id,request_id,request_idx', ignoreDuplicates: true });
+    const { error } = await db
+      .from('transactions')
+      .upsert(payload, { onConflict: 'user_id,request_id,request_idx', ignoreDuplicates: true });
     if (error) return SAMPLE_FAIL;
     const { count, error: countError } = await db
       .from('transactions')
@@ -28,7 +30,11 @@ export async function addSampleWith(db: Db, userId: string, rows: SampleRow[]): 
 export async function removeSampleWith(db: Db, userId: string): Promise<string | null> {
   try {
     if (!userId) return SAMPLE_REMOVE_FAIL;
-    const mine = (q: Query) => q.eq('user_id', userId).in('request_id', SAMPLE_IDS).like('description', SAMPLE_LABEL + '%');
+    const mine = (q: Query) =>
+      q
+        .eq('user_id', userId)
+        .in('request_id', SAMPLE_IDS)
+        .like('description', SAMPLE_LABEL + '%');
     const { error } = await mine(db.from('transactions').delete()).select('id');
     if (error) return SAMPLE_REMOVE_FAIL;
     const { count, error: countError } = await mine(db.from('transactions').select('id', { count: 'exact', head: true }));

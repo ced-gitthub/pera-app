@@ -63,7 +63,7 @@ function SampleBox({ step }: { step: GateStep }) {
   );
 }
 
-// Full-screen and rendered INSTEAD of the app, so nothing behind it can be tapped or scrolled. There is no Skip; only Log out.
+// Full-screen and rendered INSTEAD of the app, so nothing behind it can be tapped or scrolled. The setup steps can be skipped (it is all in Settings, and replayable); Log out is always there.
 // `slide` is the required step to do now, or 'finish'. `tour` = already set up: the same slides as Next / Back.
 export function Wizard(p: {
   slide: Slide;
@@ -73,6 +73,7 @@ export function Wizard(p: {
   refresh: () => Promise<string>;
   onFinish: () => void | Promise<void>;
   onBalances: () => Promise<boolean>;
+  onSkip?: () => void | Promise<void>; // setup steps: leave the first-run steps for later
   onClose?: () => void; // the read-only walkthrough (tour mode) shows a pinned Close
   onUseSamples?: () => Promise<string | null>; // first step only: fill in labelled sample entries instead of typing one
 }) {
@@ -168,6 +169,7 @@ export function Wizard(p: {
               )}
             </>
           )}
+          {!p.tour && !!p.onSkip && <Btn label="Skip setup" alt onPress={() => void p.onSkip?.()} />}
           {!p.tour && <Btn label="Log out" alt onPress={confirmSignOut} />}
         </Animated.View>
       </ScrollView>

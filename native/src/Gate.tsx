@@ -6,6 +6,7 @@ import { supabase } from './supabase';
 import { load, type Snapshot } from './data';
 import { loadCounts } from './wizardData';
 import { askPending, readFlags, setAskPending, setFlags, tabTourSeen, markTabTourSeen, samplePending, setSamplePending } from './flags';
+import { isIntroDone } from './introLogic';
 import { createGeneration, decideAsk, isReturningAccount, openSheet } from './gateFlow';
 import { TabTour } from './TabTour';
 import { CoachProvider } from './Coach';
@@ -122,6 +123,7 @@ export function Gate({ uid: sessionUid }: { uid: string }) {
         replaying: false,
         firstLoad: !booted.current,
         accountsCount: sn.accounts.length,
+        introDone: isIntroDone({ meta: data.session?.user.user_metadata, createdAt: data.session?.user.created_at, now: Date.now() }),
         gate: d.gate,
       });
       if (returning) {
@@ -276,6 +278,12 @@ export function Gate({ uid: sessionUid }: { uid: string }) {
           refresh={refresh}
           onBalances={() => setFlags(uid, { balances: true })}
           onUseSamples={startSamples}
+          onSkip={async () => {
+            await setFlags(uid, FINISH_FLAGS);
+            await Promise.all([markTabTourSeen(uid), markMakeItYoursSeen(uid)]);
+            setMine(false);
+            await refresh();
+          }}
           onFinish={async () => {
             await setFlags(uid, FINISH_FLAGS);
             await refresh();

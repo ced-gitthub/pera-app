@@ -85,4 +85,5 @@ export const MEASURE_WAITS = [0, 60, 100, 160];
 
 // Show the spotlight now? Tab icons and the + button never move; a control on the tab already showing is already laid out; otherwise wait
 // for two matching measurements in a row (the tab has just mounted).
-export const readyToShow = (fixed: boolean, sameTab: boolean, prev: Rect | null, now: Rect): boolean => fixed || sameTab || sameRect(prev, now);
+export const readyToShow = (fixed: boolean, sameTab: boolean, prev: Rect | null, now: Rect): boolean =>
+  fixed || sameTab || sameRect(prev, now);

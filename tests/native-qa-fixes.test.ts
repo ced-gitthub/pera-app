@@ -409,3 +409,32 @@ test('the gate applies it before anything is shown', () => {
   assert.match(g, /markTabTourSeen\(id\)/);
   assert.match(g, /markMakeItYoursSeen\(id\)/);
 });
+
+// ---- 0.9.11: Ced signed back in with an old account and was forced through the tutorial again
+import { isIntroDone, INTRO_MARKER, OLD_ACCOUNT_MS } from '../native/src/introLogic.ts';
+const NOW = Date.parse('2026-10-15T00:00:00Z');
+test('an account is "already introduced" when the server says so, or when it is more than a day old', () => {
+  assert.equal(isIntroDone({ meta: { [INTRO_MARKER]: true }, createdAt: new Date(NOW - 1000).toISOString(), now: NOW }), true);
+  assert.equal(isIntroDone({ meta: {}, createdAt: new Date(NOW - OLD_ACCOUNT_MS - 1).toISOString(), now: NOW }), true);
+  assert.equal(isIntroDone({ meta: {}, createdAt: new Date(NOW - 60_000).toISOString(), now: NOW }), false); // a brand-new account
+  assert.equal(isIntroDone({ meta: null, createdAt: null, now: NOW }), false); // unknown: never hide setup
+  assert.equal(isIntroDone({ meta: { [INTRO_MARKER]: 'yes' }, createdAt: null, now: NOW }), false); // only the real marker counts
+});
+test('an introduced account skips everything at any setup step, even with zero balances or a failed count read; sign-up and replay never do', () => {
+  const x = { wasSignUp: false, replaying: false, firstLoad: true, accountsCount: 0, introDone: true };
+  for (const gate of [{ show: true, step: 'balance' }, { show: true, step: 'budget' }, { show: true, step: 'tour' }, { show: false }])
+    assert.equal(isReturningAccount({ ...x, gate }), true);
+  assert.equal(isReturningAccount({ ...x, wasSignUp: true, gate: { show: true, step: 'first' } }), false);
+  assert.equal(isReturningAccount({ ...x, replaying: true, gate: { show: true, step: 'tour' } }), false);
+  assert.equal(isReturningAccount({ ...x, introDone: false, gate: { show: true, step: 'balance' } }), false);
+});
+test('the setup steps have a Skip, and the server marker is written when the intro is answered', () => {
+  const w = fs.readFileSync('native/src/Wizard.tsx', 'utf8');
+  assert.match(w, /label="Skip setup"/);
+  assert.match(w, /onSkip/);
+  const g = fs.readFileSync('native/src/Gate.tsx', 'utf8');
+  assert.match(g, /onSkip=\{/);
+  assert.match(g, /introDone: isIntroDone\(/);
+  assert.match(fs.readFileSync('native/src/flags.ts', 'utf8'), /markIntroDoneServer\(\)/);
+  assert.match(fs.readFileSync('native/src/profile.ts', 'utf8'), /markIntroDoneServer\(\)/);
+});

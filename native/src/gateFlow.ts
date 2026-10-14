@@ -41,8 +41,11 @@ export function isReturningAccount(x: {
   replaying: boolean;
   firstLoad: boolean;
   accountsCount: number;
+  introDone: boolean; // the account itself says it was introduced (server marker, or older than a day)
   gate: { show: boolean; step?: string };
 }): boolean {
-  if (x.wasSignUp || x.replaying || !x.firstLoad || x.accountsCount < 1) return false;
+  if (x.wasSignUp || x.replaying || !x.firstLoad) return false;
+  if (x.introDone) return true; // any setup step, any data: never force an introduced account through it again
+  if (x.accountsCount < 1) return false;
   return x.gate.show && x.gate.step === 'tour'; // never when nothing is shown: that is also what a failed read looks like, and a new user who left the tour question open
 }

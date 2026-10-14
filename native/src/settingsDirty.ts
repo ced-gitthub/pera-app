@@ -14,7 +14,8 @@ export function createDraftStore(): DraftStore {
   return {
     get: (key) => m.get(key),
     set: (key, value) => {
-      if (value === key) m.delete(key); // back to the saved value: nothing to keep
+      if (value === key)
+        m.delete(key); // back to the saved value: nothing to keep
       else m.set(key, value);
     },
     clear: (key) => void m.delete(key),

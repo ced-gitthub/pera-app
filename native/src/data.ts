@@ -31,7 +31,11 @@ export async function load(): Promise<Snapshot> {
       .limit(1000),
     supabase.from('transactions').select('id', { count: 'exact', head: true }),
     supabase.rpc('no_account_summary'),
-    supabase.from('transactions').select('account_id,type,amount_minor').in('request_id', SAMPLE_IDS).like('description', SAMPLE_LABEL + '%'),
+    supabase
+      .from('transactions')
+      .select('account_id,type,amount_minor')
+      .in('request_id', SAMPLE_IDS)
+      .like('description', SAMPLE_LABEL + '%'),
   ]);
   const err = a.error ?? c.error ?? b.error ?? t.error ?? dts.error ?? cnt.error ?? na.error ?? smp.error;
   if (err) throw new Error('Could not load your data. Check your connection.');

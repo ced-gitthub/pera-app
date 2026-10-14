@@ -25,7 +25,8 @@ export const hasIconTwin = (id: ThemeId | string): boolean => id in THEME_TO_ICO
 /** The label of the "match" button: only claims to match when a twin exists, otherwise says it picks the default icon. */
 export const matchIconLabel = (id: ThemeId | string): string => (hasIconTwin(id) ? 'Match my theme' : 'Use the default icon');
 /** Which icon to show as selected: the queued one, else the one in use, and null (the original launcher icon) is the default icon. */
-export const highlightedIcon = (current: AppIconName | null, pending: AppIconName | null): AppIconName => pending ?? current ?? DEFAULT_APP_ICON;
+export const highlightedIcon = (current: AppIconName | null, pending: AppIconName | null): AppIconName =>
+  pending ?? current ?? DEFAULT_APP_ICON;
 
 export const APP_ICON_PENDING_KEY = 'zv_app_icon_pending';
 export type IconStore = {
@@ -46,8 +47,10 @@ export const ICON_PENDING_TEXT = (name: string) =>
   `Your icon will change to ${name} when you leave Zovix (press Home). Android closes the app to switch icons, so open Zovix again from its new icon a few seconds later.`;
 export const ICON_LEAVE_DELAY_MS = 800; // after the app goes to the background, wait this long (and re-check) before applying
 // Android says "background" whenever another screen opens on top, including one the app opened itself (the share sheet): only a real leave counts.
-export const shouldApplyIconNow = (appState: string, externalOpenCount: number): boolean => appState === 'background' && externalOpenCount === 0;
-export const ICON_APPLY_NOW_WARNING = 'Zovix will close right now to switch the icon. Open Zovix again from its new icon a few seconds later.';
+export const shouldApplyIconNow = (appState: string, externalOpenCount: number): boolean =>
+  appState === 'background' && externalOpenCount === 0;
+export const ICON_APPLY_NOW_WARNING =
+  'Zovix will close right now to switch the icon. Open Zovix again from its new icon a few seconds later.';
 
 const UNSUPPORTED = 'Changing the app icon is only available in the Android app.';
 const FAILED = 'Could not change the app icon. Please try again.';
