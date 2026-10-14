@@ -114,3 +114,5 @@
 - Open: nothing run on a phone; live steps for sample entries and clear-everything run after the next push to main (needs Ced's yes, it deploys the website); local commit 2fc3d93 (key guard) not pushed; website backup feature probably fine now that the key is fixed but unverified.
 - 0.9.6: sample entries are one batched write (was 12+ requests); the end-of-tour Clear shows the empty app instead of restarting the first-run tutorial (I had misread "start all over again").
 - Process (2026-10-14): Ced supplied a 5-stage app development pipeline; saved as `docs/APP-DEV-PIPELINE.md`, adapted to this repo (agent mapping, full track vs light track) and referenced from CLAUDE.md. All future work follows it.
+
+- Pipeline gates (2026-10-14): added section 7 to docs/APP-DEV-PIPELINE.md: gates G1 to G5 between stages with failure routing to planner / design skills / migrator / builder / tester / ci-watcher / judge, a verbatim Instruction ledger re-checked at every gate, max 3 rounds then ask Ced. Test: tests/pipeline-doc.test.ts.
