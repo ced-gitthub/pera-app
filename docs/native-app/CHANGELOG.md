@@ -2,6 +2,9 @@
 
 One entry per release. "Rejected" lines are what independent review (the judge agent) found before it was allowed out. See [NATIVE.md](NATIVE.md) for how it works.
 
+## 0.9.6 (2026-10-14)
+- Sample entries: one request writes all six (was 12+ in a row) and the local session is used; "Clear everything" after the tour no longer restarts the first-run tutorial, it shows the empty app. Ced: "TOO LONG" and "wtf is happening".
+
 ## 0.9.5 (2026-10-14)
 - "Clear" after the tour now clears ALL of it (sample entries, budgets, goals, recurring rules, every starting balance to 0) behind a second step that lists the counts, then starts over from the first step. Delete ALL my records does the same, and recurring rules have their own Delete option. Ced: "if I say clear all data, why leave some?".
 - Unverified: on a phone; the new live steps run in prod-qa after the next push.

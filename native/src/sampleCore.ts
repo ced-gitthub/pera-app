@@ -1,13 +1,23 @@
 // Sample-entry writes with the database client passed in, so tests can use a fake (no react-native, no supabase import).
-import { createEntryWith, type Db, type Query } from './entriesCore.ts';
+import type { Db, Query } from './entriesCore.ts';
 import { SAMPLE_FAIL, SAMPLE_IDS, SAMPLE_LABEL, SAMPLE_REMOVE_FAIL, type SampleRow } from './sampleLogic.ts';
 
-// Each row is retry-safe (same request id saves once). Returns null when all are saved, otherwise a message.
+// FAST: one request writes all the rows (retry-safe: the same fixed request ids save once) and one request confirms they are all there.
+// Returns null when all are saved, otherwise a message.
 export async function addSampleWith(db: Db, userId: string, rows: SampleRow[]): Promise<string | null> {
   try {
     if (!userId || !rows.length) return SAMPLE_FAIL;
-    for (const r of rows) if (await createEntryWith(db, userId, r.patch, r.requestId)) return SAMPLE_FAIL;
-    return null;
+    const payload = rows.map((r) => ({ ...r.patch, user_id: userId, request_id: r.requestId, request_idx: 0 }));
+    const { error } = await db.from('transactions').upsert(payload, { onConflict: 'user_id,request_id,request_idx', ignoreDuplicates: true });
+    if (error) return SAMPLE_FAIL;
+    const { count, error: countError } = await db
+      .from('transactions')
+      .select('id', { count: 'exact', head: true })
+      .in(
+        'request_id',
+        rows.map((r) => r.requestId),
+      );
+    return countError || count !== rows.length ? SAMPLE_FAIL : null;
   } catch {
     return SAMPLE_FAIL;
   }

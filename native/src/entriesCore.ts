@@ -8,7 +8,7 @@ type Res = { data?: unknown; error?: { message: string; code?: string } | null; 
 // The few chainable calls the entry writes use. The real Supabase client satisfies this.
 export interface Query extends PromiseLike<Res> {
   select(columns?: string, options?: { count?: 'exact'; head?: boolean }): Query;
-  upsert(values: Record<string, unknown>, options?: { onConflict?: string; ignoreDuplicates?: boolean }): Query;
+  upsert(values: Record<string, unknown> | Record<string, unknown>[], options?: { onConflict?: string; ignoreDuplicates?: boolean }): Query;
   update(values: Record<string, unknown>): Query;
   delete(): Query;
   eq(column: string, value: unknown): Query;

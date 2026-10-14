@@ -23,7 +23,7 @@ import { TourChoice, TourEnd } from './SampleSheets';
 import { addSamples, removeSamples } from './sampleApi';
 import { resetChoice } from './reset';
 import { startSamplesWith } from './sampleCore';
-import { TOUR_END_RESTART_FAIL, canOfferSample } from './sampleLogic';
+import { canOfferSample } from './sampleLogic';
 import { MakeItYours } from './MakeItYours';
 import { makeItYoursSeen } from './profile';
 import { shouldRunDue } from './recurringLogic';
@@ -188,12 +188,10 @@ export function Gate() {
     setChoose(false);
     startTour('home');
   };
-  // Returns a message when the flags could not be stored (then the setup steps cannot restart), otherwise null.
-  const replay = async (startOver = false): Promise<string | null> => {
-    const ok = await setFlags(uid, startOver ? { ...REPLAY_FLAGS, balances: false } : REPLAY_FLAGS); // a fresh start asks for the balances again; a plain replay keeps them
+  const replay = async () => {
+    await setFlags(uid, REPLAY_FLAGS);
     setTab('home');
     await refresh();
-    return ok ? null : TOUR_END_RESTART_FAIL;
   };
   return (
     <CoachProvider>
@@ -266,8 +264,7 @@ export function Gate() {
             }
             await setSamplePending(uid, false);
             setSampleEnd(false);
-            const m = await replay(true); // start over from the first step
-            if (m) setNotice(m);
+            await refresh(); // the app is now empty; the first-run tutorial is NOT shown again (it is only a first-run step)
             return null;
           }}
         />

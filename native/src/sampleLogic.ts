@@ -53,8 +53,7 @@ export const SAMPLE_REMOVE_FAIL = 'Could not clear the sample entries. They are 
 // because that is what a person means by "clear all data"; the words below must stay true to the code (tests/native-sample.test.ts checks them).
 export const TOUR_END_TITLE = 'Keep what you set up?';
 export const TOUR_END_TEXT =
-  'The tour added sample entries, and the setup steps made your budget, goal and starting balances. Keep everything, or clear everything (sample entries, budgets, goals, recurring rules and starting balances) and start over from the first step. Your login stays.';
+  'The tour added sample entries, and the setup steps made your budget, goal and starting balances. Keep everything, or clear everything (sample entries, budgets, goals, recurring rules and starting balances) and use an empty app. Your login, accounts and categories stay.';
 export const TOUR_END_KEEP = 'Keep everything';
-export const TOUR_END_CLEAR = 'Clear everything and start over';
+export const TOUR_END_CLEAR = 'Clear everything';
 export const TOUR_END_CONFIRM = 'Yes, delete everything';
-export const TOUR_END_RESTART_FAIL = 'Everything was cleared, but this phone could not restart the setup steps. Close and reopen Zovix, or use Settings > Show the first-run tutorial again.';

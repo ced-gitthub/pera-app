@@ -10,6 +10,9 @@ Every time Ced had to correct something, it is here, so he never has to say it t
 - **Fix the whole list.** "Fix it ALL" means every item, not the first few. After a fix, grep for the same mistake elsewhere (other tabs, other screens).
 - **Explain causes plainly, no excuses.** When he asks "why did this happen", answer honestly first (what I assumed, what I skipped), before changing anything, if he asks for the answer first.
 
+- **Clearing data never sends the person back into the first-run tutorial.** After "Clear everything" they land on the empty app (the mandatory wizard is a first-run step only; the "onboarded" flag stays). I once read "reset and start all over again" as "restart the tutorial", and Ced: "wtf is happening?". When a phrase can mean two things, pick the one with the least surprise, and say what will happen in the button text.
+- **Every action he taps must feel instant.** Count the network round trips of a tap (one request for all rows, not one per row; local session instead of getUser; reads in parallel). "Try sample entries" took 12+ sequential requests; it is now 2.
+
 ## 2. UI and product rules
 - Uniform UI: the same floating button in the same place on every tab; the Done/Close button pinned in a header (never scrolled to the bottom where it is hard to tap); same card, button and spacing everywhere.
 - Skeletons, not "Loading" text. Always a loading, empty, error and success state.
@@ -52,6 +55,7 @@ Every time Ced had to correct something, it is here, so he never has to say it t
 | Published before the re-review | Judge approves first, then publish |
 | Narrow reading of "the data from the tutorial" | List every thing the tutorial creates; the clear option removes all of it |
 | Copy that promised more than the code | Test the copy against the code |
+| Looping a network call per row | One batched request; count round trips before shipping any button |
 | Test regexes with unescaped `(`, `)` written through shell heredocs | Write scripts with the Write tool, or use Edit; shells mangle quotes and backslashes |
 | Long measuring waits before showing a tooltip | Show text first, move the highlight when ready; hard deadline |
 | Sequential network reads on every refresh | Read in parallel (`Promise.all`); use the local session, not `getUser`, on saves |

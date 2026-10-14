@@ -45,26 +45,35 @@ test('sample data is offered only to an account that has no entries yet', () => 
   assert.equal(canOfferSample(null, 2), false); // unknown: never risk mixing with real data
 });
 
-test('adding samples: one retry-safe upsert per row, null when all are confirmed', async () => {
+test('adding samples is FAST: one retry-safe upsert for all rows plus one count check, null when all are confirmed', async () => {
   const rows = buildSampleRows(accounts, categories, '2026-10-14');
-  const db = fakeDb({ 'transactions.upsert': { error: null }, 'transactions.select': { count: 1, error: null } });
+  const db = fakeDb({ 'transactions.upsert': { error: null }, 'transactions.select': { count: rows.length, error: null } });
   assert.equal(await addSampleWith(db, 'u1', rows), null);
   const ups = db.of('transactions', 'upsert');
-  assert.equal(ups.length, rows.length);
-  for (const u of ups) {
-    const row = u.args[0] as Record<string, unknown>;
+  assert.equal(ups.length, 1, 'one request for all rows, not one per row');
+  const sent = ups[0].args[0] as Record<string, unknown>[];
+  assert.ok(Array.isArray(sent) && sent.length === rows.length);
+  for (const row of sent) {
     assert.equal(row.user_id, 'u1');
     assert.ok(SAMPLE_IDS.includes(String(row.request_id)));
-    assert.deepEqual(u.args[1], { onConflict: 'user_id,request_id,request_idx', ignoreDuplicates: true });
+    assert.equal(row.request_idx, 0);
   }
+  assert.deepEqual(ups[0].args[1], { onConflict: 'user_id,request_id,request_idx', ignoreDuplicates: true });
+  const sel = db.of('transactions', 'select');
+  assert.equal(sel.length, 1, 'one count check');
+  assert.deepEqual(sel[0].filters, [['request_id in', sent.map((r) => r.request_id)]]);
+  assert.equal(db.calls.length, 2, 'two requests in total');
 });
 
-test('adding samples: a refused write is reported, not hidden', async () => {
+test('adding samples: a count that does not match, a refused write and a thrown error are all reported', async () => {
   const rows = buildSampleRows(accounts, categories, '2026-10-14');
-  const db = fakeDb({ 'transactions.upsert': { error: { message: 'PRLIM: limit' } } });
-  const msg = await addSampleWith(db, 'u1', rows);
+  const short = fakeDb({ 'transactions.upsert': { error: null }, 'transactions.select': { count: rows.length - 1, error: null } });
+  assert.ok(await addSampleWith(short, 'u1', rows));
+  const refused = fakeDb({ 'transactions.upsert': { error: { message: 'PRLIM: limit' } } });
+  const msg = await addSampleWith(refused, 'u1', rows);
   assert.ok(msg && !/PRLIM/.test(msg));
   assert.ok(await addSampleWith(fakeDb({ 'transactions.upsert': 'throw' }), 'u1', rows));
+  assert.ok(await addSampleWith(refused, '', rows));
 });
 
 test('removing samples deletes ONLY the untouched sample rows (fixed ids AND the "Sample:" label), then confirms none are left', async () => {
@@ -168,9 +177,10 @@ test('"Clear" after the tour means clear ALL of it: the sheet says everything, a
   // the words promise exactly what the code does
   for (const w of ['sample entries', 'budget', 'goal', 'starting balances', 'recurring']) assert.ok(TOUR_END_TEXT.includes(w), w);
   assert.match(TOUR_END_TEXT, /everything/i);
-  assert.doesNotMatch(TOUR_END_TEXT, /only those sample entries|empty app/i); // the old, narrower promise
+  assert.doesNotMatch(TOUR_END_TEXT, /only those sample entries|first step|start over/i); // not the narrow promise, and no restart of the tutorial
   assert.equal(TOUR_END_KEEP, 'Keep everything');
-  assert.match(TOUR_END_CLEAR, /Clear everything and start over/);
+  assert.equal(TOUR_END_CLEAR, 'Clear everything');
+  assert.match(TOUR_END_TEXT, /empty app/);
   assert.match(TOUR_END_CONFIRM, /Yes, delete everything/);
   assert.ok(TOUR_END_TITLE.length > 0);
   const sheets = fs.readFileSync('native/src/SampleSheets.tsx', 'utf8');
@@ -179,7 +189,8 @@ test('"Clear" after the tour means clear ALL of it: the sheet says everything, a
   const gate = fs.readFileSync('native/src/Gate.tsx', 'utf8');
   const clear = gate.slice(gate.indexOf('onClear={'), gate.indexOf('<ResetData'));
   assert.match(clear, /resetChoice\('all'\)/);
-  assert.match(clear, /replay\(true\)/); // start over from the first step
+  assert.doesNotMatch(clear, /replay/); // clearing does NOT send the person back into the first-run tutorial
+  assert.match(clear, /await refresh\(\)/); // it just shows the empty app
   assert.doesNotMatch(clear, /removeSamples/); // not just the samples
 });
 
@@ -207,12 +218,19 @@ test('a failed clear recounts what is really left and refreshes the screen behin
   assert.match(onClear, /if \(r\.error\) \{[\s\S]*await refresh\(\)/);
 });
 
-import { TOUR_END_RESTART_FAIL } from '../native/src/sampleLogic.ts';
-test('if the restart flags cannot be stored, the person is told the data is cleared but the setup steps could not restart', () => {
-  assert.match(TOUR_END_RESTART_FAIL, /cleared/i);
-  assert.match(TOUR_END_RESTART_FAIL, /setup/i);
+test('clearing after the tour never re-runs the mandatory first-run tutorial; the first-run flags are left alone', () => {
   const gate = fs.readFileSync('native/src/Gate.tsx', 'utf8');
-  assert.match(gate, /const replay = async/);
-  assert.match(gate, /TOUR_END_RESTART_FAIL/);
-  assert.match(gate, /onReplay=\{\(\) => void replay\(\)\}/); // the plain Settings replay stays unchanged
+  const onClear = gate.slice(gate.indexOf('onClear={'), gate.indexOf('<ResetData'));
+  assert.doesNotMatch(onClear, /setFlags|REPLAY_FLAGS|replay/);
+  assert.doesNotMatch(gate, /replay\(true\)|startOver|TOUR_END_RESTART_FAIL/);
+  assert.match(gate, /onReplay=\{\(\) => void replay\(\)\}/); // the Settings "show the tutorial again" button is unchanged
+  // with the "onboarded" flag set (it is, once the first-run steps were finished) the gate never shows the wizard, whatever the data
+  const src = fs.readFileSync('src/lib/onboarding.ts', 'utf8');
+  assert.match(src, /if \(cookies\.onboarded\) return \{ show: false/);
+});
+
+test('the sample writes use the local session (no extra network round trip for getUser)', () => {
+  const api = fs.readFileSync('native/src/sampleApi.ts', 'utf8');
+  assert.doesNotMatch(api, /auth\.getUser\(/);
+  assert.match(api, /auth\.getSession\(/);
 });
