@@ -1,0 +1,233 @@
+/* Scroll motion for the landing page. Everything here is progressive: without the "fx" class (no script, or reduce-motion) nothing is hidden or moving. */
+
+/* ---- entrances (only when ScrollFx turned on) ---- */
+.fx [data-fx]:not([data-in]) {
+  opacity: 0;
+}
+.fx [data-fx][data-in] {
+  animation-duration: 0.7s;
+  animation-fill-mode: both;
+  animation-timing-function: cubic-bezier(0.2, 0.9, 0.3, 1.15);
+  animation-delay: calc(var(--i, 0) * 90ms);
+}
+/* headings: rise, then a yellow underline draws under them */
+.fx h2[data-fx][data-in] {
+  animation-name: fx-rise;
+}
+.fx h2[data-fx] {
+  background: linear-gradient(var(--mango), var(--mango)) left bottom / 0 6px no-repeat;
+  padding-bottom: 4px;
+  width: fit-content;
+  max-width: 100%;
+}
+.fx h2[data-fx][data-in] {
+  background-size: 64px 6px;
+  transition: background-size 0.8s 0.3s cubic-bezier(0.3, 1.2, 0.4, 1);
+}
+/* cards: tilt in and settle, each a little after the last */
+.fx [data-fx='card'][data-in] {
+  animation-name: fx-tilt;
+}
+.fx [data-fx='row'][data-in] {
+  animation-name: fx-slide;
+}
+/* "what Zovix does" checkmarks pop one by one */
+.fx [data-fx='check'][data-in] {
+  animation-name: fx-pop;
+  animation-delay: calc(0.25s + var(--i, 0) * 140ms);
+}
+.fx [data-fx='chip'][data-in] {
+  animation-name: fx-pop;
+}
+/* ladder: rungs light up from the bottom of the ladder to the top */
+.fx [data-fx='rung']:not([data-in]) {
+  opacity: 0.25;
+  filter: grayscale(1);
+}
+.fx [data-fx='rung'][data-in] {
+  animation-name: fx-light;
+  animation-delay: calc(var(--i, 0) * 160ms);
+}
+/* progress bars start empty and fill when they arrive */
+.fx [data-fx='fill']:not([data-in]) {
+  opacity: 1;
+}
+.fx [data-fx='fill']:not([data-in]) > i {
+  width: 0 !important;
+}
+.fx [data-fx='fill'] > i {
+  transition: width 1.4s 0.2s cubic-bezier(0.3, 1.1, 0.4, 1);
+}
+/* the closing block pops, then coins fall once */
+.fx [data-fx='burst'][data-in] {
+  animation-name: fx-tilt;
+}
+.ld-rain {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.ld-rain s {
+  position: absolute;
+  top: -30px;
+  left: calc(var(--k) * 8.2%);
+  font-size: 22px;
+  text-decoration: none;
+  opacity: 0;
+}
+.fx [data-fx='burst'][data-in] .ld-rain s {
+  animation: fx-coin 2.2s ease-in calc(0.3s + var(--k) * 0.11s) both;
+}
+.wl-final {
+  position: relative;
+}
+
+@keyframes fx-rise {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+}
+@keyframes fx-tilt {
+  from {
+    opacity: 0;
+    transform: translateY(26px) rotate(-2.2deg) scale(0.97);
+  }
+  60% {
+    transform: translateY(-4px) rotate(0.6deg) scale(1.01);
+  }
+}
+@keyframes fx-slide {
+  from {
+    opacity: 0;
+    transform: translateX(-18px);
+  }
+}
+@keyframes fx-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  70% {
+    transform: scale(1.08);
+  }
+}
+@keyframes fx-light {
+  from {
+    opacity: 0.25;
+    filter: grayscale(1);
+    transform: translateY(8px);
+  }
+  60% {
+    transform: translateY(-5px);
+  }
+}
+@keyframes fx-coin {
+  0% {
+    opacity: 0;
+    transform: translateY(0) rotate(0);
+  }
+  12% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(260px) rotate(300deg);
+  }
+}
+
+/* step badges spin when their row arrives */
+.fx .wl-steps li[data-in] .wl-n {
+  animation: fx-spin 0.8s calc(var(--i, 0) * 90ms + 0.15s) cubic-bezier(0.3, 1.4, 0.5, 1) both;
+}
+@keyframes fx-spin {
+  from {
+    transform: rotate(-200deg) scale(0.4);
+    opacity: 0;
+  }
+}
+
+/* ---- always-on, scroll-linked pieces (browsers with scroll timelines; others just see them static) ---- */
+.ld-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  z-index: 40;
+  background: var(--mango);
+  transform-origin: left;
+  transform: scaleX(0);
+  pointer-events: none;
+}
+@supports (animation-timeline: scroll()) {
+  .ld-progress {
+    animation: fx-progress linear both;
+    animation-timeline: scroll(root block);
+  }
+  .ld-coin {
+    animation:
+      fx-float 5s ease-in-out infinite,
+      fx-drift linear both;
+    animation-timeline: auto, scroll(root block);
+    animation-range:
+      normal,
+      0 90vh;
+  }
+}
+@keyframes fx-progress {
+  to {
+    transform: scaleX(1);
+  }
+}
+.ld-coin {
+  position: absolute;
+  font-size: 34px;
+  pointer-events: none;
+  animation: fx-float 5s ease-in-out infinite;
+}
+.ld-coin.a {
+  right: 6%;
+  top: 150px;
+}
+.ld-coin.b {
+  right: 22%;
+  top: 310px;
+  font-size: 24px;
+  animation-delay: 1.2s;
+}
+.ld-coin.c {
+  left: 3%;
+  top: 420px;
+  font-size: 26px;
+  animation-delay: 2.1s;
+}
+@keyframes fx-float {
+  50% {
+    translate: 0 -12px;
+  }
+}
+@keyframes fx-drift {
+  to {
+    transform: translateY(-90px) rotate(40deg);
+  }
+}
+@media (max-width: 700px) {
+  .ld-coin.c {
+    display: none;
+  }
+}
+.ld > .ld-top {
+  position: relative;
+  overflow: clip;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ld-coin,
+  .ld-progress {
+    animation: none;
+  }
+  .ld-progress {
+    display: none;
+  }
+}

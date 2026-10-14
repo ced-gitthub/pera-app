@@ -178,6 +178,56 @@ for (const [label, vp, scheme] of [
     });
   await c.close();
 }
+G('landing: scroll motion');
+{
+  const url = ONLY ? '/' : '/welcome';
+  const c = await newCtx(browser, { width: 390, height: 800 }),
+    q = await c.newPage();
+  await step('motion on: blocks below the fold start hidden, and every one is revealed after scrolling the whole page', async () => {
+    await q.goto(url);
+    await q.waitForTimeout(600);
+    const hidden0 = await q.locator('[data-fx]:not([data-in])').count();
+    const total = await q.locator('[data-fx]').count();
+    const h = await q.evaluate(() => document.documentElement.scrollHeight);
+    for (let y = 0; y <= h; y += 350) {
+      await q.evaluate((yy) => window.scrollTo(0, yy), y);
+      await q.waitForTimeout(120);
+    }
+    await q.waitForTimeout(900);
+    const hidden1 = await q.locator('[data-fx]:not([data-in])').count();
+    return hidden0 > 10 && total > 30 && hidden1 === 0 ? true : { hidden0, total, hidden1 };
+  });
+  await step('motion on: no sideways scroll after everything has animated in', async () => {
+    const o = await q.evaluate(() => ({ sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth }));
+    return o.sw <= o.cw + 1 ? true : o;
+  });
+  await step('the scroll progress bar fills as you scroll (browsers with scroll timelines)', async () => {
+    const supported = await q.evaluate(() => CSS.supports('animation-timeline: scroll()'));
+    if (!supported) return true;
+    const bar = async () => q.evaluate(() => new DOMMatrix(getComputedStyle(document.querySelector('.ld-progress')).transform).a);
+    await q.evaluate(() => window.scrollTo(0, 0));
+    await q.waitForTimeout(300);
+    const top = await bar();
+    await q.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+    await q.waitForTimeout(500);
+    const end = await bar();
+    return top < 0.1 && end > 0.9 ? true : { top, end };
+  });
+  await c.close();
+  const r = await newCtx(browser, { width: 390, height: 800 }, { reducedMotion: 'reduce' }),
+    rp = await r.newPage();
+  await step('reduce-motion: nothing is hidden or animated, all content is simply there', async () => {
+    await rp.goto(url);
+    await rp.waitForTimeout(600);
+    const fx = await rp.evaluate(() => document.documentElement.classList.contains('fx'));
+    const tagged = await rp.locator('[data-fx]').count();
+    const faded = await rp.evaluate(
+      () => [...document.querySelectorAll('h2, .wl-card, .ld-sample')].filter((e) => getComputedStyle(e).opacity !== '1').length,
+    );
+    return !fx && tagged === 0 && faded === 0 ? true : { fx, tagged, faded };
+  });
+  await r.close();
+}
 G('landing: files and redirects');
 {
   const c = await newCtx(browser),

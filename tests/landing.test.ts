@@ -119,3 +119,14 @@ test('free-plan usage: the landing page is static (no searchParams or cookies) a
     'the /welcome rule must come after the no-store rule so it wins',
   );
 });
+test('scroll motion is progressive: off for reduce-motion, never hides what is already on screen, no horizontal overflow tricks', () => {
+  const js = readFileSync('src/components/ScrollFx.tsx', 'utf8');
+  assert.ok(js.includes('prefers-reduced-motion: reduce'), 'reduce-motion users get a still page');
+  assert.ok(js.includes("'IntersectionObserver' in window"), 'no observer support means everything just shows');
+  assert.ok(js.includes('already on screen'), 'blocks in view at load are never hidden first');
+  const css = readFileSync('src/app/welcome/motion.css', 'utf8');
+  assert.ok(css.includes('.fx [data-fx]:not([data-in])'), 'content is only hidden under the fx class that the script adds');
+  assert.ok(!/(^|\n)\[data-fx\][^{]*\{[^}]*opacity: 0/.test(css), 'never hidden without the fx class');
+  assert.ok(css.includes('prefers-reduced-motion: reduce'));
+  assert.ok(!css.includes('translateX(1') && !css.includes('translateX(2'), 'nothing is pushed off the right edge');
+});

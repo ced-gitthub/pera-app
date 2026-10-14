@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './welcome.css'; // shared landing styles
 import './landing.css';
+import './motion.css';
 import Landing from '@/components/Landing';
 import { landingPath } from '@/lib/site';
 export const metadata: Metadata = {
