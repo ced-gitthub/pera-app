@@ -3,6 +3,7 @@ name: prod-qa
 on:
   workflow_dispatch:
   push:
+    branches: [main] # production only serves main; a branch push would wait for a deploy that never comes
     # Only changes that alter what production serves. Test-only, doc and native-app commits do not re-run the suites (each run sends thousands of requests to the Vercel project).
     paths: ['src/**', 'public/**', 'package.json', 'package-lock.json', 'next.config.mjs', 'tsconfig.json', 'postcss.config.mjs', 'vercel.json', 'scripts/vercel-ignore.sh', 'scripts/deployable-paths']
 # One run at a time: overlapping runs share test users and were a source of flaky failures; a newer push replaces a waiting one.
