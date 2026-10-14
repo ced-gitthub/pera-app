@@ -393,7 +393,8 @@ import { isReturningAccount } from '../native/src/gateFlow.ts';
 const base = { wasSignUp: false, replaying: false, firstLoad: true, accountsCount: 2 };
 test('a returning account (set up, flags wiped by a reinstall) skips the walkthrough, Make it yours and the tour question', () => {
   assert.equal(isReturningAccount({ ...base, gate: { show: true, step: 'tour' } }), true); // flags wiped, everything already set up
-  assert.equal(isReturningAccount({ ...base, gate: { show: false } }), true);
+  // nothing to show is NOT proof of a reinstall: a failed count read looks the same, and so does a new user who left the tour question open
+  assert.equal(isReturningAccount({ ...base, gate: { show: false } }), false);
 });
 test('new users and real replays still get the tutorial', () => {
   assert.equal(isReturningAccount({ ...base, wasSignUp: true, gate: { show: true, step: 'account' } }), false); // just signed up

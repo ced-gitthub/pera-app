@@ -44,5 +44,5 @@ export function isReturningAccount(x: {
   gate: { show: boolean; step?: string };
 }): boolean {
   if (x.wasSignUp || x.replaying || !x.firstLoad || x.accountsCount < 1) return false;
-  return !x.gate.show || x.gate.step === 'tour';
+  return x.gate.show && x.gate.step === 'tour'; // never when nothing is shown: that is also what a failed read looks like, and a new user who left the tour question open
 }
