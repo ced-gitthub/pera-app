@@ -424,7 +424,9 @@ test('an introduced account skips everything at any setup step, even with zero b
   const x = { wasSignUp: false, replaying: false, firstLoad: true, accountsCount: 0, introDone: true };
   for (const gate of [{ show: true, step: 'balance' }, { show: true, step: 'budget' }, { show: true, step: 'tour' }, { show: false }])
     assert.equal(isReturningAccount({ ...x, gate }), true);
-  assert.equal(isReturningAccount({ ...x, wasSignUp: true, gate: { show: true, step: 'first' } }), false);
+  // Ced after a reinstall: the Welcome screen only offers 'Create my free account', so his OLD account arrives as a sign-up
+  assert.equal(isReturningAccount({ ...x, wasSignUp: true, gate: { show: true, step: 'first' } }), true);
+  assert.equal(isReturningAccount({ ...x, wasSignUp: true, introDone: false, gate: { show: true, step: 'first' } }), false); // a really new account
   assert.equal(isReturningAccount({ ...x, replaying: true, gate: { show: true, step: 'tour' } }), false);
   assert.equal(isReturningAccount({ ...x, introDone: false, gate: { show: true, step: 'balance' } }), false);
 });
@@ -437,4 +439,15 @@ test('the setup steps have a Skip, and the server marker is written when the int
   assert.match(g, /introDone: isIntroDone\(/);
   assert.match(fs.readFileSync('native/src/flags.ts', 'utf8'), /markIntroDoneServer\(\)/);
   assert.match(fs.readFileSync('native/src/profile.ts', 'utf8'), /markIntroDoneServer\(\)/);
+});
+
+test('QA 0.9.11: the server marker is written only when the intro is finished, never by the first Make it yours screen, and never twice', () => {
+  assert.doesNotMatch(fs.readFileSync('native/src/profile.ts', 'utf8'), /markIntroDoneServer/);
+  const srv = fs.readFileSync('native/src/introServer.ts', 'utf8');
+  assert.match(srv, /INTRO_MARKER\] === true\) return/); // no write (and no sign-in event) when it is already saved
+  const w = fs.readFileSync('native/src/Wizard.tsx', 'utf8');
+  assert.match(w, /!p.onClose && !!p.onSkip && <Btn label="Skip"/); // the example walkthrough can be skipped too
+  const g = fs.readFileSync('native/src/Gate.tsx', 'utf8');
+  const skip = g.slice(g.indexOf('onSkip={'), g.indexOf('onFinish={'));
+  assert.match(skip, /samplePending(uid)/); // Skip still asks Keep / Clear for sample entries
 });

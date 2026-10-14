@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from './supabase';
-import { markIntroDoneServer } from './introServer';
 import { saveName } from './config';
 import { createProfileMemo, nextProfileState, type LoadResult } from './profileFlow';
 import { nameDrafts } from './settingsDirty';
@@ -129,7 +128,6 @@ export async function makeItYoursSeen(uid: string): Promise<boolean> {
 }
 export async function markMakeItYoursSeen(uid: string): Promise<void> {
   try {
-    void markIntroDoneServer();
     await AsyncStorage.setItem(makeItYoursKey(uid), '1');
   } catch {
     // ignore

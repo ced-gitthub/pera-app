@@ -282,6 +282,7 @@ export function Gate({ uid: sessionUid }: { uid: string }) {
             await setFlags(uid, FINISH_FLAGS);
             await Promise.all([markTabTourSeen(uid), markMakeItYoursSeen(uid)]);
             setMine(false);
+            void samplePending(uid).then((on) => on && setSampleEnd(true)); // sample entries added in step 1 still get their Keep / Clear question
             await refresh();
           }}
           onFinish={async () => {

@@ -163,6 +163,7 @@ export function Wizard(p: {
                 <View>
                   <Btn label="Next" onPress={() => setI(i + 1)} />
                   {i > 0 && <Btn label="Back" alt onPress={() => setI(i - 1)} />}
+                  {!p.onClose && !!p.onSkip && <Btn label="Skip" alt onPress={() => void p.onSkip?.()} />}
                 </View>
               ) : (
                 act.body
