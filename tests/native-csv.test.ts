@@ -354,3 +354,27 @@ test('the export-row comment no longer claims it never cuts anything off', async
   const src = readFileSync(new URL('../native/src/csvLogic.ts', import.meta.url), 'utf8');
   assert.ok(!/never cuts anything off/.test(src));
 });
+
+// ---- the web artifact's own export: "id,date,type,amount,category,description,notes,account,to" (an extra id column in front, and "to" instead of "to_account")
+const ARTIFACT_CSV = [
+  'id,date,type,amount,category,description,notes,account,to',
+  '"tdemo1","2026-10-01","expense","120.00","Food","Lunch","","Cash",""',
+  '"tdemo2","2026-10-02","income","5000.00","Salary","Pay","","GCash",""',
+  '"tdemo3","2026-10-03","transfer","1000.00","Transfer","","","Cash","GCash"',
+].join('\n');
+test('a CSV exported from the web artifact imports (the leading id column and the "to" header are understood)', () => {
+  const plan = planImport(ARTIFACT_CSV, snap, new Set(), TODAY);
+  assert.equal(plan.blocked, null);
+  assert.deepEqual(plan.problems, []);
+  assert.equal(plan.rows.length, 3);
+  assert.equal(plan.rows[0].amount_minor, 12000);
+  assert.equal(plan.rows[0].transaction_date, '2026-10-01');
+  assert.equal(plan.rows[2].type, 'transfer');
+  assert.equal(plan.rows[2].transfer_account_id, 'b');
+});
+test('the normal export still imports, and a file that only looks similar is left alone', () => {
+  const plain = planImport(buildExport([], snap).text + '\n2026-10-01,expense,10.00,Food,x,,Cash,', snap, new Set(), TODAY);
+  assert.equal(plain.rows.length, 1);
+  const odd = planImport('id,name\n1,abc', snap, new Set(), TODAY);
+  assert.ok(odd.problems.length >= 1 || odd.blocked);
+});

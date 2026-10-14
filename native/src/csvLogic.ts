@@ -127,8 +127,21 @@ function whyBad(c: string[]): string {
   return 'This row could not be read. Use: date, type, amount, category, description, notes, account, to_account.';
 }
 
+// The web artifact exports "id,date,type,amount,category,description,notes,account,to": an extra id column in front, and "to" for to_account.
+// Drop the id column and rename the header so that file imports like any other. Anything else is returned untouched.
+export function normalizeArtifactCsv(text: string): string {
+  const rows = csvParse(text);
+  const h = rows[0]?.map((x) => x.trim().toLowerCase());
+  if (!h || h[0] !== 'id' || h[1] !== 'date' || h[2] !== 'type' || h[3] !== 'amount') return text;
+  const q = (v: string) => '"' + v.replace(/"/g, '""') + '"';
+  return rows
+    .map((r, i) => (i === 0 ? r.slice(1).map((x) => (x.trim().toLowerCase() === 'to' ? 'to_account' : x)) : r.slice(1)).map(q).join(','))
+    .join('\n');
+}
+
 export function planImport(text: string, s: Snapshot, existing: Set<string> = new Set(), today = manilaToday()): ImportPlan {
   if (!text.trim()) return empty('Paste your CSV text first.');
+  text = normalizeArtifactCsv(text);
   if (text.length > MAX_CSV_CHARS)
     return empty(
       `That text is too large (max ${n(MAX_CSV_CHARS)} characters, roughly 9,000 rows). Split it into smaller parts and import them one by one.`,
