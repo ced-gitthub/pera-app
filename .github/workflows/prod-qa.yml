@@ -3,7 +3,13 @@ name: prod-qa
 on:
   workflow_dispatch:
   push:
-    paths: ['tests/prod/**', 'native/**', '.github/workflows/prod-qa.yml', 'src/**', 'supabase/**', 'package.json', 'package-lock.json', 'next.config.mjs']
+    branches: [main] # production only serves main; a branch push would wait for a deploy that never comes
+    # Only changes that alter what production serves. Test-only, doc and native-app commits do not re-run the suites (each run sends thousands of requests to the Vercel project).
+    paths: ['src/**', 'public/**', 'package.json', 'package-lock.json', 'next.config.mjs', 'tsconfig.json', 'postcss.config.mjs', 'vercel.json', 'scripts/vercel-ignore.sh', 'scripts/deployable-paths']
+# One run at a time: overlapping runs share test users and were a source of flaky failures; a newer push replaces a waiting one.
+concurrency:
+  group: prod-qa
+  cancel-in-progress: false
 permissions:
   contents: write
 env:
@@ -39,16 +45,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
-      - name: Wait until production serves this commit
-        run: |
-          want="${GITHUB_SHA::7}"
-          for i in $(seq 1 50); do
-            got=$(curl -s "$BASE_URL/api/health" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{console.log(JSON.parse(s).commit)}catch{console.log('?')}})")
-            echo "prod commit=$got want=$want"
-            [ "$got" = "$want" ] && exit 0
-            sleep 15
-          done
-          echo "::warning title=prod-qa::production did not report commit $want in time; testing whatever is live ($got)"
+      - name: Wait until production serves this push
+        run: sh scripts/wait-for-deploy.sh
       - run: npm ci
       - name: Install Playwright
         working-directory: tests/prod
@@ -92,16 +90,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
-      - name: Wait until production serves this commit
-        run: |
-          want="${GITHUB_SHA::7}"
-          for i in $(seq 1 50); do
-            got=$(curl -s "$BASE_URL/api/health" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{console.log(JSON.parse(s).commit)}catch{console.log('?')}})")
-            echo "prod commit=$got want=$want"
-            [ "$got" = "$want" ] && exit 0
-            sleep 15
-          done
-          echo "::warning title=prod-qa::production did not report commit $want in time; testing whatever is live ($got)"
+      - name: Wait until production serves this push
+        run: sh scripts/wait-for-deploy.sh
       - run: npm ci
       - name: Install Playwright
         working-directory: tests/prod

@@ -434,3 +434,43 @@ html {
 .ld-nav a:focus-visible {
   background: rgba(255, 255, 255, 0.3);
 }
+
+/* wide screens: headline and call to action on the left, the live demo on the right (instead of one narrow column) */
+@media (min-width: 960px) {
+  .ld-in {
+    max-width: 1080px;
+  }
+  .ld .wl-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 440px);
+    grid-template-areas:
+      'eye demo'
+      'h1 demo'
+      'sub demo'
+      'cta demo'
+      '. demo';
+    column-gap: 56px;
+    align-items: start;
+    padding-top: 36px;
+  }
+  .ld .wl-hero > .wl-eyebrow {
+    grid-area: eye;
+    justify-self: start;
+  }
+  .ld .wl-hero > h1 {
+    grid-area: h1;
+    font-size: clamp(44px, 5vw, 64px);
+  }
+  .ld .wl-hero > .wl-sub {
+    grid-area: sub;
+    font-size: 19px;
+  }
+  .ld .wl-hero > .ld-demo {
+    grid-area: demo;
+    margin-bottom: 0;
+  }
+  .ld .wl-hero > .ld-cta-row {
+    grid-area: cta;
+    max-width: 380px;
+  }
+}

@@ -61,13 +61,13 @@ export default function LiveDemo() {
   return (
     <div className="wl-demo ld-demo" id="try" role="group" aria-label="Try Zovix">
       <div className="ld-demo-top">
-        <b>{n === 0 ? 'Pindutin mo. Tingnan mo kung paano.' : `${n} na ang na-track${n >= DEMO_GOAL ? '. Ayos!' : ''}`}</b>
+        <b>{n === 0 ? 'Tap one. Panoorin mo.' : `${n} tracked${n >= DEMO_GOAL ? '. Ayos!' : ''}`}</b>
         <span className={n > 0 ? 'wl-flame on' : 'wl-flame'} aria-label={n > 0 ? '1-day streak' : 'No streak yet'}>
           🔥 {n > 0 ? 1 : 0}
         </span>
       </div>
       <div className="wl-total">
-        <span>Sample na wallet mo</span>
+        <span>Your sample wallet</span>
         <b>{formatMinor(bal)}</b>
       </div>
       <div className="wl-accts">
@@ -93,7 +93,7 @@ export default function LiveDemo() {
           value={text}
           maxLength={120}
           onChange={(e) => setText(e.target.value)}
-          placeholder="I-type: lunch 150 gcash"
+          placeholder="Try: lunch 150 gcash"
           autoComplete="off"
           enterKeyHint="send"
         />
@@ -139,8 +139,8 @@ export default function LiveDemo() {
         <div className="wl-panel">
           <div className="wl-ptop">
             <span aria-hidden="true">🍜</span>
-            <b>Budget sa pagkain</b>
-            <small>{formatMinor(DEMO_BUDGET_MINOR)} kada buwan</small>
+            <b>Food budget</b>
+            <small>{formatMinor(DEMO_BUDGET_MINOR)} a month</small>
           </div>
           <div
             className="wl-gbar"
@@ -152,14 +152,12 @@ export default function LiveDemo() {
           >
             <i style={{ width: `${Math.min(100, (food * 100) / DEMO_BUDGET_MINOR)}%` }} />
           </div>
-          <small>
-            {left >= 0 ? `${formatMinor(left)} na lang ang natitira ngayong buwan` : `${formatMinor(-left)} lampas na sa budget`}
-          </small>
+          <small>{left >= 0 ? `${formatMinor(left)} left this month` : `${formatMinor(-left)} over budget`}</small>
         </div>
       )}
       {bars.length > 0 && (
         <div className="wl-chart">
-          <p className="wl-chart-t">Saan napunta ang pera mo</p>
+          <p className="wl-chart-t">Where your money went</p>
           {bars.slice(0, 4).map((b) => (
             <div key={b.category} className="wl-brow">
               <span>{b.category}</span>
@@ -177,7 +175,7 @@ export default function LiveDemo() {
             ))}
           </div>
           <h2>🎉 Ayan, ganyan lang kadali.</h2>
-          <p>Tatlong tap lang, alam mo na kung saan napunta ang pera mo. Ganyan din sa totoong app.</p>
+          <p>Three taps and you know where your pera went. Ganyan din sa totoong app.</p>
         </div>
       )}
     </div>

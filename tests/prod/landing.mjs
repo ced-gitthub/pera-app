@@ -30,7 +30,7 @@ for (const [label, vp, scheme] of [
   const url = ONLY ? '/' : '/welcome';
   await step(`${url} shows the landing page with Get Zovix free buttons`, async () => {
     await q.goto(url);
-    await q.locator('text=Pribado ang pera mo').waitFor({ timeout: 20000 });
+    await q.locator('text=Private ang pera mo').waitFor({ timeout: 20000 });
     const a = q.locator('a[href="/zovix.apk"]');
     const n = await a.count(),
       href = await a.first().getAttribute('href');
@@ -43,14 +43,14 @@ for (const [label, vp, scheme] of [
   await step('has the introduction, how it works, worked samples, benefits, levels, privacy and FAQ', async () => {
     const t = (await q.locator('body').innerText()).replace(/\s+/g, ' ').toLowerCase();
     const need = [
-      'Ano ito',
-      'Paano gumagana',
+      'What it is',
+      'How it works',
       'lunch 150 gcash',
-      'Ito ang ginagawa ng Zovix',
-      'Ano ang makukuha mo',
+      'What Zovix does',
+      'What you get',
       'Broke Rookie',
-      'Pribado ang pera mo',
-      'Libre ba talaga ang Zovix?',
+      'Private ang pera mo',
+      'Is Zovix really free?',
       'iPhone',
     ];
     const miss = need.filter((x) => !t.includes(x.toLowerCase()));
@@ -59,7 +59,7 @@ for (const [label, vp, scheme] of [
   await step(
     'conversion sections are there: pain, comparison table, who it is for; page has structured data and a share image',
     async () => {
-      const need = ['Sound familiar?', 'Bakit hindi na lang Notes o spreadsheet?', 'Para kanino ang Zovix'];
+      const need = ['Sound familiar?', 'Why not just Notes or a spreadsheet?', 'Who it is for'];
       const t = await q.locator('body').innerText();
       const miss = need.filter((x) => !t.includes(x));
       const ld = await q.locator('script[type="application/ld+json"]').count(),
@@ -77,7 +77,7 @@ for (const [label, vp, scheme] of [
     const mid = await q.locator('.ld-sticky.on').count();
     return top === 0 && mid === 1 ? true : { top, mid };
   });
-  await step('top shortcuts jump to Demo, Ano ito, Paano, Features, Privacy, FAQ and I-install', async () => {
+  await step('top shortcuts jump to Demo, About, How it works, Features, Privacy, FAQ and Install', async () => {
     const hrefs = await q.locator('nav.ld-nav a').evaluateAll((as) => as.map((a) => a.getAttribute('href')));
     const want = ['#try', '#about', '#how', '#features', '#privacy', '#faq', '#install'];
     const missing = want.filter((h) => !hrefs.includes(h));
@@ -87,6 +87,16 @@ for (const [label, vp, scheme] of [
     await q.waitForTimeout(900);
     const top = await q.evaluate(() => document.getElementById('faq').getBoundingClientRect().top);
     return !missing.length && !dead.length && top < 300 ? true : { missing, dead, top };
+  });
+  await step('the email-confirmed note shows for the exact link message and never for other text', async () => {
+    const msg = 'Email confirmed. Welcome to Zovix.';
+    await q.goto(url + '?ok=' + encodeURIComponent(msg));
+    await q.locator('[role=status] >> text=Open the Zovix app and sign in').waitFor({ timeout: 10000 });
+    await q.goto(url + '?ok=' + encodeURIComponent('Your bank needs you. Call now.'));
+    await q.waitForTimeout(800);
+    const other = await q.locator('.ld-ok').count();
+    await q.goto(url);
+    return other === 0 ? true : { other };
   });
   await step('a FAQ answer opens when tapped', async () => {
     const d = q.locator('details.ld-faq').first();

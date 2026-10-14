@@ -56,6 +56,18 @@ Pushing to `main` deploys to Vercel (100/day limit). Batch changes; put `[skip c
 ## Tests
 Any behaviour change needs: a unit/e2e test, and a live step in `tests/prod/` for user-visible features. The UI uses per-tab Edit mode: controls are hidden until Edit is pressed, so live tests must click Edit first.
 
+## Website team (website and landing page ONLY; never for `native/`)
+Read `docs/WEBSITE-TEAM.md` before any website work: scope boundary, 4 failure protocols (F1-F4), 4-stage pipeline with gates, coordination rules. Six agents in `.claude/agents/`, run as real subagents (never personas):
+| Agent | Use for |
+|---|---|
+| `web-seo-architect` | structure, metadata, canonicals, robots/sitemap, structured data, Core Web Vitals risks |
+| `web-aeo-engineer` | user-question map, question headings, concise answers, FAQs (read-only) |
+| `web-geo-architect` | entity map, consistent terminology, claim evidence (read-only) |
+| `web-copywriter` | all visible copy and CTAs (mostly English, Tagalog mixed in, never pure Tagalog; calm CTAs) |
+| `web-ux-designer` | layout, accessibility, responsive at 360px, interaction states |
+| `web-qa-auditor` | independent defect audit and PASS / FAIL / NOT VERIFIED report (read-only) |
+The native app keeps its own separate team and rules (next section). The older shared agents above (`explorer`, `planner`, `builder`, `tester`, `migrator`, `ci-watcher`, `judge`) stay available for app, database and CI work; `judge` is still required for middleware/redirect/deploy-config changes on the website.
+
 ## Native app (`native/`, Expo Android)
 - Read `docs/native-app/NATIVE.md` before touching it (map, rules, build recipe, open items). History in `CHANGELOG.md`, roadmap in `PLAN.md`.
 - Screens use only design tokens (`native/src/uiTokens.ts`); `tests/native-design.test.ts` enforces it. `npm run verify` does not type-check `native/`: also run `cd native && npx tsc --noEmit`.

@@ -162,19 +162,14 @@ const count = (h: string, s: string) => h.split(s).length - 1;
       'landing: Get Zovix free links to the APK as a download (header, hero, final CTA, sticky bar)',
       lh.split('href="/zovix.apk" download=""').length - 1 >= 4 && lh.includes('Get Zovix free'),
     );
-    T(
-      'landing: install steps and the iPhone route are explained',
-      lh.includes('payagan ang installs') && lh.includes('Add to Home Screen'),
-    );
+    T('landing: install steps and the iPhone route are explained', lh.includes('allow installs') && lh.includes('Add to Home Screen'));
     T(
       'landing: worked samples show what each part means (lunch 150 gcash, balances, budget, goal)',
-      ['lunch 150 gcash', 'GCash 1500', 'Food', 'New phone', 'Ito ang ginagawa ng Zovix', 'Ano ito', 'Paano ito nakakatulong'].every((x) =>
-        lh.includes(x),
-      ),
+      ['lunch 150 gcash', 'GCash 1500', 'Food', 'New phone', 'What Zovix does', 'What it is', 'How it helps'].every((x) => lh.includes(x)),
     );
     T(
       'landing: level ladder, quests, privacy, FAQ and the privacy link are there',
-      ['Broke Rookie', 'Money Master', '7-day streak', 'Pribado ang pera mo', 'Libre ba talaga ang Zovix?', 'href="/privacy"'].every((x) =>
+      ['Broke Rookie', 'Money Master', '7-day streak', 'Private ang pera mo', 'Is Zovix really free?', 'href="/privacy"'].every((x) =>
         lh.includes(x),
       ),
     );
@@ -183,21 +178,20 @@ const count = (h: string, s: string) => h.split(s).length - 1;
       lh.includes('href="/login"') && !lh.includes('/register'),
     );
     process.env.WEB_APP_ENABLED = 'false';
-    const lo = await html(<L ok="Email confirmed." />);
+    const lo = await html(<L />);
     delete process.env.WEB_APP_ENABLED;
     T(
-      'landing: web app off -> no tracker links at all (login, register, security, transactions), and the email-confirmed note shows',
+      'landing: web app off -> no tracker links at all (login, register, security, transactions)',
       !/href="\/(login|register|code|forgot|transactions|accounts|budgets|reports|settings|security|assistant)/.test(lo) &&
-        lo.includes('Email confirmed.') &&
         lo.includes('href="/zovix.apk" download=""'),
     );
     T(
       'landing: conversion sections (pain, comparison table, who it is for, extra FAQ) and a hidden-until-scroll sticky bar',
       [
         'Sound familiar?',
-        'Bakit hindi na lang Notes o spreadsheet?',
-        'Para kanino ang Zovix',
-        'Pwede ko bang subukan bago mag-install?',
+        'Why not just Notes or a spreadsheet?',
+        'Who it is for',
+        'Can I try it before installing?',
         'class="ld-sticky"',
       ].every((x) => lh.includes(x)) &&
         lh.includes('<table class="ld-cmp"') &&

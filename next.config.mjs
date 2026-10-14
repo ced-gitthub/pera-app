@@ -24,6 +24,8 @@ const nextConfig = {
       { source: '/:path*', headers: security },
       { source: '/zovix.apk', headers: [{ key: 'Content-Type', value: 'application/vnd.android.package-archive' }] }, // the Android app, public download
       { source: '/((?!_next/static|_next/image|favicon.ico).*)', headers: [{ key: 'Cache-Control', value: 'private, no-store, max-age=0' }] },
+      // The landing page is the same for everyone and prerendered, so the CDN may keep direct /welcome visits (the middleware still runs on every request and redirects signed-in users first).
+      { source: '/welcome', headers: [{ key: 'Cache-Control', value: 'public, max-age=0, s-maxage=3600, stale-while-revalidate=86400' }] },
     ];
   },
 };

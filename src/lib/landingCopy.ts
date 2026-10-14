@@ -1,59 +1,56 @@
-// Words for the landing page: plain English with natural Tagalog mixed in, the way people actually talk about money.
+// Words for the landing page: mostly English, with Tagalog words dropped in the way Filipinos actually talk about money (Taglish, not pure Tagalog).
 // Worked samples come from onboardingCopy so the website and the app teach the same examples.
 export const NAV: [string, string][] = [
   ['#try', 'Demo'],
-  ['#about', 'Ano ito'],
-  ['#how', 'Paano'],
+  ['#about', 'About'],
+  ['#how', 'How it works'],
   ['#features', 'Features'],
   ['#privacy', 'Privacy'],
   ['#faq', 'FAQ'],
-  ['#install', 'I-install'],
+  ['#install', 'Install'],
 ];
 export const H = {
   pain: 'Sound familiar?',
-  about: 'Para klaro na ang pera mo',
-  how: 'Paano gumagana',
-  samples: 'Subukan natin',
-  samplesLead: 'Apat na bagay na gagawin mo sa unang minuto, at kung ano ang ginagawa ng Zovix sa bawat isa.',
-  does: 'Ito ang ginagawa ng Zovix',
-  cmp: 'Bakit hindi na lang Notes o spreadsheet?',
-  features: 'Ano ang makukuha mo',
-  levels: 'Mag-level up habang nagta-track',
-  who: 'Para kanino ang Zovix',
-  privacy: 'Pribado ang pera mo',
+  about: 'Your pesos, finally klaro',
+  how: 'How it works',
+  samples: 'Try it in your head',
+  samplesLead: 'Four things you do in your first minute, and what Zovix does with each.',
+  does: 'What Zovix does',
+  cmp: 'Why not just Notes or a spreadsheet?',
+  features: 'What you get',
+  levels: 'Level up habang nagta-track',
+  who: 'Who it is for',
+  privacy: 'Private ang pera mo',
   faq: 'May tanong ka?',
-  install: 'I-install sa 3 tap',
+  install: 'Install in 3 taps',
   final: 'May plano na ang susunod mong piso.',
 } as const;
 export const WHAT: [string, string][] = [
+  ['What it is', 'A free money tracker for Pinoys. Type your gastos or kita like a text message, and Zovix keeps the tala.'],
   [
-    'Ano ito',
-    'Libreng money tracker para sa mga Pinoy. I-type mo lang ang gastos o kita mo na parang nagte-text, at Zovix na ang bahala sa tala.',
+    'How it helps',
+    'You always know how much ang laman ng bawat wallet, saan napunta ang pera mo this month, and whether you are still inside your budget.',
   ],
-  [
-    'Paano ito nakakatulong',
-    'Alam mo kung magkano na lang ang laman ng bawat wallet, saan napunta ang pera mo ngayong buwan, at kung nasa budget ka pa.',
-  ],
-  ['Ano ang makukuha mo', 'Mas kaunting "saan napunta?" na sandali, goal na unti-unting napupuno, at streak na nagbubuo ng ugali.'],
+  ['What you gain', 'Fewer "saan napunta?" moments, a goal that fills up as you ipon, and a streak that builds the habit.'],
 ];
 export const HOW: [string, string, string][] = [
-  ['1', 'I-type mo', 'Isulat lang ang "lunch 150 gcash". Walang form, walang spreadsheet, walang bank login.'],
-  ['2', 'Zovix na ang bahala', 'Siya na ang pipili ng halaga, category at account, at mag-a-update ng balanse mo.'],
-  ['3', 'Panoorin mong lumago', 'Budgets, goals, reports at quests ang magpapakita ng progress mo. Bawat entry may XP.'],
+  ['1', 'Type it', 'Write "lunch 150 gcash". No forms, no spreadsheets, no bank login.'],
+  ['2', 'Zovix sorts it', 'Amount, category and account are filled in for you, tapos nag-a-update ang balance mo.'],
+  ['3', 'Watch it grow', 'Budgets, goals, reports and quests show your progress. Bawat entry may XP.'],
 ];
 export const SAMPLE_TITLES = {
-  first: 'Mag-log ng entry',
-  balance: 'Ilagay ang balanse mo',
-  budget: 'Gumawa ng budget',
-  goal: 'Magsimulang mag-ipon',
+  first: 'Log an entry',
+  balance: 'Set your balances',
+  budget: 'Make a budget',
+  goal: 'Start a savings goal',
 } as const;
 export const BENEFITS: [string, string, string][] = [
-  ['⚡', 'I-type. Tapos na.', 'Ilang segundo lang bawat entry. Naiintindihan ng Zovix ang cash, GCash, Maya at mga bangko mo.'],
-  ['🎯', 'Makita kung saan napunta', 'Gastos kada category, buwan-buwan, para alam mo kung ano ang babawasan at ano ang itatabi.'],
-  ['🔔', 'Budget na nagpapaalala', 'Maglagay ng limit kada category at tingnan kung magkano na lang ang natitira bago maubos.'],
-  ['🏆', 'Goals na napupuno', 'Mag-ipon para sa bagong phone o bakasyon. Gumagalaw ang bar sa bawat pisong itinabi mo.'],
-  ['🔥', 'Streaks at quests', 'Daily at weekly quests, XP at levels, para maging ugali ang pagta-track at hindi gawain lang.'],
-  ['🔒', 'Pribado at libre', 'Ikaw lang ang makakakita ng data mo. Walang ads, walang tracking, at hindi ibinebenta ang impormasyon mo.'],
+  ['⚡', 'Type it. Done.', 'Seconds lang per entry. Zovix understands cash, GCash, Maya and your banks.'],
+  ['🎯', 'See where it goes', 'Gastos per category, month by month, so you know what to cut and what to keep.'],
+  ['🔔', 'Budgets that nudge', 'Set a monthly limit per category and see how much ang natitira bago maubos.'],
+  ['🏆', 'Goals that fill up', 'Mag-ipon for a new phone or a trip. The bar moves with every peso you set aside.'],
+  ['🔥', 'Streaks and quests', 'Daily and weekly quests, XP and levels make tracking a habit, hindi chore.'],
+  ['🔒', 'Private and free', 'Ikaw lang ang makakakita ng data mo. No ads, no tracking tools, never sold.'],
 ];
 export const LEVELS: [string, string][] = [
   ['🪙', 'Broke Rookie'],
@@ -64,30 +61,27 @@ export const LEVELS: [string, string][] = [
 ];
 export const QUESTS = ['Log your first peso', 'Triple tap: log three entries in a day', 'Stay in budget', '5 of 7 days', '7-day streak'];
 export const PRIVACY: string[] = [
-  'Ikaw lang ang makakakita ng pera mo. Naka-lock sa may-ari ang bawat account sa mismong database.',
-  'Walang ads, walang tracking o analytics, at hindi ibinebenta o ibinabahagi ang data mo.',
-  'Hindi kumokonekta ang Zovix sa bangko mo at hindi humihingi ng bank login.',
-  'Walang access sa contacts, camera, microphone o location mo.',
-  'Pwede mong burahin ang account mo at lahat ng laman nito kahit kailan.',
+  'Only you can see your money. Naka-lock sa owner ang bawat account sa mismong database.',
+  'No ads, no tracking or analytics tools, and your data is never sold or shared.',
+  'Zovix never connects to your bank and never asks for your bank login.',
+  'No access to your contacts, camera, microphone or location.',
+  'You can delete your account and everything in it anytime.',
 ];
 export const FAQ: [string, string][] = [
-  ['Libre ba talaga ang Zovix?', 'Oo. Libre, walang ads, at walang bayad na bersyon.'],
+  ['Is Zovix really free?', 'Yes. Libre, no ads, and no paid tier.'],
   [
-    'Paano mag-install sa Android?',
-    'I-tap ang "Get Zovix free" at buksan ang file pagkatapos mag-download. Kung magtanong ang Android, payagan ang installs mula sa browser mo, tapos tap ang Install. Buksan ang Zovix at mag-sign in.',
+    'How do I install it on Android?',
+    'Tap "Get Zovix free" and open the file when it finishes. If Android asks, allow installs from your browser, then tap Install. Open Zovix and sign in.',
   ],
   [
-    'May iPhone version ba?',
-    'Wala pa. Sa iPhone, buksan ang page na ito sa Safari, tap ang Share, tapos Add to Home Screen. Kailangan ng bayad na developer program ng Apple para sa buong iPhone app, kaya mamaya pa.',
+    'Is there an iPhone version?',
+    'Not yet. On iPhone, open this page in Safari, tap Share, then Add to Home Screen. A full iPhone app needs Apple’s paid developer program, kaya mamaya pa.',
   ],
-  ['Kumokonekta ba ito sa bangko ko?', 'Hindi. Ikaw ang nagta-type ng entries mo, kaya walang naka-link sa bangko o e-wallet mo.'],
+  ['Does it connect to my bank?', 'No. You type your entries yourself, so walang naka-link sa bank or e-wallet mo.'],
+  ['What happens to my data?', 'It is stored securely, visible only to you, and never sold. Read the full privacy policy above.'],
   [
-    'Ano ang nangyayari sa data ko?',
-    'Ligtas itong naka-store, ikaw lang ang makakakita, at hindi ibinebenta. Basahin ang buong privacy policy sa taas.',
-  ],
-  [
-    'Bakit may warning ang Android sa file?',
-    'Normal iyon sa mga app na na-install sa labas ng Play Store. Karaniwan itong lumalabas sa file na ikaw mismo ang nag-download.',
+    'Why does Android warn me about the file?',
+    'Apps installed outside the Play Store show that warning. Normal lang ito for a file you downloaded yourself.',
   ],
 ];
 export const PAIN: [string, string, string][] = [
@@ -100,25 +94,22 @@ export const PAIN: [string, string, string][] = [
   ['🙈', 'Hindi pagtingin ≠ pag-iipon', 'Kapag nakita mo na, iba na ang paggastos mo. Budgets at goals na ang magpapaalala sa iyo.'],
 ];
 export const COMPARE: [string, string, string][] = [
-  ['Pag-log ng gastos', 'Buksan ang file, hanapin ang row, i-format', 'Isang linya lang: lunch 150 gcash'],
-  ['Categories', 'Ikaw ang mag-aayos ng bawat entry', 'Zovix na ang pipili base sa tina-type mo'],
-  ['Balanse', 'Ikaw ang magkukuwenta nang mano-mano', 'Automatic sa bawat wallet'],
-  ['Budget at goals', 'Gumawa ka muna ng formulas', 'Built-in, may bar na napupuno'],
-  ['Pagiging consistent', 'Madaling sukuan', 'Streaks, quests at levels para bumalik ka'],
+  ['Logging a purchase', 'Open the file, find the row, format it', 'One line lang: lunch 150 gcash'],
+  ['Categories', 'You sort every entry yourself', 'Zovix picks it from the words you type'],
+  ['Balances', 'Kuwentahin mo nang mano-mano', 'Automatic for every wallet'],
+  ['Budgets and goals', 'Build the formulas first', 'Built in, may bar na napupuno'],
+  ['Sticking with it', 'Madaling sukuan', 'Streaks, quests and levels keep you coming back'],
 ];
-export const WHO: string[] = ['Estudyanteng may baon', 'First-jobber', 'Freelancer', 'May sideline', 'Lahat ng may GCash at cash'];
+export const WHO: string[] = ['Students na may baon', 'First-jobbers', 'Freelancers', 'May sideline', 'Anyone with GCash and cash'];
 export const FAQ_MORE: [string, string][] = [
   [
-    'Pwede ko bang subukan bago mag-install?',
-    'Pwede. Yung sample sa taas ng page na ito ay ang totoong app na tumatakbo sa sample na pera. Walang sine-save sa tina-type mo.',
+    'Can I try it before installing?',
+    'Yes. The sample at the top of this page is the real thing running on sample money. Walang sine-save sa tina-type mo.',
   ],
+  ['Do I need an account?', 'You sign in once, with Google or an email code, so your entries stay yours. No password to remember.'],
   [
-    'Kailangan ko ba ng account?',
-    'Mag-sign in ka lang nang isang beses gamit ang Google o email code, para ligtas at sa iyo lang ang entries mo. Walang password na kakabisaduhin.',
-  ],
-  [
-    'Paano kung mawala o magpalit ako ng phone?',
-    'Nasa account mo ang entries, hindi sa phone. I-install lang ang Zovix sa bago, mag-sign in, at nandoon na lahat.',
+    'What if mawala o magpalit ako ng phone?',
+    'Your entries live in your account, not on the phone. Install Zovix on the new one, sign in, and nandoon na lahat.',
   ],
 ];
 export const SITE_NAME = 'Zovix Pera Tracker';

@@ -1,0 +1,10 @@
+src
+public
+next.config.mjs
+package.json
+package-lock.json
+tsconfig.json
+postcss.config.mjs
+vercel.json
+scripts/vercel-ignore.sh
+scripts/deployable-paths

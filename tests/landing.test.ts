@@ -47,3 +47,75 @@ test("landing-only: the native app's own routes stay reachable (account deletion
   assert.equal(kind('/api/nativeish'), 'redirect');
   assert.equal(kind('/api'), 'redirect');
 });
+test('free-plan usage: production deploys skip commits that change nothing deployable, and previews are not built', () => {
+  const v = JSON.parse(readFileSync('vercel.json', 'utf8'));
+  assert.ok(
+    v.ignoreCommand.length <= 256,
+    'Vercel rejects an ignoreCommand longer than 256 characters (a rejected vercel.json breaks every deploy)',
+  );
+  assert.equal(v.ignoreCommand, 'sh scripts/vercel-ignore.sh');
+  const sh = readFileSync('scripts/vercel-ignore.sh', 'utf8');
+  assert.ok(sh.includes('[ "$VERCEL_ENV" = "production" ] || exit 0'), 'previews are not built');
+  assert.ok(
+    sh.includes('VERCEL_GIT_PREVIOUS_SHA'),
+    'compare with the last deployed commit, so a docs-only newest commit cannot hide an earlier src change',
+  );
+  assert.ok(!sh.includes('HEAD^ '), 'never compare with the parent commit only');
+  assert.equal(sh.split('|| exit 1').length - 1, 2, 'build whenever the previous commit is unknown or missing');
+  assert.ok(sh.includes('git diff --quiet "$VERCEL_GIT_PREVIOUS_SHA" HEAD -- $(cat scripts/deployable-paths)'));
+  const paths = readFileSync('scripts/deployable-paths', 'utf8').trim().split('\n');
+  for (const must of [
+    'src',
+    'public',
+    'next.config.mjs',
+    'package.json',
+    'package-lock.json',
+    'vercel.json',
+    'scripts/vercel-ignore.sh',
+    'scripts/deployable-paths',
+  ])
+    assert.ok(paths.includes(must), must + ' must trigger a deploy');
+  for (const p of paths) assert.ok(!/^(tests|docs|native|\.github|supabase)/.test(p), p + ' must not trigger a deploy');
+  const w = readFileSync('.github/workflows/prod-qa.yml', 'utf8');
+  assert.equal(w.split('sh scripts/wait-for-deploy.sh').length - 1, 2, 'both jobs wait with the shared script');
+  const wait = readFileSync('scripts/wait-for-deploy.sh', 'utf8');
+  assert.ok(wait.includes('cat scripts/deployable-paths') && wait.includes('git fetch --unshallow'));
+  assert.ok(
+    wait.includes('merge-base --is-ancestor "$want" "$full"'),
+    'accept any production commit at or after the newest deployable commit',
+  );
+  assert.ok(wait.includes('merge-base --is-ancestor "$full" "$GITHUB_SHA"'), 'and not newer than the pushed commit');
+  assert.ok(wait.includes('exit 1'), 'never test stale code');
+  const filter = w.match(/paths: \[(.*)\]/)![1];
+  for (const line of paths)
+    assert.ok(
+      filter.includes("'" + line + "'") || filter.includes("'" + line + "/**'"),
+      line + ' changes production, so it must run the live suites',
+    );
+});
+test('free-plan usage: the live suites run one at a time and not for test-only or native-only commits', () => {
+  const w = readFileSync('.github/workflows/prod-qa.yml', 'utf8');
+  assert.match(w, /concurrency:\s+group: prod-qa/);
+  assert.match(w, /push:\n\s+branches: \[main\]/, 'only main is deployed, so only main pushes can be live-tested');
+  const paths = w.match(/paths: \[(.*)\]/)![1];
+  assert.doesNotMatch(paths, /tests\/prod|native|docs|supabase/, 'only commits that Vercel will actually deploy');
+  assert.match(paths, /src\/\*\*/);
+  assert.doesNotMatch(w, /testing whatever is live/, 'never test stale code: fail when production does not serve the commit');
+});
+test('the email-confirmed banner shows only for the exact fixed message', async () => {
+  const { isConfirmed, CONFIRMED } = await import('../src/lib/okMessage.ts');
+  assert.equal(isConfirmed('?ok=' + encodeURIComponent(CONFIRMED)), true);
+  assert.equal(isConfirmed('?ok=' + encodeURIComponent('Your bank is closed. Call 0917...')), false);
+  assert.equal(isConfirmed('?ok='), false);
+  assert.equal(isConfirmed(''), false);
+});
+test('free-plan usage: the landing page is static (no searchParams or cookies) and CDN-cacheable', () => {
+  const page = readFileSync('src/app/welcome/page.tsx', 'utf8');
+  assert.doesNotMatch(page, /searchParams|cookies\(|headers\(/);
+  const cfg = readFileSync('next.config.mjs', 'utf8');
+  assert.match(cfg, /source: '\/welcome'[^}]*s-maxage=3600/);
+  assert.ok(
+    cfg.indexOf("source: '/welcome'") > cfg.indexOf('private, no-store'),
+    'the /welcome rule must come after the no-store rule so it wins',
+  );
+});
