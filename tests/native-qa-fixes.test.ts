@@ -330,3 +330,19 @@ test('the read-only tutorial replay has a pinned Close and the back button leave
   assert.match(g, /BackHandler\.addEventListener\('hardwareBackPress'/);
   assert.match(g, /onClose=\{\(\) => setReplaying\(false\)\}/);
 });
+
+test('while Start fresh is open a reload never swaps it back to the existing-data question', () => {
+  assert.deepEqual(decideAsk({ wasSignUp: false, pending: true, total: 7, fresh: true }), { ask: false, write: null });
+  assert.deepEqual(decideAsk({ wasSignUp: false, pending: true, total: 7, fresh: false }), { ask: true, write: null });
+  const g = read('Gate.tsx');
+  assert.match(g, /fresh: freshOpen\.current/);
+  assert.match(g, /const freshOpen = useRef\(false\)/);
+  assert.match(g, /freshOpen\.current = fresh/);
+});
+
+test('the live lost-reply step removes a leftover row from an aborted run before it starts', () => {
+  const live = fs.readFileSync('tests/prod/rls-bulk.ts', 'utf8');
+  const step = live.slice(live.indexOf('native lost-reply retry'));
+  const del = step.search(/delete\(\)\s*\.eq\('user_id', A\.id\)\s*\.eq\('request_id', rid\)/);
+  assert.ok(del >= 0 && del < step.search(/const first = await A\.c\s*\.from\('transactions'\)\s*\.upsert/));
+});

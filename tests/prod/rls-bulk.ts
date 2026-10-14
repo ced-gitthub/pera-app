@@ -379,6 +379,7 @@ export async function bulkDeleteSteps({ A, B, step, cnt, other, d, mk }: Ctx): P
         request_idx: 0,
       };
       const opts = { onConflict: 'user_id,request_id,request_idx', ignoreDuplicates: true };
+      await A.c.from('transactions').delete().eq('user_id', A.id).eq('request_id', rid); // a row left by an aborted run would make this step fail once
       const first = await A.c
         .from('transactions')
         .upsert({ ...base, amount_minor: 150 }, opts)
