@@ -36,8 +36,17 @@ export async function updateEntryWith(db: Db, id: string, patch: TxPatch): Promi
 export async function createEntryWith(db: Db, userId: string, patch: TxPatch, requestId: string): Promise<string | null> {
   try {
     const row = { ...patch, user_id: userId, request_id: requestId, request_idx: 0 };
-    const { error } = await db.from('transactions').upsert(row, { onConflict: 'user_id,request_id,request_idx', ignoreDuplicates: true });
+    const { data, error } = await db
+      .from('transactions')
+      .upsert(row, { onConflict: 'user_id,request_id,request_idx', ignoreDuplicates: true })
+      .select('id');
     if (error) return entryError(error, 'save');
+    // Skipped because the row already exists (an earlier save reached the database but its reply was lost): make the stored row match THIS form,
+    // otherwise the person would be told "saved" while the old values stay.
+    if (Array.isArray(data) && data.length === 0) {
+      const { error: updateError } = await db.from('transactions').update(patch).eq('user_id', userId).eq('request_id', requestId);
+      if (updateError) return entryError(updateError, 'save');
+    }
     const { count, error: countError } = await db
       .from('transactions')
       .select('id', { count: 'exact', head: true })

@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { fakeDb } from './helpers/fakeDb.ts';
-import { SAMPLE_IDS, buildSampleRows, canOfferSample } from '../native/src/sampleLogic.ts';
+import { SAMPLE_IDS, buildSampleRows, canOfferSample, sampleMovementOf } from '../native/src/sampleLogic.ts';
+import { balancePrefill, planBalances } from '../native/src/logic.ts';
 import { addSampleWith, countSampleWith, removeSampleWith } from '../native/src/sampleCore.ts';
 import { withTimeout } from '../native/src/coachLogic.ts';
 
@@ -187,7 +188,7 @@ test('"Clear" after the tour means clear ALL of it: the sheet says everything, a
   assert.match(sheets, /resetWarning\('all'/); // the confirm step lists exactly what will go
   assert.match(sheets, /countFor/);
   const gate = fs.readFileSync('native/src/Gate.tsx', 'utf8');
-  const clear = gate.slice(gate.indexOf('onClear={'), gate.indexOf('<ResetData'));
+  const clear = gate.slice(gate.indexOf('onClear={'), gate.indexOf('{resetSheet}', gate.indexOf('onClear={')));
   assert.match(clear, /resetChoice\('all'\)/);
   assert.doesNotMatch(clear, /replay/); // clearing does NOT send the person back into the first-run tutorial
   assert.match(clear, /await refresh\(\)/); // it just shows the empty app
@@ -214,16 +215,16 @@ test('a failed clear recounts what is really left and refreshes the screen behin
   assert.match(clear, /setErr\(m\)/);
   assert.match(clear, /await review\(\)/);
   const gate = fs.readFileSync('native/src/Gate.tsx', 'utf8');
-  const onClear = gate.slice(gate.indexOf('onClear={'), gate.indexOf('<ResetData'));
+  const onClear = gate.slice(gate.indexOf('onClear={'), gate.indexOf('{resetSheet}', gate.indexOf('onClear={')));
   assert.match(onClear, /if \(r\.error\) \{[\s\S]*await refresh\(\)/);
 });
 
 test('clearing after the tour never re-runs the mandatory first-run tutorial; the first-run flags are left alone', () => {
   const gate = fs.readFileSync('native/src/Gate.tsx', 'utf8');
-  const onClear = gate.slice(gate.indexOf('onClear={'), gate.indexOf('<ResetData'));
+  const onClear = gate.slice(gate.indexOf('onClear={'), gate.indexOf('{resetSheet}', gate.indexOf('onClear={')));
   assert.doesNotMatch(onClear, /setFlags|REPLAY_FLAGS|replay/);
   assert.doesNotMatch(gate, /replay\(true\)|startOver|TOUR_END_RESTART_FAIL/);
-  assert.match(gate, /onReplay=\{\(\) => void replay\(\)\}/); // the Settings "show the tutorial again" button is unchanged
+  assert.match(gate, /onReplay=\{replay\}/); // the Settings "show the tutorial again" button opens the read-only walkthrough
   // with the "onboarded" flag set (it is, once the first-run steps were finished) the gate never shows the wizard, whatever the data
   const src = fs.readFileSync('src/lib/onboarding.ts', 'utf8');
   assert.match(src, /if \(cookies\.onboarded\) return \{ show: false/);
@@ -301,4 +302,51 @@ test('PROGRESS.md carries the gate records and the instruction ledger for the 0.
   for (const w of ['IL-1', 'IL-2', 'IL-3', 'IL-4', 'Gate G1', 'Gate G2', 'Gate G3', 'Gate G4', 'Gate G5a', 'deferred'])
     assert.ok(entry.includes(w), w);
   assert.match(entry, /the delete sample records was gone in the tutorial tab/); // verbatim
+});
+
+// ---- the balance typed in setup must survive deleting the sample entries (money)
+test('sample movement per account: income adds, expense subtracts, anything else is ignored', () => {
+  assert.deepEqual(
+    sampleMovementOf([
+      { account_id: 'a1', type: 'income', amount_minor: 2500000 },
+      { account_id: 'a1', type: 'expense', amount_minor: 125000 },
+      { account_id: 'a2', type: 'expense', amount_minor: 5000 },
+      { account_id: 'a2', type: 'transfer', amount_minor: 999 },
+      { account_id: null, type: 'expense', amount_minor: 1 },
+    ]),
+    { a1: 2375000, a2: -5000 },
+  );
+  assert.deepEqual(sampleMovementOf([]), {});
+});
+
+test('setup balances: samples never count as the money a person already logged (typing 5,000, then deleting the samples, leaves 5,000)', () => {
+  const acc = { id: 'a1', name: 'Cash', short_name: null, counts_as_savings: false, opening_balance_minor: 0, show_on_home: true };
+  const withSamples = {
+    accounts: [acc],
+    categories: [],
+    balances: { a1: 2267100 },
+    recent: [],
+    dates: [],
+    totalEntries: 6,
+    noAccount: 0,
+    sampleMovement: { a1: 2267100 },
+  };
+  // the form is pre-filled with the balance WITHOUT the samples
+  assert.equal(balancePrefill(withSamples, acc), 0);
+  const plan = planBalances({ a1: '5000' }, withSamples);
+  assert.ok(plan.ok);
+  if (plan.ok) assert.deepEqual(plan.patch, [{ id: 'a1', v: 500000 }]); // starting balance 5,000.00, NOT 5,000 minus the samples
+  // after the samples are deleted the account shows opening + 0 = 5,000.00
+  // without samples nothing changes from before
+  const plain = { ...withSamples, balances: { a1: 120000 }, totalEntries: 1, sampleMovement: undefined };
+  assert.equal(balancePrefill(plain, { ...acc }), 120000);
+  const p2 = planBalances({ a1: '1500' }, plain);
+  assert.ok(p2.ok);
+  if (p2.ok) assert.deepEqual(p2.patch, [{ id: 'a1', v: 30000 }]);
+  // and the snapshot loader reads the samples' movement
+  const data = fs.readFileSync('native/src/data.ts', 'utf8');
+  assert.match(data, /sampleMovementOf/);
+  assert.match(data, /SAMPLE_IDS/);
+  const wiz = fs.readFileSync('native/src/Wizard.tsx', 'utf8');
+  assert.match(wiz, /balancePrefill\(/);
 });

@@ -33,6 +33,7 @@ export type Snapshot = {
   dates: string[]; // dates of the last 60 days of entries, one per entry, for the streak
   totalEntries: number;
   noAccount: number; // balance of entries with no account (legacy), counted in Total like the website
+  sampleMovement?: Record<string, number>; // what the tour's "Sample:" entries add to each account (they are not money the person logged)
 };
 
 // Same parser as the website. Only fully understood entries are saved; anything vague asks for a clearer line.
@@ -66,6 +67,9 @@ export const newRequestId = () =>
     return (ch === 'x' ? r : (r & 3) | 8).toString(16);
   });
 
+// The balance the setup form starts from: what the account shows, WITHOUT the sample entries (deleting them later must not change what the person typed).
+export const balancePrefill = (s: Snapshot, a: Account): number => (s.balances[a.id] ?? a.opening_balance_minor) - (s.sampleMovement?.[a.id] ?? 0);
+
 // Wizard step 2: "what I have in each account today" -> opening balances to store (typed minus what is already logged). Accounts not on the form are never touched.
 export function planBalances(
   typed: Record<string, string>,
@@ -79,7 +83,7 @@ export function planBalances(
     if (v === null)
       return { ok: false, message: `"${typed[a.id].slice(0, 20)}" is not a valid amount for ${a.name}. Use numbers like 1500 or 1500.50.` };
     if (v !== 0) any = true;
-    const o = openingFromToday(v, s.balances[a.id] ?? a.opening_balance_minor, a.opening_balance_minor);
+    const o = openingFromToday(v, balancePrefill(s, a), a.opening_balance_minor);
     if (o === null) return { ok: false, message: `That amount is too large for ${a.name}.` };
     if (o !== a.opening_balance_minor) patch.push({ id: a.id, v: o });
   }

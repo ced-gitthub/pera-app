@@ -3,12 +3,13 @@ import { validateItems } from '../../src/lib/validate';
 import type { Item } from '../../src/core/parser';
 import { addDays, manilaToday } from '../../src/core/money';
 import { missingFeeCategories, type Account, type Category, type Tx, type Snapshot } from './logic';
+import { SAMPLE_IDS, SAMPLE_LABEL, sampleMovementOf } from './sampleLogic';
 
 export { preview, newRequestId, type Snapshot, type Preview } from './logic';
 
 export async function load(): Promise<Snapshot> {
   const since = addDays(manilaToday(), -60);
-  const [a, c, b, t, dts, cnt, na] = await Promise.all([
+  const [a, c, b, t, dts, cnt, na, smp] = await Promise.all([
     supabase
       .from('accounts')
       .select('id,name,short_name,counts_as_savings,opening_balance_minor,show_on_home')
@@ -30,8 +31,9 @@ export async function load(): Promise<Snapshot> {
       .limit(1000),
     supabase.from('transactions').select('id', { count: 'exact', head: true }),
     supabase.rpc('no_account_summary'),
+    supabase.from('transactions').select('account_id,type,amount_minor').in('request_id', SAMPLE_IDS).like('description', SAMPLE_LABEL + '%'),
   ]);
-  const err = a.error ?? c.error ?? b.error ?? t.error ?? dts.error ?? cnt.error ?? na.error;
+  const err = a.error ?? c.error ?? b.error ?? t.error ?? dts.error ?? cnt.error ?? na.error ?? smp.error;
   if (err) throw new Error('Could not load your data. Check your connection.');
   const balances: Record<string, number> = {};
   for (const x of (b.data ?? []) as { account_id: string; balance_minor: number }[]) balances[x.account_id] = Number(x.balance_minor);
@@ -43,6 +45,7 @@ export async function load(): Promise<Snapshot> {
     dates: (dts.data ?? []).map((x) => x.transaction_date as string),
     totalEntries: cnt.count ?? 0,
     noAccount: Number((na.data as { balance_minor: number }[] | null)?.[0]?.balance_minor ?? 0),
+    sampleMovement: sampleMovementOf((smp.data ?? []) as { account_id: string | null; type: string; amount_minor: number }[]),
   };
 }
 

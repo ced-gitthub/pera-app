@@ -8,7 +8,7 @@ import { c, s } from './ui';
 export const sign = (t: string) => (t === 'income' ? '+' : t === 'expense' ? '-' : '');
 
 // Type a line, check the preview, save. Shared by Home and the first-run wizard.
-export function QuickAdd({ snap, onSaved }: { snap: Snapshot; onSaved: () => void }) {
+export function QuickAdd({ snap, onSaved }: { snap: Snapshot; onSaved: () => void | Promise<string | void> }) {
   const [text, setText] = useState('');
   const [pv, setPv] = useState<Preview | null>(null);
   const [busy, setBusy] = useState(false);
@@ -32,7 +32,8 @@ export function QuickAdd({ snap, onSaved }: { snap: Snapshot; onSaved: () => voi
     setText('');
     setPv(null);
     setMsg({ bad: false, t: `Saved ${pv.items.length} ${pv.items.length === 1 ? 'entry' : 'entries'}.` });
-    onSaved();
+    const reloaded = await onSaved(); // wait for the reload, and say so if it failed (the entry IS saved)
+    if (typeof reloaded === 'string' && reloaded) setMsg({ bad: true, t: `Saved, but could not refresh the screen: ${reloaded}` });
   };
 
   return (

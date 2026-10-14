@@ -22,10 +22,11 @@ export async function saveBalances(typed: Record<string, string>): Promise<strin
   if (!fresh) return FAIL;
   const plan = planBalances(typed, fresh);
   if (!plan.ok) return plan.message;
-  for (const p of plan.patch) {
-    const { error } = await supabase.from('accounts').update({ opening_balance_minor: p.v }).eq('id', p.id);
-    if (error) return FAIL;
-  }
+  // all the account updates go out together (not one after another); an honest message if only some were saved
+  const results = await Promise.all(plan.patch.map((p) => supabase.from('accounts').update({ opening_balance_minor: p.v }).eq('id', p.id)));
+  const failed = results.filter((r) => r.error).length;
+  if (failed === results.length && failed > 0) return FAIL;
+  if (failed > 0) return `Saved ${results.length - failed} of ${results.length} accounts. Press Save again for the rest.`;
   return null;
 }
 

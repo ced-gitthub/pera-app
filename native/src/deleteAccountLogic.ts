@@ -2,8 +2,9 @@
 
 // 1) Delete my records: clears what you logged. The login and the setup stay.
 export const RECORDS_DELETE = [
-  'Choose which records to clear: all entries, all budgets, or all goals.',
-  'Your login stays, and so do your accounts (Cash, GCash...) and categories. Accounts keep their starting balances.',
+  'Choose what to clear: all entries, all budgets, all savings goals, all recurring rules, or everything at once.',
+  'Delete ALL my records clears all of those and also sets every account\'s starting balance to 0.',
+  'Your login stays, and so do your accounts (Cash, GCash...) and categories, empty.',
   'Use this to clear test entries and start tracking for real.',
 ];
 

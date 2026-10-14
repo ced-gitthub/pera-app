@@ -55,3 +55,14 @@ export async function samplePending(uid: string): Promise<boolean> {
 }
 export const setSamplePending = (uid: string, on: boolean) =>
   (on ? AsyncStorage.setItem(sampleKey(uid), '1') : AsyncStorage.removeItem(sampleKey(uid))).catch(() => {});
+
+// "This account already has data: keep it or start fresh?" is pending until it is answered, even across a restart or a theme change.
+const askKey = (uid: string) => `zv_ask_pending:${uid}`;
+export async function askPending(uid: string): Promise<boolean> {
+  try {
+    return (await AsyncStorage.getItem(askKey(uid))) === '1';
+  } catch {
+    return false;
+  }
+}
+export const setAskPending = (uid: string, on: boolean) => (on ? AsyncStorage.setItem(askKey(uid), '1') : AsyncStorage.removeItem(askKey(uid))).catch(() => {});

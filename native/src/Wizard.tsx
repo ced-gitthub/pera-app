@@ -7,6 +7,7 @@ import { GOAL_EMOJIS } from '../../src/lib/goals';
 import { COPY, SAMPLES } from '../../src/lib/onboardingCopy';
 import { GATE_STEPS, WIZARD_TOTAL, type GateStep } from '../../src/lib/onboarding';
 import type { Snapshot } from './data';
+import { balancePrefill } from './logic';
 import { ToggleRow } from './Sheet';
 import { setAccountFlag } from './config';
 import { saveBalances, saveBudget, saveGoal } from './wizardData';
@@ -76,11 +77,21 @@ export function Wizard(p: {
   snap: Snapshot;
   tour: boolean;
   refresh: () => Promise<string>;
-  onFinish: () => void;
+  onFinish: () => void | Promise<void>;
   onBalances: () => Promise<boolean>;
   onUseSamples?: () => Promise<string | null>; // first step only: fill in labelled sample entries instead of typing one
 }) {
   const [i, setI] = useState(0); // tour position
+  const [finishing, setFinishing] = useState(false);
+  const finish = async () => {
+    if (finishing) return;
+    setFinishing(true);
+    try {
+      await p.onFinish();
+    } finally {
+      setFinishing(false);
+    }
+  };
   const slide: Slide = p.tour ? ORDER[i] : p.slide;
   const number = p.tour ? i + 1 : Math.max(ORDER.indexOf(slide), 0) + 1;
   const c0 = COPY[slide];
@@ -131,7 +142,7 @@ export function Wizard(p: {
           <View style={{ marginTop: sp.m }}>
             <Text style={[s.p, { marginBottom: sp.m }]}>Log it, track it, budget it, save for it. Everything is on your Home screen.</Text>
             <Text style={{ color: c.ink, marginBottom: sp.l }}>🔥 Tip: log something 3 days in a row to light your streak.</Text>
-            <Btn label="Open my Zovix" onPress={p.onFinish} />
+            <Btn label="Open my Zovix" busy={finishing} onPress={() => void finish()} />
             {p.tour && <Btn label="Back" alt onPress={() => setI(i - 1)} />}
           </View>
         ) : (
@@ -186,7 +197,7 @@ function Action({
     setBusy(false);
   };
   const [bal, setBal] = useState<Record<string, string>>(() =>
-    Object.fromEntries(snap.accounts.map((a) => [a.id, minorToInput(snap.balances[a.id] ?? 0)])),
+    Object.fromEntries(snap.accounts.map((a) => [a.id, minorToInput(balancePrefill(snap, a))])),
   );
   const [flagBusy, setFlagBusy] = useState('');
   const flip = async (id: string, on: boolean) => {

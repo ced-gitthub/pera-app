@@ -57,3 +57,13 @@ export const TOUR_END_TEXT =
 export const TOUR_END_KEEP = 'Keep everything';
 export const TOUR_END_CLEAR = 'Clear everything';
 export const TOUR_END_CONFIRM = 'Yes, delete everything';
+
+/** The movement the sample entries put on each account (income +, expense -). Setup balances must not count it as money the person logged. */
+export function sampleMovementOf(rows: { account_id: string | null; type: string; amount_minor: number }[]): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const r of rows) {
+    if (!r.account_id || (r.type !== 'income' && r.type !== 'expense')) continue;
+    out[r.account_id] = (out[r.account_id] ?? 0) + (r.type === 'income' ? r.amount_minor : -r.amount_minor);
+  }
+  return out;
+}

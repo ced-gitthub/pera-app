@@ -5,11 +5,12 @@ import type { Gate as GateResult } from '../../src/lib/onboarding';
 import { supabase } from './supabase';
 import { load, type Snapshot } from './data';
 import { loadCounts } from './wizardData';
-import { readFlags, setFlags, tabTourSeen, markTabTourSeen, samplePending, setSamplePending } from './flags';
+import { askPending, readFlags, setAskPending, setFlags, tabTourSeen, markTabTourSeen, samplePending, setSamplePending } from './flags';
+import { createGeneration, openSheet } from './gateFlow';
 import { TabTour } from './TabTour';
 import { CoachProvider } from './Coach';
 import { TOUR } from './tourContent';
-import { type Tx, decideGate, firstName, FINISH_FLAGS, REPLAY_FLAGS } from './logic';
+import { type Tx, decideGate, firstName, FINISH_FLAGS } from './logic';
 import { Home } from './Home';
 import { EntrySheet, UndoBar } from './EntrySheet';
 import { restoreEntry } from './entries';
@@ -60,6 +61,9 @@ export function Gate() {
   const [canSample, setCanSample] = useState(false);
   const [sampleEnd, setSampleEnd] = useState(false); // 'Keep the sample entries?' after the tour
   const [tour, setTour] = useState<number | null>(null); // index of the live-tour step, or null when it is closed
+  const [replaying, setReplaying] = useState(false); // the read-only walkthrough (Settings > Show the first-run tutorial again); never the required setup
+  const gen = useRef(createGeneration()); // numbers the reloads: the newest answer wins
+  const booted = useRef(false); // the first load also decides Make it yours, the pending questions and the tour-seen flag, in one go (no flashing)
   const tourFrom = useRef('home'); // the tab the person was on, restored when the tour ends
   const lastTry = useRef<number | null>(null);
   const lastDue = useRef<string | null>(null); // Manila day when due recurring rules last ran; they run again when the day changes, like the website does on each Home load
@@ -79,17 +83,32 @@ export function Gate() {
       const { data } = await supabase.auth.getSession();
       const id = data.session?.user.id;
       if (!id) return 'Session expired. Please sign in again.';
+      const my = gen.current.next();
       const wasSignUp = await takeSignUpFlag(data.session?.user.email ?? ''); // read once; used below with this load's counts
       // One round trip, not four in a row: the snapshot, the counts and the profile are read together.
-      const [sn, flags, counts, prof] = await Promise.all([
+      const [sn, flags, counts, prof, seenMine, pendingSamples, tourSeen, pendingAsk] = await Promise.all([
         load(),
         readFlags(id),
         loadCounts().catch(() => null),
         Promise.resolve(supabase.from('profiles').select('name').eq('id', id).maybeSingle()).catch(() => ({ data: null })),
+        makeItYoursSeen(id),
+        samplePending(id),
+        tabTourSeen(id),
+        askPending(id),
       ]);
+      if (gen.current.isStale(my)) return ''; // a newer reload started while this one was waiting: it will apply its own answer
       const d = decideGate(counts, sn.accounts, flags);
       await setFlags(id, d.set);
-      if (shouldAskAboutExistingData(wasSignUp, counts)) setAsk(true);
+      if (shouldAskAboutExistingData(wasSignUp, counts)) {
+        void setAskPending(id, true); // remembered until answered
+        setAsk(true);
+      }
+      if (!booted.current) {
+        booted.current = true;
+        setMine(!seenMine);
+        setSampleEnd(pendingSamples && tourSeen); // if the tour was not seen yet, the tour choice comes first and the Keep / Clear question follows the tour
+        if (pendingAsk) setAsk(true);
+      }
       setCanSample(canOfferSample(counts, sn.accounts.length));
       setUid(id);
       const nm = String(prof.data?.name || data.session?.user.user_metadata?.name || data.session?.user.email?.split('@')[0] || '');
@@ -119,23 +138,12 @@ export function Gate() {
     refresh();
   }, [refresh]);
   useEffect(() => {
-    if (!uid) return;
-    void makeItYoursSeen(uid).then((seen) => !seen && setMine(true));
-  }, [uid]);
-  useEffect(() => {
     // the tab tour opens once per account, as soon as the first-run steps are out of the way
     if (!snap || !gate || gate.show || !uid || ask || fresh) return; // the tour waits while the existing-data question is open
     void tabTourSeen(uid).then((seen) => {
-      if (!seen) {
-        setChoose(true);
-        void markTabTourSeen(uid);
-      }
+      if (!seen) setChoose(true); // marked as seen only when answered (onChoose)
     });
   }, [snap, gate, uid, ask, fresh]);
-  useEffect(() => {
-    // the app was closed during a sample-entry tour: still ask what to do with them
-    if (uid) void samplePending(uid).then((on) => on && setSampleEnd(true));
-  }, [uid]);
   useEffect(() => {
     // a queued launcher-icon change is applied when the person LEAVES the app (Android closes the app to switch icons, so never while it is in use)
     let timer: ReturnType<typeof setTimeout> | null = null;
@@ -177,22 +185,49 @@ export function Gate() {
       </View>
     );
   const startSamples = () => startSamplesWith({ setPending: (on) => setSamplePending(uid, on), add: () => addSamples(snap), remove: removeSamples });
-  if (gate.show)
+  const sheet = openSheet({ ask: ask && !mine, fresh, choose, end: sampleEnd, tour: tour !== null, mine });
+  const keepExisting = () => {
+    setAsk(false);
+    void setAskPending(uid, false);
+  };
+  const startFresh = () => {
+    setAsk(false);
+    setFresh(true);
+  };
+  const resetSheet = <ResetData open={sheet === 'fresh'} onClose={() => (setFresh(false), void setAskPending(uid, false))} onDone={() => void refresh()} />;
+  if (replaying)
     return (
       <Wizard
-        key={gate.step}
-        slide={gate.step === 'tour' ? 'first' : gate.step}
-        doneIds={gate.doneIds}
+        key="replay"
+        slide="first"
+        doneIds={[]}
         snap={snap}
-        tour={gate.step === 'tour'}
+        tour
         refresh={refresh}
-        onBalances={() => setFlags(uid, { balances: true })}
-        onUseSamples={startSamples}
-        onFinish={async () => {
-          await setFlags(uid, FINISH_FLAGS);
-          await refresh();
-        }}
+        onBalances={async () => true}
+        onFinish={() => setReplaying(false)}
       />
+    );
+  if (gate.show)
+    return (
+      <>
+        <Wizard
+          key={gate.step}
+          slide={gate.step === 'tour' ? 'first' : gate.step}
+          doneIds={gate.doneIds}
+          snap={snap}
+          tour={gate.step === 'tour'}
+          refresh={refresh}
+          onBalances={() => setFlags(uid, { balances: true })}
+          onUseSamples={startSamples}
+          onFinish={async () => {
+            await setFlags(uid, FINISH_FLAGS);
+            await refresh();
+          }}
+        />
+        <ExistingDataPrompt open={sheet === 'ask'} onKeep={keepExisting} onFresh={startFresh} />
+        {resetSheet}
+      </>
     );
   const endTour = () => {
     setTour(null);
@@ -200,6 +235,7 @@ export function Gate() {
     void samplePending(uid).then((on) => on && setSampleEnd(true));
   };
   const onChoose = async (k: 'sample' | 'plain' | 'skip') => {
+    void markTabTourSeen(uid); // answered: the offer is used up (closing the app at the sheet keeps it)
     if (k === 'skip') {
       setChoose(false);
       void samplePending(uid).then((on) => on && setSampleEnd(true)); // samples added in the wizard still get their Keep / Clear question
@@ -213,10 +249,9 @@ export function Gate() {
     setChoose(false);
     startTour('home');
   };
-  const replay = async () => {
-    await setFlags(uid, REPLAY_FLAGS);
+  const replay = () => {
     setTab('home');
-    await refresh();
+    setReplaying(true); // read-only walkthrough: no flags change, the required setup is never re-opened
   };
   return (
     <CoachProvider>
@@ -234,7 +269,7 @@ export function Gate() {
           {tab === 'accounts' && <AccountsTab snap={snap} refresh={refresh} />}
           {tab === 'budgets' && <Budgets snap={snap} />}
           {tab === 'goals' && <Goals snap={snap} />}
-          {tab === 'more' && <Settings snap={snap} name={name} refresh={refresh} onReplay={() => void replay()} onTour={() => startTour(tab)} />}
+          {tab === 'more' && <Settings snap={snap} name={name} refresh={refresh} onReplay={replay} onTour={() => startTour(tab)} />}
         </View>
         <UndoBar
           row={undo?.row ?? null}
@@ -266,17 +301,10 @@ export function Gate() {
             await refresh();
           }}
         />
-        <ExistingDataPrompt
-          open={ask && !mine && tour === null}
-          onKeep={() => setAsk(false)}
-          onFresh={() => {
-            setAsk(false);
-            setFresh(true);
-          }}
-        />
-        <TourChoice open={choose && !ask && !fresh && tour === null} canSample={canSample} onChoose={onChoose} />
+        <ExistingDataPrompt open={sheet === 'ask'} onKeep={keepExisting} onFresh={startFresh} />
+        <TourChoice open={sheet === 'choose'} canSample={canSample} onChoose={onChoose} />
         <TourEnd
-          open={sampleEnd && tour === null && !choose}
+          open={sheet === 'end'}
           onKeep={async () => {
             await setSamplePending(uid, false);
             setSampleEnd(false);
@@ -293,7 +321,7 @@ export function Gate() {
             return null;
           }}
         />
-        <ResetData open={fresh} onClose={() => setFresh(false)} onDone={() => void refresh()} />
+        {resetSheet}
         {!!notice && <Text style={{ color: c.mute, fontSize: t.caption, textAlign: 'center', padding: sp.s }}>{notice}</Text>}
         <TabBar tab={tab} setTab={setTab} onHeight={setTabH} />
         {tour !== null && <TabTour index={tour} onIndex={setTour} onClose={endTour} />}
