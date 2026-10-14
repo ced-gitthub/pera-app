@@ -21,6 +21,7 @@ import { ExistingDataPrompt } from './ExistingDataPrompt';
 import { ResetData } from './ResetData';
 import { TourChoice, TourEnd } from './SampleSheets';
 import { addSamples, removeSamples } from './sampleApi';
+import { startSamplesWith } from './sampleCore';
 import { canOfferSample } from './sampleLogic';
 import { MakeItYours } from './MakeItYours';
 import { makeItYoursSeen } from './profile';
@@ -146,6 +147,7 @@ export function Gate() {
     ) : (
       <HomeSkeleton />
     );
+  const startSamples = () => startSamplesWith({ setPending: (on) => setSamplePending(uid, on), add: () => addSamples(snap), remove: removeSamples });
   if (gate.show)
     return (
       <Wizard
@@ -156,6 +158,7 @@ export function Gate() {
         tour={gate.step === 'tour'}
         refresh={refresh}
         onBalances={() => setFlags(uid, { balances: true })}
+        onUseSamples={startSamples}
         onFinish={async () => {
           await setFlags(uid, FINISH_FLAGS);
           await refresh();
@@ -170,9 +173,8 @@ export function Gate() {
   const onChoose = async (k: 'sample' | 'plain' | 'skip') => {
     if (k === 'skip') return setChoose(false);
     if (k === 'sample') {
-      const m = await addSamples(snap);
+      const m = await startSamples();
       if (m) setNotice(m);
-      else await setSamplePending(uid, true);
       await refresh();
     }
     setChoose(false);

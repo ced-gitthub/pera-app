@@ -78,6 +78,7 @@ export function Wizard(p: {
   refresh: () => Promise<string>;
   onFinish: () => void;
   onBalances: () => Promise<boolean>;
+  onUseSamples?: () => Promise<string | null>; // first step only: fill in labelled sample entries instead of typing one
 }) {
   const [i, setI] = useState(0); // tour position
   const slide: Slide = p.tour ? ORDER[i] : p.slide;
@@ -163,11 +164,13 @@ function Action({
   snap,
   refresh,
   onBalances,
+  onUseSamples,
 }: {
   step: GateStep;
   snap: Snapshot;
   refresh: () => Promise<string>;
   onBalances: () => Promise<boolean>;
+  onUseSamples?: () => Promise<string | null>;
 }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
@@ -233,6 +236,14 @@ function Action({
     <View style={[s.card, { borderColor: c.primary, borderWidth: 2, marginTop: sp.s }]}>
       <Text style={[s.h2, { color: c.primary }]}>👉 Start here</Text>
       {step === 'first' && <QuickAdd snap={snap} onSaved={refresh} />}
+      {step === 'first' && !!onUseSamples && snap.totalEntries === 0 && (
+        <>
+          <Text style={[s.p, { marginTop: sp.m }]}>
+            Or skip typing: I fill in a few labelled sample entries for you. You choose to keep or clear them after the tour.
+          </Text>
+          <Btn label="Use sample entries instead" alt busy={busy} onPress={() => run(onUseSamples)} />
+        </>
+      )}
       {step === 'balance' && (
         <>
           {snap.accounts.map((a) => (

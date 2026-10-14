@@ -205,4 +205,38 @@ export async function bulkDeleteSteps({ A, B, step, cnt, other, d, mk }: Ctx): P
           aRows: aRows.data?.length ?? aRows.error?.message,
         };
   });
+
+  // Native tour sample entries (native/src/sampleLogic.ts): fixed uuid request ids, added with the retry-safe upsert and cleared with .eq(user_id).in(request_id, ids).
+  // Proves the ids are accepted by the uuid column, that clearing removes exactly those rows, and that a real entry of the same user survives.
+  await step('native sample entries: saved with fixed uuid request ids, cleared by id list only, a real entry survives', async () => {
+    const accts = (await A.c.from('accounts').select('id').limit(1)).data ?? [];
+    const cats = (await A.c.from('categories').select('id').eq('type', 'expense').limit(1)).data ?? [];
+    if (!accts[0] || !cats[0]) return 'could not read the test user defaults';
+    const ids = ['5a3e0000-0000-4000-8000-000000000001', '5a3e0000-0000-4000-8000-000000000002'];
+    const row = (rid: string, n: number) => ({
+      user_id: A.id,
+      type: 'expense',
+      category_id: cats[0].id,
+      account_id: accts[0].id,
+      amount_minor: 100 + n,
+      transaction_date: d,
+      description: 'Sample: live test',
+      request_id: rid,
+      request_idx: 0,
+    });
+    const realId = '5a3e0000-0000-4000-8000-0000000000ff';
+    const up = await A.c
+      .from('transactions')
+      .upsert([row(ids[0], 1), row(ids[1], 2), row(realId, 3)], { onConflict: 'user_id,request_id,request_idx', ignoreDuplicates: true });
+    if (up.error) return { upsert: up.error.message };
+    const del = await A.c.from('transactions').delete().eq('user_id', A.id).in('request_id', ids).select('id');
+    const left = await A.c
+      .from('transactions')
+      .select('id')
+      .in('request_id', [...ids, realId]);
+    const cleanup = await A.c.from('transactions').delete().eq('user_id', A.id).eq('request_id', realId);
+    return !del.error && (del.data ?? []).length === 2 && !left.error && (left.data ?? []).length === 1 && !cleanup.error
+      ? true
+      : { del: del.error?.message ?? (del.data ?? []).length, left: left.error?.message ?? (left.data ?? []).length };
+  });
 }

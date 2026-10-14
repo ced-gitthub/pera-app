@@ -23,3 +23,17 @@ export async function removeSampleWith(db: Db, userId: string): Promise<string |
     return SAMPLE_REMOVE_FAIL;
   }
 }
+
+// Starts sample entries safely. The "pending" flag is stored FIRST, so even if the app dies mid-way the Keep / Clear question still appears.
+// If adding fails part-way, the partial rows are removed; the flag is cleared only when that clean-up worked. Returns null on success.
+export async function startSamplesWith(p: {
+  setPending: (on: boolean) => Promise<unknown> | void;
+  add: () => Promise<string | null>;
+  remove: () => Promise<string | null>;
+}): Promise<string | null> {
+  await p.setPending(true);
+  const m = await p.add();
+  if (!m) return null;
+  if (!(await p.remove())) await p.setPending(false);
+  return m;
+}

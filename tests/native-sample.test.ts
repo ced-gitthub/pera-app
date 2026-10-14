@@ -24,7 +24,7 @@ test('sample rows: whole centavos, real accounts and categories, recent plausibl
     assert.match(r.patch.transaction_date, /^2026-(09|10)-\d\d$/);
     assert.ok(r.patch.transaction_date <= '2026-10-14');
     assert.ok(SAMPLE_IDS.includes(r.requestId));
-    assert.match(r.requestId, /^zv-sample-\d+$/);
+    assert.ok(SAMPLE_IDS.includes(r.requestId));
     assert.match(r.patch.description, /^Sample: /); // it is plain to see that these are samples
     assert.equal(r.patch.type === 'transfer', false);
     if (r.patch.category_id) assert.ok(categories.some((c) => c.id === r.patch.category_id && c.type === r.patch.type));
@@ -54,7 +54,7 @@ test('adding samples: one retry-safe upsert per row, null when all are confirmed
   for (const u of ups) {
     const row = u.args[0] as Record<string, unknown>;
     assert.equal(row.user_id, 'u1');
-    assert.match(String(row.request_id), /^zv-sample-\d+$/);
+    assert.ok(SAMPLE_IDS.includes(String(row.request_id)));
     assert.deepEqual(u.args[1], { onConflict: 'user_id,request_id,request_idx', ignoreDuplicates: true });
   }
 });
@@ -86,4 +86,60 @@ test('withTimeout: a promise that never settles still resolves to the fallback',
   assert.equal(await withTimeout(new Promise<number>(() => {}), 20, -1), -1);
   assert.equal(await withTimeout(Promise.resolve(5), 20, -1), 5);
   assert.equal(await withTimeout(Promise.reject(new Error('x')), 20, -1), -1);
+});
+
+import fs from 'node:fs';
+import { startSamplesWith } from '../native/src/sampleCore.ts';
+import { decideGate } from '../native/src/logic.ts';
+
+test('sample ids are valid uuids (transactions.request_id is a uuid column)', () => {
+  for (const id of SAMPLE_IDS) assert.match(id, /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+  assert.equal(new Set(SAMPLE_IDS).size, SAMPLE_IDS.length);
+});
+
+test('start samples: the pending flag is set BEFORE anything is written, and stays on success', async () => {
+  const log: string[] = [];
+  const m = await startSamplesWith({
+    setPending: async (on) => void log.push(`pending:${on}`),
+    add: async () => (log.push('add'), null),
+    remove: async () => (log.push('remove'), null),
+  });
+  assert.equal(m, null);
+  assert.deepEqual(log, ['pending:true', 'add']);
+});
+
+test('start samples: a partial failure is cleaned up, and the flag is cleared only if the clean-up worked', async () => {
+  const a: string[] = [];
+  const m = await startSamplesWith({
+    setPending: async (on) => void a.push(`pending:${on}`),
+    add: async () => (a.push('add'), 'could not add'),
+    remove: async () => (a.push('remove'), null),
+  });
+  assert.equal(m, 'could not add');
+  assert.deepEqual(a, ['pending:true', 'add', 'remove', 'pending:false']);
+  const b: string[] = [];
+  await startSamplesWith({
+    setPending: async (on) => void b.push(`pending:${on}`),
+    add: async () => 'could not add',
+    remove: async () => (b.push('remove'), 'still there'),
+  });
+  assert.deepEqual(b, ['pending:true', 'remove']); // rows may remain: the flag stays so the Keep / Clear question still appears
+});
+
+test('a brand-new account sees the wizard first step, where samples are offered; after them it moves on', () => {
+  const off = { onboarded: false, wizard: false, balances: false, toured: false };
+  const none = { totalEntries: 0, budgetsCount: 0, goalsCount: 0 };
+  const d = decideGate(none, accounts, off);
+  assert.ok(d.gate.show && d.gate.step === 'first');
+  assert.equal(canOfferSample(none, accounts.length), true); // this is when the wizard shows "Use sample entries"
+  const after = decideGate({ ...none, totalEntries: SAMPLE_IDS.length }, accounts, off);
+  assert.ok(!after.gate.show || after.gate.step !== 'first');
+});
+
+test('the wizard offers samples only on its first step with no entries, and the tour has a hard deadline for its tooltip', () => {
+  const w = fs.readFileSync('native/src/Wizard.tsx', 'utf8');
+  assert.match(w, /onUseSamples/);
+  assert.match(w, /totalEntries === 0/);
+  const t = fs.readFileSync('native/src/TabTour.tsx', 'utf8');
+  assert.match(t, /DEADLINE_MS/);
 });

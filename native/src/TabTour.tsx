@@ -13,6 +13,7 @@ const BOUNCE_MS = 520;
 const TIP_W = 340;
 const TIP_GUESS_H = 200;
 const WAITS = [0, 120, 120, 200, 300, 500]; // after a tab switch the target may mount late; measure a few times until it stops moving
+const DEADLINE_MS = 2500; // hard limit per step: if nothing has been measured by then the tooltip is shown anyway (centred), never an invisible blocker
 const SETTLE_MS = 800; // one measuring pass never waits longer than this, so the tooltip always appears
 const pause = (ms: number) => new Promise<void>((res) => setTimeout(res, ms));
 const fixed = (tgt: string) => tgt.startsWith('tab:') || tgt === 'fab'; // these sit on the screen already; never scroll for them
@@ -37,6 +38,7 @@ export function TabTour({ index, onIndex, onClose }: { index: number; onIndex: (
   const tipIn = useRef(new Animated.Value(0)).current;
   const bounce = useRef(new Animated.Value(0)).current;
   const first = useRef(true);
+  const shown = useRef(false); // true once the current step's tooltip has been revealed
 
   useEffect(() => {
     let live = true;
@@ -73,7 +75,13 @@ export function TabTour({ index, onIndex, onClose }: { index: number; onIndex: (
 
   // The tooltip leaves while we look for the new target...
   useEffect(() => {
+    shown.current = false;
     tipIn.setValue(still ? 1 : 0);
+    // ...but a restarted or stuck measuring pass must never leave it hidden under the touch blocker: reveal it at the deadline.
+    const timer = setTimeout(() => {
+      if (!shown.current) Animated.timing(tipIn, { toValue: 1, duration: TIP_MS, useNativeDriver: true }).start();
+    }, DEADLINE_MS);
+    return () => clearTimeout(timer);
   }, [index, still, tipIn]);
 
   // ...find the real control, scroll it into view if needed, wait until it stops moving, then move the spotlight there.
@@ -106,6 +114,7 @@ export function TabTour({ index, onIndex, onClose }: { index: number; onIndex: (
           ),
         ).start();
       }
+      shown.current = true;
       if (still) tipIn.setValue(1);
       else Animated.timing(tipIn, { toValue: 1, duration: TIP_MS, useNativeDriver: true }).start();
     };

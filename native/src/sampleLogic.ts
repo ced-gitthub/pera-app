@@ -1,9 +1,10 @@
-// Sample entries for the tour (pure: no React Native, no network). They are ordinary entries with fixed request ids "zv-sample-N",
+// Sample entries for the tour (pure: no React Native, no network). They are ordinary entries with fixed request ids (SAMPLE_IDS),
 // so removing them can target exactly those rows and can never touch an entry the person made (their request ids are random).
 import { addDays } from '../../src/core/money.ts';
 import type { Account, Category, TxPatch } from './logic.ts';
 
-export const SAMPLE_IDS = [1, 2, 3, 4, 5, 6].map((n) => `zv-sample-${n}`);
+// transactions.request_id is a uuid column, so these are fixed, valid uuids (v4 shape). Real request ids are random, so they never collide.
+export const SAMPLE_IDS = [1, 2, 3, 4, 5, 6].map((n) => `5a3e0000-0000-4000-8000-00000000000${n}`);
 
 type Seed = { n: number; type: 'income' | 'expense'; amount: number; ago: number; text: string; cat: RegExp };
 const SEEDS: Seed[] = [
@@ -25,7 +26,7 @@ export function buildSampleRows(accounts: Account[], categories: Category[], tod
     const pool = categories.filter((c) => c.type === x.type);
     const cat = pool.find((c) => x.cat.test(c.name)) ?? pool[0] ?? null;
     return {
-      requestId: `zv-sample-${x.n}`,
+      requestId: SAMPLE_IDS[x.n - 1],
       patch: {
         amount_minor: x.amount,
         transaction_date: addDays(today, -x.ago),
