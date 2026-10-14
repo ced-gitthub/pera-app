@@ -141,11 +141,11 @@ export function normalizeArtifactCsv(text: string): string {
 
 export function planImport(text: string, s: Snapshot, existing: Set<string> = new Set(), today = manilaToday()): ImportPlan {
   if (!text.trim()) return empty('Paste your CSV text first.');
-  text = normalizeArtifactCsv(text);
   if (text.length > MAX_CSV_CHARS)
     return empty(
       `That text is too large (max ${n(MAX_CSV_CHARS)} characters, roughly 9,000 rows). Split it into smaller parts and import them one by one.`,
     );
+  text = normalizeArtifactCsv(text); // after the size cap, so a huge paste is never parsed twice
   const parsed = csvParse(text);
   const hasHeader = parsed.length > 0 && /date/i.test(parsed[0][0] ?? '');
   const cells = hasHeader ? parsed.slice(1) : parsed;
