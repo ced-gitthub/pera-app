@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     # Only changes that alter what production serves. Test-only, doc and native-app commits do not re-run the suites (each run sends thousands of requests to the Vercel project).
-    paths: ['src/**', 'package.json', 'package-lock.json', 'next.config.mjs', 'vercel.json']
+    paths: ['src/**', 'public/**', 'package.json', 'package-lock.json', 'next.config.mjs', 'vercel.json', 'scripts/vercel-ignore.sh', 'scripts/deployable-paths']
 # One run at a time: overlapping runs share test users and were a source of flaky failures; a newer push replaces a waiting one.
 concurrency:
   group: prod-qa
@@ -46,7 +46,9 @@ jobs:
         with: { node-version: 22 }
       - name: Wait until production serves this commit
         run: |
-          want="${GITHUB_SHA::7}"
+          # Vercel skips commits that change nothing deployable, so wait for the newest commit that does (same list the skip script uses).
+          git fetch --unshallow -q 2>/dev/null || true
+          want=$(git log -1 --format=%H -- $(cat scripts/deployable-paths) | cut -c1-7)
           for i in $(seq 1 50); do
             got=$(curl -s "$BASE_URL/api/health" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{console.log(JSON.parse(s).commit)}catch{console.log('?')}})")
             echo "prod commit=$got want=$want"
@@ -100,7 +102,9 @@ jobs:
         with: { node-version: 22 }
       - name: Wait until production serves this commit
         run: |
-          want="${GITHUB_SHA::7}"
+          # Vercel skips commits that change nothing deployable, so wait for the newest commit that does (same list the skip script uses).
+          git fetch --unshallow -q 2>/dev/null || true
+          want=$(git log -1 --format=%H -- $(cat scripts/deployable-paths) | cut -c1-7)
           for i in $(seq 1 50); do
             got=$(curl -s "$BASE_URL/api/health" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{console.log(JSON.parse(s).commit)}catch{console.log('?')}})")
             echo "prod commit=$got want=$want"

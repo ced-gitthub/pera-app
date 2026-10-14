@@ -49,16 +49,40 @@ test("landing-only: the native app's own routes stay reachable (account deletion
 });
 test('free-plan usage: production deploys skip commits that change nothing deployable, and previews are not built', () => {
   const v = JSON.parse(readFileSync('vercel.json', 'utf8'));
-  assert.match(v.ignoreCommand, /VERCEL_ENV/);
-  assert.match(
-    v.ignoreCommand,
-    /VERCEL_GIT_PREVIOUS_SHA/,
+  assert.ok(
+    v.ignoreCommand.length <= 256,
+    'Vercel rejects an ignoreCommand longer than 256 characters (a rejected vercel.json breaks every deploy)',
+  );
+  assert.equal(v.ignoreCommand, 'sh scripts/vercel-ignore.sh');
+  const sh = readFileSync('scripts/vercel-ignore.sh', 'utf8');
+  assert.ok(sh.includes('[ "$VERCEL_ENV" = "production" ] || exit 0'), 'previews are not built');
+  assert.ok(
+    sh.includes('VERCEL_GIT_PREVIOUS_SHA'),
     'compare with the last deployed commit, so a docs-only newest commit cannot hide an earlier src change',
   );
-  assert.doesNotMatch(v.ignoreCommand, /HEAD\^/);
-  assert.match(v.ignoreCommand, /exit 1/, 'build whenever the previous commit is unknown');
-  assert.match(v.ignoreCommand, /git diff --quiet "\$VERCEL_GIT_PREVIOUS_SHA" HEAD -- src public/);
-  assert.doesNotMatch(v.ignoreCommand, /tests|docs|native|\.github/, 'tests, docs, native and CI files must not trigger a deploy');
+  assert.ok(!sh.includes('HEAD^ '), 'never compare with the parent commit only');
+  assert.equal(sh.split('|| exit 1').length - 1, 2, 'build whenever the previous commit is unknown or missing');
+  assert.ok(sh.includes('git diff --quiet "$VERCEL_GIT_PREVIOUS_SHA" HEAD -- $(cat scripts/deployable-paths)'));
+  const paths = readFileSync('scripts/deployable-paths', 'utf8').trim().split('\n');
+  for (const must of [
+    'src',
+    'public',
+    'next.config.mjs',
+    'package.json',
+    'package-lock.json',
+    'vercel.json',
+    'scripts/vercel-ignore.sh',
+    'scripts/deployable-paths',
+  ])
+    assert.ok(paths.includes(must), must + ' must trigger a deploy');
+  for (const p of paths) assert.ok(!/^(tests|docs|native|\.github|supabase)/.test(p), p + ' must not trigger a deploy');
+  const w = readFileSync('.github/workflows/prod-qa.yml', 'utf8');
+  assert.equal(
+    w.split('cat scripts/deployable-paths').length - 1,
+    2,
+    'both wait steps wait for the newest DEPLOYABLE commit, not the newest commit',
+  );
+  assert.equal(w.split('git fetch --unshallow').length - 1, 2);
 });
 test('free-plan usage: the live suites run one at a time and not for test-only or native-only commits', () => {
   const w = readFileSync('.github/workflows/prod-qa.yml', 'utf8');
