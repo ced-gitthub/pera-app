@@ -849,8 +849,10 @@ await step('remembered screens never show a deleted row (delete, then hop Dashbo
   await edit();
   await p.locator('tbody tr:has-text("zzcache") button:has-text("Delete")').first().click();
   await p.locator('button:has-text("Undo")').first().waitFor({ timeout: 20000 });
-  await p.waitForTimeout(1500);
-  const here = /zzcache/i.test(await body(p).then((t) => t.replace(/Deleted\. Changed your mind\?/g, '')));
+  // the row leaves the list as soon as the server answers; poll for it instead of a fixed pause (a fixed 1.5 s was flaky on a slow run)
+  const gone = async () => !/zzcache/i.test(await body(p).then((t) => t.replace(/Deleted\. Changed your mind\?/g, '')));
+  for (let i = 0; i < 10 && !(await gone()); i++) await p.waitForTimeout(1000);
+  const here = !(await gone());
   await tab('/');
   const dash = /zzcache/i.test(await body(p));
   await tab('/transactions');
