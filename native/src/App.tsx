@@ -1,4 +1,5 @@
 import { forgetProfile } from './profile';
+import { ToastProvider } from './Toast';
 import { useCallback, useEffect, useState } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ActivityIndicator, KeyboardAvoidingView, StatusBar, Text, View } from 'react-native';
@@ -79,10 +80,12 @@ export default function App() {
   else body = <Gate />;
   return (
     <SafeAreaProvider>
+      <ToastProvider>
       <KeyboardAvoidingView key={themeKey} style={{ flex: 1, backgroundColor: c.bg }} behavior="padding">
         <StatusBar barStyle={themeState.statusBarStyle} backgroundColor={c.bg} />
         {body}
       </KeyboardAvoidingView>
+      </ToastProvider>
     </SafeAreaProvider>
   );
 }

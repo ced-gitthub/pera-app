@@ -1,8 +1,11 @@
 import type { ReactNode } from 'react';
 import { useEffect, useRef } from 'react';
-import { Animated, KeyboardAvoidingView, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Animated, KeyboardAvoidingView, Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { c, r, s, sp, t } from './ui';
+import { ToastCard } from './Toast';
+import { UNSAVED_TEXT_ANY, unsavedButtons } from './unsaved';
+import { UNSAVED_TITLE } from './profileLogic';
 
 // The pinned close button of a sheet or full-screen page: always in the header, never scrolled away, at least 48 tall.
 export function HeaderClose({ label = 'Done', onPress }: { label?: string; onPress: () => void }) {
@@ -31,6 +34,8 @@ export function Sheet({
   children,
   footer,
   toast,
+  dirty,
+  onSave,
 }: {
   open: boolean;
   title: string;
@@ -38,7 +43,14 @@ export function Sheet({
   children: ReactNode;
   footer?: ReactNode; // pinned below the scrolling content: always on screen
   toast?: string | null; // a centred card that pops out over the sheet (for example 'Profile saved')
+  dirty?: boolean; // unsaved changes: Done, a tap outside and the back button ask Save / Discard / Keep editing first
+  onSave?: () => Promise<boolean> | boolean; // saves from that prompt; true = it worked (the sheet then closes)
 }) {
+  // every way to close goes through here
+  const requestClose = () => {
+    if (dirty) Alert.alert(UNSAVED_TITLE, UNSAVED_TEXT_ANY, unsavedButtons({ onClose, onSave }));
+    else onClose();
+  };
   const { bottom } = useSafeAreaInsets();
   const pop = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -47,9 +59,9 @@ export function Sheet({
     Animated.spring(pop, { toValue: 1, useNativeDriver: true, friction: 6 }).start();
   }, [toast, pop]);
   return (
-    <Modal visible={open} transparent statusBarTranslucent navigationBarTranslucent animationType="slide" onRequestClose={onClose}>
+    <Modal visible={open} transparent statusBarTranslucent navigationBarTranslucent animationType="slide" onRequestClose={requestClose}>
       <KeyboardAvoidingView behavior="padding" style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: c.overlay }}>
-        <Pressable style={{ flex: 1 }} onPress={onClose} accessibilityLabel="Close" />
+        <Pressable style={{ flex: 1 }} onPress={requestClose} accessibilityLabel="Close" />
         <View
           style={{
             backgroundColor: c.card,
@@ -66,35 +78,14 @@ export function Sheet({
             <Text style={[s.h2, { flex: 1, marginBottom: 0 }]} accessibilityRole="header" numberOfLines={2}>
               {title}
             </Text>
-            <HeaderClose onPress={onClose} />
+            <HeaderClose onPress={requestClose} />
           </View>
           <ScrollView style={{ flexShrink: 1 }} keyboardShouldPersistTaps="handled">
             {children}
           </ScrollView>
           {!!footer && <View style={{ paddingTop: sp.m }}>{footer}</View>}
         </View>
-        {!!toast && (
-          <View pointerEvents="none" style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center' }]}>
-            <Animated.View
-              accessibilityRole="alert"
-              accessibilityLiveRegion="assertive"
-              style={{
-                backgroundColor: c.card,
-                borderColor: c.up,
-                borderWidth: 2,
-                borderRadius: r.l,
-                paddingVertical: sp.l,
-                paddingHorizontal: sp.xl,
-                alignItems: 'center',
-                opacity: pop,
-                transform: [{ scale: pop.interpolate({ inputRange: [0, 1], outputRange: [0.8, 1] }) }],
-              }}
-            >
-              <Text style={{ color: c.up, fontSize: t.head, fontWeight: '800' }}>✓</Text>
-              <Text style={{ color: c.ink, fontSize: t.title, fontWeight: '800', marginTop: sp.xs }}>{toast}</Text>
-            </Animated.View>
-          </View>
-        )}
+        {!!toast && <ToastCard message={toast} pop={pop} />}
       </KeyboardAvoidingView>
     </Modal>
   );
