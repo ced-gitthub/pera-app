@@ -24,7 +24,7 @@ import { addSamples, removeSamples } from './sampleApi';
 import { resetChoice } from './reset';
 import { applyPendingAppIcon } from './appIconApi';
 import { ICON_LEAVE_DELAY_MS, shouldApplyIconNow } from './appIcon';
-import { externalOpen } from './externalActivity';
+import { externalOpen, noteActive, noteBackground } from './externalActivity';
 import { startSamplesWith } from './sampleCore';
 import { canOfferSample } from './sampleLogic';
 import { MakeItYours } from './MakeItYours';
@@ -142,6 +142,8 @@ export function Gate() {
     const sub = AppState.addEventListener('change', (st) => {
       if (timer) clearTimeout(timer); // coming back cancels it
       timer = null;
+      if (st === 'active') noteActive();
+      if (st === 'background') noteBackground();
       if (st === 'background')
         timer = setTimeout(() => {
           timer = null;

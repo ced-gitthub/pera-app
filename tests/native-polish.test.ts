@@ -13,7 +13,7 @@ import {
   profileCacheKey,
   type Profile,
 } from '../native/src/profileLogic.ts';
-import { adoptServerProfile, nextProfileState, saveButtonBusy } from '../native/src/profileFlow.ts';
+import { adoptServerProfile, createProfileMemo, nextProfileState, saveButtonBusy } from '../native/src/profileFlow.ts';
 
 const read = (f: string) => fs.readFileSync(`native/src/${f}`, 'utf8');
 const base: Profile = { avatar: '🦊', avatarColor: 'violet', frame: 'none', status: 'Saving' };
@@ -101,7 +101,7 @@ test('the app never shows a placeholder profile and then swaps it: the avatar wa
   const prof = read('profile.ts');
   assert.match(prof, /readCachedProfile/);
   assert.match(prof, /profileCacheKey/);
-  assert.match(prof, /useState<ProfileState \| null>\(memo\)/); // within a session there is no flash at all
+  assert.match(prof, /useState<ProfileState \| null>\(store\.get\(\)\)/); // within a session there is no flash at all
   assert.match(prof, /forgetProfile/);
   assert.match(read('signout.ts'), /forgetProfile/);
 });
@@ -171,4 +171,26 @@ test('Save from the unsaved prompt on the Theme tab shows the problem: it switch
   const src = read('Personalize.tsx');
   const prompt = src.slice(src.indexOf('Alert.alert(UNSAVED_TITLE'), src.indexOf('const savedPopup'));
   assert.match(prompt, /setTab\('profile'\)/);
+});
+
+test('a profile load that was running when the person signed out can never bring the old profile back', () => {
+  const m = createProfileMemo<{ uid: string; name: string }>();
+  const token = m.begin(); // a load starts
+  assert.equal(m.forget(), ''); // sign-out while it runs (nothing stored yet)
+  assert.equal(m.remember(token, { uid: 'old', name: 'Old' }), false); // the late result is dropped
+  assert.equal(m.get(), null);
+  const t2 = m.begin(); // a new account loads
+  assert.equal(m.remember(t2, { uid: 'new', name: 'New' }), true);
+  assert.equal(m.get()?.uid, 'new');
+  assert.equal(m.isCurrent(t2), true);
+  assert.equal(m.forget(), 'new'); // returns the uid whose saved copy must be removed
+  assert.equal(m.isCurrent(t2), false);
+  assert.equal(m.get(), null);
+});
+
+test('the profile module uses the guarded memo (a late write after sign-out also removes the saved copy)', () => {
+  const prof = read('profile.ts');
+  assert.match(prof, /createProfileMemo/);
+  assert.match(prof, /isCurrent\(/);
+  assert.doesNotMatch(prof, /^let memo/m);
 });

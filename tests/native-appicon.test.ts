@@ -209,18 +209,18 @@ test('the icon is applied only when the person has really left: app in the backg
   assert.equal(shouldApplyIconNow('background', 1), false); // Zovix itself opened the share sheet (Android reports "background")
 });
 
-test('external screens opened by the app are counted (nested ones too), and an error still closes the count', async () => {
+test('external screens opened by the app are counted (nested too), an error still closes the count, and the Csv share sheet is wrapped', async () => {
   const ext = await import('../native/src/externalActivity.ts');
+  ext.noteActive();
   assert.equal(ext.externalOpen(), 0);
   await ext.withExternal(async () => {
-    assert.equal(ext.externalOpen(), 1);
-    await ext.withExternal(async () => assert.equal(ext.externalOpen(), 2));
-    assert.equal(ext.externalOpen(), 1);
+    assert.ok(ext.externalOpen() >= 1);
+    await ext.withExternal(async () => assert.ok(ext.externalOpen() >= 2));
   });
-  assert.equal(ext.externalOpen(), 0);
   await assert.rejects(ext.withExternal(async () => Promise.reject(new Error('x'))));
+  ext.noteActive(); // the app is back in front: nothing is open any more
   assert.equal(ext.externalOpen(), 0);
-  assert.match(fs.readFileSync('native/src/Csv.tsx', 'utf8'), /withExternal\(/); // the CSV share sheet is wrapped
+  assert.match(fs.readFileSync('native/src/Csv.tsx', 'utf8'), /withExternal\(/);
 });
 
 test('Gate applies the queued icon only after a short delay and re-checks that the app is still in the background', () => {
@@ -261,4 +261,40 @@ test('apply writes the new state BEFORE the native call (Android may close the a
   assert.ok(await bad.applyPendingAppIcon());
   assert.equal(store2.data.get('zv_app_icon'), 'Rose');
   assert.equal(store2.data.get(APP_ICON_PENDING_KEY), 'Ocean');
+});
+
+test('the share sheet cannot sneak an icon change in: the mark stays until the app is back in front, even though Share.share resolves early', async () => {
+  const ext = await import('../native/src/externalActivity.ts');
+  ext.noteActive(); // clean slate
+  // Android: Share.share resolves right after the sheet is launched, BEFORE the app is reported as "background"
+  await ext.withExternal(async () => {});
+  assert.equal(ext.externalOpen() > 0, true, 'still marked after the promise resolved');
+  assert.equal(shouldApplyIconNow('background', ext.externalOpen()), false);
+  ext.noteBackground(); // the app goes to the background behind the sheet
+  assert.equal(ext.externalOpen() > 0, true);
+  ext.noteActive(); // the person is back
+  assert.equal(ext.externalOpen(), 0);
+  assert.equal(shouldApplyIconNow('background', ext.externalOpen()), true); // a later real leave applies the icon
+});
+
+test('if the share sheet never sends the app to the background, the mark expires on its own (the next real leave still applies the icon)', async () => {
+  const ext = await import('../native/src/externalActivity.ts');
+  ext.noteActive();
+  ext.markExternal(15);
+  assert.equal(ext.externalOpen() > 0, true);
+  await new Promise((r) => setTimeout(r, 40));
+  assert.equal(ext.externalOpen(), 0);
+  // but once the app did go to the background, it does not expire: it waits for the return
+  ext.markExternal(15);
+  ext.noteBackground();
+  await new Promise((r) => setTimeout(r, 40));
+  assert.equal(ext.externalOpen() > 0, true);
+  ext.noteActive();
+  assert.equal(ext.externalOpen(), 0);
+});
+
+test('Gate tells the external-activity tracker about background and active', () => {
+  const g = fs.readFileSync('native/src/Gate.tsx', 'utf8');
+  assert.match(g, /noteBackground\(\)/);
+  assert.match(g, /noteActive\(\)/);
 });

@@ -13,3 +13,30 @@ export const adoptServerProfile = (x: { dirty: boolean; hasSaved: boolean }): bo
 
 /** The pinned Save button only spins while a save is really running (never while the editor has simply not reported yet). */
 export const saveButtonBusy = (editor: { busy: boolean } | null): boolean => !!editor?.busy;
+
+/** The last known value plus a generation counter: a load that started before a sign-out can never write its (old account's) result afterwards. */
+export function createProfileMemo<T extends { uid: string }>() {
+  let value: T | null = null;
+  let gen = 0;
+  let lastUid = '';
+  return {
+    get: (): T | null => value,
+    /** Call when a load starts; pass the token to remember(). */
+    begin: (): number => gen,
+    isCurrent: (token: number): boolean => token === gen,
+    remember(token: number, st: T): boolean {
+      if (token !== gen) return false;
+      value = st;
+      lastUid = st.uid;
+      return true;
+    },
+    /** Sign-out: forget the value and make every running load stale. Returns the uid whose saved copy must be removed ('' if none). */
+    forget(): string {
+      gen += 1;
+      const uid = value?.uid || lastUid;
+      value = null;
+      lastUid = '';
+      return uid;
+    },
+  };
+}
