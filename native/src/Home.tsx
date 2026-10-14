@@ -217,9 +217,9 @@ export function Home({
           setAddDirty(false);
           setPop(Date.now());
           toast('Entry saved');
+          setAddKey((k) => k + 1); // reset the form NOW (before the reload): anything typed while the reload runs is never wiped
           const problem = await refresh(); // a failed reload is shown at the top of Home (the sheet is already closed)
           if (problem) setErr(problem);
-          setAddKey((k) => k + 1);
           return problem; // QuickAdd gets it too
         }}
       />

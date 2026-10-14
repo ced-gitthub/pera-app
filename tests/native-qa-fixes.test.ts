@@ -346,3 +346,15 @@ test('the live lost-reply step removes a leftover row from an aborted run before
   const del = step.search(/delete\(\)\s*\.eq\('user_id', A\.id\)\s*\.eq\('request_id', rid\)/);
   assert.ok(del >= 0 && del < step.search(/const first = await A\.c\s*\.from\('transactions'\)\s*\.upsert/));
 });
+
+test('once the existing-data question is answered (Keep / Start fresh), a reload that was already running can never raise it again', () => {
+  assert.deepEqual(decideAsk({ wasSignUp: false, pending: true, total: 7, answered: true }), { ask: false, write: null });
+  assert.deepEqual(decideAsk({ wasSignUp: true, pending: true, total: 7, answered: true }), { ask: false, write: null });
+  const g = read('Gate.tsx');
+  assert.match(g, /const askAnswered = useRef\(false\)/);
+  assert.match(g, /answered: askAnswered\.current/);
+  const keep = g.slice(g.indexOf('const keepExisting'), g.indexOf('const startFresh'));
+  assert.match(keep, /askAnswered\.current = true/);
+  const fresh = g.slice(g.indexOf('const startFresh'), g.indexOf('const resetSheet'));
+  assert.match(fresh, /askAnswered\.current = true/);
+});

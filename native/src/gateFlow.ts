@@ -20,8 +20,9 @@ export function createGeneration() {
 
 /** The "this account already has data: keep it or start fresh?" question. total = entries + budgets + goals (null when the counts could not be read).
  *  Never lost: kept pending when the counts are unknown; cleared once the account is known to be empty (a sign-up into a new account, or after Start fresh). */
-export function decideAsk(x: { wasSignUp: boolean; pending: boolean; total: number | null; fresh?: boolean }): { ask: boolean; write: 'clear' | null } {
-  if (x.fresh) return { ask: false, write: null }; // the Start fresh sheet is open: a reload must not swap it back to the question
+export function decideAsk(x: { wasSignUp: boolean; pending: boolean; total: number | null; fresh?: boolean; answered?: boolean }): { ask: boolean; write: 'clear' | null } {
+  if (x.fresh || x.answered) return { ask: false, write: null }; // answered already, or Start fresh is open: a reload must not raise it again
+ // the Start fresh sheet is open: a reload must not swap it back to the question
   const pending = x.pending || x.wasSignUp;
   if (!pending) return { ask: false, write: null };
   if (x.total === null) return { ask: true, write: null };

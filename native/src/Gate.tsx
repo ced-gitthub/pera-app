@@ -70,6 +70,7 @@ export function Gate({ uid: sessionUid }: { uid: string }) {
   const [sampleEnd, setSampleEnd] = useState(false); // 'Keep the sample entries?' after the tour
   const [tour, setTour] = useState<number | null>(null); // index of the live-tour step, or null when it is closed
   const [replaying, setReplaying] = useState(false); // the read-only walkthrough (Settings > Show the first-run tutorial again); never the required setup
+  const askAnswered = useRef(false); // Keep / Start fresh was chosen: a reload that was already running must not raise the question again
   const freshOpen = useRef(false); // true while the Start fresh sheet is open (read inside the reload)
   const booted = useRef(false); // the first load also decides Make it yours, the pending questions and the tour-seen flag, in one go (no flashing)
   const tourFrom = useRef('home'); // the tab the person was on, restored when the tour ends
@@ -116,7 +117,7 @@ export function Gate({ uid: sessionUid }: { uid: string }) {
       if (reloads.isStale(my)) return ''; // a newer reload started while this one was waiting: it will apply its own answer
       const d = decideGate(counts, sn.accounts, flags);
       await setFlags(id, d.set);
-      const dec = decideAsk({ wasSignUp, pending: pendingAsk, fresh: freshOpen.current, total: counts ? counts.totalEntries + counts.budgetsCount + counts.goalsCount : null });
+      const dec = decideAsk({ wasSignUp, pending: pendingAsk, fresh: freshOpen.current, answered: askAnswered.current, total: counts ? counts.totalEntries + counts.budgetsCount + counts.goalsCount : null });
       if (dec.write === 'clear') void setAskPending(id, false); // the account is known to be empty: nothing to ask
       if (dec.ask) setAsk(true);
       if (!booted.current) {
@@ -211,10 +212,12 @@ export function Gate({ uid: sessionUid }: { uid: string }) {
   const startSamples = () => startSamplesWith({ setPending: (on) => setSamplePending(uid, on), add: () => addSamples(snap), remove: removeSamples });
   const sheet = openSheet({ ask: ask && !mine, fresh, choose, end: sampleEnd, tour: tour !== null, mine });
   const keepExisting = () => {
+    askAnswered.current = true;
     setAsk(false);
     void setAskPending(uid, false);
   };
   const startFresh = () => {
+    askAnswered.current = true;
     setAsk(false);
     setFresh(true);
   };

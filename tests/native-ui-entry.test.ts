@@ -88,3 +88,9 @@ test('QuickAdd reports unsaved text through an optional onDirtyChange', () => {
   assert.match(q, /onDirtyChange\?: \(dirty: boolean\) => void/);
   assert.match(q, /onDirtyChange\?\.\(/);
 });
+
+test('Quick Add is reset BEFORE the reload finishes, so text typed while it runs is never wiped', () => {
+  const h = src('Home.tsx');
+  const onSaved = h.slice(h.indexOf('onSaved={async'), h.indexOf('/>', h.indexOf('onSaved={async')));
+  assert.ok(onSaved.indexOf('setAddKey(') >= 0 && onSaved.indexOf('setAddKey(') < onSaved.indexOf('await refresh()'));
+});
