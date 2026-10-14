@@ -14,6 +14,8 @@ import {
   problemLines,
   type ImportPlan,
 } from './csvLogic';
+import { useToast } from './Toast';
+import { csvDirty, importedToast } from './csvMineLogic';
 import { c, s, sp } from './ui';
 
 type Msg = { bad: boolean; t: string } | null;
@@ -30,6 +32,7 @@ export function Csv({ snap, onClose, onChanged }: { snap: Snapshot; onClose: () 
   const [exportMsg, setExportMsg] = useState<Msg>(null);
   const [importMsg, setImportMsg] = useState<Msg>(null);
   const [note, setNote] = useState('');
+  const toast = useToast();
 
   const run = async (kind: Work, fn: () => Promise<void>) => {
     if (lock.current) return;
@@ -93,6 +96,7 @@ export function Csv({ snap, onClose, onChanged }: { snap: Snapshot; onClose: () 
         if (r.added > 0) {
           setText('');
           setPlan(null);
+          toast(importedToast(r.added));
           await onChanged();
         } else if (!r.error) setPlan(null);
       } catch {
@@ -102,36 +106,50 @@ export function Csv({ snap, onClose, onChanged }: { snap: Snapshot; onClose: () 
 
   const ready = !!plan && !plan.blocked && plan.rows.length > 0;
   return (
-    <Sheet open title="Export and import" onClose={onClose}>
+    <Sheet
+      open
+      title="Export and import"
+      onClose={onClose}
+      dirty={csvDirty(text)}
+      footer={
+        ready ? <Btn label={`Import ${plan!.rows.length.toLocaleString('en-US')} rows`} busy={work === 'import'} onPress={doImport} /> : undefined
+      }
+    >
       <View style={s.card}>
         <Text style={s.h2}>Export</Text>
         <Text style={[s.p, { marginBottom: sp.m }]}>
           Share your entries as CSV text. Open it in a spreadsheet, or import it on the website. Leave From and To empty to share
           everything, or fill them (YYYY-MM-DD) to share only that period. Very large exports must be split by date range.
         </Text>
-        <View style={{ flexDirection: 'row', gap: sp.s }}>
-          <TextInput
-            style={[s.input, { flex: 1 }]}
-            accessibilityLabel="Export from date, YYYY-MM-DD, empty for everything"
-            placeholder="From (YYYY-MM-DD)"
-            placeholderTextColor={c.mute}
-            autoCapitalize="none"
-            autoCorrect={false}
-            value={fromText}
-            onChangeText={setFromText}
-            editable={work === ''}
-          />
-          <TextInput
-            style={[s.input, { flex: 1 }]}
-            accessibilityLabel="Export to date, YYYY-MM-DD, empty for everything"
-            placeholder="To (YYYY-MM-DD)"
-            placeholderTextColor={c.mute}
-            autoCapitalize="none"
-            autoCorrect={false}
-            value={toText}
-            onChangeText={setToText}
-            editable={work === ''}
-          />
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: sp.s }}>
+          <View style={{ flexGrow: 1, flexBasis: '100%' }}>
+            <Text style={s.p}>From (YYYY-MM-DD)</Text>
+            <TextInput
+              style={s.input}
+              accessibilityLabel="Export from date, YYYY-MM-DD, empty for everything"
+              placeholder="From (YYYY-MM-DD)"
+              placeholderTextColor={c.mute}
+              autoCapitalize="none"
+              autoCorrect={false}
+              value={fromText}
+              onChangeText={setFromText}
+              editable={work === ''}
+            />
+          </View>
+          <View style={{ flexGrow: 1, flexBasis: '100%' }}>
+            <Text style={s.p}>To (YYYY-MM-DD)</Text>
+            <TextInput
+              style={s.input}
+              accessibilityLabel="Export to date, YYYY-MM-DD, empty for everything"
+              placeholder="To (YYYY-MM-DD)"
+              placeholderTextColor={c.mute}
+              autoCapitalize="none"
+              autoCorrect={false}
+              value={toText}
+              onChangeText={setToText}
+              editable={work === ''}
+            />
+          </View>
         </View>
         {!!exportMsg && <Text style={exportMsg.bad ? s.err : s.ok}>{exportMsg.t}</Text>}
         <Btn label="Export my entries" busy={work === 'export'} onPress={doExport} />
@@ -172,7 +190,6 @@ export function Csv({ snap, onClose, onChanged }: { snap: Snapshot; onClose: () 
           </View>
         )}
         <Btn label="Check" alt busy={work === 'check'} onPress={doCheck} />
-        {ready && <Btn label={`Import ${plan!.rows.length.toLocaleString('en-US')} rows`} busy={work === 'import'} onPress={doImport} />}
       </View>
     </Sheet>
   );

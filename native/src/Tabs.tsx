@@ -6,7 +6,7 @@ import type { Snapshot } from './data';
 import { loadActivity } from './extra';
 import { filterActivity, type ActivityFilter, type Tx } from './logic';
 import { sign } from './QuickAdd';
-import { ListSkeleton } from './Skeleton';
+import { ListSkeleton, Skel } from './Skeleton';
 import { Sheet } from './Sheet';
 import { Btn } from './Btn';
 import { Fab } from './Fab';
@@ -48,6 +48,7 @@ export function Page(p: {
   gearLabel?: string;
   gearId?: string;
   loading?: boolean;
+  skeleton?: ReactNode; // what to show while loading (defaults to plain rows)
   fab?: { label: string; onPress: () => void };
   children: ReactNode;
 }) {
@@ -96,7 +97,7 @@ export function Page(p: {
               <Btn label="Try again" onPress={p.reload} />
             </>
           )}
-          {p.loading && !p.err && <ListSkeleton />}
+          {p.loading && !p.err && (p.skeleton ?? <ListSkeleton />)}
           {!p.loading && p.children}
         </View>
       </ScrollView>
@@ -155,6 +156,14 @@ export function Activity({ snap, onPick, onAdd, ver }: { snap: Snapshot; onPick:
         line={filtered ? `${rows.length} matching of your latest 200.` : 'Your latest 200 entries.'}
         tint={c.hero.navy}
         loading={l.rows === null}
+        skeleton={
+          <>
+            <View style={{ marginBottom: sp.s }}>
+              <Skel w="70%" h={sp.l} />
+            </View>
+            <ListSkeleton variant="card" rows={6} />
+          </>
+        }
         onGear={() => setOpen(true)}
         gearLabel={filtered ? 'Filter on' : 'Filter'}
         gearId="activity:filter"

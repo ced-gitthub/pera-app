@@ -1,5 +1,5 @@
 // The live tour: a short list of steps. Each one switches to a real tab and points at a real control (a CoachTarget id, or the tab icon itself).
-// tests/native-tour.test.ts checks that every tab id is a real tab in Tabs.tsx, every targetId is registered, and that the tour stays short (8 steps, 150 characters each).
+// tests/native-tour.test.ts checks that every tab id is a real tab in Tabs.tsx, every targetId is registered, and that the tour stays short (7 steps, 150 characters each).
 export type TourStep = {
   tab: string;
   targetId: string;

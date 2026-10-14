@@ -2,6 +2,7 @@
 // Creates two throwaway users (pera-qa-*@example.com) using only the publishable key; their data is cleaned up, the auth users remain (delete them in Supabase > Authentication > Users).
 import { createClient } from '@supabase/supabase-js';
 import { bulkDeleteSteps } from './rls-bulk.ts';
+import { trashPolicySteps } from './rls-trash.ts';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 const same = (a: string, b: string) => {
@@ -383,6 +384,7 @@ export async function GET(req: Request) {
     return cnt(r) === 0 && cnt(u) <= 0 && cnt(own) === 1 ? true : { read: cnt(r), upd: cnt(u), own: cnt(own) };
   });
   await bulkDeleteSteps({ A, B, step, cnt, other, d, mk });
+  await trashPolicySteps({ A, B, anon, step, other, d });
   // The restrictive MFA policy (aal1 session of a user with a verified TOTP factor cannot delete) is NOT repeated here: this suite has no TOTP helper. security.mjs covers it with a real factor.
   // ---- migration 0008: layout settings (RLS) + account options + ordering
   await step("user_settings: A saves own layout; B cannot read, change or insert A's row; anonymous sees nothing", async () => {

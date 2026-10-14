@@ -151,7 +151,7 @@ test('the icon section queues and warns (it never changes the icon on tap), and 
   assert.match(src, /ICON_PENDING_TEXT/);
   const gate = fs.readFileSync('native/src/Gate.tsx', 'utf8');
   assert.match(gate, /applyPendingAppIcon/);
-  assert.match(gate, /'background'/); // applied when the person leaves the app
+  assert.match(fs.readFileSync('native/src/leaveWatcher.ts', 'utf8'), /'background'/); // applied when the person leaves the app (the watcher has its own behaviour tests)
 });
 
 test('appicon api: current prefers the phone value, falls back to the stored choice, ignores junk', async () => {
@@ -225,9 +225,13 @@ test('external screens opened by the app are counted (nested too), an error stil
 
 test('Gate applies the queued icon only after a short delay and re-checks that the app is still in the background', () => {
   const g = fs.readFileSync('native/src/Gate.tsx', 'utf8');
-  assert.match(g, /shouldApplyIconNow\(AppState\.currentState, externalOpen\(\)\)/);
-  assert.match(g, /setTimeout\(/);
-  assert.match(g, /clearTimeout\(/); // coming back cancels it
+  assert.match(g, /createLeaveWatcher\(/);
+  assert.match(g, /getState: \(\) => AppState\.currentState/);
+  assert.match(g, /externalOpen,/);
+  const w = fs.readFileSync('native/src/leaveWatcher.ts', 'utf8');
+  assert.match(w, /shouldApplyIconNow\(d\.getState\(\), d\.externalOpen\(\)\)/);
+  assert.match(w, /d\.setTimer\(/);
+  assert.match(w, /d\.clearTimer\(/); // coming back cancels it
 });
 
 test('apply writes the new state BEFORE the native call (Android may close the app during it), and puts the queue back if the call fails', async () => {
@@ -295,8 +299,11 @@ test('if the share sheet never sends the app to the background, the mark expires
 
 test('Gate tells the external-activity tracker about background and active', () => {
   const g = fs.readFileSync('native/src/Gate.tsx', 'utf8');
-  assert.match(g, /noteBackground\(\)/);
-  assert.match(g, /noteActive\(\)/);
+  assert.match(g, /noteBackground,/);
+  assert.match(g, /noteActive,/);
+  const w = fs.readFileSync('native/src/leaveWatcher.ts', 'utf8');
+  assert.match(w, /d\.noteBackground\(\)/);
+  assert.match(w, /d\.noteActive\(\)/);
 });
 
 test('the icon picker never rearranges when you choose: fixed three-column cells, a label that never changes, no "(soon)", the check is a badge on the icon', () => {

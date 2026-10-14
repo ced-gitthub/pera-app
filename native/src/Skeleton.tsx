@@ -45,8 +45,9 @@ export function HomeSkeleton() {
           </View>
         ))}
       </View>
-      <View style={{ alignItems: 'flex-end', marginBottom: sp.m }}>
-        <Skel w={120} h={sp.l} />
+      {/* See all accounts link: same height as the live link (a line plus its vertical padding) */}
+      <View style={{ alignItems: 'flex-end', paddingVertical: sp.xs, marginBottom: sp.m }}>
+        <Skel w={120} h={sp.xl} />
       </View>
       <View style={[s.card, { flexDirection: 'row', alignItems: 'center', gap: sp.m }]}>
         <Skel w={e.s} h={e.s} round={r.pill} />
@@ -58,6 +59,10 @@ export function HomeSkeleton() {
         <Skel w={64} h={e.s} round={r.m} />
       </View>
       <Skel w={90} h={sp.xl} />
+      {/* Tap an entry hint */}
+      <View style={{ marginBottom: sp.s }}>
+        <Skel w="70%" h={sp.l} />
+      </View>
       {[0, 1, 2].map((i) => (
         <View key={i} style={s.row}>
           <View style={{ flex: 1, gap: sp.xs }}>
@@ -96,19 +101,37 @@ export function TabBarSkeleton() {
   );
 }
 
-// Rows that look like the real list rows (title and date on the left, amount on the right).
-export function ListSkeleton({ rows = 5 }: { rows?: number }) {
+// Placeholders that look like the real lists. 'row' = plain rows (title and date left, amount right); 'card' = boxed cards like the live Activity and Planning lists;
+// 'budget' = a card plus a progress bar line, like a budget.
+export function ListSkeleton({ rows = 5, variant = 'row' }: { rows?: number; variant?: 'row' | 'card' | 'budget' }) {
   return (
     <View accessibilityLabel="Loading">
-      {Array.from({ length: rows }, (_, i) => (
-        <View key={i} style={s.row}>
-          <View style={{ flex: 1, gap: sp.xs }}>
-            <Skel w="55%" h={sp.l} />
-            <Skel w="35%" h={sp.m} />
+      {Array.from({ length: rows }, (_, i) =>
+        variant === 'row' ? (
+          <View key={i} style={s.row}>
+            <View style={{ flex: 1, gap: sp.xs }}>
+              <Skel w="55%" h={sp.l} />
+              <Skel w="35%" h={sp.m} />
+            </View>
+            <Skel w={72} h={sp.l} />
           </View>
-          <Skel w={72} h={sp.l} />
-        </View>
-      ))}
+        ) : (
+          <View key={i} style={[s.card, { marginBottom: sp.s }]}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <View style={{ flex: 1, gap: sp.xs }}>
+                <Skel w="55%" h={sp.l} />
+                <Skel w="35%" h={sp.m} />
+              </View>
+              <Skel w={72} h={sp.l} />
+            </View>
+            {variant === 'budget' && (
+              <View style={{ marginTop: sp.s }}>
+                <Skel w="100%" h={sp.m} round={r.pill} />
+              </View>
+            )}
+          </View>
+        ),
+      )}
     </View>
   );
 }

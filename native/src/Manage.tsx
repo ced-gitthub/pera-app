@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Alert, BackHandler, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { formatMinor } from '../../src/core/money';
 import { minorToInput } from '../../src/lib/validate';
@@ -7,6 +7,10 @@ import type { Snapshot, Category } from './logic';
 import { Btn } from './Btn';
 import { HeaderClose, Sheet } from './Sheet';
 import { Chip } from './Tabs';
+import { useToast } from './Toast';
+import { UNSAVED_TEXT_ANY, unsavedButtons } from './unsaved';
+import { UNSAVED_TITLE } from './profileLogic';
+import { isManageDraftDirty, type ManageDraft } from './manageDirty';
 import { c, s, sp, t } from './ui';
 import {
   ACCOUNT_TYPES,
@@ -39,7 +43,7 @@ const typeLabel = (id: string) => ACCOUNT_TYPES.find((x) => x.id === id)?.label 
 // Add, rename and delete accounts and categories. The database refuses a delete while entries still use the row, and we say so plainly.
 export function Manage({
   snap,
-  onClose,
+  onClose: leave,
   onChanged,
   startAdd,
 }: {
@@ -49,12 +53,14 @@ export function Manage({
   startAdd?: boolean; // open straight on the new-account form
 }) {
   const { top, bottom } = useSafeAreaInsets();
+  const toast = useToast();
   const [rows, setRows] = useState<AccountRow[] | null>(null);
   const [loadErr, setLoadErr] = useState('');
   const [target, setTarget] = useState<Target>(null);
   const [acct, setAcct] = useState<AccountDraft>(NEW_ACCOUNT);
   const [catName, setCatName] = useState('');
   const [catType, setCatType] = useState<'income' | 'expense'>('expense');
+  const [initial, setInitial] = useState<ManageDraft>({ kind: 'account', account: NEW_ACCOUNT, catName: '', catType: 'expense' }); // the form as opened
   const [err, setErr] = useState(''); // inside the sheet
   const [note, setNote] = useState(''); // on the page (delete results)
   const [busy, setBusy] = useState(false);
@@ -84,9 +90,9 @@ export function Manage({
   const openAccount = (a: AccountRow | null) => {
     setErr('');
     setNote('');
-    setAcct(
-      a ? { name: a.name, type: a.account_type, short: a.short_name ?? '', opening: minorToInput(a.opening_balance_minor) } : NEW_ACCOUNT,
-    );
+    const d = a ? { name: a.name, type: a.account_type, short: a.short_name ?? '', opening: minorToInput(a.opening_balance_minor) } : NEW_ACCOUNT;
+    setAcct(d);
+    setInitial({ kind: 'account', account: d, catName: '', catType: 'expense' });
     setTarget({ kind: 'account', id: a?.id ?? null });
   };
   const openCategory = (cat: Category | null) => {
@@ -94,28 +100,37 @@ export function Manage({
     setNote('');
     setCatName(cat?.name ?? '');
     setCatType(cat?.type ?? 'expense');
+    setInitial({ kind: 'category', account: NEW_ACCOUNT, catName: cat?.name ?? '', catType: cat?.type ?? 'expense' });
     setTarget({ kind: 'category', id: cat?.id ?? null });
   };
 
-  const save = async () => {
-    if (busy || !target) return;
+  // true = saved (the unsaved-changes prompt closes only then)
+  const save = async (): Promise<boolean> => {
+    if (busy || !target) return false;
     setErr('');
     let problem: string | null;
     if (target.kind === 'account') {
       const v = validateAccount(acct, rows ?? [], target.id);
-      if (!v.ok) return setErr(v.message);
+      if (!v.ok) return fail(v.message);
       setBusy(true);
       problem = await (target.id ? updateAccount(target.id, v.value) : addAccount(v.value)).catch(() => OFFLINE_SAVE);
     } else {
       const v = validateCategory({ name: catName, type: catType }, snap.categories, target.id);
-      if (!v.ok) return setErr(v.message);
+      if (!v.ok) return fail(v.message);
       setBusy(true);
       problem = await (target.id ? renameCategory(target.id, v.value.name) : addCategory(v.value)).catch(() => OFFLINE_SAVE);
     }
     setBusy(false);
-    if (problem) return setErr(problem);
+    if (problem) return fail(problem);
+    const what = target.kind === 'account' ? 'Account' : 'Category';
     setTarget(null);
+    toast(target.id ? `${what} saved` : `${what} added`);
     await changed();
+    return true;
+  };
+  const fail = (m: string) => {
+    setErr(m);
+    return false;
   };
 
   const confirmDelete = (kind: 'account' | 'category', id: string, name: string) => {
@@ -131,11 +146,29 @@ export function Manage({
           const problem = await (kind === 'account' ? deleteAccount(id) : deleteCategory(id)).catch(() => OFFLINE_DELETE);
           setBusy(false);
           if (problem) return setNote(problem);
+          toast(`Deleted ${name}`);
           await changed();
         },
       },
     ]);
   };
+
+  const current: ManageDraft = { kind: target?.kind ?? 'account', account: acct, catName, catType };
+  const dirty = !!target && isManageDraftDirty(initial, current);
+  // Close and the Android back button ask first when a form has unsaved changes.
+  const onClose = () => {
+    if (dirty) Alert.alert(UNSAVED_TITLE, UNSAVED_TEXT_ANY, unsavedButtons({ onClose: leave, onSave: save }));
+    else leave();
+  };
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      closeRef.current();
+      return true;
+    });
+    return () => sub.remove();
+  }, []);
 
   const editing = target?.id != null;
   const isAcct = target?.kind === 'account';
@@ -145,7 +178,7 @@ export function Manage({
   const atCatCap = snap.categories.length >= MAX_CATEGORIES;
 
   const link = (label: string, a11y: string, onPress: () => void, danger?: boolean) => (
-    <Pressable accessibilityRole="button" accessibilityLabel={a11y} disabled={busy && !!danger} onPress={onPress} style={{ padding: sp.m }}>
+    <Pressable accessibilityRole="button" accessibilityLabel={a11y} disabled={busy && !!danger} onPress={onPress} style={{ padding: sp.m, minHeight: 48, justifyContent: 'center' }}>
       <Text style={{ color: danger ? c.down : c.primary, fontSize: t.body, fontWeight: '700' }}>{label}</Text>
     </Pressable>
   );
@@ -236,7 +269,14 @@ export function Manage({
         </View>
       </ScrollView>
 
-      <Sheet open={!!target} title={title} onClose={() => !busy && setTarget(null)}>
+      <Sheet
+        open={!!target}
+        title={title}
+        dirty={dirty}
+        onSave={save}
+        onClose={() => !busy && setTarget(null)}
+        footer={<Btn label={editing ? 'Save changes' : 'Add'} busy={busy} onPress={() => void save()} />}
+      >
         {!!err && <Text style={s.err}>{err}</Text>}
         {isAcct ? (
           <>
@@ -302,7 +342,6 @@ export function Manage({
             )}
           </>
         )}
-        <Btn label={editing ? 'Save changes' : 'Add'} busy={busy} onPress={() => void save()} />
       </Sheet>
     </View>
   );

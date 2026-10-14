@@ -1,7 +1,9 @@
 // All money is an integer number of minor units (centavos). No floats in arithmetic.
 export const MAX_MINOR = 99_999_999_999; // ₱999,999,999.99
 export function parseAmountMinor(s: string, thousands = false): number | null {
-  const [w, f = ''] = s.replace(/,/g, '').split('.');
+  const parts = s.replace(/,/g, '').split('.');
+  if (parts.length > 2) return null; // two decimal points (1.2.3) is a typo, not 1.20
+  const [w, f = ''] = parts;
   if (!/^\d{1,11}$/.test(w) || !/^\d{0,2}$/.test(f)) return null;
   let m = Number(w) * 100 + Number((f + '00').slice(0, 2));
   if (thousands) m *= 1000;

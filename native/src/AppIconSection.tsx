@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Alert, Image, Pressable, Text, View } from 'react-native';
 import { c, e, r, s, sp, t, themeState } from './ui';
 import { Btn } from './Btn';
-import { APP_ICON_NAMES, ICON_APPLY_NOW_WARNING, ICON_PENDING_TEXT, iconForTheme, type AppIconName } from './appIcon';
+import { APP_ICON_NAMES, ICON_APPLY_NOW_WARNING, ICON_PENDING_TEXT, DEFAULT_APP_ICON, iconForTheme, highlightedIcon, matchIconLabel, type AppIconName } from './appIcon';
 import { APP_ICON_PREVIEWS } from './appIconAssets';
 import { applyPendingAppIcon, canChangeAppIcon, currentAppIcon, pendingAppIcon, queueAppIcon } from './appIconApi';
 
@@ -26,16 +26,17 @@ export function AppIconSection() {
     };
   }, []);
   if (!canChangeAppIcon) return null;
-  const picked = pending ?? current;
+  const picked = highlightedIcon(current, pending);
+  const inUse = current ?? DEFAULT_APP_ICON; // the original launcher icon is the default one
   // Picking only QUEUES the icon: nothing closes now. It changes when the person leaves the app (Gate applies it), or on "Apply now".
   const choose = async (name: AppIconName) => {
     setErr('');
-    if (name === current && !pending) return setMsg(`Icon is already ${name}`);
+    if (name === inUse && !pending) return setMsg(`Icon is already ${name}`);
     const problem = await queueAppIcon(name);
     if (!live.current) return;
     if (problem) return setErr(problem);
-    setPending(name === current ? null : name);
-    setMsg(name === current ? `Icon stays ${name}` : ICON_PENDING_TEXT(name));
+    setPending(name === inUse ? null : name);
+    setMsg(name === inUse ? `Icon stays ${name}` : ICON_PENDING_TEXT(name));
   };
   const applyNow = () =>
     Alert.alert('Change the icon now?', ICON_APPLY_NOW_WARNING, [
@@ -108,7 +109,8 @@ export function AppIconSection() {
           );
         })}
       </View>
-      <Btn label="Match my theme" alt busy={busy} onPress={() => choose(iconForTheme(themeState.id))} />
+      {/* Match my theme (only when the theme has a colour twin; otherwise the button says it uses the default icon) */}
+      <Btn label={matchIconLabel(themeState.id)} alt busy={busy} onPress={() => choose(iconForTheme(themeState.id))} />
       {!!pending && <Btn label="Apply now (closes Zovix)" alt busy={busy} onPress={applyNow} />}
       <Text style={[s.p, { marginTop: sp.s }]}>The icon changes when you leave Zovix. The launcher may take a few seconds to update, and your home screen may flicker once.</Text>
       {!!msg && (

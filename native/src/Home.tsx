@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { KeyboardAvoidingView, Modal, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { useCallback, useState } from 'react';
+import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { formatMinor, manilaToday } from '../../src/core/money';
 import type { Snapshot } from './data';
@@ -7,6 +7,8 @@ import type { Tx } from './logic';
 import { gameView, homeTiles, homeView } from './logic';
 import { QuickAdd, sign } from './QuickAdd';
 import { Fab } from './Fab';
+import { Sheet } from './Sheet';
+import { useToast } from './Toast';
 import { CoachTarget, useCoachScroll } from './Coach';
 import { CountUp, XpPop } from './Motion';
 import { Avatar } from './Avatar';
@@ -33,6 +35,9 @@ export function Home({
   const [err, setErr] = useState('');
   const [adding, setAdding] = useState(false);
   const [pop, setPop] = useState(0);
+  const [addDirty, setAddDirty] = useState(false); // typed text in Quick Add that is not saved yet
+  const toast = useToast();
+  const onAddDirty = useCallback((d: boolean) => setAddDirty(d), []);
   const [cfg, setCfg] = useState(false);
   const prof = useProfile(); // the person's avatar, shown next to the greeting
   const v = homeView(snap);
@@ -68,7 +73,13 @@ export function Home({
               {name ? `Hi, ${name}` : 'Hi there'}
             </Text>
           </View>
-          <Pressable accessibilityRole="button" accessibilityLabel="Home settings" onPress={() => setCfg(true)} style={s.chip}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Home settings"
+            onPress={() => setCfg(true)}
+            hitSlop={sp.s}
+            style={[s.chip, { minHeight: sp.xxl + sp.l, justifyContent: 'center' }]}
+          >
             <Text style={{ color: c.ink, fontSize: t.body }}>⚙︎ Edit</Text>
           </Pressable>
         </View>
@@ -123,7 +134,8 @@ export function Home({
           accessibilityRole="button"
           accessibilityLabel="See all accounts"
           onPress={onOpenAccounts}
-          style={{ alignSelf: 'flex-end', paddingVertical: sp.xs, marginBottom: sp.m }}
+          hitSlop={sp.s}
+          style={{ alignSelf: 'flex-end', minHeight: sp.xxl + sp.l, justifyContent: 'center', marginBottom: sp.s }}
         >
           <Text style={{ color: c.primary, fontSize: t.body, fontWeight: '700' }}>See all accounts ›</Text>
         </Pressable>
@@ -141,7 +153,7 @@ export function Home({
               {g.quest ? `${g.quest.emoji} ${g.quest.title}: ${g.quest.have}/${g.quest.need}` : 'All quests done. Nice.'}
             </Text>
           </View>
-          <View style={s.chip}>
+          <View style={s.chipStatic}>
             <Text style={{ color: g.streak ? c.reward : c.mute, fontSize: t.body, fontWeight: '700' }}>🔥 {g.streak}</Text>
           </View>
         </View>
@@ -180,37 +192,27 @@ export function Home({
       <XpPop play={pop} label="+5 XP" />
       <AccountsSheet open={cfg} onClose={() => setCfg(false)} snap={snap} refresh={refresh} />
 
-      <Modal
-        visible={adding}
-        transparent
-        statusBarTranslucent
-        navigationBarTranslucent
-        animationType="slide"
-        onRequestClose={() => setAdding(false)}
+      <Sheet
+        open={adding}
+        title="What did you spend or earn?"
+        onClose={() => {
+          setAdding(false);
+          setAddDirty(false);
+        }}
+        dirty={addDirty}
       >
-        <KeyboardAvoidingView behavior="padding" style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: c.overlay }}>
-          <Pressable style={{ flex: 1 }} onPress={() => setAdding(false)} accessibilityLabel="Close" />
-          <View
-            style={{
-              backgroundColor: c.card,
-              padding: sp.l,
-              paddingBottom: bottom + sp.l,
-              borderTopLeftRadius: r.l,
-              borderTopRightRadius: r.l,
-            }}
-          >
-            <Text style={s.h2}>What did you spend or earn?</Text>
-            <QuickAdd
-              snap={snap}
-              onSaved={async () => {
-                setAdding(false);
-                setPop(Date.now());
-                await refresh();
-              }}
-            />
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
+        <QuickAdd
+          snap={snap}
+          onDirtyChange={onAddDirty}
+          onSaved={async () => {
+            setAdding(false);
+            setAddDirty(false);
+            setPop(Date.now());
+            toast('Entry saved');
+            await refresh();
+          }}
+        />
+      </Sheet>
     </View>
   );
 }

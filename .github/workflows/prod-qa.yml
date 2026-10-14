@@ -3,7 +3,7 @@ name: prod-qa
 on:
   workflow_dispatch:
   push:
-    paths: ['tests/prod/**', '.github/workflows/prod-qa.yml', 'src/**', 'supabase/**', 'package.json', 'package-lock.json', 'next.config.mjs']
+    paths: ['tests/prod/**', 'native/**', '.github/workflows/prod-qa.yml', 'src/**', 'supabase/**', 'package.json', 'package-lock.json', 'next.config.mjs']
 permissions:
   contents: write
 env:

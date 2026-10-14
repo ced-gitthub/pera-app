@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Text, TextInput, View } from 'react-native';
 import { formatMinor } from '../../src/core/money';
 import { preview, save, newRequestId, type Snapshot, type Preview } from './data';
@@ -8,11 +8,22 @@ import { c, s } from './ui';
 export const sign = (t: string) => (t === 'income' ? '+' : t === 'expense' ? '-' : '');
 
 // Type a line, check the preview, save. Shared by Home and the first-run wizard.
-export function QuickAdd({ snap, onSaved }: { snap: Snapshot; onSaved: () => void | Promise<string | void> }) {
+export function QuickAdd({
+  snap,
+  onSaved,
+  onDirtyChange,
+}: {
+  snap: Snapshot;
+  onSaved: () => void | Promise<string | void>;
+  onDirtyChange?: (dirty: boolean) => void; // true while typed text is not saved yet
+}) {
   const [text, setText] = useState('');
   const [pv, setPv] = useState<Preview | null>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ bad: boolean; t: string } | null>(null);
+  useEffect(() => {
+    onDirtyChange?.(text.trim().length > 0);
+  }, [text, onDirtyChange]);
   const rid = useRef(newRequestId()); // one id per entry: a retry or double-tap saves once
 
   const check = () => {

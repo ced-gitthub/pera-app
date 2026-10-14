@@ -144,9 +144,9 @@ export async function bulkDeleteSteps({ A, B, step, cnt, other, d, mk }: Ctx): P
       ? true
       : { b: bRows.length, a: aRows.length, aSeesB: cnt(aSeesB), bSeesA: cnt(bSeesA), err: bt.error?.message ?? at.error?.message };
   });
-  // The native app's "Delete ALL my records" (native/src/resetCore.ts resetAllWith) sends the same unfiltered deletes in this exact order. Earlier steps emptied B, so B is re-seeded first.
+  // The native app's "Delete ALL my records" (native/src/resetCore.ts resetAllWith) sends the same unfiltered deletes in this exact order (ALL_ORDER: recurring, budgets, goals, entries). Earlier steps emptied B, so B is re-seeded first.
   await step(
-    "bulk delete in the native app's order (budgets, savings_goals, transactions): B ends with none left and A's rows in all three tables are untouched",
+    "bulk delete in the native app's order (recurring_transactions, budgets, savings_goals, transactions): B ends with none left and A's rows in all three tables are untouched",
     async () => {
       if (!bulk.ready) return SKIP;
       const bAcct = ((await B.c.from('accounts').select('id,name')).data ?? []).find((x: { name: string }) => x.name === 'Cash')?.id,
@@ -165,18 +165,31 @@ export async function bulkDeleteSteps({ A, B, step, cnt, other, d, mk }: Ctx): P
       });
       const s1 = await B.c.from('transactions').insert([tx(1), tx(2)]),
         s2 = await B.c.from('budgets').insert({ user_id: B.id, category_id: bFood, amount_minor: 70000, month: 4, year: 2020 }),
-        s3 = await B.c.from('savings_goals').insert({ user_id: B.id, name: 'QA-B-ORDER', target_minor: 3000 });
-      if (s1.error || s2.error || s3.error) return { reseed: [s1.error?.message, s2.error?.message, s3.error?.message] };
-      const seeded = await Promise.all(['budgets', 'savings_goals', 'transactions'].map((t) => idsOf(B.c, t)));
-      if (seeded.map((x) => x?.length).join() !== '1,1,2') return { seeded: seeded.map((x) => x?.length ?? 'error') };
-      const order = ['budgets', 'savings_goals', 'transactions'];
+        s3 = await B.c.from('savings_goals').insert({ user_id: B.id, name: 'QA-B-ORDER', target_minor: 3000 }),
+        s4 = await B.c.from('recurring_transactions').insert({
+          user_id: B.id,
+          account_id: bAcct,
+          category_id: bFood,
+          type: 'expense',
+          amount_minor: 1000,
+          description: 'QA-BULK-ORDER',
+          interval_count: 1,
+          frequency: 'daily',
+          start_date: '2020-01-01',
+          next_run_date: '2020-01-01',
+        });
+      if (s1.error || s2.error || s3.error || s4.error)
+        return { reseed: [s1.error?.message, s2.error?.message, s3.error?.message, s4.error?.message] };
+      const order = ['recurring_transactions', 'budgets', 'savings_goals', 'transactions'];
+      const seeded = await Promise.all(order.map((t) => idsOf(B.c, t)));
+      if (seeded.map((x) => x?.length).join() !== '1,1,1,2') return { seeded: seeded.map((x) => x?.length ?? 'error') };
       const r = [] as { error: { message: string } | null; count: number | null }[];
       for (const t of order) r.push(await wipe(B.c, t, { count: 'exact' }));
-      const left = await Promise.all(WIPE_TABLES.map((t) => idsOf(B.c, t)));
+      const left = await Promise.all(order.map((t) => idsOf(B.c, t)));
       const aNow = await Promise.all(WIPE_TABLES.map((t) => idsOf(A.c, t)));
       const aSame = WIPE_TABLES.every((t, i) => JSON.stringify(aNow[i]) === JSON.stringify(bulk.aIds[t]));
       return r.every((x) => !x.error) &&
-        r.map((x) => x.count).join() === '1,1,2' &&
+        r.map((x) => x.count).join() === '1,1,1,2' &&
         left.every((x) => x !== null && x.length === 0) &&
         aSame
         ? true
@@ -196,11 +209,14 @@ export async function bulkDeleteSteps({ A, B, step, cnt, other, d, mk }: Ctx): P
     const asAnon = await mk().rpc('delete_user_account', { p_user: A.id });
     const aStill = await A.c.auth.getUser();
     const aRows = await A.c.from('accounts').select('id');
-    return asB.error && asAnon.error && !aStill.error && !!aStill.data.user && !aRows.error && (aRows.data ?? []).length > 0
+    // Only the exact permission refusal counts: a missing function (PGRST202) or a network failure must NOT pass.
+    const denied = (e: { code?: string; message?: string } | null) =>
+      !!e && (e.code === '42501' || /permission denied/i.test(e.message ?? ''));
+    return denied(asB.error) && denied(asAnon.error) && !aStill.error && !!aStill.data.user && !aRows.error && (aRows.data ?? []).length > 0
       ? true
       : {
-          asB: asB.error?.message ?? 'ALLOWED',
-          asAnon: asAnon.error?.message ?? 'ALLOWED',
+          asB: asB.error ? asB.error.code + ' ' + asB.error.message : 'ALLOWED',
+          asAnon: asAnon.error ? asAnon.error.code + ' ' + asAnon.error.message : 'ALLOWED',
           aUser: aStill.error?.message ?? 'ok',
           aRows: aRows.data?.length ?? aRows.error?.message,
         };

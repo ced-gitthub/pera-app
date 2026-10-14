@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Modal, Pressable, Text, TextInput, View } from 'react-native';
 import Constants from 'expo-constants';
 import { countSamples, removeSamples } from './sampleApi';
 import type { Snapshot } from './data';
 import { setAccountFlag, saveName } from './config';
 import { reloadProfile } from './profile';
+import { cleanName } from './logic';
 import { Page } from './Tabs';
 import { Sheet, ToggleRow } from './Sheet';
 import { confirmSignOut } from './signout';
@@ -16,6 +17,7 @@ import { Manage } from './Manage';
 import { Csv } from './Csv';
 import { ResetData } from './ResetData';
 import { DeleteAccount } from './DeleteAccount';
+import { useToast } from './Toast';
 import { Personalize } from './Personalize';
 import { PersonalizeCard } from './PersonalizeCard';
 import { RECORDS_DELETE } from './deleteAccountLogic';
@@ -86,7 +88,17 @@ export function Settings({
   onReplay: () => void;
   onTour: () => void;
 }) {
+  const toast = useToast();
   const [nm, setNm] = useState(name);
+  const lastName = useRef(name);
+  useEffect(() => {
+    // follow the saved name when it changes elsewhere, but never overwrite what the person is typing
+    if (name !== lastName.current) {
+      const typing = nm !== lastName.current;
+      lastName.current = name;
+      if (!typing) setNm(name);
+    }
+  }, [name, nm]);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ bad: boolean; t: string } | null>(null);
   const [accounts, setAccounts] = useState(false);
@@ -142,7 +154,12 @@ export function Settings({
     const m = await saveName(nm).catch(() => 'Not saved: could not reach the server. Try again.');
     if (m) setMsg({ bad: true, t: m });
     else {
-      setMsg({ bad: false, t: 'Saved.' });
+      const cleaned = cleanName(nm);
+      if (cleaned.ok) {
+        lastName.current = cleaned.name;
+        setNm(cleaned.name);
+      }
+      toast('Name saved');
       reloadProfile(); // the cached profile carries the name too
       await refresh();
     }
@@ -162,7 +179,7 @@ export function Settings({
               placeholder="Your name"
               placeholderTextColor={c.mute}
               accessibilityLabel="Your name"
-              maxLength={60}
+              maxLength={40}
             />
             {msg && <Text style={msg.bad ? s.err : s.ok}>{msg.t}</Text>}
             <Btn label="Save name" busy={busy} onPress={save} />
@@ -249,7 +266,10 @@ export function Settings({
           {tool === 'manage' && <Manage snap={snap} onClose={() => setTool('')} onChanged={refresh} />}
         </View>
       </Modal>
-      <Personalize open={personalize} onClose={() => setPersonalize(false)} onChanged={() => setPver((n) => n + 1)} />
+      <Personalize open={personalize} onClose={() => setPersonalize(false)} onChanged={() => {
+          setPver((n) => n + 1);
+          void refresh();
+        }} />
       <DeleteAccount open={delAccount} onClose={() => setDelAccount(false)} />
       <ResetData open={reset} onClose={() => setReset(false)} onDone={() => void refresh()} />
       <AccountsSheet open={accounts} onClose={() => setAccounts(false)} snap={snap} refresh={refresh} />

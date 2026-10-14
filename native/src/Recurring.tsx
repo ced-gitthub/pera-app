@@ -1,8 +1,9 @@
-import { useState, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { Alert, Text, TextInput, View } from 'react-native';
 import { formatMinor, manilaToday } from '../../src/core/money';
 import { Btn } from './Btn';
 import { newRequestId, type Snapshot } from './logic';
+import { isRuleDraftDirty } from './manageDirty';
 import { createRule, deleteRule, listRules, runDue, setRuleActive, type Rule } from './recurringApi';
 import { FREQUENCIES, MAX_DESCRIPTION, MAX_RULES, describeRule, validateRule, type Frequency, type RuleForm } from './recurringLogic';
 import { Sheet, ToggleRow } from './Sheet';
@@ -33,7 +34,10 @@ const Wrap = ({ children }: { children: ReactNode }) => (
 export function Recurring({ snap, onClose, onChanged }: { snap: Snapshot; onClose: () => void; onChanged: () => void }) {
   const l = useList(listRules, []);
   const [adding, setAdding] = useState(false);
-  const [f, setF] = useState<RuleForm>(() => blank(snap));
+  const [initial, setInitial] = useState<RuleForm>(() => blank(snap)); // the form as it was opened, to tell if anything was typed
+  const [f, setF] = useState<RuleForm>(initial);
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
   const [saving, setSaving] = useState(false);
@@ -43,32 +47,57 @@ export function Recurring({ snap, onClose, onChanged }: { snap: Snapshot; onClos
   const full = rules.length >= MAX_RULES;
   const acc = (id: string) => snap.accounts.find((a) => a.id === id)?.name ?? 'Account';
   const cat = (id: string) => snap.categories.find((x) => x.id === id)?.name ?? 'Category';
+  const ruleName = (r: Rule) => r.description || cat(r.category_id);
   const set = (p: Partial<RuleForm>) => setF((x) => ({ ...x, ...p }));
   const setType = (type: 'income' | 'expense') => set({ type, categoryId: snap.categories.find((x) => x.type === type)?.id ?? '' });
 
-  async function save() {
+  const dirty = adding && isRuleDraftDirty(initial, f);
+  const fresh = () => {
+    const b = blank(snap); // a fresh request id for the next rule
+    setInitial(b);
+    setF(b);
+  };
+  // The Sheet is a modal, so its own pop-out card (not the app-wide one) is what the person can see.
+  const flash = (m: string) => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToastMsg(m);
+    toastTimer.current = setTimeout(() => setToastMsg(null), 2200);
+  };
+
+  // true = saved (the unsaved-changes prompt closes the sheet only then)
+  async function save(): Promise<boolean> {
+    if (saving) return false;
     setMsg('');
     const v = validateRule(f, snap);
-    if (!v.ok) return setErr(v.message);
+    if (!v.ok) {
+      setErr(v.message);
+      return false;
+    }
     setSaving(true);
     const e = await createRule(v.row);
     setSaving(false);
-    if (e) return setErr(e);
+    if (e) {
+      setErr(e);
+      return false;
+    }
     setErr('');
     setMsg('Rule added. Press "Run due now" to add anything already due.');
+    flash('Rule saved');
     setAdding(false);
-    setF(blank(snap)); // a fresh id for the next rule
+    fresh();
     l.reload();
     onChanged();
+    return true;
   }
 
-  async function change(id: string, job: () => Promise<string | null>) {
+  async function change(id: string, job: () => Promise<string | null>, done: string) {
     setWorking(id);
     const e = await job();
     setWorking('');
     setMsg('');
     setErr(e ?? '');
     if (!e) {
+      flash(done);
       l.reload();
       onChanged();
     }
@@ -77,7 +106,7 @@ export function Recurring({ snap, onClose, onChanged }: { snap: Snapshot; onClos
   function remove(r: Rule) {
     Alert.alert('Delete this rule?', 'Entries it already made stay.', [
       { text: 'Keep it', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => change(r.id, () => deleteRule(r.id)) },
+      { text: 'Delete', style: 'destructive', onPress: () => change(r.id, () => deleteRule(r.id), `Deleted ${ruleName(r)}`) },
     ]);
   }
 
@@ -95,7 +124,15 @@ export function Recurring({ snap, onClose, onChanged }: { snap: Snapshot; onClos
 
   const cats = snap.categories.filter((x) => x.type === f.type);
   return (
-    <Sheet open title="Recurring" onClose={onClose}>
+    <Sheet
+      open
+      title="Recurring"
+      dirty={dirty}
+      onSave={save}
+      onClose={onClose}
+      toast={toastMsg}
+      footer={adding ? <Btn label="Save rule" busy={saving} onPress={() => void save()} /> : undefined}
+    >
       <Text style={s.p}>Rules add an entry for you on a schedule, like rent or salary.</Text>
       {!!err && <Text style={s.err}>{err}</Text>}
       {!!msg && <Text style={s.ok}>{msg}</Text>}
@@ -113,7 +150,7 @@ export function Recurring({ snap, onClose, onChanged }: { snap: Snapshot; onClos
       {rules.map((r) => (
         <View key={r.id} style={s.card}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-            <Text style={{ flex: 1, color: c.ink, fontWeight: '700', fontSize: t.body }}>{r.description || cat(r.category_id)}</Text>
+            <Text style={{ flex: 1, color: c.ink, fontWeight: '700', fontSize: t.body }}>{ruleName(r)}</Text>
             <Text style={{ color: r.type === 'income' ? c.up : c.down, fontWeight: '800', fontSize: t.body }}>
               {r.type === 'income' ? '+' : '-'}
               {formatMinor(r.amount_minor)}
@@ -128,9 +165,9 @@ export function Recurring({ snap, onClose, onChanged }: { snap: Snapshot; onClos
             hint={r.active ? 'Turn off to pause.' : 'Turn on to resume. Dates missed while paused are skipped.'}
             on={r.active}
             busy={working === r.id}
-            onChange={(on) => change(r.id, () => setRuleActive(r.id, on))}
+            onChange={(on) => change(r.id, () => setRuleActive(r.id, on), on ? 'Rule resumed' : 'Rule paused')}
           />
-          <Btn label="Delete" alt busy={working === r.id} onPress={() => remove(r)} />
+          <Btn label={`Delete rule: ${ruleName(r)}`} danger busy={working === r.id} onPress={() => remove(r)} />
         </View>
       ))}
 
@@ -138,7 +175,15 @@ export function Recurring({ snap, onClose, onChanged }: { snap: Snapshot; onClos
         <>
           {full && <Text style={s.err}>You have {MAX_RULES} rules, the most allowed. Delete one to add another.</Text>}
           {!full && snap.accounts.length === 0 && <Text style={s.err}>Add an account first, then you can make a rule.</Text>}
-          {!full && snap.accounts.length > 0 && <Btn label="New rule" onPress={() => setAdding(true)} />}
+          {!full && snap.accounts.length > 0 && (
+            <Btn
+              label="New rule"
+              onPress={() => {
+                fresh();
+                setAdding(true);
+              }}
+            />
+          )}
           {rules.length > 0 && <Btn label="Run due now" alt busy={running} onPress={run} />}
         </>
       )}
@@ -212,7 +257,6 @@ export function Recurring({ snap, onClose, onChanged }: { snap: Snapshot; onClos
             maxLength={10}
           />
           <Text style={[s.p, { marginBottom: sp.m }]}>A date in the past adds the missed entries when the rule runs.</Text>
-          <Btn label="Save rule" busy={saving} onPress={save} />
           <Btn
             label="Cancel"
             alt

@@ -447,16 +447,111 @@ G('two-step verification is enforced by the database (migration 0006)');
     return 'no code accepted';
   });
   await step('aal2 session still reads its data', async () => ((await n(U.c)) === 6 ? true : await n(U.c)));
-  await step('a fresh password-only (aal1) session is blocked from every table', async () => {
+  // Every table below gets ONE real row for U while U is aal2, so "aal1 sees 0 rows" and "aal1 changes 0 rows" can only pass if the policy really hides/blocks them.
+  const PROT = [
+    'accounts',
+    'categories',
+    'transactions',
+    'budgets',
+    'recurring_transactions',
+    'savings_goals',
+    'user_settings',
+    'profiles',
+    'tx_trash',
+  ];
+  const pk = (t) => (t === 'user_settings' ? 'user_id' : t === 'profiles' ? 'id' : 'id');
+  const patch = {
+    accounts: { name: 'Hacked' },
+    categories: { name: 'Hacked' },
+    transactions: { description: 'Hacked' },
+    budgets: { amount_minor: 999 },
+    recurring_transactions: { amount_minor: 999 },
+    savings_goals: { name: 'Hacked' },
+    user_settings: { layout: { hacked: true } },
+    profiles: { name: 'Hacked' },
+  };
+  const keep = {}; // table -> primary key value of the seeded row
+  await step('seed one row in every protected table for U (aal2), including a trash row, so the aal1 checks below can fail', async () => {
+    const acct = (await U.c.from('accounts').select('id').order('sort_order').limit(1)).data?.[0]?.id,
+      cat = (await U.c.from('categories').select('id').eq('type', 'expense').order('sort_order').limit(1)).data?.[0]?.id;
+    if (!acct || !cat) return 'no default account/category for U';
+    const tx = (d) => ({
+      user_id: U.id,
+      type: 'expense',
+      category_id: cat,
+      account_id: acct,
+      amount_minor: 1234,
+      transaction_date: '2020-01-15',
+      description: d,
+    });
+    const t1 = await U.c.from('transactions').insert(tx('QA-AAL1-keep')).select('id').single(),
+      t2 = await U.c.from('transactions').insert(tx('QA-AAL1-trash')).select('id').single();
+    if (t1.error || t2.error) return { tx: t1.error?.message ?? t2.error?.message };
+    const del = await U.c.from('transactions').delete().eq('id', t2.data.id); // the delete trigger writes the tx_trash row
+    const bu = await U.c
+        .from('budgets')
+        .insert({ user_id: U.id, category_id: cat, amount_minor: 5000, month: 3, year: 2020 })
+        .select('id')
+        .single(),
+      rc = await U.c
+        .from('recurring_transactions')
+        .insert({
+          user_id: U.id,
+          account_id: acct,
+          category_id: cat,
+          type: 'expense',
+          amount_minor: 1000,
+          description: 'QA-AAL1',
+          interval_count: 1,
+          frequency: 'daily',
+          start_date: '2020-01-01',
+          next_run_date: '2020-01-01',
+        })
+        .select('id')
+        .single(),
+      sg = await U.c.from('savings_goals').insert({ user_id: U.id, name: 'QA-AAL1', target_minor: 1000 }).select('id').single(),
+      us = await U.c
+        .from('user_settings')
+        .upsert({ user_id: U.id, layout: { qa: 1 } })
+        .select('user_id')
+        .single();
+    const err = [del, bu, rc, sg, us].find((x) => x.error);
+    if (err) return err.error.message;
+    keep.transactions = t1.data.id;
+    keep.budgets = bu.data.id;
+    keep.recurring_transactions = rc.data.id;
+    keep.savings_goals = sg.data.id;
+    keep.user_settings = us.data.user_id;
+    keep.accounts = acct;
+    keep.categories = cat;
+    keep.profiles = U.id;
+    keep.tx_trash = (await U.c.from('tx_trash').select('id').limit(1)).data?.[0]?.id;
+    const seen = {};
+    for (const t of PROT) seen[t] = await n(U.c, t);
+    return PROT.every((t) => keep[t] && typeof seen[t] === 'number' && seen[t] >= 1) ? true : { keep: Object.keys(keep), seen };
+  });
+  await step('a fresh password-only (aal1) session reads 0 rows from every table, although each one holds a row', async () => {
     await U.c.auth.signOut();
     const s = await U.c.auth.signInWithPassword({ email: U.email, password: PW });
     if (s.error) return s.error.message;
     const a = await U.c.auth.mfa.getAuthenticatorAssuranceLevel();
     if (!(a.data.currentLevel === 'aal1' && a.data.nextLevel === 'aal2')) return a.data;
     const out = {};
-    for (const t of ['accounts', 'categories', 'transactions', 'budgets', 'recurring_transactions', 'profiles', 'tx_trash'])
-      out[t] = await n(U.c, t);
+    for (const t of PROT) out[t] = await n(U.c, t);
     return Object.values(out).every((v) => v === 0) ? true : out;
+  });
+  await step('aal1 cannot update or delete those rows (0 rows affected or 42501), in every table', async () => {
+    const bad = {};
+    for (const t of PROT) {
+      const col = pk(t);
+      if (patch[t]) {
+        const u = await U.c.from(t).update(patch[t]).eq(col, keep[t]).select(col);
+        if (!(u.error ? u.error.code === '42501' : (u.data ?? []).length === 0)) bad[t + ' update'] = u.error?.code ?? u.data.length;
+      }
+      const d = await U.c.from(t).delete({ count: 'exact' }).eq(col, keep[t]);
+      if (!(d.error ? d.error.code === '42501' : d.count === 0)) bad[t + ' delete'] = d.error?.code ?? d.count;
+    }
+    return Object.keys(bad).length === 0 ? true : bad;
   });
   await step('aal1 cannot write either (insert is rejected)', async () => {
     const r = await U.c.from('accounts').insert({ user_id: U.id, name: 'Sneaky', account_type: 'cash' });
@@ -479,6 +574,16 @@ G('two-step verification is enforced by the database (migration 0006)');
     }
     return 'no code accepted';
   });
+  await step('after the code, the seeded rows are all still there and unchanged (the aal1 update/delete did nothing)', async () => {
+    const bad = {};
+    for (const t of PROT) {
+      const r = await U.c.from(t).select('*').eq(pk(t), keep[t]);
+      if (r.error || (r.data ?? []).length !== 1) bad[t] = r.error?.code ?? (r.data ?? []).length;
+      else if (patch[t] && Object.entries(patch[t]).some(([k, v]) => JSON.stringify(r.data[0][k]) === JSON.stringify(v)))
+        bad[t] = 'CHANGED';
+    }
+    return Object.keys(bad).length === 0 ? true : bad;
+  });
   await step('another user without 2FA is unaffected', async () => ((await n(V.c)) === 6 ? true : await n(V.c)));
   await step('removing the factor restores plain password access', async () => {
     const u = await U.c.auth.mfa.unenroll({ factorId: fid });
@@ -486,6 +591,15 @@ G('two-step verification is enforced by the database (migration 0006)');
     await U.c.auth.signOut();
     const s = await U.c.auth.signInWithPassword({ email: U.email, password: PW });
     return !s.error && (await n(U.c)) === 6 ? true : (s.error?.message ?? (await n(U.c)));
+  });
+  await step('cleanup: the seeded rows are deleted and read back as 0', async () => {
+    const bad = {};
+    for (const t of ['tx_trash', 'transactions', 'budgets', 'recurring_transactions', 'savings_goals', 'user_settings']) {
+      const d = await U.c.from(t).delete().eq('user_id', U.id);
+      const left = await n(U.c, t);
+      if (d.error || left !== 0) bad[t] = d.error?.message ?? left;
+    }
+    return Object.keys(bad).length === 0 ? true : bad;
   });
 }
 

@@ -38,3 +38,13 @@ jobs:
         env:
           NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ci-placeholder-not-a-real-key
+  # The native (Android) app is not covered by the root typecheck: check it in its own job, so it can never change the result of the website job above.
+  native-typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm ci
+      - run: npm ci --prefix native
+      - run: cd native && npx tsc --noEmit

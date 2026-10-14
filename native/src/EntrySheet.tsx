@@ -3,6 +3,8 @@ import { Pressable, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Btn } from './Btn';
 import { Sheet } from './Sheet';
+import { useToast } from './Toast';
+import { isEntryDirty } from './entryDirty';
 import { Chip } from './Tabs';
 import { createEntry, deleteEntry, loadTransferTarget, updateEntry } from './entries';
 import { autoDismissMs, blankForm, categoriesFor, formOf, switchType } from './entriesLogic';
@@ -32,7 +34,9 @@ export function EntrySheet({
   onClose: () => void;
   onChanged: (undo?: { row: Record<string, unknown> }) => void;
 }) {
+  const toast = useToast();
   const [f, setF] = useState<TxEdit | null>(null);
+  const [initial, setInitial] = useState<TxEdit | null>(null); // the form as opened: compared to find unsaved changes
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
   const requestId = useRef(newRequestId()); // a double tap or retry of the same new entry saves once
@@ -45,15 +49,26 @@ export function EntrySheet({
     if (!tx) {
       if (creating) {
         requestId.current = newRequestId();
-        setF(blankForm(snap, manilaToday()));
-      } else setF(null);
+        const blank = blankForm(snap, manilaToday());
+        setF(blank);
+        setInitial(blank);
+      } else {
+        setF(null);
+        setInitial(null);
+      }
       return;
     }
-    setF(formOf(tx));
+    const opened = formOf(tx);
+    setF(opened);
+    setInitial(opened);
     if (tx.type !== 'transfer') return;
     let live = true;
     loadTransferTarget(tx.id)
-      .then((to) => live && to && setF((p) => (p && p.type === 'transfer' && !p.toId ? { ...p, toId: to } : p)))
+      .then((to) => {
+        if (!live || !to) return;
+        setF((p) => (p && p.type === 'transfer' && !p.toId ? { ...p, toId: to } : p));
+        setInitial((p) => (p && p.type === 'transfer' && !p.toId ? { ...p, toId: to } : p));
+      })
       .catch(() => {}); // the person can simply pick the account again
     return () => {
       live = false;
@@ -63,19 +78,28 @@ export function EntrySheet({
 
   const set = (patch: Partial<TxEdit>) => setF((p) => (p ? { ...p, ...patch } : p));
 
-  const save = async () => {
-    if ((!tx && !creating) || !f || working.current) return;
+  // true = saved (the prompt on Done / back then closes the sheet)
+  const save = async (): Promise<boolean> => {
+    if ((!tx && !creating) || !f || working.current) return false;
     const plan = planTxEdit(f, snap);
-    if (!plan.ok) return setErr(plan.message);
+    if (!plan.ok) {
+      setErr(plan.message);
+      return false;
+    }
     working.current = true;
     setBusy(true);
     setErr('');
     const e = tx ? await updateEntry(tx.id, plan.patch) : await createEntry(plan.patch, requestId.current);
     working.current = false;
     setBusy(false);
-    if (e) return setErr(e);
+    if (e) {
+      setErr(e);
+      return false;
+    }
     onChanged();
+    toast('Entry saved');
     onClose();
+    return true;
   };
 
   const remove = async () => {
@@ -88,12 +112,25 @@ export function EntrySheet({
     setBusy(false);
     if ('error' in res) return setErr(res.error);
     onChanged({ row: res.row });
+    toast('Entry deleted');
     onClose();
   };
 
   const cats = f ? categoriesFor(f.type, snap.categories) : [];
   return (
-    <Sheet open={(!!tx || !!creating) && !!f} title={tx ? 'Edit entry' : 'New entry'} onClose={onClose}>
+    <Sheet open={(!!tx || !!creating) && !!f} title={tx ? 'Edit entry' : 'New entry'}
+      onClose={onClose}
+      dirty={isEntryDirty(initial, f)}
+      onSave={save}
+      footer={
+        f ? (
+          <View>
+            {!!err && <Text style={s.err}>{err}</Text>}
+            <Btn label={tx ? 'Save changes' : 'Save entry'} busy={busy} onPress={save} />
+          </View>
+        ) : undefined
+      }
+    >
       {f && (
         <View>
           <Label text="Type" />
@@ -160,8 +197,6 @@ export function EntrySheet({
               </View>
             </>
           )}
-          {!!err && <Text style={s.err}>{err}</Text>}
-          <Btn label={tx ? 'Save changes' : 'Save entry'} busy={busy} onPress={save} />
           {tx && <Btn label="Delete" danger busy={busy} onPress={remove} />}
         </View>
       )}

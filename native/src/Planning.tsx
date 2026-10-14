@@ -8,6 +8,9 @@ import { loadBudgets, loadGoals, type BudgetRow, type GoalRow } from './extra';
 import { saveBudget, saveGoal, updateGoal } from './wizardData';
 import { deleteBudget, deleteGoal } from './config';
 import { Bar, Chip, Page, useList } from './Tabs';
+import { ListSkeleton } from './Skeleton';
+import { useToast } from './Toast';
+import { isBudgetDirty, isGoalDirty, type BudgetForm, type GoalForm } from './planningDirty';
 import { Sheet } from './Sheet';
 import { Btn } from './Btn';
 import { CoachTarget } from './Coach';
@@ -41,14 +44,22 @@ export function Budgets({ snap }: { snap: Snapshot }) {
   const [cat, setCat] = useState('');
   const [editing, setEditing] = useState<BudgetRow | null>(null);
   const [amount, setAmount] = useState('');
+  const [initial, setInitial] = useState<BudgetForm>({ cat: '', amount: '' });
+  const toast = useToast();
   const sv = useSaver(async () => {
     setOpen(false);
     await l.reload();
   });
+  const saveNow = async () => {
+    const ok = await sv.run(() => saveBudget(cat, amount, snap));
+    if (ok) toast('Budget saved');
+    return ok;
+  };
   const edit = (b?: BudgetRow) => {
     setEditing(b ?? null);
     setCat(b?.categoryId ?? '');
     setAmount(b ? minorToInput(b.limit) : '');
+    setInitial({ cat: b?.categoryId ?? '', amount: b ? minorToInput(b.limit) : '' });
     sv.setErr('');
     setOpen(true);
   };
@@ -59,10 +70,11 @@ export function Budgets({ snap }: { snap: Snapshot }) {
         title="Budgets"
         line="What is left to spend this month."
         tint={c.hero.plum}
-        loading={l.rows === null}
-        fab={{ label: '＋ New budget', onPress: () => edit() }}
         {...l}
+        loading={false}
+        fab={{ label: '＋ New budget', onPress: () => edit() }}
       >
+        {l.rows === null && !l.err && <ListSkeleton variant="budget" rows={3} />}
         {!!l.rows?.length && <Text style={[s.p, { marginBottom: sp.s }]}>Tap a budget to change or delete it.</Text>}
         {l.rows?.length === 0 && (
           <CoachTarget id="budgets:card" empty>
@@ -72,9 +84,11 @@ export function Budgets({ snap }: { snap: Snapshot }) {
         {l.rows?.map((b, i) => (
           <CoachTarget key={b.id} id="budgets:card" on={i === 0}>
             <Pressable accessibilityRole="button" accessibilityLabel={`Edit ${b.name} budget`} onPress={() => edit(b)} style={s.card}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                <Text style={s.h2}>{b.name}</Text>
-                <Text style={{ color: b.over ? c.down : c.ink, fontWeight: '800', fontSize: t.body }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Text style={[s.h2, { flexShrink: 1 }]} numberOfLines={1}>
+                  {b.name}
+                </Text>
+                <Text style={{ color: b.over ? c.down : c.ink, fontWeight: '800', fontSize: t.body }} numberOfLines={1}>
                   {b.over ? `Over by ${formatMinor(b.overBy)}` : `${formatMinor(b.left)} left`}
                 </Text>
                 <Text style={{ color: c.mute, fontSize: t.title }}> ›</Text>
@@ -87,7 +101,14 @@ export function Budgets({ snap }: { snap: Snapshot }) {
           </CoachTarget>
         ))}
       </Page>
-      <Sheet open={open} title={editing ? `${editing.name} budget` : 'New budget'} onClose={() => setOpen(false)}>
+      <Sheet
+        open={open}
+        title={editing ? `${editing.name} budget` : 'New budget'}
+        onClose={() => setOpen(false)}
+        dirty={isBudgetDirty(initial, { cat, amount })}
+        onSave={saveNow}
+        footer={<Btn label="Save budget" busy={sv.busy} onPress={saveNow} />}
+      >
         {!editing && (
           <>
             <Text style={s.p}>Spending on</Text>
@@ -110,14 +131,13 @@ export function Budgets({ snap }: { snap: Snapshot }) {
           keyboardType="decimal-pad"
         />
         {!!sv.err && <Text style={s.err}>{sv.err}</Text>}
-        <Btn label="Save budget" busy={sv.busy} onPress={() => sv.run(() => saveBudget(cat, amount, snap))} />
         {editing && (
           <Btn
             label="Delete budget"
             danger
             onPress={() =>
               confirmDelete(`Delete the ${editing.name} budget?`, 'Your entries stay. Only the monthly limit is removed.', () =>
-                sv.run(() => deleteBudget(editing.id)),
+                sv.run(() => deleteBudget(editing.id)).then((ok) => ok && toast('Budget deleted')),
               )
             }
           />
@@ -135,15 +155,26 @@ export function Goals({ snap }: { snap: Snapshot }) {
   const [emoji, setEmoji] = useState(GOAL_EMOJIS[0]);
   const [amount, setAmount] = useState('');
   const [account, setAccount] = useState('');
+  const [initial, setInitial] = useState<GoalForm>({ name: '', emoji: GOAL_EMOJIS[0], amount: '', account: '' });
+  const toast = useToast();
   const sv = useSaver(async () => {
     setOpen(false);
     await l.reload();
   });
+  const saveNow = async () => {
+    const ok = await sv.run(() =>
+      sel ? updateGoal(sel.id, { name, emoji, amount, account }, snap) : saveGoal({ name, emoji, amount, account }, snap, true),
+    );
+    if (ok) toast('Goal saved');
+    return ok;
+  };
   const fresh = () => {
     setSel(null);
     setName('');
+    setEmoji(GOAL_EMOJIS[0]);
     setAmount('');
     setAccount('');
+    setInitial({ name: '', emoji: GOAL_EMOJIS[0], amount: '', account: '' });
     sv.setErr('');
     setOpen(true);
   };
@@ -154,10 +185,11 @@ export function Goals({ snap }: { snap: Snapshot }) {
         title="Goals"
         line="Watch them fill up."
         tint={c.hero.amber}
-        loading={l.rows === null}
-        fab={{ label: '＋ New goal', onPress: fresh }}
         {...l}
+        loading={false}
+        fab={{ label: '＋ New goal', onPress: fresh }}
       >
+        {l.rows === null && !l.err && <ListSkeleton variant="card" rows={3} />}
         {!!l.rows?.length && <Text style={[s.p, { marginBottom: sp.s }]}>Tap a goal to change or delete it.</Text>}
         {l.rows?.length === 0 && (
           <CoachTarget id="goals:card" empty>
@@ -175,6 +207,7 @@ export function Goals({ snap }: { snap: Snapshot }) {
                 setEmoji(g.emoji);
                 setAmount(minorToInput(g.target));
                 setAccount(g.accountId);
+                setInitial({ name: g.name, emoji: g.emoji, amount: minorToInput(g.target), account: g.accountId });
                 sv.setErr('');
                 setOpen(true);
               }}
@@ -193,7 +226,14 @@ export function Goals({ snap }: { snap: Snapshot }) {
           </CoachTarget>
         ))}
       </Page>
-      <Sheet open={open} title={sel ? 'Edit goal' : 'New goal'} onClose={() => setOpen(false)}>
+      <Sheet
+        open={open}
+        title={sel ? 'Edit goal' : 'New goal'}
+        onClose={() => setOpen(false)}
+        dirty={isGoalDirty(initial, { name, emoji, amount, account })}
+        onSave={saveNow}
+        footer={<Btn label={sel ? 'Save changes' : 'Add goal'} busy={sv.busy} onPress={saveNow} />}
+      >
         <>
           <TextInput
             style={s.input}
@@ -225,22 +265,13 @@ export function Goals({ snap }: { snap: Snapshot }) {
             ))}
           </View>
           {!!sv.err && <Text style={s.err}>{sv.err}</Text>}
-          <Btn
-            label={sel ? 'Save changes' : 'Add goal'}
-            busy={sv.busy}
-            onPress={() =>
-              sv.run(() =>
-                sel ? updateGoal(sel.id, { name, emoji, amount, account }, snap) : saveGoal({ name, emoji, amount, account }, snap, true),
-              )
-            }
-          />
           {sel && (
             <Btn
               label="Delete goal"
               danger
               onPress={() =>
                 confirmDelete(`Delete "${sel.name}"?`, 'Your entries and accounts stay. Only this goal is removed.', () =>
-                  sv.run(() => deleteGoal(sel.id)),
+                  sv.run(() => deleteGoal(sel.id)).then((ok) => ok && toast('Goal deleted')),
                 )
               }
             />

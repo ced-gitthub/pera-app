@@ -1,0 +1,75 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { isEntryDirty } from '../native/src/entryDirty.ts';
+
+const src = (f: string) => readFileSync(new URL(`../native/src/${f}`, import.meta.url), 'utf8');
+const base = {
+  type: 'expense' as const,
+  amount: '150',
+  date: '2026-10-14',
+  description: 'lunch',
+  accountId: 'a1',
+  toId: '',
+  categoryId: 'c1',
+};
+
+test('isEntryDirty: identical forms are clean', () => {
+  assert.equal(isEntryDirty(base, { ...base }), false);
+});
+test('isEntryDirty: each field change is dirty', () => {
+  for (const patch of [
+    { type: 'income' as const },
+    { amount: '151' },
+    { date: '2026-10-15' },
+    { description: 'dinner' },
+    { accountId: 'a2' },
+    { categoryId: 'c2' },
+    { toId: 'a2' },
+  ])
+    assert.equal(isEntryDirty(base, { ...base, ...patch }), true, JSON.stringify(patch));
+});
+test('isEntryDirty: surrounding spaces are not a change', () => {
+  assert.equal(isEntryDirty(base, { ...base, amount: ' 150 ', description: 'lunch  ', date: ' 2026-10-14' }), false);
+});
+test('isEntryDirty: changing back to the original is clean again', () => {
+  assert.equal(isEntryDirty(base, { ...base, amount: '200' }), true);
+  assert.equal(isEntryDirty(base, { ...base, amount: '150' }), false);
+});
+test('isEntryDirty: no form loaded is clean', () => {
+  assert.equal(isEntryDirty(null, base), false);
+  assert.equal(isEntryDirty(base, null), false);
+});
+
+test('EntrySheet wires dirty, onSave, a pinned footer and toasts', () => {
+  const s = src('EntrySheet.tsx');
+  assert.match(s, /isEntryDirty\(/);
+  assert.match(s, /dirty=\{/);
+  assert.match(s, /onSave=\{/);
+  const footer = s.match(/footer=\{([\s\S]*?)\n\s*\}\n?\s*(?:toast|dirty|onSave|>)/);
+  assert.ok(s.includes('footer='), 'footer prop');
+  assert.ok(footer && /Save changes/.test(footer[1]) && /Save entry/.test(footer[1]), 'Save button is in the footer');
+  assert.match(s, /toast\('Entry saved'\)/);
+  assert.match(s, /toast\('Entry deleted'\)/);
+  assert.match(s, /return true/);
+});
+test('Home uses the shared Sheet for Quick Add, with dirty and a toast', () => {
+  const h = src('Home.tsx');
+  assert.doesNotMatch(h, /<Modal/);
+  assert.match(h, /<Sheet[\s\S]*title="What did you spend or earn\?"/);
+  assert.match(h, /dirty=\{/);
+  assert.match(h, /onDirtyChange=\{/);
+  assert.match(h, /toast\('Entry saved'\)/);
+  assert.match(h, /setPop\(Date\.now\(\)\)/);
+});
+test('Home Edit chip and See all accounts are 48 tall touch targets', () => {
+  const h = src('Home.tsx');
+  assert.equal((h.match(/minHeight: sp\.xxl \+ sp\.l/g) ?? []).length >= 2, true);
+  assert.match(h, /Home settings/);
+  assert.match(h, /See all accounts/);
+});
+test('QuickAdd reports unsaved text through an optional onDirtyChange', () => {
+  const q = src('QuickAdd.tsx');
+  assert.match(q, /onDirtyChange\?: \(dirty: boolean\) => void/);
+  assert.match(q, /onDirtyChange\?\.\(/);
+});

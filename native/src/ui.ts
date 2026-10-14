@@ -3,6 +3,9 @@ import { c, sp, t, r, applyPalette } from './uiTokens';
 import type { ThemeId } from './themeLogic';
 export { c, sp, t, e, r, themeState } from './uiTokens';
 
+// The smallest comfortable tap target (48).
+export const TOUCH = sp.xxl + sp.l;
+
 // The shared styles are rebuilt from the current colours (buildStyles) and re-assigned onto `s` when the theme changes.
 export const buildStyles = () =>
   StyleSheet.create({
@@ -30,6 +33,18 @@ export const buildStyles = () =>
     ok: { color: c.up, fontSize: t.body, marginBottom: sp.s },
     row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: sp.s },
     chip: {
+      borderRadius: r.pill,
+      paddingVertical: sp.xs,
+      paddingHorizontal: sp.m,
+      backgroundColor: c.raised,
+      borderWidth: 1,
+      borderColor: c.line,
+      minHeight: TOUCH,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    // The same pill for tags that are NOT tappable (no 48 minimum).
+    chipStatic: {
       borderRadius: r.pill,
       paddingVertical: sp.xs,
       paddingHorizontal: sp.m,

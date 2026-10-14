@@ -1,5 +1,6 @@
 import { forgetProfile } from './profile';
 import { ToastProvider } from './Toast';
+import { gateMemo } from './Gate';
 import { useCallback, useEffect, useState } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ActivityIndicator, KeyboardAvoidingView, StatusBar, Text, View } from 'react-native';
@@ -41,7 +42,10 @@ export default function App() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => check(data.session));
     const { data } = supabase.auth.onAuthStateChange((ev, sess) => {
-      if (ev === 'SIGNED_OUT') void forgetProfile(); // session expired, revoked or ended elsewhere: the next account must never see this one's profile
+      if (ev === 'SIGNED_OUT') {
+        void forgetProfile();
+        gateMemo.clear(); // the next account must never see this one's data, even for a moment
+      } // session expired, revoked or ended elsewhere: the next account must never see this one's profile
       setTimeout(() => check(sess, ev), 0); // never await supabase calls inside this callback
     });
     Linking.getInitialURL()

@@ -16,6 +16,7 @@ export function AvatarPicker({ value, name, onChange }: { value: Profile; name: 
         {AVATARS.map((a) => (
           <Pressable
             key={a}
+            hitSlop={sp.xs}
             accessibilityRole="radio"
             accessibilityLabel={`Avatar ${a}`}
             accessibilityState={{ selected: a === value.avatar }}
@@ -42,6 +43,7 @@ export function AvatarPicker({ value, name, onChange }: { value: Profile; name: 
         {AVATAR_COLOR_IDS.map((id) => (
           <Pressable
             key={id}
+            hitSlop={sp.xs}
             accessibilityRole="radio"
             accessibilityLabel={`Colour ${id}`}
             accessibilityState={{ selected: id === value.avatarColor }}
@@ -66,7 +68,7 @@ export function AvatarPicker({ value, name, onChange }: { value: Profile; name: 
             accessibilityLabel={`Frame ${FRAME_LABEL[f]}`}
             accessibilityState={{ selected: f === value.frame }}
             onPress={() => onChange({ ...value, frame: f })}
-            style={[s.chip, { minHeight: e.s, justifyContent: 'center' }, f === value.frame && { borderColor: c.primary, borderWidth: 2 }]}
+            style={[s.chip, f === value.frame && { borderColor: c.primary, borderWidth: 2 }]}
           >
             <Text style={{ color: f === value.frame ? c.primary : c.ink, fontSize: t.body, fontWeight: '700' }}>{FRAME_LABEL[f]}</Text>
           </Pressable>

@@ -6,6 +6,10 @@ import { createEntryWith } from '../native/src/entriesCore.ts';
 import { RECORDS_DELETE } from '../native/src/deleteAccountLogic.ts';
 import { RESET_KINDS, RESET_LABEL } from '../native/src/resetLogic.ts';
 import { createGeneration, openSheet } from '../native/src/gateFlow.ts';
+import { createLeaveWatcher } from '../native/src/leaveWatcher.ts';
+import { createGateMemo } from '../native/src/gateMemo.ts';
+import { TOUR } from '../native/src/tourContent.ts';
+import { parseAmountMinor } from '../src/core/money.ts';
 
 const read = (f: string) => fs.readFileSync(`native/src/${f}`, 'utf8');
 const patch = {
@@ -147,4 +151,111 @@ test('Save balances sends the account updates together and says honestly when on
   const d = read('wizardData.ts');
   assert.match(d, /Promise\.all\(plan\.patch\.map/);
   assert.match(d, /Saved \$\{.*\} of \$\{/);
+});
+
+// ---- the icon change fires only after a REAL leave (behaviour, with fake timers)
+function watcher(over: Partial<{ state: string; ext: number }> = {}) {
+  const st = {
+    state: over.state ?? 'background',
+    ext: over.ext ?? 0,
+    applied: 0,
+    timers: [] as { f: () => void; ms: number; live: boolean }[],
+    bg: 0,
+    act: 0,
+  };
+  const w = createLeaveWatcher({
+    delayMs: 800,
+    getState: () => st.state,
+    externalOpen: () => st.ext,
+    apply: () => void st.applied++,
+    noteBackground: () => void st.bg++,
+    noteActive: () => void st.act++,
+    setTimer: (f, ms) => {
+      const h = { f, ms, live: true };
+      st.timers.push(h);
+      return h;
+    },
+    clearTimer: (h) => void ((h as { live: boolean }).live = false),
+  });
+  const fire = () => st.timers.filter((x) => x.live).forEach((x) => ((x.live = false), x.f()));
+  return { st, w, fire };
+}
+test('leave watcher: background then still in the background after the delay applies the icon once', () => {
+  const { st, w, fire } = watcher();
+  w.onChange('background');
+  assert.equal(st.timers[0].ms, 800);
+  assert.equal(st.applied, 0); // nothing at once
+  fire();
+  assert.equal(st.applied, 1);
+  assert.equal(st.bg, 1);
+});
+test('leave watcher: coming back before the delay cancels it; "inactive" never schedules; a share sheet (external screen) blocks it', () => {
+  const a = watcher();
+  a.w.onChange('background');
+  a.w.onChange('active'); // back in front
+  a.fire();
+  assert.equal(a.st.applied, 0);
+  assert.equal(a.st.act, 1);
+  const b = watcher();
+  b.w.onChange('inactive');
+  assert.equal(b.st.timers.length, 0);
+  const c = watcher({ ext: 1 });
+  c.w.onChange('background');
+  c.fire();
+  assert.equal(c.st.applied, 0);
+  const d = watcher({ state: 'active' }); // the timer fires but the app is in front again
+  d.w.onChange('background');
+  d.fire();
+  assert.equal(d.st.applied, 0);
+});
+test('leave watcher: a second background replaces the first timer (never two applies)', () => {
+  const { st, w, fire } = watcher();
+  w.onChange('background');
+  w.onChange('background');
+  fire();
+  assert.equal(st.applied, 1);
+  assert.match(read('Gate.tsx'), /createLeaveWatcher\(/);
+});
+
+// ---- a theme change (the app redraws) keeps you where you were
+test('the Gate remembers its data and tab across the theme redraw, and forgets them on sign-out', () => {
+  const m = createGateMemo<{ n: number }>();
+  assert.equal(m.get(), null);
+  m.set({ n: 1 });
+  assert.deepEqual(m.get(), { n: 1 });
+  m.clear();
+  assert.equal(m.get(), null);
+  const g = read('Gate.tsx');
+  assert.match(g, /gateMemo\.get\(\)/);
+  assert.match(g, /gateMemo\.set\(/);
+  assert.match(read('App.tsx'), /gateMemo\.clear\(\)/);
+});
+
+// ---- the tour length rule is exact (the rule says 7)
+test('the tour has at most 7 steps and the comment in tourContent says so', () => {
+  assert.ok(TOUR.length <= 7, `${TOUR.length} steps`);
+  assert.match(read('tourContent.ts'), /7 steps/);
+  assert.doesNotMatch(read('tourContent.ts'), /8 steps/);
+  for (const x of TOUR) for (const k of ['title', 'text'] as const) assert.ok(x[k].length <= 150, `${x.targetId}.${k}`);
+});
+
+// ---- money: an amount with two decimal points is an error, never a silently shortened number
+test('amounts with more than one decimal point are refused (1.2.3 used to save 1.20, 1.50.99 saved 1.50)', () => {
+  assert.equal(parseAmountMinor('1.2.3'), null);
+  assert.equal(parseAmountMinor('1.50.99'), null);
+  assert.equal(parseAmountMinor('..5'), null);
+  assert.equal(parseAmountMinor('1,234.56'), 123456); // thousands separators still work
+  assert.equal(parseAmountMinor('1500'), 150000);
+  assert.equal(parseAmountMinor('1500.5'), 150050);
+  assert.equal(parseAmountMinor('0.10')! + parseAmountMinor('0.20')!, 30);
+});
+
+// ---- the checks that guard native changes actually run on native changes
+test('CI type-checks the native app, and the live run also starts for native changes', () => {
+  const ci = fs.readFileSync('.github/workflows/ci.yml', 'utf8');
+  assert.match(ci, /native-typecheck:/);
+  assert.match(ci, /npm ci --prefix native/);
+  assert.match(ci, /cd native && npx tsc --noEmit/);
+  const qa = fs.readFileSync('.github/workflows/prod-qa.yml', 'utf8');
+  assert.match(qa, /paths: \[[^\]]*'native\/\*\*'/);
 });

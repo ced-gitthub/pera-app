@@ -105,7 +105,7 @@ export function AccountsTab({ snap, refresh }: { snap: Snapshot; refresh: () => 
                       <Text style={{ color: x.balance < 0 ? c.down : c.ink, fontSize: t.lead, fontWeight: '800' }}>
                         {formatMinor(x.balance)}
                       </Text>
-                      {x.balance < 0 && <Text style={[s.chip, { color: c.down, fontSize: t.caption, marginLeft: sp.s }]}>owed</Text>}
+                      {x.balance < 0 && <Text style={[s.chipStatic, { color: c.down, fontSize: t.caption, marginLeft: sp.s }]}>owed</Text>}
                       <Text style={{ color: c.mute, fontSize: t.title, marginLeft: sp.s }}>›</Text>
                     </Pressable>
                   </CoachTarget>

@@ -66,13 +66,29 @@ function Swatch({
         </View>
         <View style={{ backgroundColor: k.card, borderRadius: r.s, padding: sp.s }}>
           <Text numberOfLines={1} style={{ color: k.ink, fontSize: t.body, fontWeight: '800' }}>
-            {picked ? '✓ ' : ''}
             {theme.name}
           </Text>
           <Text numberOfLines={1} style={{ color: k.mute, fontSize: t.caption }}>
             {theme.blurb}
           </Text>
         </View>
+        {picked && (
+          <View
+            style={{
+              position: 'absolute',
+              top: sp.s,
+              right: sp.s,
+              width: sp.xl,
+              height: sp.xl,
+              borderRadius: r.pill,
+              backgroundColor: k.primary,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Text style={{ color: k.onPrimary, fontSize: t.caption, fontWeight: '800' }}>✓</Text>
+          </View>
+        )}
       </Pressable>
     </Animated.View>
   );

@@ -24,8 +24,10 @@ import { TourChoice, TourEnd } from './SampleSheets';
 import { addSamples, removeSamples } from './sampleApi';
 import { resetChoice } from './reset';
 import { applyPendingAppIcon } from './appIconApi';
-import { ICON_LEAVE_DELAY_MS, shouldApplyIconNow } from './appIcon';
+import { ICON_LEAVE_DELAY_MS } from './appIcon';
 import { externalOpen, noteActive, noteBackground } from './externalActivity';
+import { createLeaveWatcher } from './leaveWatcher';
+import { createGateMemo } from './gateMemo';
 import { startSamplesWith } from './sampleCore';
 import { canOfferSample } from './sampleLogic';
 import { MakeItYours } from './MakeItYours';
@@ -41,14 +43,18 @@ import { Wizard } from './Wizard';
 import { Btn } from './Btn';
 import { c, s, sp, t } from './ui';
 
+type Kept = { snap: Snapshot; gate: GateResult; uid: string; name: string; tab: string };
+export const gateMemo = createGateMemo<Kept>();
+
 // Decides between the wizard and Home from REAL data (entries, opening balances, budgets, goals). Flags only remember what was seen, per account.
 // If the counts cannot be read the person is let in (fail open) and nothing is blocked by a read error.
 export function Gate() {
-  const [snap, setSnap] = useState<Snapshot | null>(null);
-  const [gate, setGate] = useState<GateResult | null>(null);
-  const [uid, setUid] = useState('');
-  const [name, setName] = useState('');
-  const [tab, setTab] = useState('home');
+  const kept = gateMemo.get(); // after a theme redraw the Gate starts from what it showed a moment ago
+  const [snap, setSnap] = useState<Snapshot | null>(kept?.snap ?? null);
+  const [gate, setGate] = useState<GateResult | null>(kept?.gate ?? null);
+  const [uid, setUid] = useState(kept?.uid ?? '');
+  const [name, setName] = useState(kept?.name ?? '');
+  const [tab, setTab] = useState(kept?.tab ?? 'home');
   const [picked, setPicked] = useState<Tx | null>(null);
   const [creating, setCreating] = useState(false); // the manual "New entry" form from Activity
   const [undo, setUndo] = useState<UndoState | null>(null);
@@ -73,6 +79,10 @@ export function Gate() {
     tourFrom.current = from;
     setTour(0);
   };
+  useEffect(() => {
+    const m = gateMemo.get();
+    if (m && m.tab !== tab) gateMemo.set({ ...m, tab });
+  }, [tab]);
   useEffect(() => {
     // every tour step shows its own real tab underneath the overlay
     if (tour !== null) setTab(TOUR[Math.min(tour, TOUR.length - 1)].tab);
@@ -115,6 +125,7 @@ export function Gate() {
       setName(nm);
       setSnap(sn);
       setGate(d.gate);
+      gateMemo.set({ snap: sn, gate: d.gate, uid: id, name: nm, tab: gateMemo.get()?.tab ?? 'home' });
       setErr('');
       // Due recurring rules run AFTER the screen has its data, so a slow network never stalls a refresh. If they made entries, reload once.
       if (shouldRunDue(lastDue.current, manilaToday(), lastTry.current)) {
@@ -146,20 +157,19 @@ export function Gate() {
   }, [snap, gate, uid, ask, fresh]);
   useEffect(() => {
     // a queued launcher-icon change is applied when the person LEAVES the app (Android closes the app to switch icons, so never while it is in use)
-    let timer: ReturnType<typeof setTimeout> | null = null;
-    const sub = AppState.addEventListener('change', (st) => {
-      if (timer) clearTimeout(timer); // coming back cancels it
-      timer = null;
-      if (st === 'active') noteActive();
-      if (st === 'background') noteBackground();
-      if (st === 'background')
-        timer = setTimeout(() => {
-          timer = null;
-          if (shouldApplyIconNow(AppState.currentState, externalOpen())) void applyPendingAppIcon();
-        }, ICON_LEAVE_DELAY_MS);
+    const watcher = createLeaveWatcher({
+      delayMs: ICON_LEAVE_DELAY_MS,
+      getState: () => AppState.currentState,
+      externalOpen,
+      apply: () => void applyPendingAppIcon(),
+      noteBackground,
+      noteActive,
+      setTimer: (f, ms) => setTimeout(f, ms),
+      clearTimer: (h) => clearTimeout(h as ReturnType<typeof setTimeout>),
     });
+    const sub = AppState.addEventListener('change', (st) => watcher.onChange(st));
     return () => {
-      if (timer) clearTimeout(timer);
+      watcher.dispose();
       sub.remove();
     };
   }, []);

@@ -20,6 +20,13 @@ const THEME_TO_ICON: Partial<Record<string, AppIconName>> = {
 /** The icon that matches a theme. Themes without a colour twin (mono, daylight) and unknown ids use the default. */
 export const iconForTheme = (id: ThemeId | string): AppIconName => THEME_TO_ICON[id] ?? DEFAULT_APP_ICON;
 
+/** True when a theme has its own colour icon (mono and daylight do not). */
+export const hasIconTwin = (id: ThemeId | string): boolean => id in THEME_TO_ICON;
+/** The label of the "match" button: only claims to match when a twin exists, otherwise says it picks the default icon. */
+export const matchIconLabel = (id: ThemeId | string): string => (hasIconTwin(id) ? 'Match my theme' : 'Use the default icon');
+/** Which icon to show as selected: the queued one, else the one in use, and null (the original launcher icon) is the default icon. */
+export const highlightedIcon = (current: AppIconName | null, pending: AppIconName | null): AppIconName => pending ?? current ?? DEFAULT_APP_ICON;
+
 export const APP_ICON_PENDING_KEY = 'zv_app_icon_pending';
 export type IconStore = {
   getItem(k: string): Promise<string | null>;
