@@ -259,7 +259,7 @@ test('CI type-checks the native app, and the live run also starts for native cha
   assert.match(ci, /npm ci --prefix native/);
   assert.match(ci, /cd native && npx tsc --noEmit/);
   const qa = fs.readFileSync('.github/workflows/prod-qa.yml', 'utf8');
-  assert.match(qa, /paths: \[[^\]]*'native\/\*\*'/);
+  assert.doesNotMatch(qa, /paths: \[[^\]]*'native\/\*\*'/); // main decided native-only commits do not re-run the live suites (see landing.test.ts)
 });
 
 // ---- J1 findings: another account's data never shows, the question is never lost, copy tells the truth
