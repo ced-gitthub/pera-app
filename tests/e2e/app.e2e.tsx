@@ -183,12 +183,11 @@ const count = (h: string, s: string) => h.split(s).length - 1;
       lh.includes('href="/login"') && !lh.includes('/register'),
     );
     process.env.WEB_APP_ENABLED = 'false';
-    const lo = await html(<L ok="Email confirmed." />);
+    const lo = await html(<L />);
     delete process.env.WEB_APP_ENABLED;
     T(
-      'landing: web app off -> no tracker links at all (login, register, security, transactions), and the email-confirmed note shows',
+      'landing: web app off -> no tracker links at all (login, register, security, transactions)',
       !/href="\/(login|register|code|forgot|transactions|accounts|budgets|reports|settings|security|assistant)/.test(lo) &&
-        lo.includes('Email confirmed.') &&
         lo.includes('href="/zovix.apk" download=""'),
     );
     T(

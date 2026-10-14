@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import LiveDemo from '@/components/LiveDemo';
+import OkBanner from '@/components/OkBanner';
 import StickyCta from '@/components/StickyCta';
 import ZovixMark from '@/components/ZovixMark';
 import { APK_URL, webAppEnabled } from '@/lib/site';
@@ -30,7 +31,7 @@ function Install() {
     </div>
   );
 }
-export default function Landing({ ok }: { ok?: string }) {
+export default function Landing() {
   const web = webAppEnabled();
   return (
     <main className="wl ld">
@@ -53,11 +54,7 @@ export default function Landing({ ok }: { ok?: string }) {
               </a>
             ))}
           </nav>
-          {ok && (
-            <p className="flash good ld-ok" role="status">
-              {ok} Open the Zovix app and sign in.
-            </p>
-          )}
+          <OkBanner />
           <section className="wl-hero" id="get">
             <p className="wl-eyebrow">Free peso tracker</p>
             <h1>

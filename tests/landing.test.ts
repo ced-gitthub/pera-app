@@ -47,3 +47,26 @@ test("landing-only: the native app's own routes stay reachable (account deletion
   assert.equal(kind('/api/nativeish'), 'redirect');
   assert.equal(kind('/api'), 'redirect');
 });
+test('free-plan usage: production deploys skip commits that change nothing deployable, and previews are not built', () => {
+  const v = JSON.parse(readFileSync('vercel.json', 'utf8'));
+  assert.match(v.ignoreCommand, /VERCEL_ENV/);
+  assert.match(v.ignoreCommand, /git diff --quiet HEAD\^ HEAD -- src public/);
+  assert.doesNotMatch(v.ignoreCommand, /tests|docs|native|\.github/, 'tests, docs, native and CI files must not trigger a deploy');
+});
+test('free-plan usage: the live suites run one at a time and not for test-only or native-only commits', () => {
+  const w = readFileSync('.github/workflows/prod-qa.yml', 'utf8');
+  assert.match(w, /concurrency:\s+group: prod-qa/);
+  const paths = w.match(/paths: \[(.*)\]/)![1];
+  assert.doesNotMatch(paths, /tests\/prod|native|docs/);
+  assert.match(paths, /src\/\*\*/);
+});
+test('free-plan usage: the landing page is static (no searchParams or cookies) and CDN-cacheable', () => {
+  const page = readFileSync('src/app/welcome/page.tsx', 'utf8');
+  assert.doesNotMatch(page, /searchParams|cookies\(|headers\(/);
+  const cfg = readFileSync('next.config.mjs', 'utf8');
+  assert.match(cfg, /source: '\/welcome'[^}]*s-maxage=3600/);
+  assert.ok(
+    cfg.indexOf("source: '/welcome'") > cfg.indexOf('private, no-store'),
+    'the /welcome rule must come after the no-store rule so it wins',
+  );
+});
