@@ -2,20 +2,20 @@
   "expo": {
     "name": "Zovix",
     "slug": "zovix-native",
-    "version": "0.9.1",
+    "version": "0.9.2",
     "scheme": "zovix",
     "orientation": "portrait",
-    "icon": "./assets/icons/lime/preview.png",
+    "icon": "./assets/icons/grape/preview.png",
     "userInterfaceStyle": "dark",
     "android": {
       "package": "com.zovixhub.pera",
-      "versionCode": 12,
+      "versionCode": 13,
       "allowBackup": false,
       "adaptiveIcon": {
-        "backgroundColor": "#4D7C0F",
-        "foregroundImage": "./assets/icons/lime/foreground.png",
-        "backgroundImage": "./assets/icons/lime/background.png",
-        "monochromeImage": "./assets/icons/lime/monochrome.png"
+        "backgroundColor": "#4B27D6",
+        "foregroundImage": "./assets/icons/grape/foreground.png",
+        "backgroundImage": "./assets/icons/grape/background.png",
+        "monochromeImage": "./assets/icons/grape/monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
       "intentFilters": [

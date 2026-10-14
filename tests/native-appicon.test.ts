@@ -36,19 +36,19 @@ test('appicon: names are the six PascalCase colours and validation is strict', (
 });
 
 test('appicon: unknown names fall back to the default', () => {
-  assert.equal(DEFAULT_APP_ICON, 'Lime');
+  assert.equal(DEFAULT_APP_ICON, 'Grape');
   assert.equal(resolveAppIcon('Grape'), 'Grape');
-  assert.equal(resolveAppIcon('nope'), 'Lime');
-  assert.equal(resolveAppIcon(null), 'Lime');
+  assert.equal(resolveAppIcon('nope'), 'Grape');
+  assert.equal(resolveAppIcon(null), 'Grape');
 });
 
 test('appicon: every theme maps to a valid icon; colour themes match by name, the rest use the default', () => {
   for (const id of THEME_IDS) assert.ok(isAppIconName(iconForTheme(id)), id);
   assert.equal(iconForTheme('ocean'), 'Ocean');
   assert.equal(iconForTheme('mint'), 'Mint');
-  assert.equal(iconForTheme('mono'), 'Lime');
-  assert.equal(iconForTheme('daylight'), 'Lime');
-  assert.equal(iconForTheme('bogus'), 'Lime');
+  assert.equal(iconForTheme('mono'), 'Grape');
+  assert.equal(iconForTheme('daylight'), 'Grape');
+  assert.equal(iconForTheme('bogus'), 'Grape');
 });
 
 test('appicon api: set calls the phone, remembers the choice and returns null', async () => {
@@ -164,4 +164,15 @@ test('a failed change does not use up the one change', async () => {
   } as never);
   assert.ok(await api.setAppIcon('Ocean'));
   assert.equal(await api.setAppIcon('Ocean'), null);
+});
+
+test('appicon: the launcher icon matches the website (violet tile) and the mark is compact', () => {
+  const app = JSON.parse(fs.readFileSync('native/app.json', 'utf8')).expo;
+  assert.equal(app.icon, './assets/icons/grape/preview.png');
+  assert.equal(app.android.adaptiveIcon.foregroundImage, './assets/icons/grape/foreground.png');
+  assert.equal(app.android.adaptiveIcon.backgroundColor, '#4B27D6'); // the website's violet
+  const gen = fs.readFileSync('docs/native-app/icons/generate-icons.mjs', 'utf8');
+  assert.match(gen, /grape: \['#7A52FF', '#4B27D6', '#FFC53D'/); // the website's gradient and yellow badge
+  const badge = Number(/const BADGE = (\d+)/.exec(gen)?.[1]);
+  assert.ok(badge > 0 && badge <= 1024 * 0.45, 'the badge stays well inside the 66% adaptive-icon safe zone');
 });

@@ -3,7 +3,7 @@ import type { ThemeId } from './themeLogic.ts';
 
 export const APP_ICON_NAMES = ['Lime', 'Ocean', 'Sunset', 'Grape', 'Rose', 'Mint'] as const;
 export type AppIconName = (typeof APP_ICON_NAMES)[number];
-export const DEFAULT_APP_ICON: AppIconName = 'Lime';
+export const DEFAULT_APP_ICON: AppIconName = 'Grape'; // the website's violet
 export const APP_ICON_KEY = 'zv_app_icon';
 
 export const isAppIconName = (x: unknown): x is AppIconName => typeof x === 'string' && (APP_ICON_NAMES as readonly string[]).includes(x);
