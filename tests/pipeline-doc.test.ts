@@ -101,3 +101,12 @@ test("publishing the native APK needs the judge's APPROVE always (G5a) and an as
   assert.match(b, /native-0\.3/);
   assert.match(b, /asset size/i);
 });
+
+test('the ledger rule matches the gates: G5a proves each row or defers it, G5b proves every deferred row', () => {
+  assert.match(section, /G5a proves each row[^.]*deferred/i);
+  assert.match(section, /G5b proves every deferred row/i);
+});
+
+test('the APK asset size is checked right after any upload, whether or not anything was pushed to main', () => {
+  assert.match(section, /right after any upload to `native-0\.3`[^.]*whether or not[^.]*pushed to `main`/i);
+});
