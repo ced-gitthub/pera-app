@@ -21,12 +21,12 @@ function Install() {
     <div className="ld-info">
       <h3>{H.install}</h3>
       <ol className="wl-get-steps" aria-label="How to install on Android">
-        <li>I-tap ang Get Zovix free. Buksan ang file pagkatapos mag-download.</li>
-        <li>Kung magtanong ang Android, payagan ang installs mula sa browser mo, tapos tap ang Install.</li>
-        <li>Buksan ang Zovix at mag-sign in gamit ang Google o email code.</li>
+        <li>Tap Get Zovix free. Open the file when it finishes.</li>
+        <li>If Android asks, allow installs from your browser, then tap Install.</li>
+        <li>Open Zovix and sign in with Google or an email code.</li>
       </ol>
       <p className="wl-get-note">
-        <b>iPhone?</b> Buksan ang page na ito sa Safari, tap ang Share, tapos Add to Home Screen. Mamaya pa ang buong iPhone app.
+        <b>iPhone?</b> Open this page in Safari, tap Share, then Add to Home Screen. Kaya mamaya pa ang full iPhone app.
       </p>
     </div>
   );
@@ -47,7 +47,7 @@ export default function Landing() {
               Get the app
             </a>
           </header>
-          <nav className="ld-nav" aria-label="Mga shortcut sa page">
+          <nav className="ld-nav" aria-label="Page shortcuts">
             {NAV.map(([href, label]) => (
               <a key={href} href={href}>
                 {label}
@@ -61,12 +61,12 @@ export default function Landing() {
               Your pesos keep disappearing. <span className="wl-hl">Catch them.</span>
             </h1>
             <p className="wl-sub">
-              I-type mo lang ang <b>lunch 150 gcash</b>. Zovix na ang bahala sa iba. Subukan mo dito, 5 seconds lang.
+              Type <b>lunch 150 gcash</b>. Zovix na ang bahala sa iba. Try it right here, 5 seconds lang.
             </p>
             <LiveDemo />
             <div className="ld-cta-row" id="get-hero">
               <Download />
-              <small>Android · libre · walang ads · walang bank login</small>
+              <small>Android · free · no ads · no bank login</small>
             </div>
           </section>
         </div>
@@ -83,7 +83,7 @@ export default function Landing() {
           ))}
         </div>
       </section>
-      <section className="ld-sec" id="about" aria-label="Tungkol sa Zovix">
+      <section className="ld-sec" id="about" aria-label="About Zovix">
         <h2>{H.about}</h2>
         <div className="ld-what">
           {WHAT.map(([t, d]) => (
@@ -110,7 +110,7 @@ export default function Landing() {
           ))}
         </ol>
       </section>
-      <section className="ld-sec" id="samples" aria-label="Mga halimbawa">
+      <section className="ld-sec" id="samples" aria-label="Worked examples">
         <h2>{H.samples}</h2>
         <p className="ld-lead">{H.samplesLead}</p>
         {(['first', 'balance', 'budget', 'goal'] as const).map((k) => {
@@ -119,7 +119,7 @@ export default function Landing() {
             <article key={k} className="ld-sample">
               <h3>{SAMPLE_TITLES[k]}</h3>
               <p className="ld-you">
-                <small>I-type mo</small>
+                <small>You type</small>
                 <code>{s.you}</code>
               </p>
               <dl className="ld-parts">
@@ -143,11 +143,11 @@ export default function Landing() {
       <section className="ld-sec" aria-label={H.cmp}>
         <h2>{H.cmp}</h2>
         <table className="ld-cmp">
-          <caption className="sr-only">Notes o spreadsheet kumpara sa Zovix</caption>
+          <caption className="sr-only">Notes or spreadsheet compared with Zovix</caption>
           <thead>
             <tr>
               <th scope="col">&nbsp;</th>
-              <th scope="col">Notes o sheet</th>
+              <th scope="col">Notes or sheet</th>
               <th scope="col">Zovix</th>
             </tr>
           </thead>
@@ -155,7 +155,7 @@ export default function Landing() {
             {COMPARE.map(([k, a, b]) => (
               <tr key={k}>
                 <th scope="row">{k}</th>
-                <td data-label="Notes o sheet">{a}</td>
+                <td data-label="Notes or sheet">{a}</td>
                 <td data-label="Zovix">{b}</td>
               </tr>
             ))}
@@ -177,8 +177,8 @@ export default function Landing() {
       <section className="wl-ladder" aria-label={H.levels}>
         <h2>{H.levels}</h2>
         <p className="wl-sub2">
-          Bawat entry ay may XP, at dagdag pa kapag araw-araw kang nagta-track. Umakyat mula Broke Rookie hanggang Money Master at tapusin
-          ang mga quest.
+          Every entry earns XP, plus more for every araw na tuloy-tuloy. Climb from Broke Rookie to Money Master and finish the quests along
+          the way.
         </p>
         <div className="wl-rungs">
           {LEVELS.map(([e, t], i) => (
@@ -193,16 +193,16 @@ export default function Landing() {
             <li key={q}>{q}</li>
           ))}
         </ul>
-        <div className="wl-goal" aria-label="Halimbawa ng savings goal">
+        <div className="wl-goal" aria-label="Savings goal example">
           <div className="wl-goal-top">
             <span aria-hidden="true">📱</span>
-            <b>Bagong phone</b>
+            <b>New phone</b>
             <small>₱3,500 of ₱10,000</small>
           </div>
           <div className="wl-gbar">
             <i style={{ width: '35%' }} />
           </div>
-          <small>Magtakda ng goal, i-connect ang account, at panoorin ang bar na napupuno.</small>
+          <small>Set a goal, connect an account, and watch the bar fill up.</small>
         </div>
       </section>
       <section className="ld-sec" aria-label={H.who}>
@@ -221,7 +221,7 @@ export default function Landing() {
           ))}
         </ul>
         <p>
-          <Link href="/privacy">Basahin ang privacy policy</Link>
+          <Link href="/privacy">Read the privacy policy</Link>
         </p>
       </section>
       <section className="ld-sec" id="faq" aria-label={H.faq}>
@@ -238,7 +238,7 @@ export default function Landing() {
       </section>
       <section className="wl-final" id="join">
         <h2>{H.final}</h2>
-        <p>Libre habambuhay. Walang ads. Walang bank login.</p>
+        <p>Free forever. No ads. No bank login.</p>
         <div className="wl-cta">
           <Download id="get-bottom" />
         </div>
