@@ -94,11 +94,21 @@ export function Settings({
   const [delAccount, setDelAccount] = useState(false);
   const [sampleCount, setSampleCount] = useState<number | null>(null);
   const [sampleMsg, setSampleMsg] = useState<{ bad: boolean; t: string } | null>(null);
-  const recount = useCallback(() => void countSamples().then(setSampleCount), []);
+  const [sampleBusy, setSampleBusy] = useState(false);
+  const [sampleChecked, setSampleChecked] = useState(false); // false until the first count finished (so "could not count" never flashes while it is still running)
+  const recount = useCallback(
+    () =>
+      void countSamples().then((n) => {
+        setSampleCount(n);
+        setSampleChecked(true);
+      }),
+    [],
+  );
   useEffect(() => {
     recount();
   }, [recount, snap.totalEntries]);
-  const deleteSamples = () =>
+  const deleteSamples = () => {
+    if (sampleBusy) return;
     Alert.alert(
       'Delete sample records?',
       `This deletes the ${sampleCount} sample ${sampleCount === 1 ? 'entry' : 'entries'} (the ones labelled "Sample:"). Your own entries, budgets and goals stay.`,
@@ -108,14 +118,21 @@ export function Settings({
           text: 'Delete sample records',
           style: 'destructive',
           onPress: async () => {
-            const m = await removeSamples();
-            setSampleMsg(m ? { bad: true, t: m } : { bad: false, t: 'Sample records deleted.' });
-            recount();
-            if (!m) await refresh();
+            setSampleBusy(true);
+            setSampleMsg(null);
+            try {
+              const m = await removeSamples();
+              setSampleMsg(m ? { bad: true, t: m } : { bad: false, t: 'Sample records deleted.' });
+              recount();
+              if (!m) await refresh();
+            } finally {
+              setSampleBusy(false);
+            }
           },
         },
       ],
     );
+  };
   const [personalize, setPersonalize] = useState(false);
   const [pver, setPver] = useState(0);
   const [tool, setTool] = useState<'' | 'reports' | 'recurring' | 'manage' | 'csv'>('');
@@ -191,12 +208,18 @@ export function Settings({
             <Text style={s.h2}>Help</Text>
             <Btn label="🧭 Take the tour of the tabs" alt onPress={onTour} />
             <Btn label="Show the first-run tutorial again" alt onPress={onReplay} />
+            {sampleChecked && sampleCount === null && (
+              <>
+                <Text style={[s.p, { marginTop: sp.m }]}>Could not check for sample entries. Check your connection.</Text>
+                <Btn label="Try again" alt onPress={recount} />
+              </>
+            )}
             {sampleCount !== null && sampleCount > 0 && (
               <>
                 <Text style={[s.p, { marginTop: sp.m }]}>
                   {sampleCount} sample {sampleCount === 1 ? 'entry' : 'entries'} from the tour (labelled "Sample:") {sampleCount === 1 ? 'is' : 'are'} still in your account.
                 </Text>
-                <Btn label="🧹 Delete sample records" alt onPress={deleteSamples} />
+                <Btn label="🧹 Delete sample records" alt busy={sampleBusy} onPress={deleteSamples} />
               </>
             )}
             {!!sampleMsg && (

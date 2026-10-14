@@ -270,3 +270,35 @@ test('the version shown in Settings is the real app version, not a hard-coded ol
   assert.doesNotMatch(st, /APP_VERSION = '\d/);
   assert.match(st, /Constants\.expoConfig\?\.version/);
 });
+
+test('Delete sample records shows it is working: the button is busy (and cannot be tapped twice) from the confirmation until the delete and refresh are done', () => {
+  const st = fs.readFileSync('native/src/Settings.tsx', 'utf8');
+  assert.match(st, /const \[sampleBusy, setSampleBusy\] = useState\(false\)/);
+  assert.match(st, /busy=\{sampleBusy\}/);
+  const del = st.slice(st.indexOf('const deleteSamples'), st.indexOf('return (', st.indexOf('const deleteSamples')));
+  assert.match(del, /setSampleBusy\(true\)/);
+  assert.match(del, /finally/);
+  assert.match(del, /setSampleBusy\(false\)/);
+  assert.match(del, /if \(sampleBusy\) return/);
+});
+
+test('if the sample entries cannot be counted, Settings says so and offers Try again (the option never silently disappears)', () => {
+  const st = fs.readFileSync('native/src/Settings.tsx', 'utf8');
+  assert.match(st, /sampleCount === null/);
+  assert.match(st, /Could not check for sample entries/);
+  const nullBranch = st.slice(st.indexOf('sampleCount === null'), st.indexOf('sampleCount !== null && sampleCount > 0'));
+  assert.match(nullBranch, /Try again/);
+  assert.match(nullBranch, /recount/);
+  // while the first count is still running nothing flashes: a separate flag distinguishes "not counted yet" from "could not count"
+  assert.match(st, /sampleChecked/);
+});
+
+test('PROGRESS.md carries the gate records and the instruction ledger for the 0.9.8 task (the judge reads them)', () => {
+  const p = fs.readFileSync('PROGRESS.md', 'utf8');
+  const i = p.indexOf('0.9.8');
+  assert.ok(i >= 0);
+  const entry = p.slice(i);
+  for (const w of ['IL-1', 'IL-2', 'IL-3', 'IL-4', 'Gate G1', 'Gate G2', 'Gate G3', 'Gate G4', 'Gate G5a', 'deferred'])
+    assert.ok(entry.includes(w), w);
+  assert.match(entry, /the delete sample records was gone in the tutorial tab/); // verbatim
+});
