@@ -23,7 +23,7 @@ import { TourChoice, TourEnd } from './SampleSheets';
 import { addSamples, removeSamples } from './sampleApi';
 import { resetChoice } from './reset';
 import { startSamplesWith } from './sampleCore';
-import { canOfferSample } from './sampleLogic';
+import { TOUR_END_RESTART_FAIL, canOfferSample } from './sampleLogic';
 import { MakeItYours } from './MakeItYours';
 import { makeItYoursSeen } from './profile';
 import { shouldRunDue } from './recurringLogic';
@@ -188,10 +188,12 @@ export function Gate() {
     setChoose(false);
     startTour('home');
   };
-  const replay = async (startOver = false) => {
-    await setFlags(uid, startOver ? { ...REPLAY_FLAGS, balances: false } : REPLAY_FLAGS); // a fresh start asks for the balances again; a plain replay keeps them
+  // Returns a message when the flags could not be stored (then the setup steps cannot restart), otherwise null.
+  const replay = async (startOver = false): Promise<string | null> => {
+    const ok = await setFlags(uid, startOver ? { ...REPLAY_FLAGS, balances: false } : REPLAY_FLAGS); // a fresh start asks for the balances again; a plain replay keeps them
     setTab('home');
     await refresh();
+    return ok ? null : TOUR_END_RESTART_FAIL;
   };
   return (
     <CoachProvider>
@@ -209,7 +211,7 @@ export function Gate() {
           {tab === 'accounts' && <AccountsTab snap={snap} refresh={refresh} />}
           {tab === 'budgets' && <Budgets snap={snap} />}
           {tab === 'goals' && <Goals snap={snap} />}
-          {tab === 'more' && <Settings snap={snap} name={name} refresh={refresh} onReplay={() => replay()} onTour={() => startTour(tab)} />}
+          {tab === 'more' && <Settings snap={snap} name={name} refresh={refresh} onReplay={() => void replay()} onTour={() => startTour(tab)} />}
         </View>
         <UndoBar
           row={undo?.row ?? null}
@@ -258,10 +260,14 @@ export function Gate() {
           }}
           onClear={async () => {
             const r = await resetChoice('all'); // everything: sample entries, budgets, goals, recurring rules, starting balances
-            if (r.error) return r.error;
+            if (r.error) {
+              await refresh(); // part of it may already be gone: show the real state behind the sheet
+              return r.error;
+            }
             await setSamplePending(uid, false);
             setSampleEnd(false);
-            await replay(true); // start over from the first step
+            const m = await replay(true); // start over from the first step
+            if (m) setNotice(m);
             return null;
           }}
         />

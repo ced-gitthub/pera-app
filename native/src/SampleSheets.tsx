@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { Text } from 'react-native';
+import { Pressable, Text, TextInput } from 'react-native';
 import { Sheet } from './Sheet';
 import { Btn } from './Btn';
 import { countFor } from './reset';
-import { RESET_KINDS, resetWarning, type Counts } from './resetLogic';
+import { RESET_KINDS, canConfirm, confirmPhrase, resetWarning, type Counts } from './resetLogic';
 import { TOUR_END_CLEAR, TOUR_END_CONFIRM, TOUR_END_KEEP, TOUR_END_TEXT, TOUR_END_TITLE } from './sampleLogic';
-import { s, sp } from './ui';
+import { c, r, s, sp, t } from './ui';
 
 // Asked once, before the first tour. The sample entries are optional, labelled "Sample:", and the next sheet lets the person keep or clear them.
 export function TourChoice({
@@ -55,6 +55,7 @@ export function TourEnd({
   const [err, setErr] = useState('');
   const [counts, setCounts] = useState<Counts | null>(null); // set while the confirm step is showing
   const [counting, setCounting] = useState(false);
+  const [typed, setTyped] = useState(''); // the same typed word as Delete ALL in Settings: real data can reach this sheet
   const keep = async () => {
     if (busy) return;
     setBusy(true);
@@ -72,19 +73,27 @@ export function TourEnd({
     setCounting(false);
     if (list.some((n) => n === null)) return setErr('Could not count what would be deleted. Check your connection and try again. Nothing was deleted.');
     setCounts({ entries: list[0], budgets: list[1], goals: list[2], recurring: list[3] });
+    setTyped('');
   };
   const clear = async () => {
-    if (busy) return;
+    if (busy || !canConfirm(typed, 'all')) return;
     setBusy(true);
     setErr('');
+    let m: string | null = null;
     try {
-      const m = await onClear();
-      if (m) setErr(m);
-      else setCounts(null);
+      m = await onClear();
     } finally {
       setBusy(false);
     }
+    if (m) {
+      await review(); // a failure part-way: show what is REALLY left, not the old numbers
+      setErr(m);
+    } else {
+      setCounts(null);
+      setTyped('');
+    }
   };
+  const ready = canConfirm(typed, 'all');
   return (
     <Sheet open={open} title={TOUR_END_TITLE} onClose={() => (counts ? setCounts(null) : void keep())}>
       {!counts ? (
@@ -98,8 +107,31 @@ export function TourEnd({
         <>
           <Text style={[s.p, { marginBottom: sp.l }]}>{resetWarning('all', counts)}</Text>
           {!!err && <Text style={s.err}>{err}</Text>}
-          <Btn label={TOUR_END_CONFIRM} danger busy={busy} onPress={() => void clear()} />
-          <Btn label="Go back" alt onPress={() => setCounts(null)} />
+          <Text style={s.p}>Type {confirmPhrase('all')} to confirm.</Text>
+          <TextInput
+            value={typed}
+            onChangeText={setTyped}
+            autoCapitalize="characters"
+            autoCorrect={false}
+            accessibilityLabel={`Type ${confirmPhrase('all')} to confirm`}
+            placeholder={confirmPhrase('all')}
+            placeholderTextColor={c.mute}
+            style={{ color: c.ink, fontSize: t.body, borderWidth: 1, borderColor: c.line, borderRadius: r.s, padding: sp.m, marginBottom: sp.m }}
+          />
+          {ready ? (
+            <Btn label={TOUR_END_CONFIRM} danger busy={busy} onPress={() => void clear()} />
+          ) : (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`${TOUR_END_CONFIRM}. Type ${confirmPhrase('all')} first.`}
+              accessibilityState={{ disabled: true }}
+              disabled
+              style={[s.btn, s.btnDanger, { opacity: 0.4 }]}
+            >
+              <Text style={s.btnText}>{TOUR_END_CONFIRM}</Text>
+            </Pressable>
+          )}
+          <Btn label="Go back" alt onPress={() => (setCounts(null), setTyped(''))} />
         </>
       )}
     </Sheet>

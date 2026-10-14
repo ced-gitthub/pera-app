@@ -57,3 +57,4 @@ export const TOUR_END_TEXT =
 export const TOUR_END_KEEP = 'Keep everything';
 export const TOUR_END_CLEAR = 'Clear everything and start over';
 export const TOUR_END_CONFIRM = 'Yes, delete everything';
+export const TOUR_END_RESTART_FAIL = 'Everything was cleared, but this phone could not restart the setup steps. Close and reopen Zovix, or use Settings > Show the first-run tutorial again.';

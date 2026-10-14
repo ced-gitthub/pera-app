@@ -187,3 +187,32 @@ test('the Delete-ALL option is available even when only starting balances are le
   const src = fs.readFileSync('native/src/ResetData.tsx', 'utf8');
   assert.match(src, /const empty = n === 0 && k !== 'all'/);
 });
+
+test('the end-of-tour full reset needs the typed word DELETE, like Delete ALL in Settings (real data can reach this sheet)', () => {
+  const sheets = fs.readFileSync('native/src/SampleSheets.tsx', 'utf8');
+  assert.match(sheets, /TextInput/);
+  assert.match(sheets, /canConfirm\(typed, 'all'\)/);
+  assert.match(sheets, /Type \{confirmPhrase\('all'\)\} to confirm/); // the word shown is the one the reset logic checks (DELETE)
+  const confirmBtn = sheets.slice(sheets.indexOf('TOUR_END_CONFIRM}'), sheets.indexOf('Go back'));
+  assert.match(confirmBtn, /disabled|ready/); // the red button does nothing until the word matches
+});
+
+test('a failed clear recounts what is really left and refreshes the screen behind the sheet', () => {
+  const sheets = fs.readFileSync('native/src/SampleSheets.tsx', 'utf8');
+  const clear = sheets.slice(sheets.indexOf('const clear = async'), sheets.indexOf('return (', sheets.indexOf('const clear = async')));
+  assert.match(clear, /setErr\(m\)/);
+  assert.match(clear, /await review\(\)/);
+  const gate = fs.readFileSync('native/src/Gate.tsx', 'utf8');
+  const onClear = gate.slice(gate.indexOf('onClear={'), gate.indexOf('<ResetData'));
+  assert.match(onClear, /if \(r\.error\) \{[\s\S]*await refresh\(\)/);
+});
+
+import { TOUR_END_RESTART_FAIL } from '../native/src/sampleLogic.ts';
+test('if the restart flags cannot be stored, the person is told the data is cleared but the setup steps could not restart', () => {
+  assert.match(TOUR_END_RESTART_FAIL, /cleared/i);
+  assert.match(TOUR_END_RESTART_FAIL, /setup/i);
+  const gate = fs.readFileSync('native/src/Gate.tsx', 'utf8');
+  assert.match(gate, /const replay = async/);
+  assert.match(gate, /TOUR_END_RESTART_FAIL/);
+  assert.match(gate, /onReplay=\{\(\) => void replay\(\)\}/); // the plain Settings replay stays unchanged
+});

@@ -207,36 +207,66 @@ export async function bulkDeleteSteps({ A, B, step, cnt, other, d, mk }: Ctx): P
   });
 
   // "Delete ALL my records" in the native app also clears recurring rules and sets every starting balance to 0 (native/src/resetCore.ts zeroBalancesWith).
-  // These are the same unfiltered statements: B clears its own, and A's accounts and recurring rules must not change.
+  // B is SEEDED first (one recurring rule, one non-zero balance), so the statements must really change something; A's accounts and rules must not change.
   await step(
-    "clear everything: B's recurring rules are deleted and B's starting balances set to 0, while A's accounts and rules are untouched",
+    "clear everything: B's seeded recurring rule is deleted and B's seeded starting balance set to 0 (all 6 accounts reported), while A's accounts and rules are untouched",
     async () => {
       if (!bulk.ready) return SKIP;
-      const aAcc = (await A.c.from('accounts').select('id').limit(1)).data ?? [];
-      if (!aAcc[0]) return 'could not read the test user defaults';
+      const aAcc = ((await A.c.from('accounts').select('id,opening_balance_minor').order('id')).data ?? []) as {
+        id: string;
+        opening_balance_minor: number;
+      }[];
+      const bAccs = ((await B.c.from('accounts').select('id,name')).data ?? []) as { id: string; name: string }[];
+      const bCash = bAccs.find((x) => x.name === 'Cash')?.id;
+      const bFood = (
+        ((await B.c.from('categories').select('id,name,type')).data ?? []) as { id: string; name: string; type: string }[]
+      ).find((x) => x.name === 'Food' && x.type === 'expense')?.id;
+      if (!aAcc[0] || !bCash || !bFood) return 'could not read the test user defaults';
       const setA = await A.c.from('accounts').update({ opening_balance_minor: 12345 }).eq('id', aAcc[0].id);
-      if (setA.error) return { setA: setA.error.message };
+      const setB = await B.c.from('accounts').update({ opening_balance_minor: 777 }).eq('id', bCash);
+      const seedRule = await B.c.from('recurring_transactions').insert({
+        user_id: B.id,
+        account_id: bCash,
+        category_id: bFood,
+        type: 'expense',
+        amount_minor: 1000,
+        description: 'QA-clear',
+        interval_count: 1,
+        frequency: 'daily',
+        start_date: '2020-01-01',
+        next_run_date: '2020-01-01',
+      });
+      if (setA.error || setB.error || seedRule.error)
+        return { seed: setA.error?.message ?? setB.error?.message ?? seedRule.error?.message };
+      const bRecSeeded = await B.c.from('recurring_transactions').select('id', { count: 'exact', head: true });
       const aBefore = await A.c.from('accounts').select('id,opening_balance_minor').order('id');
       const aRecBefore = await A.c.from('recurring_transactions').select('id', { count: 'exact', head: true });
+      // the exact statements of resetWith('recurring') and zeroBalancesWith
       const bRec = await B.c.from('recurring_transactions').delete({ count: 'exact' }).not('id', 'is', null);
-      const bBal = await B.c.from('accounts').update({ opening_balance_minor: 0 }).not('id', 'is', null);
+      const bBal = await B.c.from('accounts').update({ opening_balance_minor: 0 }).not('id', 'is', null).select('id');
       const bAfter = await B.c.from('accounts').select('opening_balance_minor');
       const bLeftRec = await B.c.from('recurring_transactions').select('id', { count: 'exact', head: true });
       const aAfter = await A.c.from('accounts').select('id,opening_balance_minor').order('id');
       const aRecAfter = await A.c.from('recurring_transactions').select('id', { count: 'exact', head: true });
-      return !bRec.error &&
+      const restoreA = await A.c.from('accounts').update({ opening_balance_minor: aAcc[0].opening_balance_minor }).eq('id', aAcc[0].id);
+      return bRecSeeded.count === 1 &&
+        !bRec.error &&
+        bRec.count === 1 &&
         !bBal.error &&
+        (bBal.data ?? []).length === 6 &&
         !bAfter.error &&
         (bAfter.data ?? []).every((x: { opening_balance_minor: number }) => Number(x.opening_balance_minor) === 0) &&
         bLeftRec.count === 0 &&
         !aBefore.error &&
         !aAfter.error &&
         JSON.stringify(aAfter.data) === JSON.stringify(aBefore.data) &&
-        aRecAfter.count === aRecBefore.count
+        aRecAfter.count === aRecBefore.count &&
+        !restoreA.error
         ? true
         : {
-            bRec: bRec.error?.message ?? 'ok',
-            bBal: bBal.error?.message ?? 'ok',
+            seeded: bRecSeeded.count,
+            bRec: bRec.error?.message ?? bRec.count,
+            bBal: bBal.error?.message ?? (bBal.data ?? []).length,
             bNotZero: (bAfter.data ?? []).filter((x: { opening_balance_minor: number }) => Number(x.opening_balance_minor) !== 0).length,
             bLeftRec: bLeftRec.count,
             aAccountsSame: JSON.stringify(aAfter.data) === JSON.stringify(aBefore.data),
