@@ -2,7 +2,7 @@
  "regions": [
   "syd1"
  ],
- "ignoreCommand": "if [ \"$VERCEL_ENV\" != \"production\" ]; then exit 0; fi; git diff --quiet HEAD^ HEAD -- src public next.config.mjs package.json package-lock.json tsconfig.json postcss.config.mjs vercel.json",
+ "ignoreCommand": "if [ \"$VERCEL_ENV\" != \"production\" ]; then exit 0; fi; [ -n \"$VERCEL_GIT_PREVIOUS_SHA\" ] && git cat-file -e \"$VERCEL_GIT_PREVIOUS_SHA^{commit}\" 2>/dev/null || exit 1; git diff --quiet \"$VERCEL_GIT_PREVIOUS_SHA\" HEAD -- src public next.config.mjs package.json package-lock.json tsconfig.json postcss.config.mjs vercel.json",
  "git": {
   "deploymentEnabled": {
    "qa-db": false,

@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     # Only changes that alter what production serves. Test-only, doc and native-app commits do not re-run the suites (each run sends thousands of requests to the Vercel project).
-    paths: ['src/**', 'supabase/**', 'package.json', 'package-lock.json', 'next.config.mjs', 'vercel.json']
+    paths: ['src/**', 'package.json', 'package-lock.json', 'next.config.mjs', 'vercel.json']
 # One run at a time: overlapping runs share test users and were a source of flaky failures; a newer push replaces a waiting one.
 concurrency:
   group: prod-qa
@@ -53,7 +53,8 @@ jobs:
             [ "$got" = "$want" ] && exit 0
             sleep 15
           done
-          echo "::warning title=prod-qa::production did not report commit $want in time; testing whatever is live ($got)"
+          echo "::error title=prod-qa::production never reported commit $want (last seen $got); not testing stale code"
+          exit 1
       - run: npm ci
       - name: Install Playwright
         working-directory: tests/prod
@@ -106,7 +107,8 @@ jobs:
             [ "$got" = "$want" ] && exit 0
             sleep 15
           done
-          echo "::warning title=prod-qa::production did not report commit $want in time; testing whatever is live ($got)"
+          echo "::error title=prod-qa::production never reported commit $want (last seen $got); not testing stale code"
+          exit 1
       - run: npm ci
       - name: Install Playwright
         working-directory: tests/prod
