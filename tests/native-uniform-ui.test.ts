@@ -62,7 +62,7 @@ test('create: blank form is a spent entry today on the first account with no cat
 // pinned close controls
 test('Sheet: Done is in an always-visible header and the content scroll area shrinks', () => {
   const s = src('Sheet.tsx');
-  assert.match(s, /<HeaderClose onPress=\{onClose\}/);
+  assert.match(s, /<HeaderClose onPress=\{requestClose\}/); // every close goes through the unsaved-changes guard
   assert.match(s, /label = 'Done'/);
   assert.match(s, /<ScrollView style=\{\{ flexShrink: 1 \}\}/);
   assert.match(s, /maxHeight: '85%'/);
