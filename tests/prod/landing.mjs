@@ -88,6 +88,16 @@ for (const [label, vp, scheme] of [
     const top = await q.evaluate(() => document.getElementById('faq').getBoundingClientRect().top);
     return !missing.length && !dead.length && top < 300 ? true : { missing, dead, top };
   });
+  await step('the email-confirmed note shows for the exact link message and never for other text', async () => {
+    const msg = 'Email confirmed. Welcome to Zovix.';
+    await q.goto(url + '?ok=' + encodeURIComponent(msg));
+    await q.locator('[role=status] >> text=Open the Zovix app and sign in').waitFor({ timeout: 10000 });
+    await q.goto(url + '?ok=' + encodeURIComponent('Your bank needs you. Call now.'));
+    await q.waitForTimeout(800);
+    const other = await q.locator('.ld-ok').count();
+    await q.goto(url);
+    return other === 0 ? true : { other };
+  });
   await step('a FAQ answer opens when tapped', async () => {
     const d = q.locator('details.ld-faq').first();
     await d.locator('summary').click();
