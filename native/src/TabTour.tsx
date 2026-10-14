@@ -3,7 +3,7 @@ import { AccessibilityInfo, Animated, BackHandler, Pressable, StyleSheet, Text, 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Btn } from './Btn';
 import { useCoach } from './Coach';
-import { nextIndex, padRect, placeTip, scrollDelta, sameRect, withTimeout, type Rect } from './coachLogic';
+import { MEASURE_WAITS, nextIndex, padRect, placeTip, readyToShow, scrollDelta, withTimeout, type Rect } from './coachLogic';
 import { TOUR } from './tourContent';
 import { c, r, sp, t } from './ui';
 
@@ -12,7 +12,6 @@ const TIP_MS = 220;
 const BOUNCE_MS = 520;
 const TIP_W = 340;
 const TIP_GUESS_H = 200;
-const WAITS = [0, 120, 120, 200, 300, 500]; // after a tab switch the target may mount late; measure a few times until it stops moving
 const DEADLINE_MS = 2500; // hard limit per step: if nothing has been measured by then the tooltip is shown anyway (centred), never an invisible blocker
 const SETTLE_MS = 800; // one measuring pass never waits longer than this, so the tooltip always appears
 const pause = (ms: number) => new Promise<void>((res) => setTimeout(res, ms));
@@ -38,6 +37,7 @@ export function TabTour({ index, onIndex, onClose }: { index: number; onIndex: (
   const tipIn = useRef(new Animated.Value(0)).current;
   const bounce = useRef(new Animated.Value(0)).current;
   const first = useRef(true);
+  const shownTab = useRef<string | null>(null); // the tab of the last step that was shown
   const shown = useRef(false); // true once the current step's tooltip has been revealed
 
   useEffect(() => {
@@ -115,13 +115,14 @@ export function TabTour({ index, onIndex, onClose }: { index: number; onIndex: (
         ).start();
       }
       shown.current = true;
+      shownTab.current = step.tab;
       if (still) tipIn.setValue(1);
       else Animated.timing(tipIn, { toValue: 1, duration: TIP_MS, useNativeDriver: true }).start();
     };
     void (async () => {
       let prev: Rect | null = null;
       let scrolls = 0;
-      for (const w of WAITS) {
+      for (const w of MEASURE_WAITS) {
         await pause(w);
         if (!live) return;
         const [o, raw, bar] = await withTimeout(
@@ -145,7 +146,7 @@ export function TabTour({ index, onIndex, onClose }: { index: number; onIndex: (
             continue;
           }
         }
-        if (sameRect(prev, rect)) return commit(rect);
+        if (readyToShow(fixed(id), shownTab.current === step.tab, prev, rect)) return commit(rect);
         prev = rect;
       }
       commit(prev);

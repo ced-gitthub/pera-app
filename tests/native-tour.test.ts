@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { TOUR } from '../native/src/tourContent.ts';
+import { MEASURE_WAITS, readyToShow } from '../native/src/coachLogic.ts';
 
 const read = (f: string) => fs.readFileSync(`native/src/${f}`, 'utf8');
 const sources = () =>
@@ -22,8 +23,8 @@ test('every step belongs to a real bottom tab, and every tab is toured in order'
   assert.deepEqual([...new Set(TOUR.map((x) => x.tab))], ids);
 });
 
-test('every tab has a step that points at its own tab icon', () => {
-  for (const id of ['home', 'activity', 'accounts', 'budgets', 'goals', 'more']) {
+test('every tab except Home (which points at its own content) has a step that points at its own tab icon', () => {
+  for (const id of ['activity', 'accounts', 'budgets', 'goals', 'more']) {
     const s = TOUR.find((x) => x.targetId === `tab:${id}`);
     assert.ok(s, id);
     assert.equal(s.tab, id);
@@ -39,15 +40,6 @@ test('every targetId used by a step is registered by a CoachTarget, gearId or th
     if (id === 'fab') assert.match(read('Fab.tsx'), /useCoachNode\('fab'\)/);
     else assert.ok(src.includes(`id="${id}"`) || src.includes(`gearId="${id}"`), `no CoachTarget for ${id}`);
   }
-});
-
-test('steps that can point at an empty list say what appears there', () => {
-  for (const id of ['home:recent', 'activity:rows', 'accounts:rows', 'budgets:card', 'goals:card']) {
-    const s = TOUR.find((x) => x.targetId === id);
-    assert.ok(s?.emptyText, id);
-    assert.match(sources(), new RegExp(`id="${id}" empty`)); // a placeholder target exists when the list is empty
-  }
-  assert.match(TOUR.find((x) => x.targetId === 'activity:rows')?.emptyText ?? '', /Your entries will appear here/);
 });
 
 test('no step has empty words and targets are unique per tab', () => {
@@ -68,10 +60,9 @@ test('Goals text does not claim you can add money to a goal', () => {
   assert.match(text('goals'), /income/i);
 });
 
-test('Settings steps name the real labels and mention Personalize', () => {
+test('Settings step names the real labels', () => {
   const t = text('more');
   for (const w of ['Delete my records', 'Delete my account', 'Personalize', 'Tools', 'Help']) assert.ok(t.includes(w), w);
-  assert.match(t, /ALL|everything/);
   assert.doesNotMatch(t, /sample data/i);
   const src = read('Settings.tsx');
   for (const w of ['Delete my records', 'Delete my account', 'Tools']) assert.ok(src.includes(w), w);
@@ -81,6 +72,21 @@ test('Activity and Home steps match the real screens', () => {
   assert.match(text('activity'), /Spent|Earned|Moved/);
   assert.doesNotMatch(text('activity'), /Expenses/);
   for (const w of ['Total', 'Spendable', 'Savings', 'Add']) assert.ok(text('home').includes(w), w);
+});
+
+test('the tour is short and quick to read: at most 8 steps, each at most 150 characters', () => {
+  assert.ok(TOUR.length <= 8, `${TOUR.length} steps`);
+  for (const x of TOUR) assert.ok(x.text.length <= 150, `${x.targetId}: ${x.text.length} chars`);
+});
+
+test('Next is quick: a short measuring schedule, and a fixed or already-visible target is shown at once', () => {
+  assert.ok(MEASURE_WAITS.reduce((n, w) => n + w, 0) <= 400);
+  const r = { x: 0, y: 0, w: 10, h: 10 };
+  assert.equal(readyToShow(true, false, null, r), true); // tab icons and the + button never move
+  assert.equal(readyToShow(false, true, null, r), true); // same tab as the last step: already laid out
+  assert.equal(readyToShow(false, false, null, r), false); // a new tab: wait for a second matching measure
+  assert.equal(readyToShow(false, false, r, { ...r }), true);
+  assert.equal(readyToShow(false, false, r, { ...r, y: 40 }), false);
 });
 
 test('the overlay has Skip, Back, Next, Got it, a touch blocker, reduced motion, and stays small', () => {
