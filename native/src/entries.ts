@@ -23,9 +23,9 @@ export const deleteEntry = (id: string): Promise<{ row: Record<string, unknown> 
 // Undo a delete. Returns null when it is back (or already was), otherwise a message.
 export async function restoreEntry(row: Record<string, unknown>): Promise<string | null> {
   try {
-    const { data: u } = await supabase.auth.getUser();
-    if (!u.user) return SESSION;
-    return await restoreEntryWith(db, u.user.id, row);
+    const { data: u } = await supabase.auth.getSession();
+    if (!u.session) return SESSION;
+    return await restoreEntryWith(db, u.session.user.id, row);
   } catch {
     return entryError({ message: 'network' }, 'restore');
   }
@@ -34,9 +34,9 @@ export async function restoreEntry(row: Record<string, unknown>): Promise<string
 // Adds one entry by hand. Pass the same requestId on a retry so it saves once.
 export async function createEntry(patch: TxPatch, requestId: string): Promise<string | null> {
   try {
-    const { data: u } = await supabase.auth.getUser();
-    if (!u.user) return SESSION;
-    return await createEntryWith(db, u.user.id, patch, requestId);
+    const { data: u } = await supabase.auth.getSession();
+    if (!u.session) return SESSION;
+    return await createEntryWith(db, u.session.user.id, patch, requestId);
   } catch {
     return entryError({ message: 'network' }, 'save');
   }

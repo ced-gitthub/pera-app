@@ -107,3 +107,11 @@ test('Gate switches the real tab for each step and renders the overlay inside th
   assert.match(g, /<TabTour index=/);
   assert.match(g, /tabTourSeen/);
 });
+
+test('the tooltip is never hidden between steps (only the spotlight ring waits for its target), so Next shows the next text at once', () => {
+  const src = read('TabTour.tsx');
+  assert.match(src, /const tipIn = useRef\(new Animated\.Value\(1\)\)/);
+  assert.match(src, /ringIn/);
+  assert.doesNotMatch(src, /tipIn\.setValue/);
+  assert.doesNotMatch(src, /Animated\.timing\(tipIn/);
+});

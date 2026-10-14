@@ -32,11 +32,11 @@ export async function saveBalances(typed: Record<string, string>): Promise<strin
 export async function saveBudget(categoryId: string, amount: string, s: Snapshot): Promise<string | null> {
   const plan = planBudget(categoryId, amount, s);
   if (!plan.ok) return plan.message;
-  const { data: u } = await supabase.auth.getUser();
-  if (!u.user) return 'Session expired. Please sign in again.';
+  const { data: u } = await supabase.auth.getSession();
+  if (!u.session) return 'Session expired. Please sign in again.';
   const { error } = await supabase
     .from('budgets')
-    .upsert({ user_id: u.user.id, ...plan.row }, { onConflict: 'user_id,category_id,month,year' });
+    .upsert({ user_id: u.session.user.id, ...plan.row }, { onConflict: 'user_id,category_id,month,year' });
   return writeError(error, 'budget');
 }
 
@@ -47,9 +47,9 @@ export async function saveGoal(i: GoalInput, s: Snapshot, strict = false): Promi
     s.accounts.map((a) => a.id),
   );
   if (!p.ok) return p.message;
-  const { data: u } = await supabase.auth.getUser();
-  if (!u.user) return 'Session expired. Please sign in again.';
-  const { error } = await supabase.from('savings_goals').insert({ user_id: u.user.id, ...p.goal });
+  const { data: u } = await supabase.auth.getSession();
+  if (!u.session) return 'Session expired. Please sign in again.';
+  const { error } = await supabase.from('savings_goals').insert({ user_id: u.session.user.id, ...p.goal });
   if (error && !strict && (error as { code?: string }).code === '23505') return null;
   return writeError(error, 'goal', p.goal.name);
 }

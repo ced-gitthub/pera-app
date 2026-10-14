@@ -48,8 +48,8 @@ export async function load(): Promise<Snapshot> {
 
 // Retry-safe: the same requestId can be sent twice and saves once (unique user_id+request_id+request_idx).
 export async function save(requestId: string, items: Item[], s: Snapshot): Promise<string | null> {
-  const { data: u } = await supabase.auth.getUser();
-  if (!u.user) return 'Session expired. Please sign in again.';
+  const { data: u } = await supabase.auth.getSession();
+  if (!u.session) return 'Session expired. Please sign in again.';
   // Fee categories (Transfer Fee, ATM Fee, ...) are created on first use, exactly as on the website.
   let categories = s.categories;
   const missing = missingFeeCategories(items, categories);
@@ -58,14 +58,14 @@ export async function save(requestId: string, items: Item[], s: Snapshot): Promi
     const max = Math.max(0, ...(all ?? []).map((x) => Number(x.sort_order)));
     const { error } = await supabase
       .from('categories')
-      .insert(missing.map((name, i) => ({ user_id: u.user!.id, name, type: 'expense', sort_order: max + 10 * (i + 1) })));
+      .insert(missing.map((name, i) => ({ user_id: u.session!.user.id, name, type: 'expense', sort_order: max + 10 * (i + 1) })));
     if (error && (error as { code?: string }).code !== '23505') return 'Not saved: could not create the fee category. Try again.';
     const { data } = await supabase.from('categories').select('id,name,type').order('sort_order').order('name');
     if (data) categories = data as Category[];
   }
   const v = validateItems(items, { categories, accounts: s.accounts });
   if (!v.ok) return 'Not saved: ' + v.error;
-  const rows = v.rows.map((r, i) => ({ ...r, user_id: u.user!.id, request_id: requestId, request_idx: i }));
+  const rows = v.rows.map((r, i) => ({ ...r, user_id: u.session!.user.id, request_id: requestId, request_idx: i }));
   const { error } = await supabase
     .from('transactions')
     .upsert(rows, { onConflict: 'user_id,request_id,request_idx', ignoreDuplicates: true });

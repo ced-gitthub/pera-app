@@ -34,7 +34,8 @@ export function TabTour({ index, onIndex, onClose }: { index: number; onIndex: (
   const ay = useRef(new Animated.Value(height / 2)).current;
   const aw = useRef(new Animated.Value(0)).current;
   const ah = useRef(new Animated.Value(0)).current;
-  const tipIn = useRef(new Animated.Value(0)).current;
+  const ringIn = useRef(new Animated.Value(0)).current; // the spotlight ring appears when its target is found
+  const tipIn = useRef(new Animated.Value(1)).current; // the tooltip is always visible: Next shows the next text at once
   const bounce = useRef(new Animated.Value(0)).current;
   const first = useRef(true);
   const shownTab = useRef<string | null>(null); // the tab of the last step that was shown
@@ -76,13 +77,13 @@ export function TabTour({ index, onIndex, onClose }: { index: number; onIndex: (
   // The tooltip leaves while we look for the new target...
   useEffect(() => {
     shown.current = false;
-    tipIn.setValue(still ? 1 : 0);
+    ringIn.setValue(still ? 1 : 0);
     // ...but a restarted or stuck measuring pass must never leave it hidden under the touch blocker: reveal it at the deadline.
     const timer = setTimeout(() => {
-      if (!shown.current) Animated.timing(tipIn, { toValue: 1, duration: TIP_MS, useNativeDriver: true }).start();
+      if (!shown.current) Animated.timing(ringIn, { toValue: 1, duration: TIP_MS, useNativeDriver: true }).start();
     }, DEADLINE_MS);
     return () => clearTimeout(timer);
-  }, [index, still, tipIn]);
+  }, [index, still, ringIn]);
 
   // ...find the real control, scroll it into view if needed, wait until it stops moving, then move the spotlight there.
   useEffect(() => {
@@ -116,8 +117,8 @@ export function TabTour({ index, onIndex, onClose }: { index: number; onIndex: (
       }
       shown.current = true;
       shownTab.current = step.tab;
-      if (still) tipIn.setValue(1);
-      else Animated.timing(tipIn, { toValue: 1, duration: TIP_MS, useNativeDriver: true }).start();
+      if (still) ringIn.setValue(1);
+      else Animated.timing(ringIn, { toValue: 1, duration: TIP_MS, useNativeDriver: true }).start();
     };
     void (async () => {
       let prev: Rect | null = null;
@@ -154,7 +155,7 @@ export function TabTour({ index, onIndex, onClose }: { index: number; onIndex: (
     return () => {
       live = false;
     };
-  }, [index, tick, width, height, still, step.targetId, api, insets.top, insets.bottom, ax, ay, aw, ah, tipIn]);
+  }, [index, tick, width, height, still, step.targetId, api, insets.top, insets.bottom, ax, ay, aw, ah, ringIn]);
 
   useEffect(() => {
     if (still || !hole) {
@@ -225,7 +226,7 @@ export function TabTour({ index, onIndex, onClose }: { index: number; onIndex: (
             borderRadius: r.s,
             borderWidth: 2,
             borderColor: c.primary,
-            opacity: tipIn,
+            opacity: ringIn,
           }}
         />
       )}

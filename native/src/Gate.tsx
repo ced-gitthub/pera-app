@@ -76,15 +76,18 @@ export function Gate() {
       const id = data.session?.user.id;
       if (!id) return 'Session expired. Please sign in again.';
       const wasSignUp = await takeSignUpFlag(data.session?.user.email ?? ''); // read once; used below with this load's counts
-      const sn = await load();
-      const flags = await readFlags(id);
-      const counts = await loadCounts().catch(() => null);
+      // One round trip, not four in a row: the snapshot, the counts and the profile are read together.
+      const [sn, flags, counts, prof] = await Promise.all([
+        load(),
+        readFlags(id),
+        loadCounts().catch(() => null),
+        Promise.resolve(supabase.from('profiles').select('name').eq('id', id).maybeSingle()).catch(() => ({ data: null })),
+      ]);
       const d = decideGate(counts, sn.accounts, flags);
       await setFlags(id, d.set);
       if (shouldAskAboutExistingData(wasSignUp, counts)) setAsk(true);
       setCanSample(canOfferSample(counts, sn.accounts.length));
       setUid(id);
-      const prof = await supabase.from('profiles').select('name').eq('id', id).maybeSingle();
       const nm = String(prof.data?.name || data.session?.user.user_metadata?.name || data.session?.user.email?.split('@')[0] || '');
       setName(nm);
       setSnap(sn);
