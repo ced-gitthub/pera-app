@@ -25,7 +25,7 @@ test('there is a gate between every pair of stages (G1 to G4, then G5a before th
     assert.ok(g.includes('Checks'), `${id} checks`);
     assert.ok(g.includes('If it fails'), `${id} failure routing`);
   }
-  for (const id of ['G1', 'G2', 'G3', 'G4', 'G5a'])
+  for (const id of ['G1', 'G2', 'G3', 'G4', 'G5a', 'G5b'])
     assert.match(checksPart(gate(id)), /Instruction ledger/i, `${id} re-checks the instruction ledger`);
 });
 
@@ -79,4 +79,25 @@ test('a deviation from an approved contract re-opens G3 instead of silently chan
 
 test('light-track gate records are written down (PROGRESS.md) so the judge can read them', () => {
   assert.match(section, /Gate records[^.]*PROGRESS\.md/i);
+});
+
+test('rows deferred from G5a to the live run are proven at G5b, so no instruction ships unproven', () => {
+  assert.match(checksPart(gate('G5a')), /deferred|needs the live run/i);
+  assert.match(checksPart(gate('G5b')), /deferred/i);
+  assert.match(checksPart(gate('G5b')), /Instruction ledger row/i);
+});
+
+test("the light track wording is consistent: G1 to G5a in the same turn, G5b after Ced's yes and the push", () => {
+  assert.doesNotMatch(doc, /G1 to G5b still run/);
+  assert.match(doc, /G1 to G5a/);
+  assert.match(doc, /G5b runs after Ced's yes/i);
+});
+
+test("publishing the native APK needs the judge's APPROVE always (G5a) and an asset size check after upload (G5b)", () => {
+  const a = checksPart(gate('G5a'));
+  assert.match(a, /APK/);
+  assert.match(a, /judge[^.·]*APPROVE[^.·]*(always|every)[^.·]*APK|APK[^.·]*judge[^.·]*APPROVE/i);
+  const b = checksPart(gate('G5b'));
+  assert.match(b, /native-0\.3/);
+  assert.match(b, /asset size/i);
 });
