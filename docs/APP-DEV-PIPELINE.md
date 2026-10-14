@@ -32,7 +32,7 @@ Never claim a subagent ran when it did not. If a role is played by the orchestra
   2. **Stage 3 check:** any database, RLS, deletion, money or auth change goes through `migrator` and the `judge`.
   3. **Stage 4:** test first (red, then green), tokens only in UI, count network round trips for every tap.
   4. **Stage 5:** `npm run verify`, native `tsc`, a live step in `tests/prod` for data changes, `judge` APPROVE before publishing.
-  5. **Gates G1 to G5 still run** (section 7); only failures are reported, in one line each (what failed, who fixed it, the re-run result).
+  5. **Gates G1 to G5b still run** (section 7); stop at G5a to ask for the push; only failures are reported, in one line each (what failed, who fixed it, the re-run result).
   Report as `Problem:` / `Solution:` / `Outcome:` with real pass counts and what is NOT verified.
 
 ## 5. First interaction
@@ -58,14 +58,14 @@ Cover: requirement coverage · UI states and consistency · validation and bound
 ## 7. Stage gates and failure routing (the middle layer)
 Nothing moves to the next stage on trust. Between every pair of stages sits a gate. A gate has two parts: the stage's own checks, and the **Instruction ledger** check.
 
-**Instruction ledger.** Stage 1 starts it: a table with one row per thing Ced asked for. Columns: ID (IL-1...), his words **verbatim**, the meaning chosen (the least surprising one, said in plain words), and what he will SEE on screen. Standing rules from `docs/CORRECTIONS.md` that apply are added as rows. Every gate re-checks that each row is still covered by something in the stage's deliverable, and Gate G5 proves each row with evidence. A row with no coverage is a failure, however good the rest looks.
+**Instruction ledger.** Stage 1 starts it: a table with one row per thing Ced asked for. Columns: ID (IL-1...), his words **verbatim**, the meaning chosen (the least surprising one, said in plain words), and what he will SEE on screen. Standing rules from `docs/CORRECTIONS.md` that apply are added as rows. Every gate re-checks that each row is still covered by something in the stage's deliverable, and Gate G5a proves each row with evidence. A row with no coverage is a failure, however good the rest looks.
 
 **How a gate works.**
-1. Run every check of the gate. Write the result in the stage deliverable as a **Gate record**: check, PASS or FAIL, evidence, round number, who it was routed to.
+1. Run every check of the gate. Write the result as a **Gate record**: check, PASS or FAIL, evidence, round number, who it was routed to. On the full track it goes in the stage deliverable file. On the light track the Gate records are appended to the task's entry in `PROGRESS.md` so the `judge` can read them.
 2. On any FAIL: route to the specialist named in the gate (not to whoever is convenient), give them the failing check and the ledger rows it touches, and let them fix it.
 3. Then **re-run the full gate, not only the failed check**, because a fix can break something that passed.
 4. Only when every check passes does the stage hand off. A fix routed into an earlier stage **re-opens** that stage's gate and every later gate that the changed requirement touches.
-5. Max 3 rounds per gate. If it still fails, stop, apply the systematic-debugging rule (question the approach, not just the symptom) and tell Ced exactly what is failing and the options. Never hand off a failing gate, and never mark a check passed that was not run.
+5. Limits: max 3 rounds per gate for the whole task; re-opens do not reset the count. A task may have at most one re-open of an earlier stage. If a limit is hit, stop, apply the systematic-debugging rule (question the approach, not just the symptom) and tell Ced exactly what is failing and the options. Never hand off a failing gate, and never mark a check passed that was not run.
 
 ### Gate G1 (Product Manager to UI/UX)
 Checks: every ledger row has a functional requirement (FR) · every FR has a priority and acceptance criteria · every ambiguous phrase has a stated meaning · non-goals and MVP split are written · constraints are listed ($0, integer centavos, Asia/Manila dates, 375px) · no architecture or code in the blueprint · Instruction ledger complete.
@@ -76,18 +76,22 @@ Checks: every FR with a screen has a screen ID and a wireframe · loading, empty
 If it fails: layout, state or copy defects go to the design skills (`design:design-critique`, `design:ux-copy`, `frontend-design`) · a missing FR goes back to G1 and `planner` with the change recorded.
 
 ### Gate G3 (Backend & DevOps to Mobile Developer)
-Checks: every FR needing data or a server rule has an entity, endpoint or RPC · migrations are additive · every new table has the owner policy, the MFA restrictive policy, a per-user row cap and tests in `tests/prod/rls-suite.ts` · cost stays $0 and no secret is written down · the number of network requests per tap is budgeted · Instruction ledger rows that touch data are covered.
-If it fails: schema, RLS or migration problems go to `migrator` · any change touching deletes, RLS, money, auth or deploy config also needs `judge` to APPROVE before the gate passes · an API gap that is really a requirement gap goes back to G1.
+Checks: every FR needing data or a server rule has an entity, endpoint or RPC · migrations are additive · every new table has the owner policy, the MFA restrictive policy, a per-user row cap and tests in `tests/prod/rls-suite.ts` · cost stays $0 and no secret is written down · the number of network requests per tap is budgeted · `judge` APPROVE for any migration, RLS, delete, money, auth or deploy-config change · Instruction ledger rows that touch data are covered.
+If it fails: schema, RLS or migration problems go to `migrator`, then `judge` reviews again · an API gap that is really a requirement gap goes back to G1.
 
 ### Gate G4 (Mobile Developer to QA)
 Checks: `npm run verify` and the native type-check pass, and formatting is clean · every FR has a test that was seen failing first, then passing · no placeholders, no `any`, no file over 400 lines · tests read the button copy and the code together so words match behavior · requests per tap match the budget · Instruction ledger rows are implemented, each pointing to a file and a test.
-If it fails: code, test or build failures go to `builder` (using systematic debugging, never symptom patches) · a schema or RLS mismatch goes to `migrator` · drift from the design goes back to the design stage · a real conflict with an approved contract is recorded as a deviation by the orchestrator.
+If it fails: code, test or build failures go to `builder` (using systematic debugging, never symptom patches) · a schema or RLS mismatch goes to `migrator` · drift from the design goes back to the design stage · a real conflict with an approved contract is a deviation, and a deviation re-opens G3 (`migrator`, plus `judge` if risky) before G4 can pass.
 
-### Gate G5 (QA to release)
-Checks: every FR and every Instruction ledger row has PASS evidence (command and result) · no Must-have is NOT RUN · live steps in `tests/prod` exist for every user-visible or data-changing feature and passed · CI and the live run are green · `judge` APPROVE for anything risky · what was not verified (for example "not tested on a phone") is written down.
-If it fails: a code defect goes to `builder` · a schema or RLS defect to `migrator` · a missing live step to `tester` · waiting on CI or the live run goes to `ci-watcher` · a review rejection goes to whoever owns the finding, then `judge` reviews again · a requirement or design gap goes back to the owning earlier stage (G1 `planner` or G2 design) with the change recorded, and every later gate it touches runs again. Release only with the recommendation READY or READY WITH KNOWN LIMITATIONS, listing the limits.
+### Gate G5a (QA, before anything is pushed)
+Checks: every FR and every Instruction ledger row has PASS evidence (command and result) from what can run locally · no Must-have is NOT RUN except what needs the live run (listed) · live steps in `tests/prod` are written for every user-visible or data-changing feature · `judge` APPROVE for any migration, RLS, delete, money, auth or deploy-config change · what is not verified (for example "not tested on a phone") is written down. Then **stop and ask Ced** for the yes to push to `main` (it deploys the website). Never push to turn a gate green.
+If it fails: a code defect goes to `builder` · a schema or RLS defect to `migrator` · a missing live step to `tester` · a review rejection goes to whoever owns the finding, then `judge` reviews again · a requirement or design gap goes back to the owning earlier stage (G1 `planner` or G2 design) with the change recorded, and every later gate it touches runs again.
 
-**Light track.** The same five gates run in the same turn. Only a failure is mentioned in the report, in one line: what failed, who fixed it, and the re-run result.
+### Gate G5b (QA, after Ced's yes and the push)
+Checks: the deploy is live on the pushed commit · CI is green · the live run (`prod-qa`) is green, with the pass counts of every suite · each live step written in G5a passed · the Release Readiness Matrix has no NOT RUN for a Must-have, and the recommendation is READY or READY WITH KNOWN LIMITATIONS with the limits listed.
+If it fails: `ci-watcher` waits for and reports the CI and live results (never poll in the main thread) · a failing step goes to its owner (code to `builder`, schema or RLS to `migrator`, test to `tester`) and then G4 and G5a run again before the next push.
+
+**Light track.** The same gates run in the same turn, but the light track stops at G5a: it never pushes to `main` without Ced's yes. Only a failure is mentioned in the report, in one line (what failed, who fixed it, the re-run result), and the full Gate records are in `PROGRESS.md`.
 
 ## 8. Universal handoff format
 Every stage ends with a separated, copy-ready prompt that names the next stage and role, its objective and deliverable, all upstream specs and decisions, traceability IDs and acceptance criteria, dependencies, assumptions and open issues, project paths and test evidence, and the instruction to execute only that stage and stop. It must work in a new conversation with no hidden context. If a change is needed, name the affected requirements, say why and record the revised decision.
