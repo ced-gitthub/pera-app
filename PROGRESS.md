@@ -107,3 +107,8 @@
 - qa failure: "remembered screens never show a deleted row (delete, then hop Dashboard <-> Transactions)" returned {here:true,dash:false,list:false}. It passed 189/0 on the previous run, so likely flaky; re-run once and investigate if it repeats.
 - Local commit 2fc3d93 (not pushed): `adminConfigured()` is false when the key starts with `sb_publishable_` (`src/lib/adminKey.ts`, test `tests/adminKey.test.ts`).
 - Open: confirm `src/lib/backup.ts` works with the real key (needs a live step).
+
+## 2026-10-14: native 0.9.1 to 0.9.5 (see docs/native-app/CHANGELOG.md; every Ced correction is in docs/CORRECTIONS.md)
+- Fixed: account deletion live (wrong key in the Vercel secret variable; prod-qa security 75/0); sample entries (valid uuid ids, offered in the wizard, pending flag first); tour freeze (measure timeout + deadline); tour cut 25 to 7 steps and instant Next; launcher icon in the website's style; "Clear" after the tour and Delete ALL now clear everything (entries, budgets, goals, recurring rules, starting balances to 0).
+- Decisions: "clear all" means all; accounts and categories stay (empty) so the app stays usable; Start-over after the tour re-runs the first-run steps; copy must match code (tests read both).
+- Open: nothing run on a phone; live steps for sample entries and clear-everything run after the next push to main (needs Ced's yes, it deploys the website); local commit 2fc3d93 (key guard) not pushed; website backup feature probably fine now that the key is fixed but unverified.

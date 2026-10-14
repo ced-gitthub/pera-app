@@ -161,3 +161,29 @@ test('choosing "Not now" on the tour sheet still asks Keep / Clear when samples 
   assert.match(skip, /samplePending/);
   assert.match(skip, /setSampleEnd\(true\)/);
 });
+
+import { TOUR_END_TITLE, TOUR_END_TEXT, TOUR_END_KEEP, TOUR_END_CLEAR, TOUR_END_CONFIRM } from '../native/src/sampleLogic.ts';
+
+test('"Clear" after the tour means clear ALL of it: the sheet says everything, and the code runs the full reset then starts over', () => {
+  // the words promise exactly what the code does
+  for (const w of ['sample entries', 'budget', 'goal', 'starting balances', 'recurring']) assert.ok(TOUR_END_TEXT.includes(w), w);
+  assert.match(TOUR_END_TEXT, /everything/i);
+  assert.doesNotMatch(TOUR_END_TEXT, /only those sample entries|empty app/i); // the old, narrower promise
+  assert.equal(TOUR_END_KEEP, 'Keep everything');
+  assert.match(TOUR_END_CLEAR, /Clear everything and start over/);
+  assert.match(TOUR_END_CONFIRM, /Yes, delete everything/);
+  assert.ok(TOUR_END_TITLE.length > 0);
+  const sheets = fs.readFileSync('native/src/SampleSheets.tsx', 'utf8');
+  assert.match(sheets, /resetWarning\('all'/); // the confirm step lists exactly what will go
+  assert.match(sheets, /countFor/);
+  const gate = fs.readFileSync('native/src/Gate.tsx', 'utf8');
+  const clear = gate.slice(gate.indexOf('onClear={'), gate.indexOf('<ResetData'));
+  assert.match(clear, /resetChoice\('all'\)/);
+  assert.match(clear, /replay\(true\)/); // start over from the first step
+  assert.doesNotMatch(clear, /removeSamples/); // not just the samples
+});
+
+test('the Delete-ALL option is available even when only starting balances are left to clear', () => {
+  const src = fs.readFileSync('native/src/ResetData.tsx', 'utf8');
+  assert.match(src, /const empty = n === 0 && k !== 'all'/);
+});

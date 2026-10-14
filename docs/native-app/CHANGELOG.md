@@ -2,6 +2,14 @@
 
 One entry per release. "Rejected" lines are what independent review (the judge agent) found before it was allowed out. See [NATIVE.md](NATIVE.md) for how it works.
 
+## 0.9.5 (2026-10-14)
+- "Clear" after the tour now clears ALL of it (sample entries, budgets, goals, recurring rules, every starting balance to 0) behind a second step that lists the counts, then starts over from the first step. Delete ALL my records does the same, and recurring rules have their own Delete option. Ced: "if I say clear all data, why leave some?".
+- Unverified: on a phone; the new live steps run in prod-qa after the next push.
+
+## 0.9.4 / 0.9.3 / 0.9.2 / 0.9.1
+- 0.9.4: Next is instant (tooltip never hidden; only the spotlight waits), snapshot + counts + profile read in parallel, saves use the local session. 0.9.3: tour cut from 25 steps to 7 short ones. 0.9.2: launcher icon in the website's style (violet tile, yellow badge, compact Z), Grape is the default. 0.9.1: sample entries in the wizard first step and before the tour (keep or clear afterwards), tour freeze fixed (measure timeout, 2.5 s deadline).
+- Rejected (judge, 4 rounds): sample ids not valid uuids (add and clear always failed), samples never offered because the wizard forces a typed entry first, pending flag set after the writes, live test with an invalid date, a delete filtered by RLS reported as success, an entry edited into a real one could be cleared, a stray script committed.
+
 ## 0.9.0 (2026-10-14)
 - Welcome page alive (animated scene, mood per mission, level chip); live coach-mark tour that points at the real tab and control; Delete my records (+ Delete ALL) and Delete my account; Personalize (8 free themes incl. light, avatar/profile in account metadata, Make it yours step); app icon colour (6); Accounts tab; uniform floating button; manual add in Activity; pinned Done/Close; Spendable now includes negatives (Spendable + Savings = Total).
 - Rejected: the automatic wipe after sign-up (could erase an existing account's data) became a Keep / Start fresh prompt; the prompt was first not rendered at all; icon changed twice in one session left two launcher icons; flag not tied to the email; tour not held back during Start fresh; lockfile not pinned. Delete route had no security finding.

@@ -1,6 +1,6 @@
 // Bulk-delete database logic with an injected db, so it can be tested without react-native or a network. reset.ts wires in the real client.
 // Row-level security limits every query to the signed-in person's own rows.
-import { RESET_KINDS, partialMessage, resetError, sumCounts, type ResetKind } from './resetLogic.ts';
+import { RESET_KINDS, partialMessage, resetError, sumCounts, type ResetKind, type ResetStep } from './resetLogic.ts';
 
 type DbError = { message: string; code?: string } | null;
 type Res = { count?: number | null; error: DbError };
@@ -8,11 +8,12 @@ export interface Db {
   from(table: string): {
     select(columns: string, opts: { count: 'exact'; head: true }): PromiseLike<Res>;
     delete(opts?: { count: 'exact' }): { not(column: string, op: string, value: unknown): PromiseLike<Res> };
+    update(values: Record<string, unknown>): { not(column: string, op: string, value: unknown): PromiseLike<Res> };
   };
 }
 
 // transactions: deleting copies each row to the hidden 30-day tx_trash (migration 0005). Balances are computed from entries, so they return to the starting balance.
-export const RESET_TABLES: Record<ResetKind, string> = { entries: 'transactions', budgets: 'budgets', goals: 'savings_goals' };
+export const RESET_TABLES: Record<ResetKind, string> = { entries: 'transactions', budgets: 'budgets', goals: 'savings_goals', recurring: 'recurring_transactions' };
 
 // How many rows would be deleted; null when it could not be counted.
 export async function countRows(db: Db, kind: ResetKind): Promise<number | null> {
@@ -35,13 +36,23 @@ export async function resetWith(db: Db, kind: ResetKind): Promise<ResetResult> {
   }
 }
 
-// Smallest tables first, so a failure on the biggest one (entries) leaves the small ones done.
-export const ALL_ORDER: ResetKind[] = ['budgets', 'goals', 'entries'];
-export type ResetAllResult = { error: string | null; deleted: number | null; done: ResetKind[] };
+// Recurring rules go FIRST so nothing can re-create entries; then the smaller tables, so a failure on the biggest one (entries) leaves the small ones done.
+export const ALL_ORDER: ResetKind[] = ['recurring', 'budgets', 'goals', 'entries'];
+export type ResetAllResult = { error: string | null; deleted: number | null; done: ResetStep[] };
 
-// Deletes budgets, goals, then entries, one after the other, and stops at the first failure.
+// Sets every account's starting balance to 0 (the balance on screen is the starting balance plus entries, so with no entries every account shows 0).
+export async function zeroBalancesWith(db: Db): Promise<string | null> {
+  try {
+    const { error } = await db.from('accounts').update({ opening_balance_minor: 0 }).not('id', 'is', null);
+    return error ? resetError(error) : null;
+  } catch (x) {
+    return resetError(x);
+  }
+}
+
+// Clears EVERYTHING the app stores about money, one step after the other, and stops at the first failure.
 export async function resetAllWith(db: Db): Promise<ResetAllResult> {
-  const done: ResetKind[] = [];
+  const done: ResetStep[] = [];
   let total = 0;
   let known = true;
   for (const kind of ALL_ORDER) {
@@ -51,11 +62,14 @@ export async function resetAllWith(db: Db): Promise<ResetAllResult> {
     if (res.deleted === null) known = false;
     else total += res.deleted;
   }
+  const bal = await zeroBalancesWith(db);
+  if (bal) return { error: partialMessage(done, bal), deleted: null, done };
+  done.push('balances');
   return { error: null, deleted: known ? total : null, done };
 }
 
-// Rows across all three tables; null if any count is unknown.
+// Rows across all the tables; null if any count is unknown.
 export async function countAllWith(db: Db): Promise<number | null> {
-  const [entries, budgets, goals] = await Promise.all(RESET_KINDS.map((k) => countRows(db, k)));
-  return sumCounts({ entries, budgets, goals });
+  const [entries, budgets, goals, recurring] = await Promise.all(RESET_KINDS.map((k) => countRows(db, k)));
+  return sumCounts({ entries, budgets, goals, recurring });
 }

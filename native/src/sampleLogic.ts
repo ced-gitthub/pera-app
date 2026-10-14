@@ -48,3 +48,12 @@ export function canOfferSample(counts: { totalEntries: number; budgetsCount: num
 
 export const SAMPLE_FAIL = 'Could not add the sample entries. Nothing else was changed. You can still take the tour without them.';
 export const SAMPLE_REMOVE_FAIL = 'Could not clear the sample entries. They are still there. Try again.';
+
+// The question after the tour. "Clear" means ALL of it (sample entries, the budget and goal made during setup, starting balances, recurring rules),
+// because that is what a person means by "clear all data"; the words below must stay true to the code (tests/native-sample.test.ts checks them).
+export const TOUR_END_TITLE = 'Keep what you set up?';
+export const TOUR_END_TEXT =
+  'The tour added sample entries, and the setup steps made your budget, goal and starting balances. Keep everything, or clear everything (sample entries, budgets, goals, recurring rules and starting balances) and start over from the first step. Your login stays.';
+export const TOUR_END_KEEP = 'Keep everything';
+export const TOUR_END_CLEAR = 'Clear everything and start over';
+export const TOUR_END_CONFIRM = 'Yes, delete everything';

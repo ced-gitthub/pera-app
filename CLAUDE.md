@@ -3,7 +3,7 @@
 Free-tier PHP money tracker. Next.js 15 + TypeScript + Tailwind 4, Supabase (project `vxhgkkzbmrhxayzryake`), Vercel Hobby. Production: https://pera-app-beta.vercel.app. Read README.md for architecture.
 
 ## Session rules
-- At the start of each session, read CLAUDE.md and PROGRESS.md first.
+- At the start of each session, read CLAUDE.md, `docs/CORRECTIONS.md` (everything Ced has already corrected: do not make him repeat it) and PROGRESS.md first.
 - After every fix or decision, update PROGRESS.md (fixed, open bugs, decisions, next steps).
 
 ## Non-negotiables

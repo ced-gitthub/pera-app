@@ -1,0 +1,59 @@
+# Ced's corrections: read this FIRST on any Zovix project (and any new project)
+
+Every time Ced had to correct something, it is here, so he never has to say it twice. Grouped by topic. Newest lessons are in section 1.
+
+## 1. The rule behind most corrections: do what the words say, completely
+- **"Clear / delete all" means ALL.** "Delete ALL my records" removes entries, budgets, goals, recurring rules AND sets every starting balance to 0. Only the login, the (now empty) accounts and categories, and the profile/theme stay, and the screen says so. A "clear" that leaves some data behind is a bug. (0.9.5: the end-of-tutorial "Clear" had only removed the 6 sample entries and left the budget and goal; it was narrower than the sheet's words.)
+- **The words on a button or sheet must match what the code does.** If the copy says "empty app", the code must empty the app. Test the copy against the code (a test that reads both).
+- **Check my work against Ced's wording, not against my own design.** Reviews and tests that only check my design prove nothing about what he asked. Before building: restate his request as a checklist of what he will SEE, and test each line.
+- **Leftovers that undo the action are bugs too.** Deleting entries while recurring rules stay means the entries come back. Think through what re-creates the data.
+- **Fix the whole list.** "Fix it ALL" means every item, not the first few. After a fix, grep for the same mistake elsewhere (other tabs, other screens).
+- **Explain causes plainly, no excuses.** When he asks "why did this happen", answer honestly first (what I assumed, what I skipped), before changing anything, if he asks for the answer first.
+
+## 2. UI and product rules
+- Uniform UI: the same floating button in the same place on every tab; the Done/Close button pinned in a header (never scrolled to the bottom where it is hard to tap); same card, button and spacing everywhere.
+- Skeletons, not "Loading" text. Always a loading, empty, error and success state.
+- Keyboard must never hide the input (KeyboardAvoidingView on every sheet and screen).
+- Logging out asks for confirmation. Every delete is explicit: typed DELETE for bulk deletes, Undo for single entries.
+- **Tutorial/tour: short and instant.** At most 7 steps, one or two short sentences each (150 characters). 25 steps was "too much". Pressing Next must show the next step at once: never hide the tooltip while measuring; the spotlight can arrive a moment later. No step may need more than a glance to read.
+- The pre-account tutorial is an interactive sandbox with motion and three missions, not passive slides. Accounts matter most (show up to 4 on Home). "Why is this better than a spreadsheet?" must be answered on screen.
+- After sign-in: ask what to do about the tutorial (sample entries instead of typing) and, when it ends, offer Keep everything / Clear everything and start over.
+- Spendable includes negative balances (credit cards) so Spendable + Savings = Total; money format with thousands separators and 2 decimals; tap hints on rows.
+- Themes (8, free), profile/avatar, and the launcher icon colour are changeable after sign-up; paid options later. Default/launcher icon = the website's violet tile with the yellow badge and dark Z, compact (badge about 40% of the canvas), never oversized.
+- Brand match with the website matters: colours, logo and tone must align with the site.
+
+## 3. Data and safety rules
+- Money is integer centavos; dates Asia/Manila; never floats.
+- Database changes are additive SQL in `supabase/migrations/NNNN_name.sql`, applied BEFORE the code that needs it; never edit an applied migration. Every new table: RLS owner policy, MFA restrictive policy, row cap, tests in `tests/prod/rls-suite.ts`.
+- Anything that deletes or changes money logic gets the independent `judge` review before it ships. Judge rounds caught real bugs several times (invalid uuid ids, wrong live-test date, false "cleared" message, edited rows deleted): never skip it, and fix every finding test-first.
+- A live step (`tests/prod`) for anything user-visible or data-changing; the fake database in unit tests does not check column types.
+- Never delete data silently; never auto-wipe on sign-up (sign-up with an existing email just signs in, so the app ASKS).
+- Secrets: never print or store them; never edit `.env*`. If a server feature fails with "permission denied", check the Supabase edge log for which API key the call carried (the publishable key in the secret variable was the cause of the delete-account 500).
+
+## 4. Process rules (how Ced wants me to work)
+- Final report format: `Problem:` / `Solution:` / `Outcome:`, one line each, with pass counts. No process narration. Ced goes by "Ced".
+- Do it, don't ask him to run things. If blocked, say exactly which click and give the direct links.
+- Cost stays $0. No paid services.
+- Update PROGRESS.md after every fix or decision. Save lessons here and in memory.
+- Ask before pushing to `main` (it deploys the website). Everything else on the branch is mine to do.
+- Permission prompts: the session can be in bypass mode and still prompt, because the project's `.claude/settings.json` ask/deny rules and the guard hook apply. Do not loosen them; tell him once.
+- Be honest about what is unverified: nothing native has ever run on a phone from my side. Say "not tested on a phone" every time, and say what the test did prove.
+- Scheduled work: only fires while the laptop is awake and the Claude session stays open (set Windows sleep to Never while plugged in).
+
+## 5. Release rules for the Android app
+- Always update the saved GitHub release page: `https://github.com/ced-gitthub/pera-app/releases/tag/native-0.3`, asset `Zovix-native-latest.apk` (`gh release upload native-0.3 ... --clobber`), update the notes with the version. Never create per-version releases.
+- Publish only after the judge approves. Check the asset size after upload.
+- Build in the short path `C:\zb` (see `docs/native-app/NATIVE.md`). Bump `version` and `versionCode` in `native/app.json` every build.
+- A new installed build keeps the old launcher icon until the person picks a colour in Settings (Android keeps the enabled alias); say so.
+
+## 6. Mistakes to avoid repeating (each cost a round trip)
+| Mistake | What to do instead |
+|---|---|
+| Published before the re-review | Judge approves first, then publish |
+| Narrow reading of "the data from the tutorial" | List every thing the tutorial creates; the clear option removes all of it |
+| Copy that promised more than the code | Test the copy against the code |
+| Test regexes with unescaped `(`, `)` written through shell heredocs | Write scripts with the Write tool, or use Edit; shells mangle quotes and backslashes |
+| Long measuring waits before showing a tooltip | Show text first, move the highlight when ready; hard deadline |
+| Sequential network reads on every refresh | Read in parallel (`Promise.all`); use the local session, not `getUser`, on saves |
+| Thinking `[skip ci]` only skips tests | It also skips the Vercel deploy for that commit |
+| Scratch files committed to the repo | Scratch scripts go in the scratchpad directory, never the repo |

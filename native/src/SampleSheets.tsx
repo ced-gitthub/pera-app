@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { Text } from 'react-native';
 import { Sheet } from './Sheet';
 import { Btn } from './Btn';
+import { countFor } from './reset';
+import { RESET_KINDS, resetWarning, type Counts } from './resetLogic';
+import { TOUR_END_CLEAR, TOUR_END_CONFIRM, TOUR_END_KEEP, TOUR_END_TEXT, TOUR_END_TITLE } from './sampleLogic';
 import { s, sp } from './ui';
 
 // Asked once, before the first tour. The sample entries are optional, labelled "Sample:", and the next sheet lets the person keep or clear them.
@@ -38,7 +41,7 @@ export function TourChoice({
   );
 }
 
-// Asked when the tour ends (or on the next launch if the app was closed mid-tour). Clearing deletes ONLY the entries labelled "Sample:".
+// Asked when the tour ends (or on the next launch if the app was closed mid-tour). Clear means ALL of it: a second step lists exactly what goes.
 export function TourEnd({
   open,
   onKeep,
@@ -50,6 +53,8 @@ export function TourEnd({
 }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
+  const [counts, setCounts] = useState<Counts | null>(null); // set while the confirm step is showing
+  const [counting, setCounting] = useState(false);
   const keep = async () => {
     if (busy) return;
     setBusy(true);
@@ -59,25 +64,44 @@ export function TourEnd({
       setBusy(false);
     }
   };
+  const review = async () => {
+    if (busy || counting) return;
+    setCounting(true);
+    setErr('');
+    const list = await Promise.all(RESET_KINDS.map((k) => countFor(k).catch(() => null)));
+    setCounting(false);
+    if (list.some((n) => n === null)) return setErr('Could not count what would be deleted. Check your connection and try again. Nothing was deleted.');
+    setCounts({ entries: list[0], budgets: list[1], goals: list[2], recurring: list[3] });
+  };
   const clear = async () => {
     if (busy) return;
     setBusy(true);
     setErr('');
     try {
-      setErr((await onClear()) ?? '');
+      const m = await onClear();
+      if (m) setErr(m);
+      else setCounts(null);
     } finally {
       setBusy(false);
     }
   };
   return (
-    <Sheet open={open} title="Keep the sample entries?" onClose={() => void keep()}>
-      <Text style={[s.p, { marginBottom: sp.l }]}>
-        The tour added a few entries that start with "Sample:". Keep them to play with, or clear them and begin with an empty app. Clearing removes only
-        those sample entries. Anything you added yourself stays.
-      </Text>
-      {!!err && <Text style={s.err}>{err}</Text>}
-      <Btn label="Keep them" busy={busy} onPress={() => void keep()} />
-      <Btn label="Clear them and start fresh" alt danger busy={busy} onPress={() => void clear()} />
+    <Sheet open={open} title={TOUR_END_TITLE} onClose={() => (counts ? setCounts(null) : void keep())}>
+      {!counts ? (
+        <>
+          <Text style={[s.p, { marginBottom: sp.l }]}>{TOUR_END_TEXT}</Text>
+          {!!err && <Text style={s.err}>{err}</Text>}
+          <Btn label={TOUR_END_KEEP} busy={busy} onPress={() => void keep()} />
+          <Btn label={TOUR_END_CLEAR} alt danger busy={counting} onPress={() => void review()} />
+        </>
+      ) : (
+        <>
+          <Text style={[s.p, { marginBottom: sp.l }]}>{resetWarning('all', counts)}</Text>
+          {!!err && <Text style={s.err}>{err}</Text>}
+          <Btn label={TOUR_END_CONFIRM} danger busy={busy} onPress={() => void clear()} />
+          <Btn label="Go back" alt onPress={() => setCounts(null)} />
+        </>
+      )}
     </Sheet>
   );
 }

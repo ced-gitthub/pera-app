@@ -16,14 +16,15 @@ import {
 import { Sheet } from './Sheet';
 import { c, r, s, sp, t } from './ui';
 
-const NOUN: Record<ResetChoice, string> = { all: 'records', entries: 'entries', budgets: 'budgets', goals: 'savings goals' };
-const EMOJI: Record<ResetChoice, string> = { all: '🗑️', entries: '🧾', budgets: '📊', goals: '🏆' };
+const NOUN: Record<ResetChoice, string> = { all: 'records', entries: 'entries', budgets: 'budgets', goals: 'savings goals', recurring: 'recurring rules' };
+const EMOJI: Record<ResetChoice, string> = { all: '🗑️', entries: '🧾', budgets: '📊', goals: '🏆', recurring: '🔁' };
 const CHOICES: ResetChoice[] = ['all', ...RESET_KINDS];
 const BTN: Record<ResetChoice, string> = {
   all: 'Delete ALL my records',
   entries: 'Delete all entries',
   budgets: 'Delete all budgets',
   goals: 'Delete all savings goals',
+  recurring: 'Delete all recurring rules',
 };
 
 // Safe bulk delete: pick what to clear, read what goes and what stays, then type the word before the red button works.
@@ -39,7 +40,7 @@ export function ResetData({ open, onClose, onDone }: { open: boolean; onClose: (
   const load = useCallback(async () => {
     setCounts(null); // never leave old counts on screen while the new ones load
     const list = await Promise.all(RESET_KINDS.map((k) => countFor(k).catch(() => null)));
-    setCounts({ entries: list[0], budgets: list[1], goals: list[2] });
+    setCounts({ entries: list[0], budgets: list[1], goals: list[2], recurring: list[3] });
   }, []);
 
   useEffect(() => {
@@ -78,7 +79,7 @@ export function ResetData({ open, onClose, onDone }: { open: boolean; onClose: (
       return;
     }
     const n = res.deleted; // what the server says it removed, not the earlier count
-    const what = choice === 'all' ? 'all your entries, budgets and savings goals' : `all your ${NOUN[choice]}`;
+    const what = choice === 'all' ? 'all your entries, budgets, savings goals and recurring rules, and every starting balance is now 0' : `all your ${NOUN[choice]}`;
     setDone(n === null ? `Deleted ${what}.` : `Deleted ${n} ${n === 1 ? 'item' : 'items'}: ${what}.`);
     setChoice(null);
     setTyped('');
@@ -103,7 +104,7 @@ export function ResetData({ open, onClose, onDone }: { open: boolean; onClose: (
           <Text style={s.p}>Start fresh. Pick what to clear. You will be asked to confirm before anything is deleted.</Text>
           {CHOICES.map((k) => {
             const n = countOf(k);
-            const empty = n === 0;
+            const empty = n === 0 && k !== 'all'; // Delete ALL also zeroes starting balances, so it stays available
             return (
               <Pressable
                 key={k}

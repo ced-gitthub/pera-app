@@ -1,8 +1,10 @@
 // Pure rules for the "Delete all ..." tools: what each one deletes, what the person must type, and friendly errors. No react-native imports.
-export const RESET_KINDS = ['entries', 'budgets', 'goals'] as const;
+export const RESET_KINDS = ['entries', 'budgets', 'goals', 'recurring'] as const;
 export type ResetKind = (typeof RESET_KINDS)[number];
 
 export type ResetChoice = ResetKind | 'all';
+// Everything "all" clears, in order: the four kinds, then every account's starting balance (a step, not a table of rows).
+export type ResetStep = ResetKind | 'balances';
 export type Counts = Record<ResetKind, number | null>;
 
 export const RESET_LABEL: Record<ResetChoice, string> = {
@@ -10,18 +12,20 @@ export const RESET_LABEL: Record<ResetChoice, string> = {
   entries: 'Delete all entries',
   budgets: 'Delete all budgets',
   goals: 'Delete all savings goals',
+  recurring: 'Delete all recurring rules',
 };
 
 const plural = (n: number, one: string, many: string) => (n === 1 ? `the 1 ${one}` : `all ${n} ${many}`);
 
 // Sum of the three counts; null when any is unknown.
 export const sumCounts = (c: Counts): number | null =>
-  c.entries === null || c.budgets === null || c.goals === null ? null : c.entries + c.budgets + c.goals;
+  c.entries === null || c.budgets === null || c.goals === null || c.recurring === null ? null : c.entries + c.budgets + c.goals + c.recurring;
 
-export function allWarning(c: { entries: number; budgets: number; goals: number }): string {
+export function allWarning(c: { entries: number; budgets: number; goals: number; recurring: number }): string {
   return (
-    `Deletes ${plural(c.entries, 'entry', 'entries')}, ${plural(c.budgets, 'budget', 'budgets')} and ${plural(c.goals, 'savings goal', 'savings goals')} (including real ones, not just sample data). Your login, accounts and categories stay, and so do your recurring rules (they will keep adding new entries). ` +
-    'Account balances go back to their starting balances. Your streak, XP and level go back to the start. Budget and goal tracking is gone. ' +
+    `Deletes ${plural(c.entries, 'entry', 'entries')}, ${plural(c.budgets, 'budget', 'budgets')}, ${plural(c.goals, 'savings goal', 'savings goals')} and ${plural(c.recurring, 'recurring rule', 'recurring rules')} (including real ones, not just sample data). ` +
+    'The starting balance of every account is set to 0, so every account shows 0. Your login, accounts and categories stay (empty), so you can keep using the app. ' +
+    'Your streak, XP and level go back to the start. Budget and goal tracking is gone. ' +
     'Deleted entries are kept for 30 days in a hidden trash, but the app cannot restore a whole batch. ' +
     'This cannot be undone. It is not the same as deleting your account: you stay signed up and can start again.'
   );
@@ -29,8 +33,8 @@ export function allWarning(c: { entries: number; budgets: number; goals: number 
 
 export function resetWarning(kind: ResetChoice, count: number | Counts): string {
   if (kind === 'all') {
-    const c = typeof count === 'number' ? { entries: 0, budgets: 0, goals: 0 } : count;
-    return allWarning({ entries: c.entries ?? 0, budgets: c.budgets ?? 0, goals: c.goals ?? 0 });
+    const c = typeof count === 'number' ? { entries: 0, budgets: 0, goals: 0, recurring: 0 } : count;
+    return allWarning({ entries: c.entries ?? 0, budgets: c.budgets ?? 0, goals: c.goals ?? 0, recurring: c.recurring ?? 0 });
   }
   if (typeof count !== 'number') return '';
   const all = '(including real ones, not just sample data)';
@@ -46,6 +50,11 @@ export function resetWarning(kind: ResetChoice, count: number | Counts): string 
     return (
       `Deletes ${plural(count, 'budget', 'budgets')} ${all}. Your entries, accounts, categories and goals stay. ` +
       'Your spending is no longer tracked against a limit until you make new budgets. This cannot be undone.'
+    );
+  if (kind === 'recurring')
+    return (
+      `Deletes ${plural(count, 'recurring rule', 'recurring rules')} ${all}. Your entries, accounts, categories, budgets and goals stay. ` +
+      'Nothing new is added automatically until you make a new rule. This cannot be undone.'
     );
   return (
     `Deletes ${plural(count, 'savings goal', 'savings goals')} ${all}. Your entries, accounts, categories and budgets stay. ` +
@@ -74,13 +83,14 @@ export function resetError(error: unknown): string {
   return 'Could not delete right now. Either all of them were deleted or none were. Check the numbers below, then try again.';
 }
 
-const NAME: Record<ResetKind, string> = { entries: 'entries', budgets: 'budgets', goals: 'goals' };
+const NAME: Record<ResetStep, string> = { recurring: 'recurring rules', budgets: 'budgets', goals: 'goals', entries: 'entries', balances: 'starting balances' };
 const list = (a: string[]) => (a.length > 1 ? `${a.slice(0, -1).join(', ')} and ${a[a.length - 1]}` : a[0]);
 const cap = (x: string) => x.charAt(0).toUpperCase() + x.slice(1);
+const ORDER: ResetStep[] = ['recurring', 'budgets', 'goals', 'entries', 'balances'];
 
 // Plain words about a delete-all that stopped part way. `reason` is already friendly text.
-export function partialMessage(done: ResetKind[], reason: string): string {
+export function partialMessage(done: ResetStep[], reason: string): string {
   if (done.length === 0) return reason;
-  const left = (['budgets', 'goals', 'entries'] as ResetKind[]).filter((k) => !done.includes(k)).map((k) => NAME[k]);
-  return `${cap(list(done.map((k) => NAME[k])))} were deleted, ${list(left)} were not. Check the numbers below, then try again.`;
+  const left = ORDER.filter((k) => !done.includes(k)).map((k) => NAME[k]);
+  return `${cap(list(ORDER.filter((k) => done.includes(k)).map((k) => NAME[k])))} were deleted, ${list(left)} were not. Check the numbers below, then try again.`;
 }

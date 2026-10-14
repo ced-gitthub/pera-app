@@ -206,6 +206,45 @@ export async function bulkDeleteSteps({ A, B, step, cnt, other, d, mk }: Ctx): P
         };
   });
 
+  // "Delete ALL my records" in the native app also clears recurring rules and sets every starting balance to 0 (native/src/resetCore.ts zeroBalancesWith).
+  // These are the same unfiltered statements: B clears its own, and A's accounts and recurring rules must not change.
+  await step(
+    "clear everything: B's recurring rules are deleted and B's starting balances set to 0, while A's accounts and rules are untouched",
+    async () => {
+      if (!bulk.ready) return SKIP;
+      const aAcc = (await A.c.from('accounts').select('id').limit(1)).data ?? [];
+      if (!aAcc[0]) return 'could not read the test user defaults';
+      const setA = await A.c.from('accounts').update({ opening_balance_minor: 12345 }).eq('id', aAcc[0].id);
+      if (setA.error) return { setA: setA.error.message };
+      const aBefore = await A.c.from('accounts').select('id,opening_balance_minor').order('id');
+      const aRecBefore = await A.c.from('recurring_transactions').select('id', { count: 'exact', head: true });
+      const bRec = await B.c.from('recurring_transactions').delete({ count: 'exact' }).not('id', 'is', null);
+      const bBal = await B.c.from('accounts').update({ opening_balance_minor: 0 }).not('id', 'is', null);
+      const bAfter = await B.c.from('accounts').select('opening_balance_minor');
+      const bLeftRec = await B.c.from('recurring_transactions').select('id', { count: 'exact', head: true });
+      const aAfter = await A.c.from('accounts').select('id,opening_balance_minor').order('id');
+      const aRecAfter = await A.c.from('recurring_transactions').select('id', { count: 'exact', head: true });
+      return !bRec.error &&
+        !bBal.error &&
+        !bAfter.error &&
+        (bAfter.data ?? []).every((x: { opening_balance_minor: number }) => Number(x.opening_balance_minor) === 0) &&
+        bLeftRec.count === 0 &&
+        !aBefore.error &&
+        !aAfter.error &&
+        JSON.stringify(aAfter.data) === JSON.stringify(aBefore.data) &&
+        aRecAfter.count === aRecBefore.count
+        ? true
+        : {
+            bRec: bRec.error?.message ?? 'ok',
+            bBal: bBal.error?.message ?? 'ok',
+            bNotZero: (bAfter.data ?? []).filter((x: { opening_balance_minor: number }) => Number(x.opening_balance_minor) !== 0).length,
+            bLeftRec: bLeftRec.count,
+            aAccountsSame: JSON.stringify(aAfter.data) === JSON.stringify(aBefore.data),
+            aRec: [aRecBefore.count, aRecAfter.count],
+          };
+    },
+  );
+
   // Native tour sample entries (native/src/sampleLogic.ts): fixed uuid request ids, added with the retry-safe upsert and cleared with .eq(user_id).in(request_id, ids).
   // Proves the ids are accepted by the uuid column, that clearing removes exactly those rows, and that a real entry of the same user survives.
   await step(

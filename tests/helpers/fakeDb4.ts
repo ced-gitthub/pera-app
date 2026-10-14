@@ -8,6 +8,7 @@ export type FakeOpts = {
   counts?: Record<string, number>; // rows per table
   failCount?: boolean; // the count query returns an error
   failDelete?: boolean; // the delete returns an error
+  failUpdate?: boolean; // the starting-balance update returns an error
   failTables?: string[]; // only deletes on these tables return an error
   throwDelete?: unknown; // the delete promise rejects with this (a network failure)
   removed?: number; // rows the server reports removing (default: every row in the table)
@@ -20,6 +21,7 @@ export function fakeDb4(o: FakeOpts = {}) {
   const log = {
     counts: [] as { table: string; cols: string; opts: unknown }[],
     deletes: [] as { table: string; col: string; op: string; value: unknown; opts?: unknown }[],
+    updates: [] as { table: string; values: Record<string, unknown>; col: string; op: string; value: unknown }[],
   };
   const db: Db = {
     from(table: string) {
@@ -28,6 +30,14 @@ export function fakeDb4(o: FakeOpts = {}) {
           log.counts.push({ table, cols, opts });
           if (o.failCount) return Promise.resolve({ count: null, error: err });
           return Promise.resolve({ count: counts[table] ?? 0, error: null });
+        },
+        update(values: Record<string, unknown>) {
+          return {
+            not(col: string, op: string, value: unknown): PromiseLike<Res> {
+              log.updates.push({ table, values, col, op, value });
+              return Promise.resolve({ error: o.failUpdate ? err : null });
+            },
+          };
         },
         delete(opts?: { count: 'exact' }) {
           return {
