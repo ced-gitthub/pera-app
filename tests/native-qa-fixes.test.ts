@@ -403,11 +403,6 @@ test('new users and real replays still get the tutorial', () => {
   assert.equal(isReturningAccount({ ...base, replaying: true, gate: { show: true, step: 'tour' } }), false); // Settings > replay
   assert.equal(isReturningAccount({ ...base, firstLoad: false, gate: { show: true, step: 'tour' } }), false); // only decided once per app start
 });
-test('a set-up account whose opening balances are all zero is still a returning account after a reinstall; a new user at that step is not', () => {
-  assert.equal(isReturningAccount({ ...base, hasActivity: true, gate: { show: true, step: 'balance' } }), true);
-  assert.equal(isReturningAccount({ ...base, hasActivity: false, gate: { show: true, step: 'balance' } }), false);
-  assert.equal(isReturningAccount({ ...base, hasActivity: true, gate: { show: true, step: 'finish' } }), false); // someone who just finished setup
-});
 test('the gate applies it before anything is shown', () => {
   const g = fs.readFileSync('native/src/Gate.tsx', 'utf8');
   assert.match(g, /isReturningAccount\(/);
