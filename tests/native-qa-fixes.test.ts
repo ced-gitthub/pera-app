@@ -6,6 +6,7 @@ import { createEntryWith } from '../native/src/entriesCore.ts';
 import { RECORDS_DELETE } from '../native/src/deleteAccountLogic.ts';
 import { RESET_KINDS, RESET_LABEL } from '../native/src/resetLogic.ts';
 import { createGeneration, decideAsk, openSheet } from '../native/src/gateFlow.ts';
+import { promptOnClose } from '../native/src/unsaved.ts';
 import { createLeaveWatcher } from '../native/src/leaveWatcher.ts';
 import { createGateMemo } from '../native/src/gateMemo.ts';
 import { TOUR } from '../native/src/tourContent.ts';
@@ -302,7 +303,7 @@ test('copy is true while sample entries exist: the balance step and the Keep tex
   const logic = fs.readFileSync('native/src/sampleLogic.ts', 'utf8');
   assert.match(logic, /export const BALANCE_SAMPLE_NOTE/);
   assert.match(logic, /on top/);
-  assert.match(read('Wizard.tsx'), /BALANCE_SAMPLE_NOTE/);
+  assert.match(read('WizardAction.tsx'), /BALANCE_SAMPLE_NOTE/);
   assert.match(logic, /count in your balances until you clear them/);
 });
 
@@ -357,4 +358,32 @@ test('once the existing-data question is answered (Keep / Start fresh), a reload
   assert.match(keep, /askAnswered\.current = true/);
   const fresh = g.slice(g.indexOf('const startFresh'), g.indexOf('const resetSheet'));
   assert.match(fresh, /askAnswered\.current = true/);
+});
+
+// ---- QA findings F4/F5/F10: honest copy, and tests that fail when the wiring is broken
+test('closing a sheet asks only when there are unsaved changes (behaviour of the guard Sheet uses)', () => {
+  assert.equal(promptOnClose(true), 'ask');
+  assert.equal(promptOnClose(false), 'close');
+  assert.equal(promptOnClose(undefined), 'close');
+  assert.match(read('Sheet.tsx'), /promptOnClose\(dirty\) === 'ask'/);
+});
+
+test('the tour question tells the truth whether or not sample entries exist', () => {
+  const sheets = read('SampleSheets.tsx');
+  assert.doesNotMatch(sheets, /using your own data/);
+  assert.match(sheets, /using what is in your app now/);
+});
+
+test('mutation guards: each answer/settle call is inside the handler that must make it', () => {
+  const g = read('Gate.tsx');
+  const keep = g.slice(g.indexOf('const keepExisting'), g.indexOf('const startFresh'));
+  assert.match(keep, /setAskPending\(uid, false\)/); // Keep settles the question
+  const wiz = g.slice(g.indexOf('if (gate.show)'), g.indexOf('const endTour'));
+  assert.match(wiz, /<ExistingDataPrompt open=\{sheet === 'ask'\}/); // the question can actually open during setup
+  const end = g.slice(g.indexOf('<TourEnd'), g.indexOf('{resetSheet}', g.indexOf('<TourEnd')));
+  const onKeep = end.slice(end.indexOf('onKeep='), end.indexOf('onClear='));
+  assert.match(onKeep, /setSamplePending\(uid, false\)/); // Keep settles the Keep / Clear question
+  const st = read('Settings.tsx');
+  const del = st.slice(st.indexOf('const deleteSamples'), st.indexOf('return (', st.indexOf('const deleteSamples')));
+  assert.match(del, /recount\(\)/); // the count is refreshed after deleting
 });

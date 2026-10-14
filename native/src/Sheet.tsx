@@ -4,7 +4,7 @@ import { Alert, Animated, KeyboardAvoidingView, Modal, Pressable, ScrollView, Te
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { c, r, s, sp, t } from './ui';
 import { ToastCard } from './Toast';
-import { UNSAVED_TEXT_ANY, unsavedButtons } from './unsaved';
+import { UNSAVED_TEXT_ANY, promptOnClose, unsavedButtons } from './unsaved';
 import { UNSAVED_TITLE } from './profileLogic';
 
 // The pinned close button of a sheet or full-screen page: always in the header, never scrolled away, at least 48 tall.
@@ -48,7 +48,7 @@ export function Sheet({
 }) {
   // every way to close goes through here
   const requestClose = () => {
-    if (dirty) Alert.alert(UNSAVED_TITLE, UNSAVED_TEXT_ANY, unsavedButtons({ onClose, onSave }));
+    if (promptOnClose(dirty) === 'ask') Alert.alert(UNSAVED_TITLE, UNSAVED_TEXT_ANY, unsavedButtons({ onClose, onSave }));
     else onClose();
   };
   const { bottom } = useSafeAreaInsets();

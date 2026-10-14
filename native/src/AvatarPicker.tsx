@@ -1,5 +1,5 @@
 import { Pressable, Text, View } from 'react-native';
-import { c, r, s, sp, t, e } from './ui';
+import { c, r, s, sp, t, e, TOUCH } from './ui';
 import { AVATAR_COLORS } from './themes';
 import { AVATARS, AVATAR_COLOR_IDS, FRAMES, FRAME_LABEL, type Profile } from './profileLogic';
 import { Avatar } from './Avatar';
@@ -22,8 +22,8 @@ export function AvatarPicker({ value, name, onChange }: { value: Profile; name: 
             accessibilityState={{ selected: a === value.avatar }}
             onPress={() => onChange({ ...value, avatar: a })}
             style={{
-              width: e.s,
-              height: e.s,
+              minWidth: TOUCH,
+              minHeight: TOUCH,
               borderRadius: r.s,
               alignItems: 'center',
               justifyContent: 'center',
@@ -49,8 +49,8 @@ export function AvatarPicker({ value, name, onChange }: { value: Profile; name: 
             accessibilityState={{ selected: id === value.avatarColor }}
             onPress={() => onChange({ ...value, avatarColor: id })}
             style={{
-              width: e.s,
-              height: e.s,
+              minWidth: TOUCH,
+              minHeight: TOUCH,
               borderRadius: r.pill,
               backgroundColor: AVATAR_COLORS[id],
               borderWidth: id === value.avatarColor ? 3 : 1,

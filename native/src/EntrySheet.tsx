@@ -10,7 +10,7 @@ import { createEntry, deleteEntry, loadTransferTarget, updateEntry } from './ent
 import { autoDismissMs, blankForm, categoriesFor, formOf, switchType } from './entriesLogic';
 import { newRequestId, planTxEdit, type Snapshot, type Tx, type TxEdit } from './logic';
 import { manilaToday } from '../../src/core/money';
-import { c, r, s, sp, t } from './ui';
+import { c, r, s, sp, t, TOUCH } from './ui';
 
 const TYPES: [TxEdit['type'], string][] = [
   ['expense', 'Spent'],
@@ -272,7 +272,7 @@ export function UndoBar({
         disabled={busy}
         onPress={undo}
         hitSlop={sp.m}
-        style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: sp.m, opacity: busy ? 0.5 : 1 }}
+        style={{ minHeight: TOUCH, justifyContent: 'center', paddingHorizontal: sp.m, opacity: busy ? 0.5 : 1 }}
       >
         <Text style={{ color: c.primary, fontSize: t.body, fontWeight: '800' }}>
           {busy ? 'Restoring...' : error ? 'Try again' : 'Undo'}
@@ -284,7 +284,7 @@ export function UndoBar({
           accessibilityLabel="Dismiss"
           onPress={onDismiss}
           hitSlop={sp.m}
-          style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: sp.m }}
+          style={{ minHeight: TOUCH, justifyContent: 'center', paddingHorizontal: sp.m }}
         >
           <Text style={{ color: c.mute, fontSize: t.body }}>Dismiss</Text>
         </Pressable>

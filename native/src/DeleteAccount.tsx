@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Text, TextInput, View } from 'react-native';
 import Constants from 'expo-constants';
 import { supabase } from './supabase';
@@ -19,6 +19,13 @@ export function DeleteAccount({ open, onClose }: { open: boolean; onClose: () =>
   const sent = useRef(false); // one request only: a second tap must never send a second delete
 
   const unconfirmed = useRef(false); // the last answer was lost: the account may already be gone
+
+  useEffect(() => {
+    // a fresh sheet every time: the typed word and any old error never carry over, so the red button is never already armed
+    setTyped('');
+    setErr('');
+    unconfirmed.current = false;
+  }, [open]);
 
   const go = async () => {
     if (sent.current || !canDeleteAccount(typed)) return;

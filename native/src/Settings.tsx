@@ -21,6 +21,7 @@ import { useToast } from './Toast';
 import { Personalize } from './Personalize';
 import { PersonalizeCard } from './PersonalizeCard';
 import { RECORDS_DELETE } from './deleteAccountLogic';
+import { nameDrafts, nameIsDirty, UNSAVED_NAME_LINE } from './settingsDirty';
 import { c, s, sp, t } from './ui';
 
 export const APP_VERSION = Constants.expoConfig?.version ?? '';
@@ -89,14 +90,16 @@ export function Settings({
   onTour: () => void;
 }) {
   const toast = useToast();
-  const [nm, setNm] = useState(name);
+  const [nm, setNm] = useState(() => nameDrafts.get(name) ?? name); // a draft typed before a tab switch comes back
   const lastName = useRef(name);
   useEffect(() => {
     // follow the saved name when it changes elsewhere, but never overwrite what the person is typing
     if (name !== lastName.current) {
       const typing = nm !== lastName.current;
+      nameDrafts.clear(lastName.current);
       lastName.current = name;
       if (!typing) setNm(name);
+      else nameDrafts.set(name, nm);
     }
   }, [name, nm]);
   const [busy, setBusy] = useState(false);
@@ -155,6 +158,7 @@ export function Settings({
     if (m) setMsg({ bad: true, t: m });
     else {
       const cleaned = cleanName(nm);
+      nameDrafts.clear(lastName.current);
       if (cleaned.ok) {
         lastName.current = cleaned.name;
         setNm(cleaned.name);
@@ -175,12 +179,20 @@ export function Settings({
             <TextInput
               style={s.input}
               value={nm}
-              onChangeText={setNm}
+              onChangeText={(v) => {
+                setNm(v);
+                nameDrafts.set(lastName.current, v);
+              }}
               placeholder="Your name"
               placeholderTextColor={c.mute}
               accessibilityLabel="Your name"
               maxLength={40}
             />
+            {nameIsDirty(nm, lastName.current) && (
+              <Text accessibilityLiveRegion="polite" style={[s.p, { color: c.down, marginBottom: sp.s }]}>
+                {UNSAVED_NAME_LINE}
+              </Text>
+            )}
             {msg && <Text style={msg.bad ? s.err : s.ok}>{msg.t}</Text>}
             <Btn label="Save name" busy={busy} onPress={save} />
           </View>

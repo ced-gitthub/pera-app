@@ -21,3 +21,6 @@ export function unsavedButtons(o: { onClose: () => void; onSave?: () => Promise<
   }
   return out;
 }
+
+/** What a sheet does when someone tries to close it: ask first when there are unsaved changes. */
+export const promptOnClose = (dirty?: boolean): 'ask' | 'close' => (dirty ? 'ask' : 'close');

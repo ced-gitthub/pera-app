@@ -158,7 +158,7 @@ test('a brand-new account sees the wizard first step, where samples are offered;
 });
 
 test('the wizard offers samples only on its first step with no entries, and the tour has a hard deadline for its tooltip', () => {
-  const w = fs.readFileSync('native/src/Wizard.tsx', 'utf8');
+  const w = fs.readFileSync('native/src/Wizard.tsx', 'utf8') + fs.readFileSync('native/src/WizardAction.tsx', 'utf8');
   assert.match(w, /onUseSamples/);
   assert.match(w, /totalEntries === 0/);
   const t = fs.readFileSync('native/src/TabTour.tsx', 'utf8');
@@ -347,6 +347,6 @@ test('setup balances: samples never count as the money a person already logged (
   const data = fs.readFileSync('native/src/data.ts', 'utf8');
   assert.match(data, /sampleMovementOf/);
   assert.match(data, /SAMPLE_IDS/);
-  const wiz = fs.readFileSync('native/src/Wizard.tsx', 'utf8');
+  const wiz = fs.readFileSync('native/src/Wizard.tsx', 'utf8') + fs.readFileSync('native/src/WizardAction.tsx', 'utf8');
   assert.match(wiz, /balancePrefill\(/);
 });

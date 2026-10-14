@@ -32,7 +32,7 @@ export function TourChoice({
       <Text style={[s.p, { marginBottom: sp.l }]}>
         {canSample
           ? 'I can fill your app with a few sample entries, so every screen has something to show instead of you typing them in. Each one starts with "Sample:". When the tour ends you choose to keep them or clear them.'
-          : 'The tour walks through each tab using your own data.'}
+          : 'The tour walks through each tab using what is in your app now.'}
       </Text>
       {canSample && <Btn label="Tour with sample entries" busy={busy} onPress={() => void pick('sample')} />}
       <Btn label={canSample ? 'Tour without sample entries' : 'Start the tour'} alt busy={busy} onPress={() => void pick('plain')} />
