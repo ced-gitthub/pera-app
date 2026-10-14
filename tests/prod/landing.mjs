@@ -216,16 +216,33 @@ G('landing: scroll motion');
   await c.close();
   const r = await newCtx(browser, { width: 390, height: 800 }, { reducedMotion: 'reduce' }),
     rp = await r.newPage();
-  await step('reduce-motion: nothing is hidden or animated, all content is simply there', async () => {
-    await rp.goto(url);
-    await rp.waitForTimeout(600);
-    const fx = await rp.evaluate(() => document.documentElement.classList.contains('fx'));
-    const tagged = await rp.locator('[data-fx]').count();
-    const faded = await rp.evaluate(
-      () => [...document.querySelectorAll('h2, .wl-card, .ld-sample')].filter((e) => getComputedStyle(e).opacity !== '1').length,
-    );
-    return !fx && tagged === 0 && faded === 0 ? true : { fx, tagged, faded };
-  });
+  await step(
+    'reduce-motion: calm tier. Blocks below the fold still fade in as you scroll, but nothing moves, floats or rains',
+    async () => {
+      await rp.goto(url);
+      await rp.waitForTimeout(600);
+      const calm = await rp.evaluate(() => document.documentElement.classList.contains('fx-calm'));
+      const hidden0 = await rp.locator('[data-fx]:not([data-in])').count();
+      const coins = await rp.evaluate(
+        () => [...document.querySelectorAll('.ld-coin, .ld-rain')].filter((e) => getComputedStyle(e).display !== 'none').length,
+      );
+      const h = await rp.evaluate(() => document.documentElement.scrollHeight);
+      let moved = 0;
+      for (let y = 0; y <= h; y += 350) {
+        await rp.evaluate((yy) => window.scrollTo({ top: yy, behavior: 'instant' }), y);
+        await rp.waitForTimeout(120);
+        moved += await rp.evaluate(
+          () =>
+            [...document.querySelectorAll('[data-fx][data-in]')].filter(
+              (e) => getComputedStyle(e).animationName.replace(/fx-fade|none|,|\s/g, '') !== '',
+            ).length,
+        );
+      }
+      await rp.waitForTimeout(900);
+      const hidden1 = await rp.locator('[data-fx]:not([data-in])').count();
+      return calm && hidden0 > 10 && hidden1 === 0 && coins === 0 && moved === 0 ? true : { calm, hidden0, hidden1, coins, moved };
+    },
+  );
   await r.close();
 }
 G('landing: files and redirects');

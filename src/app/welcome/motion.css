@@ -231,3 +231,26 @@
     display: none;
   }
 }
+
+/* ---- calm tier (phones with "reduce motion"): fade-only reveals, bars still fill, nothing moves. Keep this block LAST so it wins over the full-motion rules. ---- */
+@keyframes fx-fade {
+  from {
+    opacity: 0;
+  }
+}
+.fx-calm [data-fx][data-in] {
+  animation-name: fx-fade;
+  animation-duration: 0.6s;
+  animation-timing-function: ease;
+  animation-delay: calc(var(--i, 0) * 70ms);
+}
+.fx-calm [data-fx='rung']:not([data-in]) {
+  filter: none;
+}
+.fx-calm .wl-steps li[data-in] .wl-n {
+  animation: none;
+}
+.fx-calm .ld-coin,
+.fx-calm .ld-rain {
+  display: none;
+}

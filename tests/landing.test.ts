@@ -119,14 +119,45 @@ test('free-plan usage: the landing page is static (no searchParams or cookies) a
     'the /welcome rule must come after the no-store rule so it wins',
   );
 });
-test('scroll motion is progressive: off for reduce-motion, never hides what is already on screen, no horizontal overflow tricks', () => {
+test('scroll motion is progressive: calm for reduce-motion, never hides what is already on screen, no horizontal overflow tricks', () => {
   const js = readFileSync('src/components/ScrollFx.tsx', 'utf8');
   assert.ok(js.includes('prefers-reduced-motion: reduce'), 'reduce-motion users get a still page');
-  assert.ok(js.includes("'IntersectionObserver' in window"), 'no observer support means everything just shows');
+  assert.ok(
+    js.includes("addEventListener('scroll'"),
+    'reveals follow the scroll position directly, so a block on screen can never stay hidden',
+  );
+  assert.ok(
+    js.includes('setInterval'),
+    'a light poll reveals what is on screen even if the browser fires no scroll event or paints no frame',
+  );
+  assert.ok(js.includes('clearInterval'), 'the poll stops when the page is left or everything is revealed');
+  assert.ok(
+    js.includes('window.innerHeight ||') && js.includes('clientHeight'),
+    'a viewport that reports height 0 (seen in embedded browsers) must not leave everything hidden',
+  );
+  assert.ok(!js.includes('IntersectionObserver'), 'no dependency on an observer that some browsers delay or skip');
   assert.ok(js.includes('already on screen'), 'blocks in view at load are never hidden first');
   const css = readFileSync('src/app/welcome/motion.css', 'utf8');
   assert.ok(css.includes('.fx [data-fx]:not([data-in])'), 'content is only hidden under the fx class that the script adds');
   assert.ok(!/(^|\n)\[data-fx\][^{]*\{[^}]*opacity: 0/.test(css), 'never hidden without the fx class');
   assert.ok(css.includes('prefers-reduced-motion: reduce'));
   assert.ok(!css.includes('translateX(1') && !css.includes('translateX(2'), 'nothing is pushed off the right edge');
+});
+test('reduce-motion phones still get gentle reveals: fades and bar fills, with no movement, rotation, floating or coin rain', () => {
+  const js = readFileSync('src/components/ScrollFx.tsx', 'utf8');
+  assert.ok(js.includes('fx-calm'), 'the script marks the calm tier');
+  assert.ok(!/reduce\)'\)\.matches\s*\|\|/.test(js), 'reduce-motion must not switch the reveals off entirely');
+  const css = readFileSync('src/app/welcome/motion.css', 'utf8');
+  assert.ok(css.includes('@keyframes fx-fade'), 'a fade-only entrance exists');
+  const fade = css.slice(css.indexOf('@keyframes fx-fade'), css.indexOf('}', css.indexOf('@keyframes fx-fade') + 25) + 40);
+  assert.ok(fade.includes('opacity') && !fade.includes('transform'), 'the calm fade never moves anything');
+  assert.ok(
+    /\.fx-calm \[data-fx\]\[data-in\]\s*\{[^}]*animation-name: fx-fade/.test(css),
+    'every revealed block uses the fade in the calm tier',
+  );
+  assert.ok(
+    /\.fx-calm[^{]*\.ld-rain[^{]*\{[^}]*display: none/.test(css) || /\.fx-calm \.ld-rain/.test(css),
+    'coin rain is off in the calm tier',
+  );
+  assert.ok(/\.fx-calm \.ld-coin/.test(css), 'floating coins are off in the calm tier');
 });

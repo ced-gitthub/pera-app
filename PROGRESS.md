@@ -90,6 +90,8 @@
 
 - 2026-10-15 owner: the "Sound familiar?" section had turned pure Tagalog in the Taglish pass; restored to English sentences with Tagalog words (the version Ced liked). Ced also gave STANDING permission to push to main without asking first (2026-10-15).
 
+- 2026-10-15 owner: "no motion at all while scrolling". Cause found with the real browser: (1) the scroll effects were switched OFF entirely for phones with "reduce motion" (also set by many Android power-saving modes), (2) reveals depended on IntersectionObserver, which can be delayed or skipped, and (3) a viewport reporting height 0 left everything hidden. Fix (test first, RED then GREEN each time): a CALM tier for reduce-motion (fade-only reveals, bars still fill, no movement/rain/floating coins, class fx-calm), reveals now follow the scroll position directly with a 150 ms poll as a backup and a fallback viewport height. Full motion otherwise (cards tilt in, badges spin, ladder lights up, coin rain on the last block, progress bar). Tests: tests/landing.test.ts and the live landing steps.
+
 ## Next steps
 
 0. Owner: turn Supabase Confirm email back ON after any live-suite run. Provide the domain (with ending) to attach it in Vercel, then follow docs/play-store/PLAY_CONSOLE_GUIDE.md.
