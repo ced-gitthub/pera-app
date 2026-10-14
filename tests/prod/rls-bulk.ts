@@ -358,4 +358,61 @@ export async function bulkDeleteSteps({ A, B, step, cnt, other, d, mk }: Ctx): P
           };
     },
   );
+
+  // Native entry create after a LOST reply (native/src/entriesCore.ts createEntryWith): the first save reached the database, the person edits and saves again with the SAME request id.
+  // The insert is skipped (ignoreDuplicates returns []), so the stored row must be corrected to the new values, once, and exactly one row may exist.
+  await step(
+    'native lost-reply retry: a second upsert of the same request id returns no row, the correcting update changes exactly that row, one row with the new amount remains',
+    async () => {
+      const accts = (await A.c.from('accounts').select('id').limit(1)).data ?? [];
+      const cats = (await A.c.from('categories').select('id').eq('type', 'expense').limit(1)).data ?? [];
+      if (!accts[0] || !cats[0]) return 'could not read the test user defaults';
+      const rid = '5a3e0000-0000-4000-8000-0000000000ee';
+      const base = {
+        user_id: A.id,
+        type: 'expense',
+        category_id: cats[0].id,
+        account_id: accts[0].id,
+        transaction_date: d + '22',
+        description: 'QA lost reply',
+        request_id: rid,
+        request_idx: 0,
+      };
+      const opts = { onConflict: 'user_id,request_id,request_idx', ignoreDuplicates: true };
+      const first = await A.c
+        .from('transactions')
+        .upsert({ ...base, amount_minor: 150 }, opts)
+        .select('id');
+      const second = await A.c
+        .from('transactions')
+        .upsert({ ...base, amount_minor: 1500 }, opts)
+        .select('id');
+      const fix = await A.c
+        .from('transactions')
+        .update({ amount_minor: 1500 })
+        .eq('user_id', A.id)
+        .eq('request_id', rid)
+        .eq('request_idx', 0)
+        .select('id');
+      const rows = await A.c.from('transactions').select('id,amount_minor').eq('request_id', rid);
+      const cleanup = await A.c.from('transactions').delete().eq('user_id', A.id).eq('request_id', rid);
+      return !first.error &&
+        (first.data ?? []).length === 1 &&
+        !second.error &&
+        (second.data ?? []).length === 0 &&
+        !fix.error &&
+        (fix.data ?? []).length === 1 &&
+        !rows.error &&
+        (rows.data ?? []).length === 1 &&
+        Number((rows.data ?? [])[0]?.amount_minor) === 1500 &&
+        !cleanup.error
+        ? true
+        : {
+            first: first.error?.message ?? (first.data ?? []).length,
+            second: second.error?.message ?? (second.data ?? []).length,
+            fix: fix.error?.message ?? (fix.data ?? []).length,
+            rows: (rows.data ?? []).map((x: { amount_minor: number }) => x.amount_minor),
+          };
+    },
+  );
 }
