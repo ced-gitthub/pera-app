@@ -1,4 +1,4 @@
 ---
-description: Plan the change with the planner subagent
+description: Plan the change with the product-manager subagent
 ---
-Use the `planner` subagent for: $ARGUMENTS. Return only its plan.
+Use the `product-manager` subagent for: $ARGUMENTS. Return only its plan.

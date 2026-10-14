@@ -5,7 +5,7 @@ Free-tier PHP money tracker. Next.js 15 + TypeScript + Tailwind 4, Supabase (pro
 ## Session rules
 - At the start of each session, read CLAUDE.md, `docs/CORRECTIONS.md` (everything Ced has already corrected: do not make him repeat it) and PROGRESS.md first.
 - After every fix or decision, update PROGRESS.md (fixed, open bugs, decisions, next steps).
-- Every app project, feature or fix follows `docs/APP-DEV-PIPELINE.md` (5 stages: PM, UI/UX, Backend & DevOps, Mobile Developer, QA, with gates G1 to G4, G5a and G5b between stages: a failed gate is routed to the right specialist agent and the whole gate re-run before moving on; an Instruction ledger of Ced's verbatim words is re-checked at every gate). Full track for new apps/features (one stage per turn, stop for approval); light track for fixes (all stages in one turn, but always a Stage 1 restatement of the request in Ced's own words, a judge review for risky changes, and real test evidence).
+- Every app project, feature or fix follows `docs/APP-DEV-PIPELINE.md` (5 stages: PM, UI/UX, Backend & DevOps, Mobile Developer, QA, with gates G1 to G4, G5a and G5b between stages: a failed gate is routed to the right specialist agent and the whole gate re-run before moving on; an Instruction ledger of Ced's verbatim words is re-checked at every gate). Full track for new apps/features (one stage per turn, stop for approval); light track for fixes (all stages in one turn, but always a Stage 1 restatement of the request in Ced's own words, a QA Engineer review for risky changes, and real test evidence).
 
 ## Non-negotiables
 - Cost stays $0. No paid services or keys.
@@ -32,22 +32,24 @@ Free-tier PHP money tracker. Next.js 15 + TypeScript + Tailwind 4, Supabase (pro
 - Work on a branch, then merge to `main` only when the gates are green. Weekly health check: `.github/workflows/weekly-health.yml`.
 
 ## Team (use subagents; keep the main thread short)
-| Agent | Model | Use for |
+The five pipeline roles (docs/APP-DEV-PIPELINE.md), each a real agent in `.claude/agents/`, plus two cheap helpers:
+| Agent | Model | Stage / use for |
 |---|---|---|
-| `explorer` | Haiku | Find code, trace flows, answer "where is X". Always first for lookups. |
-| `planner` | Sonnet | Plan before coding anything bigger than one file. |
-| `builder` | Sonnet | Implement + unit/e2e tests. |
-| `tester` | Sonnet | Live tests in `tests/prod` (read skill `pera-live-qa`). |
-| `migrator` | Sonnet | Schema changes (read skill `pera-migration`). |
+| `product-manager` | Sonnet | Stage 1: Product Specification Blueprint + the Instruction ledger. Always before building anything bigger than one file. |
+| `ui-ux-designer` | Sonnet | Stage 2: Design Handoff Specification (screens, states, copy, tokens). |
+| `backend-devops-engineer` | Sonnet | Stage 3: Backend & API Contract, migrations (read skill `pera-migration`). Never applies a migration before the QA Engineer approves it. |
+| `mobile-app-developer` | Sonnet | Stage 4: implement + unit/e2e tests, test first. |
+| `qa-engineer` | Opus | Stage 5 and the independent reviewer at every gate: returns APPROVE/REJECT with evidence. REQUIRED before shipping migrations, RLS, money math, auth, deploy config or any APK. If it rejects, fix and re-submit. |
+| `explorer` | Haiku | Find code, trace flows, answer "where is X". |
+| `tester` | Sonnet | Live tests in `tests/prod` for the QA Engineer (read skill `pera-live-qa`). |
 | `ci-watcher` | Haiku | Wait for deploy/CI/prod-qa and return pass counts. Never poll in the main thread. |
-| `judge` | Opus | Independent review. REQUIRED before shipping migrations, RLS, money math, auth or deploy config. If it rejects, fix and re-submit. |
 
 Slash commands: `/plan`, `/migrate`, `/qa`, `/review`, `/ship`, `/status`.
 Hooks (`.claude/hooks`): `guard.mjs` blocks secret-looking writes, edits to committed migrations, and destructive SQL (drop table/column, truncate, delete/update without where); `tests.sh` blocks finishing while unit tests fail; `status.sh` prints repo/CI state at session start.
 Prefer available process skills (test-driven-development, systematic-debugging, verification-before-completion) over improvising.
 
 ## Workflow
-1. `/plan` (planner). 2. Build (builder; migrator for schema; tester for live steps). 3. judge if risky. 4. `/ship` (ci-watcher reports results).
+1. `/plan` (product-manager). 2. Build (mobile-app-developer; backend-devops-engineer for schema; tester for live steps). 3. QA Engineer if risky. 4. `/ship` (ci-watcher reports results).
 Local checks: `npm test` (unit). Typecheck/build/e2e run in CI (`ci`). Live checks: `prod-qa`; results are published to branches `qa-qa`, `qa-rls`, `qa-responsive`, `qa-security`, `qa-db` (runner logs are not readable; fetch those branches with a forced `+refs/heads/...` refspec).
 Pushing to `main` deploys to Vercel (100/day limit). Batch changes; put `[skip ci]` in the message for docs/config-only commits.
 
@@ -57,7 +59,7 @@ Any behaviour change needs: a unit/e2e test, and a live step in `tests/prod/` fo
 ## Native app (`native/`, Expo Android)
 - Read `docs/native-app/NATIVE.md` before touching it (map, rules, build recipe, open items). History in `CHANGELOG.md`, roadmap in `PLAN.md`.
 - Screens use only design tokens (`native/src/uiTokens.ts`); `tests/native-design.test.ts` enforces it. `npm run verify` does not type-check `native/`: also run `cd native && npx tsc --noEmit`.
-- Release: replace `Zovix-native-latest.apk` on the existing GitHub release `native-0.3` (Ced has that page saved); never make per-version releases. Publish ONLY after the judge approves. Never push to `main` without Ced's yes (it deploys the website).
+- Release: replace `Zovix-native-latest.apk` on the existing GitHub release `native-0.3` (Ced has that page saved); never make per-version releases. Publish ONLY after the QA Engineer approves. Never push to `main` without Ced's yes (it deploys the website).
 
 ## Reporting (user preference)
 Final message only: `Problem:` / `Solution:` / `Outcome:` — one line each, with pass counts. No process narration, no recaps, no restating the request. Ask at most one short question, only if truly blocked. User goes by Ced.

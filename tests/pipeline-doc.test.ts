@@ -30,11 +30,11 @@ test('there is a gate between every pair of stages (G1 to G4, then G5a before th
 });
 
 test('failures route to the right specialist agent', () => {
-  assert.match(failPart(gate('G1')), /planner/);
-  assert.match(failPart(gate('G2')), /design:/);
-  assert.match(failPart(gate('G3')), /migrator/);
-  assert.match(failPart(gate('G4')), /builder/);
-  assert.match(failPart(gate('G4')), /migrator/);
+  assert.match(failPart(gate('G1')), /product-manager/);
+  assert.match(failPart(gate('G2')), /ui-ux-designer/);
+  assert.match(failPart(gate('G3')), /backend-devops-engineer/);
+  assert.match(failPart(gate('G4')), /mobile-app-developer/);
+  assert.match(failPart(gate('G4')), /backend-devops-engineer/);
   assert.match(failPart(gate('G5a')), /tester/);
   assert.match(failPart(gate('G5b')), /ci-watcher/);
 });
@@ -42,7 +42,7 @@ test('failures route to the right specialist agent', () => {
 test('the judge APPROVE is a CHECK at G3 and G5a (not only a failure route) for migrations, RLS, deletes, money, auth and deploy config', () => {
   for (const id of ['G3', 'G5a']) {
     const c = checksPart(gate(id));
-    assert.match(c, /judge/, `${id} checks name judge`);
+    assert.match(c, /qa-engineer/, `${id} checks name qa-engineer`);
     assert.match(c, /APPROVE/, `${id} requires APPROVE`);
     for (const w of ['migration', 'RLS', 'delete', 'money', 'auth', 'deploy'])
       assert.ok(c.toLowerCase().includes(w.toLowerCase()), `${id} mentions ${w}`);
@@ -96,7 +96,7 @@ test("the light track wording is consistent: G1 to G5a in the same turn, G5b aft
 test("publishing the native APK needs the judge's APPROVE always (G5a) and an asset size check after upload (G5b)", () => {
   const a = checksPart(gate('G5a'));
   assert.match(a, /APK/);
-  assert.match(a, /judge[^.·]*APPROVE[^.·]*(always|every)[^.·]*APK|APK[^.·]*judge[^.·]*APPROVE/i);
+  assert.match(a, /qa-engineer[^.·]*APPROVE[^.·]*(always|every)[^.·]*APK|APK[^.·]*qa-engineer[^.·]*APPROVE/i);
   const b = checksPart(gate('G5b'));
   assert.match(b, /native-0\.3/);
   assert.match(b, /asset size/i);
@@ -109,4 +109,21 @@ test('the ledger rule matches the gates: G5a proves each row or defers it, G5b p
 
 test('the APK asset size is checked right after any upload, whether or not anything was pushed to main', () => {
   assert.match(section, /right after any upload to `native-0\.3`[^.]*whether or not[^.]*pushed to `main`/i);
+});
+
+test('the five pipeline roles exist as real agents (.claude/agents) and the old reviewer/builder names are gone', () => {
+  const roles = ['product-manager', 'ui-ux-designer', 'backend-devops-engineer', 'mobile-app-developer', 'qa-engineer'];
+  for (const r of roles) {
+    const f = `.claude/agents/${r}.md`;
+    assert.ok(fs.existsSync(f), f);
+    const body = fs.readFileSync(f, 'utf8');
+    assert.match(body, new RegExp(`^name: ${r}$`, 'm'));
+    assert.match(body, /docs\/CORRECTIONS\.md/); // every role reads the owner's corrections first
+  }
+  for (const old of ['judge', 'planner', 'builder', 'migrator'])
+    assert.ok(!fs.existsSync(`.claude/agents/${old}.md`), `${old}.md is replaced`);
+  const sec2 = doc.slice(doc.indexOf('## 2.'), doc.indexOf('## 3.'));
+  for (const r of roles) assert.ok(sec2.includes(r), `section 2 names ${r}`);
+  assert.doesNotMatch(doc, /\bjudge\b/i); // the pipeline's reviewer is the QA Engineer
+  assert.match(fs.readFileSync('CLAUDE.md', 'utf8'), /qa-engineer/);
 });

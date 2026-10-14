@@ -1,4 +1,4 @@
 ---
-description: Independent review of the current diff by the judge
+description: Independent review of the current diff by the `qa-engineer` agent
 ---
-Run the `judge` subagent on `git diff main...HEAD` (and uncommitted changes). Return only its verdict and numbered problems.
+Run the `qa-engineer` subagent on `git diff main...HEAD` (and uncommitted changes). Return only its verdict and numbered problems.

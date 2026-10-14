@@ -47,7 +47,7 @@ Every time Ced had to correct something, it is here, so he never has to say it t
 ## 3. Data and safety rules
 - Money is integer centavos; dates Asia/Manila; never floats.
 - Database changes are additive SQL in `supabase/migrations/NNNN_name.sql`, applied BEFORE the code that needs it; never edit an applied migration. Every new table: RLS owner policy, MFA restrictive policy, row cap, tests in `tests/prod/rls-suite.ts`.
-- Anything that deletes or changes money logic gets the independent `judge` review before it ships. Judge rounds caught real bugs several times (invalid uuid ids, wrong live-test date, false "cleared" message, edited rows deleted): never skip it, and fix every finding test-first.
+- Anything that deletes or changes money logic gets the independent `qa-engineer` review before it ships. QA Engineer rounds caught real bugs several times (invalid uuid ids, wrong live-test date, false "cleared" message, edited rows deleted): never skip it, and fix every finding test-first.
 - A live step (`tests/prod`) for anything user-visible or data-changing; the fake database in unit tests does not check column types.
 - Never delete data silently; never auto-wipe on sign-up (sign-up with an existing email just signs in, so the app ASKS).
 - Secrets: never print or store them; never edit `.env*`. If a server feature fails with "permission denied", check the Supabase edge log for which API key the call carried (the publishable key in the secret variable was the cause of the delete-account 500).
@@ -64,14 +64,14 @@ Every time Ced had to correct something, it is here, so he never has to say it t
 
 ## 5. Release rules for the Android app
 - Always update the saved GitHub release page: `https://github.com/ced-gitthub/pera-app/releases/tag/native-0.3`, asset `Zovix-native-latest.apk` (`gh release upload native-0.3 ... --clobber`), update the notes with the version. Never create per-version releases.
-- Publish only after the judge approves. Check the asset size after upload.
+- Publish only after the QA Engineer approves. Check the asset size after upload.
 - Build in the short path `C:\zb` (see `docs/native-app/NATIVE.md`). Bump `version` and `versionCode` in `native/app.json` every build.
 - A new installed build keeps the old launcher icon until the person picks a colour in Settings (Android keeps the enabled alias); say so.
 
 ## 6. Mistakes to avoid repeating (each cost a round trip)
 | Mistake | What to do instead |
 |---|---|
-| Published before the re-review | Judge approves first, then publish |
+| Published before the re-review | QA Engineer approves first, then publish |
 | Narrow reading of "the data from the tutorial" | List every thing the tutorial creates; the clear option removes all of it |
 | Copy that promised more than the code | Test the copy against the code |
 | Unit-tested the RULE (one icon change per session) but never the EXPERIENCE (the app closes, a repeat tap does nothing, no warning) | For every action ask: what does the person see and feel, in order? Write that as the Stage 1 checklist and test each line; say "not tested on a phone" |

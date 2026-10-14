@@ -24,10 +24,10 @@ Expo SDK 57 / React Native 0.86 Android app in `native/`, package `com.zovixhub.
 1. `npm run verify` (root) + `cd native && npx tsc --noEmit` (verify does NOT type-check `native/`) + `npm run format:check`.
 2. Build in a SHORT path (the worktree path breaks CMake): robocopy `native/` (with `node_modules`, do not exclude `build` dirs), `../src/core`, `../src/lib` to `C:\zb`, then in `C:\zb\native`: `npx expo prebuild --platform android --no-install`, and in `android`: `gradlew.bat assembleRelease -PreactNativeArchitectures=arm64-v8a --no-daemon` with `JAVA_HOME=C:/Users/Ced/Ced Personal Project/Zovix/android-build/jdk/jdk-17.0.20.1+1` and `ANDROID_HOME=.../android-build/sdk`. APK: `app/build/outputs/apk/release/app-release.apk`. Check the bundle contains the new strings (`unzip -p apk assets/index.android.bundle | grep -c "text"`); emoji strings are stored escaped.
 3. **Release page**: Ced saved `https://github.com/ced-gitthub/pera-app/releases/tag/native-0.3`. Always replace `Zovix-native-latest.apk` there (`gh release upload native-0.3 <file> --clobber`), update the notes with the version, verify the download size with `curl -sIL`. Never create per-version releases.
-4. **Publish only after the judge approves.** 0.7.0 was published before its re-review and shipped a real bug.
+4. **Publish only after the QA Engineer approves.** 0.7.0 was published before its re-review and shipped a real bug.
 
 ## Working agreements (Ced)
-Fix the whole list, not part of it ("fix it ALL"). Explain causes plainly, no excuses. Uniform UI (same button style/place on every tab). Say exactly which click is needed only when blocked. Final report as Problem / Solution / Outcome. TDD red-green; parallel agents only on disjoint files; judge review for auth, money, deletes, deploy config. No push to `main` without his yes (it deploys the website).
+Fix the whole list, not part of it ("fix it ALL"). Explain causes plainly, no excuses. Uniform UI (same button style/place on every tab). Say exactly which click is needed only when blocked. Final report as Problem / Solution / Outcome. TDD red-green; parallel agents only on disjoint files; QA Engineer review for auth, money, deletes, deploy config. No push to `main` without his yes (it deploys the website).
 
 ## Tour and sample data (0.9.x)
 - The tour is 7 steps max, 150 characters each, and Next must be instant (tooltip always visible; only the ring waits for its target; 2.5 s deadline). `tests/native-tour.test.ts` enforces it.
