@@ -8,7 +8,8 @@ import { COPY, SAMPLES } from '../../src/lib/onboardingCopy';
 import { GATE_STEPS, WIZARD_TOTAL, type GateStep } from '../../src/lib/onboarding';
 import type { Snapshot } from './data';
 import { balancePrefill } from './logic';
-import { ToggleRow } from './Sheet';
+import { BALANCE_SAMPLE_NOTE } from './sampleLogic';
+import { HeaderClose, ToggleRow } from './Sheet';
 import { setAccountFlag } from './config';
 import { saveBalances, saveBudget, saveGoal } from './wizardData';
 import { QuickAdd } from './QuickAdd';
@@ -79,6 +80,7 @@ export function Wizard(p: {
   refresh: () => Promise<string>;
   onFinish: () => void | Promise<void>;
   onBalances: () => Promise<boolean>;
+  onClose?: () => void; // the read-only walkthrough (tour mode) shows a pinned Close
   onUseSamples?: () => Promise<string | null>; // first step only: fill in labelled sample entries instead of typing one
 }) {
   const [i, setI] = useState(0); // tour position
@@ -119,6 +121,11 @@ export function Wizard(p: {
           borderBottomRightRadius: r.l,
         }}
       >
+        {p.tour && !!p.onClose && (
+          <View style={{ alignItems: 'flex-end', marginBottom: sp.s }}>
+            <HeaderClose label="Close" onPress={p.onClose} />
+          </View>
+        )}
         <View style={{ backgroundColor: c.card, borderRadius: r.s, padding: sp.m }}>
           <Dots now={number} done={p.tour ? ORDER.slice(0, i) : p.doneIds} />
         </View>
@@ -257,6 +264,7 @@ function Action({
       )}
       {step === 'balance' && (
         <>
+          {Object.values(snap.sampleMovement ?? {}).some((v) => v !== 0) && <Text style={s.p}>{BALANCE_SAMPLE_NOTE}</Text>}
           {snap.accounts.map((a) => (
             <View key={a.id}>
               <Text style={s.p}>{a.name} (₱)</Text>

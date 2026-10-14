@@ -54,3 +54,27 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     </Ctx.Provider>
   );
 }
+
+// For screens that live INSIDE a Modal (the app-wide card would be drawn behind the Modal): a message that clears itself after TOAST_MS...
+export function useToastMessage(): [string | null, (message: string) => void] {
+  const [msg, setMsg] = useState<string | null>(null);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const show = useCallback((message: string) => {
+    if (timer.current) clearTimeout(timer.current);
+    setMsg(message);
+    timer.current = setTimeout(() => setMsg(null), TOAST_MS);
+  }, []);
+  useEffect(() => () => void (timer.current && clearTimeout(timer.current)), []);
+  return [msg, show];
+}
+
+// ...and a card with its own pop animation to draw inside that screen (or pass the message to Sheet's toast prop).
+export function LocalToast({ message }: { message: string | null }) {
+  const pop = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (!message) return;
+    pop.setValue(0);
+    Animated.spring(pop, { toValue: 1, useNativeDriver: true, friction: 6 }).start();
+  }, [message, pop]);
+  return message ? <ToastCard message={message} pop={pop} /> : null;
+}

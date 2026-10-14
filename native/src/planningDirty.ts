@@ -8,3 +8,19 @@ export const isBudgetDirty = (initial: BudgetForm, now: BudgetForm): boolean => 
 
 export const isGoalDirty = (initial: GoalForm, now: GoalForm): boolean =>
   !same(initial.name, now.name) || !same(initial.emoji, now.emoji) || !same(initial.amount, now.amount) || !same(initial.account, now.account);
+
+/** One save at a time: run() returns false (and does nothing) while another run is in flight; always released afterwards. */
+export function createLock() {
+  let busy = false;
+  return {
+    async run(work: () => Promise<boolean>): Promise<boolean> {
+      if (busy) return false;
+      busy = true;
+      try {
+        return await work();
+      } finally {
+        busy = false;
+      }
+    },
+  };
+}

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { csvDirty, importedToast, seenUid } from '../native/src/csvMineLogic.ts';
+import { createOnce, csvDirty, importedToast, seenUid } from '../native/src/csvMineLogic.ts';
 
 const src = (f: string) => fs.readFileSync(`native/src/${f}`, 'utf8');
 
@@ -27,8 +27,8 @@ test('Csv: dirty guard, pinned import button, toast, flexible date inputs', () =
   const f = src('Csv.tsx');
   assert.match(f, /dirty=\{csvDirty\(text\)\}/);
   assert.match(f, /footer=/);
-  assert.match(f, /toast\(importedToast\(/);
-  assert.match(f, /useToast/);
+  assert.match(f, /showToast\(importedToast\(/);
+  assert.match(f, /useToastMessage/);
   assert.match(f, /flexWrap: 'wrap'/);
   assert.doesNotMatch(f, /minWidth: \d|width: \d/);
 });
@@ -44,4 +44,27 @@ test('MakeItYours: pinned header + footer, unsaved prompt, toast, always marked 
   assert.doesNotMatch(f, /if \(state\) await markMakeItYoursSeen/);
   // the primary button is outside the ScrollView
   assert.ok(f.indexOf('</ScrollView>') < f.indexOf('label="Looks good"'));
+});
+
+test('createOnce: the callback runs only the first time', () => {
+  let n = 0;
+  const once = createOnce();
+  assert.equal(
+    once(() => void n++),
+    true,
+  );
+  assert.equal(
+    once(() => void n++),
+    false,
+  );
+  assert.equal(n, 1);
+});
+
+test('Csv uses the local toast hook, never the app-wide one; MakeItYours finishes once', () => {
+  const f = src('Csv.tsx');
+  assert.doesNotMatch(f, /useToast\(\)/);
+  assert.match(f, /useToastMessage\(\)/);
+  assert.match(f, /toast=\{toastMsg\}/);
+  assert.match(f, /showToast\(importedToast\(/);
+  assert.match(src('MakeItYours.tsx'), /createOnce\(\)/);
 });

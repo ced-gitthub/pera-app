@@ -17,3 +17,12 @@ export function createGeneration() {
   let n = 0;
   return { next: () => ++n, isStale: (token: number) => token !== n };
 }
+
+/** The "this account already has data: keep it or start fresh?" question. total = entries + budgets + goals (null when the counts could not be read).
+ *  Never lost: kept pending when the counts are unknown; cleared once the account is known to be empty (a sign-up into a new account, or after Start fresh). */
+export function decideAsk(x: { wasSignUp: boolean; pending: boolean; total: number | null }): { ask: boolean; write: 'clear' | null } {
+  const pending = x.pending || x.wasSignUp;
+  if (!pending) return { ask: false, write: null };
+  if (x.total === null) return { ask: true, write: null };
+  return x.total > 0 ? { ask: true, write: null } : { ask: false, write: 'clear' };
+}

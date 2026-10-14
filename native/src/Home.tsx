@@ -14,7 +14,7 @@ import { CountUp, XpPop } from './Motion';
 import { Avatar } from './Avatar';
 import { useProfile } from './profile';
 import { AccountsSheet } from './Settings';
-import { c, e, r, s, sp, t } from './ui';
+import { c, e, r, s, sp, t, TOUCH } from './ui';
 
 export function Home({
   snap,
@@ -37,6 +37,7 @@ export function Home({
   const [pop, setPop] = useState(0);
   const [addDirty, setAddDirty] = useState(false); // typed text in Quick Add that is not saved yet
   const toast = useToast();
+  const [addKey, setAddKey] = useState(0); // a new key resets Quick Add's typed text when the sheet closes
   const onAddDirty = useCallback((d: boolean) => setAddDirty(d), []);
   const [cfg, setCfg] = useState(false);
   const prof = useProfile(); // the person's avatar, shown next to the greeting
@@ -78,7 +79,7 @@ export function Home({
             accessibilityLabel="Home settings"
             onPress={() => setCfg(true)}
             hitSlop={sp.s}
-            style={[s.chip, { minHeight: sp.xxl + sp.l, justifyContent: 'center' }]}
+            style={[s.chip, { minHeight: TOUCH, justifyContent: 'center' }]}
           >
             <Text style={{ color: c.ink, fontSize: t.body }}>⚙︎ Edit</Text>
           </Pressable>
@@ -135,7 +136,7 @@ export function Home({
           accessibilityLabel="See all accounts"
           onPress={onOpenAccounts}
           hitSlop={sp.s}
-          style={{ alignSelf: 'flex-end', minHeight: sp.xxl + sp.l, justifyContent: 'center', marginBottom: sp.s }}
+          style={{ alignSelf: 'flex-end', minHeight: TOUCH, justifyContent: 'center', marginBottom: sp.s }}
         >
           <Text style={{ color: c.primary, fontSize: t.body, fontWeight: '700' }}>See all accounts ›</Text>
         </Pressable>
@@ -192,27 +193,36 @@ export function Home({
       <XpPop play={pop} label="+5 XP" />
       <AccountsSheet open={cfg} onClose={() => setCfg(false)} snap={snap} refresh={refresh} />
 
-      <Sheet
-        open={adding}
-        title="What did you spend or earn?"
-        onClose={() => {
+      <QuickAdd
+        key={addKey}
+        snap={snap}
+        onDirtyChange={onAddDirty}
+        layout={(body, actions) => (
+          <Sheet
+            open={adding}
+            title="What did you spend or earn?"
+            onClose={() => {
+              setAdding(false);
+              setAddDirty(false);
+              setAddKey((k) => k + 1);
+            }}
+            dirty={addDirty}
+            footer={actions}
+          >
+            {body}
+          </Sheet>
+        )}
+        onSaved={async () => {
           setAdding(false);
           setAddDirty(false);
+          setPop(Date.now());
+          toast('Entry saved');
+          const problem = await refresh(); // a failed reload is shown at the top of Home (the sheet is already closed)
+          if (problem) setErr(problem);
+          setAddKey((k) => k + 1);
+          return problem; // QuickAdd gets it too
         }}
-        dirty={addDirty}
-      >
-        <QuickAdd
-          snap={snap}
-          onDirtyChange={onAddDirty}
-          onSaved={async () => {
-            setAdding(false);
-            setAddDirty(false);
-            setPop(Date.now());
-            toast('Entry saved');
-            await refresh();
-          }}
-        />
-      </Sheet>
+      />
     </View>
   );
 }

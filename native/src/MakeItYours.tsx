@@ -5,7 +5,7 @@ import { c, s, sp, t, themeState } from './ui';
 import { HeaderClose } from './Sheet';
 import { useToast } from './Toast';
 import { supabase } from './supabase';
-import { seenUid } from './csvMineLogic';
+import { createOnce, seenUid } from './csvMineLogic';
 import { UNSAVED_TEXT_ANY, unsavedButtons } from './unsaved';
 import { Btn } from './Btn';
 import { ThemePicker, appliedStyle } from './ThemePicker';
@@ -30,6 +30,7 @@ export function MakeItYours({ open, onDone }: { open: boolean; onDone: () => voi
   const picked = useRef(false);
   const mine = p ?? state?.profile ?? null;
   const toast = useToast();
+  const leave = useRef(createOnce()).current; // however the screen closes, it is left exactly once
   // unsaved: an avatar change that has not been saved yet
   const dirty = !!p && !!state && isProfileDirty({ name: state.name, profile: state.profile }, { name: state.name, status: p.status, profile: p });
 
@@ -68,12 +69,16 @@ export function MakeItYours({ open, onDone }: { open: boolean; onDone: () => voi
         uid = null;
       }
     }
-    if (uid) await markMakeItYoursSeen(uid);
+    let left = false;
+    leave(() => {
+      left = true;
+      if (uid) void markMakeItYoursSeen(uid);
+      if (picked.current) commitTheme(); // the app repaints once in the new colours
+      onDone();
+    });
     setBusy(false);
     lock.current = false;
-    if (picked.current) commitTheme(); // the app repaints once in the new colours
-    onDone();
-    return true;
+    return left;
   };
   // Maybe later and the back button: ask first when the avatar has unsaved changes
   const later = () => {

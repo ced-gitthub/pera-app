@@ -50,3 +50,24 @@ test('planning long budget names truncate instead of overflowing', () => {
 test('planning has no small tappables', () => {
   assert.doesNotMatch(src, /minHeight: (?:[1-3]?\d|4[0-7])\b/);
 });
+
+test('lock: a second run while one is in flight is refused, then allowed after it ends', async () => {
+  const { createLock } = await import('../native/src/planningDirty.ts');
+  const lock = createLock();
+  let release: () => void = () => {};
+  const first = lock.run(() => new Promise<boolean>((res) => (release = () => res(true))));
+  assert.equal(await lock.run(async () => true), false);
+  release();
+  assert.equal(await first, true);
+  assert.equal(await lock.run(async () => true), true);
+});
+test('lock: released even when the work throws', async () => {
+  const { createLock } = await import('../native/src/planningDirty.ts');
+  const lock = createLock();
+  await assert.rejects(lock.run(async () => Promise.reject(new Error('x'))));
+  assert.equal(await lock.run(async () => true), true);
+});
+test('planning useSaver guards run with a lock shared by the button and the unsaved prompt', () => {
+  assert.match(src, /useRef\(createLock\(\)\)/);
+  assert.match(src, /lock\.current\.run\(/);
+});

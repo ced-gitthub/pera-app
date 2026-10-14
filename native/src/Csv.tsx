@@ -14,7 +14,7 @@ import {
   problemLines,
   type ImportPlan,
 } from './csvLogic';
-import { useToast } from './Toast';
+import { useToastMessage } from './Toast';
 import { csvDirty, importedToast } from './csvMineLogic';
 import { c, s, sp } from './ui';
 
@@ -32,7 +32,7 @@ export function Csv({ snap, onClose, onChanged }: { snap: Snapshot; onClose: () 
   const [exportMsg, setExportMsg] = useState<Msg>(null);
   const [importMsg, setImportMsg] = useState<Msg>(null);
   const [note, setNote] = useState('');
-  const toast = useToast();
+  const [toastMsg, showToast] = useToastMessage();
 
   const run = async (kind: Work, fn: () => Promise<void>) => {
     if (lock.current) return;
@@ -96,7 +96,7 @@ export function Csv({ snap, onClose, onChanged }: { snap: Snapshot; onClose: () 
         if (r.added > 0) {
           setText('');
           setPlan(null);
-          toast(importedToast(r.added));
+          showToast(importedToast(r.added));
           await onChanged();
         } else if (!r.error) setPlan(null);
       } catch {
@@ -110,6 +110,7 @@ export function Csv({ snap, onClose, onChanged }: { snap: Snapshot; onClose: () 
       open
       title="Export and import"
       onClose={onClose}
+      toast={toastMsg}
       dirty={csvDirty(text)}
       footer={
         ready ? <Btn label={`Import ${plan!.rows.length.toLocaleString('en-US')} rows`} busy={work === 'import'} onPress={doImport} /> : undefined

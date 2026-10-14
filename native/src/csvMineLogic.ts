@@ -9,3 +9,14 @@ export const importedToast = (added: number): string =>
 
 /** Which account to mark "Make it yours" as seen for: the loaded profile, else the local session (works offline), else nobody. */
 export const seenUid = (profileUid: string | undefined, sessionUid: string | undefined): string | null => profileUid ?? sessionUid ?? null;
+
+/** Returns a runner that calls its callback only the first time; later calls do nothing and return false. */
+export const createOnce = (): ((fn: () => void) => boolean) => {
+  let done = false;
+  return (fn) => {
+    if (done) return false;
+    done = true;
+    fn();
+    return true;
+  };
+};

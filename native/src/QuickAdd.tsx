@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Text, TextInput, View } from 'react-native';
 import { formatMinor } from '../../src/core/money';
 import { preview, save, newRequestId, type Snapshot, type Preview } from './data';
@@ -12,10 +12,12 @@ export function QuickAdd({
   snap,
   onSaved,
   onDirtyChange,
+  layout,
 }: {
   snap: Snapshot;
   onSaved: () => void | Promise<string | void>;
   onDirtyChange?: (dirty: boolean) => void; // true while typed text is not saved yet
+  layout?: (body: ReactNode, actions: ReactNode) => ReactNode; // lets a sheet pin the Save / Add button in its footer
 }) {
   const [text, setText] = useState('');
   const [pv, setPv] = useState<Preview | null>(null);
@@ -47,7 +49,7 @@ export function QuickAdd({
     if (typeof reloaded === 'string' && reloaded) setMsg({ bad: true, t: `Saved, but could not refresh the screen: ${reloaded}` });
   };
 
-  return (
+  const body = (
     <View>
       <TextInput
         style={s.input}
@@ -77,12 +79,17 @@ export function QuickAdd({
               </Text>
             </View>
           ))}
-          <Btn label="Save" busy={busy} onPress={confirm} />
         </>
-      ) : (
-        <Btn label="Add" alt onPress={check} />
-      )}
+      ) : null}
       {msg && <Text style={msg.bad ? s.err : s.ok}>{msg.t}</Text>}
+    </View>
+  );
+  const actions = pv ? <Btn label="Save" busy={busy} onPress={confirm} /> : <Btn label="Add" alt onPress={check} />;
+  if (layout) return <>{layout(body, actions)}</>;
+  return (
+    <View>
+      {body}
+      {actions}
     </View>
   );
 }

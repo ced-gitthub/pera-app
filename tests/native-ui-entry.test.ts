@@ -64,9 +64,24 @@ test('Home uses the shared Sheet for Quick Add, with dirty and a toast', () => {
 });
 test('Home Edit chip and See all accounts are 48 tall touch targets', () => {
   const h = src('Home.tsx');
-  assert.equal((h.match(/minHeight: sp\.xxl \+ sp\.l/g) ?? []).length >= 2, true);
+  assert.equal((h.match(/minHeight: TOUCH/g) ?? []).length >= 2, true);
+  assert.doesNotMatch(h, /sp\.xxl \+ sp\.l/);
+  assert.match(h, /TOUCH[^}]*\} from '\.\/ui'/);
   assert.match(h, /Home settings/);
   assert.match(h, /See all accounts/);
+});
+test('Home returns the refresh result and shows a failed reload', () => {
+  const h = src('Home.tsx');
+  assert.match(h, /const problem = await refresh\(\)/);
+  assert.match(h, /return problem/);
+  assert.match(h, /setErr\(problem\)/);
+});
+test('Quick Add Save is pinned in the Sheet footer through the layout slot', () => {
+  const q = src('QuickAdd.tsx');
+  assert.match(q, /layout\?: \(body: ReactNode, actions: ReactNode\) => ReactNode/);
+  const h = src('Home.tsx');
+  assert.match(h, /layout=\{/);
+  assert.match(h, /footer=\{actions\}/);
 });
 test('QuickAdd reports unsaved text through an optional onDirtyChange', () => {
   const q = src('QuickAdd.tsx');

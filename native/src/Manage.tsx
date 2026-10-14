@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, BackHandler, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { formatMinor } from '../../src/core/money';
 import { minorToInput } from '../../src/lib/validate';
@@ -7,11 +7,11 @@ import type { Snapshot, Category } from './logic';
 import { Btn } from './Btn';
 import { HeaderClose, Sheet } from './Sheet';
 import { Chip } from './Tabs';
-import { useToast } from './Toast';
+import { LocalToast, useToastMessage } from './Toast';
 import { UNSAVED_TEXT_ANY, unsavedButtons } from './unsaved';
 import { UNSAVED_TITLE } from './profileLogic';
 import { isManageDraftDirty, type ManageDraft } from './manageDirty';
-import { c, s, sp, t } from './ui';
+import { c, s, sp, t, TOUCH } from './ui';
 import {
   ACCOUNT_TYPES,
   MAX_ACCOUNTS,
@@ -53,7 +53,7 @@ export function Manage({
   startAdd?: boolean; // open straight on the new-account form
 }) {
   const { top, bottom } = useSafeAreaInsets();
-  const toast = useToast();
+  const [toastMsg, showToast] = useToastMessage(); // local card: Manage sits inside a Modal, so the app-wide one would be hidden
   const [rows, setRows] = useState<AccountRow[] | null>(null);
   const [loadErr, setLoadErr] = useState('');
   const [target, setTarget] = useState<Target>(null);
@@ -124,7 +124,7 @@ export function Manage({
     if (problem) return fail(problem);
     const what = target.kind === 'account' ? 'Account' : 'Category';
     setTarget(null);
-    toast(target.id ? `${what} saved` : `${what} added`);
+    showToast(target.id ? `${what} saved` : `${what} added`);
     await changed();
     return true;
   };
@@ -146,7 +146,7 @@ export function Manage({
           const problem = await (kind === 'account' ? deleteAccount(id) : deleteCategory(id)).catch(() => OFFLINE_DELETE);
           setBusy(false);
           if (problem) return setNote(problem);
-          toast(`Deleted ${name}`);
+          showToast(`Deleted ${name}`);
           await changed();
         },
       },
@@ -155,20 +155,11 @@ export function Manage({
 
   const current: ManageDraft = { kind: target?.kind ?? 'account', account: acct, catName, catType };
   const dirty = !!target && isManageDraftDirty(initial, current);
-  // Close and the Android back button ask first when a form has unsaved changes.
+  // Close asks first when a form has unsaved changes (the Sheet guards its own Done, tap outside and back).
   const onClose = () => {
     if (dirty) Alert.alert(UNSAVED_TITLE, UNSAVED_TEXT_ANY, unsavedButtons({ onClose: leave, onSave: save }));
     else leave();
   };
-  const closeRef = useRef(onClose);
-  closeRef.current = onClose;
-  useEffect(() => {
-    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
-      closeRef.current();
-      return true;
-    });
-    return () => sub.remove();
-  }, []);
 
   const editing = target?.id != null;
   const isAcct = target?.kind === 'account';
@@ -178,7 +169,7 @@ export function Manage({
   const atCatCap = snap.categories.length >= MAX_CATEGORIES;
 
   const link = (label: string, a11y: string, onPress: () => void, danger?: boolean) => (
-    <Pressable accessibilityRole="button" accessibilityLabel={a11y} disabled={busy && !!danger} onPress={onPress} style={{ padding: sp.m, minHeight: 48, justifyContent: 'center' }}>
+    <Pressable accessibilityRole="button" accessibilityLabel={a11y} disabled={busy && !!danger} onPress={onPress} style={{ padding: sp.m, minHeight: TOUCH, justifyContent: 'center' }}>
       <Text style={{ color: danger ? c.down : c.primary, fontSize: t.body, fontWeight: '700' }}>{label}</Text>
     </Pressable>
   );
@@ -343,6 +334,7 @@ export function Manage({
           </>
         )}
       </Sheet>
+      <LocalToast message={toastMsg} />
     </View>
   );
 }

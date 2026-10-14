@@ -79,6 +79,10 @@ test('Recurring: Sheet gets dirty + onSave, Save rule is in the pinned footer, d
   assert.match(t, /<Btn[^>]*danger/);
   assert.match(t, /Delete rule: \$\{/);
   assert.match(t, /Rule saved/);
+  assert.match(t, /useToastMessage\(/);
+  // saving from the unsaved prompt must not close the sheet (that would hide the pop-out): onSave always resolves false
+  assert.match(t, /onSave=\{saveFromPrompt\}/);
+  assert.match(t, /async function saveFromPrompt\(\)[^}]*await save\(\);[^}]*return false;/s);
   assert.match(t, /Deleted/);
 });
 
@@ -86,7 +90,7 @@ test('Manage: header Close and back ask Save / Discard / Keep editing when dirty
   const t = src('Manage.tsx');
   assert.match(t, /isManageDraftDirty/);
   assert.match(t, /Alert\.alert\(UNSAVED_TITLE, UNSAVED_TEXT_ANY, unsavedButtons\(\{ onClose: leave, onSave/);
-  assert.match(t, /BackHandler/);
+  assert.doesNotMatch(t, /BackHandler/); // the host Modal takes the back press; the inner Sheet guards itself
   assert.match(t, /<HeaderClose label="Close" onPress=\{onClose\}/);
   assert.match(t, /from '\.\/unsaved'/);
   assert.match(t, /UNSAVED_TITLE/);
@@ -98,9 +102,12 @@ test('Manage: Save changes is pinned (Sheet footer), toasts name what happened, 
   const footer = t.slice(t.indexOf('footer={'));
   assert.match(footer.slice(0, 300), /Save changes/);
   assert.match(t, /<Sheet[^>]*dirty=/);
-  assert.match(t, /useToast/);
-  assert.match(t, /toast\(/);
-  assert.match(t, /minHeight: 48/);
+  assert.doesNotMatch(t, /useToast\(/); // Manage is inside a Modal: the app-wide card would sit behind it
+  assert.match(t, /useToastMessage\(/);
+  assert.match(t, /<LocalToast message=\{toastMsg\} \/>/);
+  assert.match(t, /showToast\(/);
+  assert.match(t, /minHeight: TOUCH/);
+  assert.doesNotMatch(t, /minHeight: 48/);
 });
 
 test('files stay under 400 lines', () => {

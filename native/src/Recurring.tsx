@@ -1,4 +1,4 @@
-import { useRef, useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Alert, Text, TextInput, View } from 'react-native';
 import { formatMinor, manilaToday } from '../../src/core/money';
 import { Btn } from './Btn';
@@ -7,6 +7,7 @@ import { isRuleDraftDirty } from './manageDirty';
 import { createRule, deleteRule, listRules, runDue, setRuleActive, type Rule } from './recurringApi';
 import { FREQUENCIES, MAX_DESCRIPTION, MAX_RULES, describeRule, validateRule, type Frequency, type RuleForm } from './recurringLogic';
 import { Sheet, ToggleRow } from './Sheet';
+import { useToastMessage } from './Toast';
 import { ListSkeleton } from './Skeleton';
 import { Chip, useList } from './Tabs';
 import { c, s, sp, t } from './ui';
@@ -36,8 +37,7 @@ export function Recurring({ snap, onClose, onChanged }: { snap: Snapshot; onClos
   const [adding, setAdding] = useState(false);
   const [initial, setInitial] = useState<RuleForm>(() => blank(snap)); // the form as it was opened, to tell if anything was typed
   const [f, setF] = useState<RuleForm>(initial);
-  const [toastMsg, setToastMsg] = useState<string | null>(null);
-  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [toastMsg, flash] = useToastMessage();
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
   const [saving, setSaving] = useState(false);
@@ -57,14 +57,13 @@ export function Recurring({ snap, onClose, onChanged }: { snap: Snapshot; onClos
     setInitial(b);
     setF(b);
   };
-  // The Sheet is a modal, so its own pop-out card (not the app-wide one) is what the person can see.
-  const flash = (m: string) => {
-    if (toastTimer.current) clearTimeout(toastTimer.current);
-    setToastMsg(m);
-    toastTimer.current = setTimeout(() => setToastMsg(null), 2200);
-  };
+  // The Sheet's unsaved prompt closes the sheet after a successful onSave, which would hide the pop-out card.
+  // So it saves, collapses the form, shows the card, and answers false: the sheet stays open on the rule list.
+  async function saveFromPrompt(): Promise<boolean> {
+    await save();
+    return false;
+  }
 
-  // true = saved (the unsaved-changes prompt closes the sheet only then)
   async function save(): Promise<boolean> {
     if (saving) return false;
     setMsg('');
@@ -128,7 +127,7 @@ export function Recurring({ snap, onClose, onChanged }: { snap: Snapshot; onClos
       open
       title="Recurring"
       dirty={dirty}
-      onSave={save}
+      onSave={saveFromPrompt}
       onClose={onClose}
       toast={toastMsg}
       footer={adding ? <Btn label="Save rule" busy={saving} onPress={() => void save()} /> : undefined}

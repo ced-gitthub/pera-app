@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { AppState } from 'react-native';
+import { AppState, BackHandler } from 'react-native';
 import { Text, View } from 'react-native';
 import type { Gate as GateResult } from '../../src/lib/onboarding';
 import { supabase } from './supabase';
 import { load, type Snapshot } from './data';
 import { loadCounts } from './wizardData';
 import { askPending, readFlags, setAskPending, setFlags, tabTourSeen, markTabTourSeen, samplePending, setSamplePending } from './flags';
-import { createGeneration, openSheet } from './gateFlow';
+import { createGeneration, decideAsk, openSheet } from './gateFlow';
 import { TabTour } from './TabTour';
 import { CoachProvider } from './Coach';
 import { TOUR } from './tourContent';
@@ -45,11 +45,13 @@ import { c, s, sp, t } from './ui';
 
 type Kept = { snap: Snapshot; gate: GateResult; uid: string; name: string; tab: string };
 export const gateMemo = createGateMemo<Kept>();
+const reloads = createGeneration(); // module level: a remounted Gate (theme redraw) makes the old instance's reload stale
 
 // Decides between the wizard and Home from REAL data (entries, opening balances, budgets, goals). Flags only remember what was seen, per account.
 // If the counts cannot be read the person is let in (fail open) and nothing is blocked by a read error.
-export function Gate() {
-  const kept = gateMemo.get(); // after a theme redraw the Gate starts from what it showed a moment ago
+export function Gate({ uid: sessionUid }: { uid: string }) {
+  const kept0 = gateMemo.get();
+  const kept = kept0 && kept0.uid === sessionUid ? kept0 : null; // never start from another account's data
   const [snap, setSnap] = useState<Snapshot | null>(kept?.snap ?? null);
   const [gate, setGate] = useState<GateResult | null>(kept?.gate ?? null);
   const [uid, setUid] = useState(kept?.uid ?? '');
@@ -68,7 +70,6 @@ export function Gate() {
   const [sampleEnd, setSampleEnd] = useState(false); // 'Keep the sample entries?' after the tour
   const [tour, setTour] = useState<number | null>(null); // index of the live-tour step, or null when it is closed
   const [replaying, setReplaying] = useState(false); // the read-only walkthrough (Settings > Show the first-run tutorial again); never the required setup
-  const gen = useRef(createGeneration()); // numbers the reloads: the newest answer wins
   const booted = useRef(false); // the first load also decides Make it yours, the pending questions and the tour-seen flag, in one go (no flashing)
   const tourFrom = useRef('home'); // the tab the person was on, restored when the tour ends
   const lastTry = useRef<number | null>(null);
@@ -81,7 +82,7 @@ export function Gate() {
   };
   useEffect(() => {
     const m = gateMemo.get();
-    if (m && m.tab !== tab) gateMemo.set({ ...m, tab });
+    if (m && m.uid === sessionUid && m.tab !== tab) gateMemo.set({ ...m, tab });
   }, [tab]);
   useEffect(() => {
     // every tour step shows its own real tab underneath the overlay
@@ -93,8 +94,10 @@ export function Gate() {
       const { data } = await supabase.auth.getSession();
       const id = data.session?.user.id;
       if (!id) return 'Session expired. Please sign in again.';
-      const my = gen.current.next();
+      const my = reloads.next();
+      const memoToken = gateMemo.begin();
       const wasSignUp = await takeSignUpFlag(data.session?.user.email ?? ''); // read once; used below with this load's counts
+      if (wasSignUp) await setAskPending(id, true); // saved BEFORE the network reads: a failed or replaced load can no longer lose the question
       // One round trip, not four in a row: the snapshot, the counts and the profile are read together.
       const [sn, flags, counts, prof, seenMine, pendingSamples, tourSeen, pendingAsk] = await Promise.all([
         load(),
@@ -106,18 +109,16 @@ export function Gate() {
         tabTourSeen(id),
         askPending(id),
       ]);
-      if (gen.current.isStale(my)) return ''; // a newer reload started while this one was waiting: it will apply its own answer
+      if (reloads.isStale(my)) return ''; // a newer reload started while this one was waiting: it will apply its own answer
       const d = decideGate(counts, sn.accounts, flags);
       await setFlags(id, d.set);
-      if (shouldAskAboutExistingData(wasSignUp, counts)) {
-        void setAskPending(id, true); // remembered until answered
-        setAsk(true);
-      }
+      const dec = decideAsk({ wasSignUp, pending: pendingAsk, total: counts ? counts.totalEntries + counts.budgetsCount + counts.goalsCount : null });
+      if (dec.write === 'clear') void setAskPending(id, false); // the account is known to be empty: nothing to ask
+      if (dec.ask) setAsk(true);
       if (!booted.current) {
         booted.current = true;
         setMine(!seenMine);
         setSampleEnd(pendingSamples && tourSeen); // if the tour was not seen yet, the tour choice comes first and the Keep / Clear question follows the tour
-        if (pendingAsk) setAsk(true);
       }
       setCanSample(canOfferSample(counts, sn.accounts.length));
       setUid(id);
@@ -125,7 +126,7 @@ export function Gate() {
       setName(nm);
       setSnap(sn);
       setGate(d.gate);
-      gateMemo.set({ snap: sn, gate: d.gate, uid: id, name: nm, tab: gateMemo.get()?.tab ?? 'home' });
+      gateMemo.set({ snap: sn, gate: d.gate, uid: id, name: nm, tab: gateMemo.get()?.tab ?? 'home' }, memoToken);
       setErr('');
       // Due recurring rules run AFTER the screen has its data, so a slow network never stalls a refresh. If they made entries, reload once.
       if (shouldRunDue(lastDue.current, manilaToday(), lastTry.current)) {
@@ -174,6 +175,15 @@ export function Gate() {
     };
   }, []);
   useEffect(() => {
+    // the read-only walkthrough: the back button leaves it
+    if (!replaying) return;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      setReplaying(false);
+      return true;
+    });
+    return () => sub.remove();
+  }, [replaying]);
+  useEffect(() => {
     // coming back to the app on a new day runs the day's recurring entries and reloads the numbers
     const sub = AppState.addEventListener('change', (st) => {
       if (st === 'active' && shouldRunDue(lastDue.current, manilaToday())) void refresh();
@@ -204,7 +214,16 @@ export function Gate() {
     setAsk(false);
     setFresh(true);
   };
-  const resetSheet = <ResetData open={sheet === 'fresh'} onClose={() => (setFresh(false), void setAskPending(uid, false))} onDone={() => void refresh()} />;
+  const resetSheet = (
+    <ResetData
+      open={sheet === 'fresh'}
+      onClose={() => (setFresh(false), void setAskPending(uid, false))}
+      onDone={() => {
+        void setAskPending(uid, false); // the account is empty now: the question must not come back after a restart
+        void refresh();
+      }}
+    />
+  );
   if (replaying)
     return (
       <Wizard
@@ -216,6 +235,7 @@ export function Gate() {
         refresh={refresh}
         onBalances={async () => true}
         onFinish={() => setReplaying(false)}
+        onClose={() => setReplaying(false)}
       />
     );
   if (gate.show)

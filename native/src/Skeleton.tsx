@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Animated, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { c, e, r, s, sp } from './ui';
+import { c, e, r, s, sp, TOUCH } from './ui';
 
 // Grey shapes that pulse where the real content will appear, so waiting never looks like an error.
 export function Skel({ w, h, round = r.s }: { w: number | `${number}%`; h: number; round?: number }) {
@@ -33,7 +33,7 @@ export function HomeSkeleton() {
           <Skel w={e.s} h={e.s} round={r.pill} />
           <Skel w={140} h={sp.xl} />
         </View>
-        <Skel w={72} h={e.s} round={r.m} />
+        <Skel w={72} h={TOUCH} round={r.m} />
       </View>
       <View style={{ marginBottom: sp.m }}>
         <Skel w="100%" h={e.l} round={r.l} />
@@ -45,8 +45,8 @@ export function HomeSkeleton() {
           </View>
         ))}
       </View>
-      {/* See all accounts link: same height as the live link (a line plus its vertical padding) */}
-      <View style={{ alignItems: 'flex-end', paddingVertical: sp.xs, marginBottom: sp.m }}>
+      {/* See all accounts link: the live link is a TOUCH (48) tall target with marginBottom sp.s; keep these two in step with Home.tsx */}
+      <View style={{ alignItems: 'flex-end', minHeight: TOUCH, justifyContent: 'center', marginBottom: sp.s }}>
         <Skel w={120} h={sp.xl} />
       </View>
       <View style={[s.card, { flexDirection: 'row', alignItems: 'center', gap: sp.m }]}>

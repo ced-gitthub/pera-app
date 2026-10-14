@@ -53,7 +53,7 @@ export const SAMPLE_REMOVE_FAIL = 'Could not clear the sample entries. They are 
 // because that is what a person means by "clear all data"; the words below must stay true to the code (tests/native-sample.test.ts checks them).
 export const TOUR_END_TITLE = 'Keep what you set up?';
 export const TOUR_END_TEXT =
-  'The tour added sample entries, and the setup steps made your budget, goal and starting balances. Keep everything, or clear everything (sample entries, budgets, goals, recurring rules and starting balances) and use an empty app. Your login, accounts and categories stay.';
+  'The tour added sample entries, and the setup steps made your budget, goal and starting balances. Sample entries count in your balances until you clear them. Keep everything, or clear everything (sample entries, budgets, goals, recurring rules and starting balances) and use an empty app. Your login, accounts and categories stay.';
 export const TOUR_END_KEEP = 'Keep everything';
 export const TOUR_END_CLEAR = 'Clear everything';
 export const TOUR_END_CONFIRM = 'Yes, delete everything';
@@ -67,3 +67,6 @@ export function sampleMovementOf(rows: { account_id: string | null; type: string
   }
   return out;
 }
+
+// Shown on the setup balances step while the tour's sample entries exist (they change what an account shows).
+export const BALANCE_SAMPLE_NOTE = 'The sample entries are added on top of this until you clear them.';

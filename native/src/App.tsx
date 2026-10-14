@@ -81,7 +81,7 @@ export default function App() {
       </View>
     );
   else if (totp) body = <Totp onDone={() => check(session)} />;
-  else body = <Gate />;
+  else body = <Gate uid={session?.user.id ?? ''} />;
   return (
     <SafeAreaProvider>
       <ToastProvider>

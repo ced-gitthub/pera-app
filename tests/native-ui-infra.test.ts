@@ -58,3 +58,14 @@ test('one app-wide pop-out confirmation (a centred card with a check) any screen
   const sheet = read('Sheet.tsx');
   assert.match(sheet, /ToastCard/); // the sheet's own toast and the app-wide one look the same
 });
+
+test('screens that are shown inside a Modal use a LOCAL pop-out (the app-wide card would sit behind the Modal): LocalToast and useToastMessage exist', () => {
+  const toast = read('Toast.tsx');
+  assert.match(toast, /export function LocalToast/);
+  assert.match(toast, /export function useToastMessage/);
+  assert.match(toast, /TOAST_MS/);
+});
+
+test('no component that lives inside a Modal calls the app-wide useToast() (Manage, Csv, Recurring, Planning sheets, EntrySheet)', () => {
+  for (const f of ['Manage.tsx', 'Csv.tsx', 'Recurring.tsx']) assert.doesNotMatch(read(f), /useToast\(\)/, f);
+});

@@ -44,8 +44,15 @@ export async function createEntryWith(db: Db, userId: string, patch: TxPatch, re
     // Skipped because the row already exists (an earlier save reached the database but its reply was lost): make the stored row match THIS form,
     // otherwise the person would be told "saved" while the old values stay.
     if (Array.isArray(data) && data.length === 0) {
-      const { error: updateError } = await db.from('transactions').update(patch).eq('user_id', userId).eq('request_id', requestId);
+      const { data: updated, error: updateError } = await db
+        .from('transactions')
+        .update(patch)
+        .eq('user_id', userId)
+        .eq('request_id', requestId)
+        .eq('request_idx', 0)
+        .select('id');
       if (updateError) return entryError(updateError, 'save');
+      if (!Array.isArray(updated) || updated.length !== 1) return GONE; // the row it should correct is not there (or more than one matched)
     }
     const { count, error: countError } = await db
       .from('transactions')

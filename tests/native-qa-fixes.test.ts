@@ -5,7 +5,7 @@ import { fakeDb } from './helpers/fakeDb.ts';
 import { createEntryWith } from '../native/src/entriesCore.ts';
 import { RECORDS_DELETE } from '../native/src/deleteAccountLogic.ts';
 import { RESET_KINDS, RESET_LABEL } from '../native/src/resetLogic.ts';
-import { createGeneration, openSheet } from '../native/src/gateFlow.ts';
+import { createGeneration, decideAsk, openSheet } from '../native/src/gateFlow.ts';
 import { createLeaveWatcher } from '../native/src/leaveWatcher.ts';
 import { createGateMemo } from '../native/src/gateMemo.ts';
 import { TOUR } from '../native/src/tourContent.ts';
@@ -37,6 +37,7 @@ test('new entry: a first save that reached the database but whose reply was lost
   assert.deepEqual(upd[0].filters, [
     ['user_id', 'u1'],
     ['request_id', 'rid-1'],
+    ['request_idx', 0],
   ]);
   // a normal first save does not need the extra write
   const fresh = fakeDb({ 'transactions.upsert': { data: [{ id: 'new' }], error: null }, 'transactions.select': { count: 1, error: null } });
@@ -258,4 +259,74 @@ test('CI type-checks the native app, and the live run also starts for native cha
   assert.match(ci, /cd native && npx tsc --noEmit/);
   const qa = fs.readFileSync('.github/workflows/prod-qa.yml', 'utf8');
   assert.match(qa, /paths: \[[^\]]*'native\/\*\*'/);
+});
+
+// ---- J1 findings: another account's data never shows, the question is never lost, copy tells the truth
+test('gate memo: a reload that started before a sign-out can never put the old account back (epoch), and the memo is only used for the SAME account', () => {
+  const m = createGateMemo<{ uid: string }>();
+  const token = m.begin(); // a reload starts
+  m.clear(); // sign-out while it runs
+  assert.equal(m.set({ uid: 'A' }, token), false); // its late result is dropped
+  assert.equal(m.get(), null);
+  const t2 = m.begin();
+  assert.equal(m.set({ uid: 'B' }, t2), true);
+  assert.equal(m.get()?.uid, 'B');
+  const g = read('Gate.tsx');
+  assert.match(g, /export function Gate\(\{ uid: sessionUid \}/);
+  assert.match(g, /kept0 && kept0\.uid === sessionUid/); // never start from another account's data
+  assert.match(read('App.tsx'), /<Gate uid=\{/);
+});
+
+test('the existing-data question: saved as soon as a sign-up is detected, kept when the counts cannot be read, cleared when the account turns out to be empty or after Start fresh', () => {
+  // brand-new sign-up, counts say there is data: ask, keep it pending
+  assert.deepEqual(decideAsk({ wasSignUp: true, pending: true, total: 5 }), { ask: true, write: null });
+  // sign-up into an empty account: nothing to ask, clear the early "pending"
+  assert.deepEqual(decideAsk({ wasSignUp: true, pending: true, total: 0 }), { ask: false, write: 'clear' });
+  // the counts could not be read (offline / failed load): keep the question pending, ask conservatively
+  assert.deepEqual(decideAsk({ wasSignUp: true, pending: true, total: null }), { ask: true, write: null });
+  // a pending question on a later start: data still there -> ask; account now empty (after Start fresh) -> clear
+  assert.deepEqual(decideAsk({ wasSignUp: false, pending: true, total: 7 }), { ask: true, write: null });
+  assert.deepEqual(decideAsk({ wasSignUp: false, pending: true, total: 0 }), { ask: false, write: 'clear' });
+  assert.deepEqual(decideAsk({ wasSignUp: false, pending: false, total: 7 }), { ask: false, write: null });
+  const g = read('Gate.tsx');
+  assert.match(g, /if \(wasSignUp\) await setAskPending\(id, true\)/); // before the network reads
+  assert.match(g, /decideAsk\(/);
+  assert.match(g, /const reloads = createGeneration\(\)/); // module level: a remounted Gate makes the old one's reload stale
+  assert.doesNotMatch(g, /gen = useRef\(createGeneration/);
+  const reset = g.slice(g.indexOf('const resetSheet'), g.indexOf('if (replaying)'));
+  assert.match(reset, /setAskPending\(uid, false\)/);
+  assert.match(reset, /onDone=/);
+});
+
+test('copy is true while sample entries exist: the balance step and the Keep text say they are added on top until cleared', () => {
+  const logic = fs.readFileSync('native/src/sampleLogic.ts', 'utf8');
+  assert.match(logic, /export const BALANCE_SAMPLE_NOTE/);
+  assert.match(logic, /on top/);
+  assert.match(read('Wizard.tsx'), /BALANCE_SAMPLE_NOTE/);
+  assert.match(logic, /count in your balances until you clear them/);
+});
+
+test('the lost-reply correction touches exactly that one row and treats "no row" as gone', async () => {
+  const gone = fakeDb({ 'transactions.upsert': { data: [], error: null }, 'transactions.update': { data: [], error: null } });
+  assert.match((await createEntryWith(gone, 'u1', patch, 'rid-9')) ?? '', /no longer exists/i);
+  const ok = fakeDb({
+    'transactions.upsert': { data: [], error: null },
+    'transactions.update': { data: [{ id: 'x' }], error: null },
+    'transactions.select': { count: 1, error: null },
+  });
+  assert.equal(await createEntryWith(ok, 'u1', patch, 'rid-10'), null);
+  assert.deepEqual(ok.of('transactions', 'update')[0].filters, [
+    ['user_id', 'u1'],
+    ['request_id', 'rid-10'],
+    ['request_idx', 0],
+  ]);
+});
+
+test('the read-only tutorial replay has a pinned Close and the back button leaves it', () => {
+  const w = read('Wizard.tsx');
+  assert.match(w, /onClose\?: \(\) => void/);
+  assert.match(w, /<HeaderClose label="Close" onPress=\{p\.onClose\}/);
+  const g = read('Gate.tsx');
+  assert.match(g, /BackHandler\.addEventListener\('hardwareBackPress'/);
+  assert.match(g, /onClose=\{\(\) => setReplaying\(false\)\}/);
 });

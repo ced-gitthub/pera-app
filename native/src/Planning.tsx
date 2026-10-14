@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Alert, Pressable, Text, TextInput, View } from 'react-native';
 import { formatMinor } from '../../src/core/money';
 import { GOAL_EMOJIS } from '../../src/lib/goals';
@@ -10,7 +10,7 @@ import { deleteBudget, deleteGoal } from './config';
 import { Bar, Chip, Page, useList } from './Tabs';
 import { ListSkeleton } from './Skeleton';
 import { useToast } from './Toast';
-import { isBudgetDirty, isGoalDirty, type BudgetForm, type GoalForm } from './planningDirty';
+import { createLock, isBudgetDirty, isGoalDirty, type BudgetForm, type GoalForm } from './planningDirty';
 import { Sheet } from './Sheet';
 import { Btn } from './Btn';
 import { CoachTarget } from './Coach';
@@ -26,15 +26,21 @@ const confirmDelete = (title: string, message: string, onYes: () => void) =>
 function useSaver(after: () => Promise<void> | void) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
-  const run = async (f: () => Promise<string | null>) => {
-    setBusy(true);
-    setErr('');
-    const m = await f().catch(() => 'Not saved: could not reach the server. Try again.');
-    setBusy(false);
-    if (m) setErr(m);
-    else await after();
-    return !m;
-  };
+  const lock = useRef(createLock());
+  // one save at a time, whether it came from the button or the unsaved prompt
+  const run = (f: () => Promise<string | null>) =>
+    lock.current.run(async () => {
+      setBusy(true);
+      setErr('');
+      try {
+        const m = await f().catch(() => 'Not saved: could not reach the server. Try again.');
+        if (m) setErr(m);
+        else await after();
+        return !m;
+      } finally {
+        setBusy(false);
+      }
+    });
   return { busy, err, setErr, run };
 }
 

@@ -78,3 +78,14 @@ test('Settings name: synced, 40 chars, toast, refresh and card version bump', ()
   assert.match(s, /onChanged=\{\(\) => \{[^}]*setPver[^}]*refresh\(\)/s);
   assert.match(s, /Delete sample records/);
 });
+
+test('Home skeleton uses the same TOUCH heights and margins as the live Home', () => {
+  const k = src('Skeleton.tsx');
+  const h = src('Home.tsx');
+  // live: Edit chip and See all accounts are TOUCH (48) tall; See all accounts has marginBottom sp.s
+  assert.match(h, /minHeight: TOUCH[^}]*marginBottom: sp\.s/);
+  assert.match(k, /<Skel w=\{72\} h=\{TOUCH\}/); // Edit chip placeholder
+  assert.match(k, /minHeight: TOUCH, justifyContent: 'center', marginBottom: sp\.s/); // See all accounts placeholder
+  assert.doesNotMatch(k, /same height as the live link \(a line plus/);
+  assert.match(k, /import \{[^}]*TOUCH[^}]*\} from '\.\/ui'/);
+});
