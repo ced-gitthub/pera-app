@@ -96,6 +96,7 @@ test('free-plan usage: production deploys skip commits that change nothing deplo
 test('free-plan usage: the live suites run one at a time and not for test-only or native-only commits', () => {
   const w = readFileSync('.github/workflows/prod-qa.yml', 'utf8');
   assert.match(w, /concurrency:\s+group: prod-qa/);
+  assert.match(w, /push:\n\s+branches: \[main\]/, 'only main is deployed, so only main pushes can be live-tested');
   const paths = w.match(/paths: \[(.*)\]/)![1];
   assert.doesNotMatch(paths, /tests\/prod|native|docs|supabase/, 'only commits that Vercel will actually deploy');
   assert.match(paths, /src\/\*\*/);
