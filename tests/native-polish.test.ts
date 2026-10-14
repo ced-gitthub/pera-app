@@ -66,9 +66,11 @@ test('saving pops out a clear confirmation that cannot be missed (centred card w
   assert.match(PROFILE_SAVED_TOAST, /saved/i);
   const sheet = read('Sheet.tsx');
   assert.match(sheet, /toast\??:/);
-  assert.match(sheet, /accessibilityLiveRegion="assertive"|accessibilityLiveRegion="polite"/);
-  assert.match(sheet, /✓/);
-  assert.match(sheet, /StyleSheet.absoluteFill|position: 'absolute'/); // drawn over the sheet
+  const toastCard = read('Toast.tsx'); // the card itself lives in Toast.tsx, shared by the sheet and the app
+  assert.match(toastCard, /accessibilityLiveRegion="assertive"/);
+  assert.match(toastCard, /✓/);
+  assert.match(toastCard, /StyleSheet.absoluteFill/); // drawn over the screen
+  assert.match(sheet, /ToastCard/);
   const p = read('Personalize.tsx');
   assert.match(p, /toast=\{/);
   assert.match(p, /PROFILE_SAVED_TOAST/);
