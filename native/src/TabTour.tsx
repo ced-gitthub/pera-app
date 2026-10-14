@@ -3,7 +3,7 @@ import { AccessibilityInfo, Animated, BackHandler, Pressable, StyleSheet, Text, 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Btn } from './Btn';
 import { useCoach } from './Coach';
-import { nextIndex, padRect, placeTip, scrollDelta, sameRect, type Rect } from './coachLogic';
+import { nextIndex, padRect, placeTip, scrollDelta, sameRect, withTimeout, type Rect } from './coachLogic';
 import { TOUR } from './tourContent';
 import { c, r, sp, t } from './ui';
 
@@ -13,6 +13,7 @@ const BOUNCE_MS = 520;
 const TIP_W = 340;
 const TIP_GUESS_H = 200;
 const WAITS = [0, 120, 120, 200, 300, 500]; // after a tab switch the target may mount late; measure a few times until it stops moving
+const SETTLE_MS = 800; // one measuring pass never waits longer than this, so the tooltip always appears
 const pause = (ms: number) => new Promise<void>((res) => setTimeout(res, ms));
 const fixed = (tgt: string) => tgt.startsWith('tab:') || tgt === 'fab'; // these sit on the screen already; never scroll for them
 
@@ -114,7 +115,11 @@ export function TabTour({ index, onIndex, onClose }: { index: number; onIndex: (
       for (const w of WAITS) {
         await pause(w);
         if (!live) return;
-        const [o, raw, bar] = await Promise.all([origin(), api.measure(id), fixed(id) ? Promise.resolve(null) : api.measure('tab:home')]);
+        const [o, raw, bar] = await withTimeout(
+          Promise.all([origin(), api.measure(id), fixed(id) ? Promise.resolve(null) : api.measure('tab:home')]),
+          SETTLE_MS,
+          [{ x: 0, y: 0 }, null, null] as [{ x: number; y: number }, Rect | null, Rect | null],
+        );
         if (!live) return;
         if (!raw) {
           prev = null;

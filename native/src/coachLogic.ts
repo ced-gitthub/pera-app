@@ -62,3 +62,20 @@ export function nextIndex(i: number, n: number, dir: 1 | -1): { index: number; d
   if (k >= n) return { index: n - 1, done: dir === 1 };
   return { index: Math.max(0, k), done: false };
 }
+
+// A promise that never settles (a native measure call on a view that just unmounted) must not freeze the tour: after ms it resolves to the fallback.
+export function withTimeout<T>(p: PromiseLike<T>, ms: number, fallback: T): Promise<T> {
+  return new Promise<T>((resolve) => {
+    const timer = setTimeout(() => resolve(fallback), ms);
+    Promise.resolve(p).then(
+      (v) => {
+        clearTimeout(timer);
+        resolve(v);
+      },
+      () => {
+        clearTimeout(timer);
+        resolve(fallback);
+      },
+    );
+  });
+}

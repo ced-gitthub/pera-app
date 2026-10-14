@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, type ReactNode } from 'react';
 import { View, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollView, type StyleProp, type ViewStyle } from 'react-native';
-import type { Rect } from './coachLogic';
+import { withTimeout, type Rect } from './coachLogic';
 
 // The registry behind the live tour. A <CoachTarget id="..."> wraps a REAL control and registers its view here; the tour asks for its on-screen
 // rect (measureInWindow) whenever it needs it. Nothing in this file re-renders the app: it is a plain mutable registry with a tiny event hook.
@@ -30,6 +30,7 @@ const none: CoachApi = {
   poke: () => {},
   subscribe: () => () => {},
 };
+const MEASURE_MS = 400; // a view that unmounts mid-measure never calls back; without this the tour would wait forever
 const Ctx = createContext<CoachApi>(none);
 export const useCoach = () => useContext(Ctx);
 
@@ -55,7 +56,8 @@ export function CoachProvider({ children }: { children: ReactNode }) {
       isEmpty: (id) => !!metas.current.get(id)?.empty,
       has: (id) => !!metas.current.get(id)?.node,
       measure: (id) =>
-        new Promise<Rect | null>((resolve) => {
+        withTimeout(
+          new Promise<Rect | null>((resolve) => {
           const n = metas.current.get(id)?.node;
           if (!n) return resolve(null);
           try {
@@ -63,7 +65,10 @@ export function CoachProvider({ children }: { children: ReactNode }) {
           } catch {
             resolve(null);
           }
-        }),
+          }),
+          MEASURE_MS,
+          null,
+        ),
       setScroller: (view) => {
         scroller.current = { view, y: 0 };
       },

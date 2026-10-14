@@ -12,6 +12,7 @@ export interface Query extends PromiseLike<Res> {
   update(values: Record<string, unknown>): Query;
   delete(): Query;
   eq(column: string, value: unknown): Query;
+  in(column: string, values: unknown[]): Query;
   maybeSingle(): PromiseLike<Res>;
 }
 export interface Db {

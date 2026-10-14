@@ -43,3 +43,15 @@ export async function tabTourSeen(uid: string): Promise<boolean> {
   }
 }
 export const markTabTourSeen = (uid: string) => AsyncStorage.setItem(tourKey(uid), '1').catch(() => {});
+
+// Sample entries added for the tour are remembered per account until the person chooses Keep or Clear, so the question survives closing the app mid-tour.
+const sampleKey = (uid: string) => `zv_sample_pending:${uid}`;
+export async function samplePending(uid: string): Promise<boolean> {
+  try {
+    return (await AsyncStorage.getItem(sampleKey(uid))) === '1';
+  } catch {
+    return false;
+  }
+}
+export const setSamplePending = (uid: string, on: boolean) =>
+  (on ? AsyncStorage.setItem(sampleKey(uid), '1') : AsyncStorage.removeItem(sampleKey(uid))).catch(() => {});

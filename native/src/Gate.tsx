@@ -5,7 +5,7 @@ import type { Gate as GateResult } from '../../src/lib/onboarding';
 import { supabase } from './supabase';
 import { load, type Snapshot } from './data';
 import { loadCounts } from './wizardData';
-import { readFlags, setFlags, tabTourSeen, markTabTourSeen } from './flags';
+import { readFlags, setFlags, tabTourSeen, markTabTourSeen, samplePending, setSamplePending } from './flags';
 import { TabTour } from './TabTour';
 import { CoachProvider } from './Coach';
 import { TOUR } from './tourContent';
@@ -19,6 +19,9 @@ import { takeSignUpFlag } from './fresh';
 import { shouldAskAboutExistingData } from './freshLogic';
 import { ExistingDataPrompt } from './ExistingDataPrompt';
 import { ResetData } from './ResetData';
+import { TourChoice, TourEnd } from './SampleSheets';
+import { addSamples, removeSamples } from './sampleApi';
+import { canOfferSample } from './sampleLogic';
 import { MakeItYours } from './MakeItYours';
 import { makeItYoursSeen } from './profile';
 import { shouldRunDue } from './recurringLogic';
@@ -48,6 +51,9 @@ export function Gate() {
   const [ask, setAsk] = useState(false); // sign-up landed in an account that already has data: ask, never delete silently
   const [fresh, setFresh] = useState(false);
   const [mine, setMine] = useState(false); // 'Make it yours' (theme + profile), once per account
+  const [choose, setChoose] = useState(false); // 'Take a quick tour?' (with or without sample entries)
+  const [canSample, setCanSample] = useState(false);
+  const [sampleEnd, setSampleEnd] = useState(false); // 'Keep the sample entries?' after the tour
   const [tour, setTour] = useState<number | null>(null); // index of the live-tour step, or null when it is closed
   const tourFrom = useRef('home'); // the tab the person was on, restored when the tour ends
   const lastTry = useRef<number | null>(null);
@@ -75,6 +81,7 @@ export function Gate() {
       const d = decideGate(counts, sn.accounts, flags);
       await setFlags(id, d.set);
       if (shouldAskAboutExistingData(wasSignUp, counts)) setAsk(true);
+      setCanSample(canOfferSample(counts, sn.accounts.length));
       setUid(id);
       const prof = await supabase.from('profiles').select('name').eq('id', id).maybeSingle();
       const nm = String(prof.data?.name || data.session?.user.user_metadata?.name || data.session?.user.email?.split('@')[0] || '');
@@ -112,11 +119,15 @@ export function Gate() {
     if (!snap || !gate || gate.show || !uid || ask || fresh) return; // the tour waits while the existing-data question is open
     void tabTourSeen(uid).then((seen) => {
       if (!seen) {
-        startTour('home');
+        setChoose(true);
         void markTabTourSeen(uid);
       }
     });
   }, [snap, gate, uid, ask, fresh]);
+  useEffect(() => {
+    // the app was closed during a sample-entry tour: still ask what to do with them
+    if (uid) void samplePending(uid).then((on) => on && setSampleEnd(true));
+  }, [uid]);
   useEffect(() => {
     // coming back to the app on a new day runs the day's recurring entries and reloads the numbers
     const sub = AppState.addEventListener('change', (st) => {
@@ -154,6 +165,18 @@ export function Gate() {
   const endTour = () => {
     setTour(null);
     setTab(tourFrom.current);
+    void samplePending(uid).then((on) => on && setSampleEnd(true));
+  };
+  const onChoose = async (k: 'sample' | 'plain' | 'skip') => {
+    if (k === 'skip') return setChoose(false);
+    if (k === 'sample') {
+      const m = await addSamples(snap);
+      if (m) setNotice(m);
+      else await setSamplePending(uid, true);
+      await refresh();
+    }
+    setChoose(false);
+    startTour('home');
   };
   const replay = async () => {
     await setFlags(uid, REPLAY_FLAGS);
@@ -214,6 +237,22 @@ export function Gate() {
           onFresh={() => {
             setAsk(false);
             setFresh(true);
+          }}
+        />
+        <TourChoice open={choose && !ask && !fresh && tour === null} canSample={canSample} onChoose={onChoose} />
+        <TourEnd
+          open={sampleEnd && tour === null && !choose}
+          onKeep={async () => {
+            await setSamplePending(uid, false);
+            setSampleEnd(false);
+          }}
+          onClear={async () => {
+            const m = await removeSamples();
+            if (m) return m;
+            await setSamplePending(uid, false);
+            setSampleEnd(false);
+            await refresh();
+            return null;
           }}
         />
         <ResetData open={fresh} onClose={() => setFresh(false)} onDone={() => void refresh()} />
