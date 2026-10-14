@@ -83,3 +83,5 @@ Every time Ced had to correct something, it is here, so he never has to say it t
 | Scratch files committed to the repo | Scratch scripts go in the scratchpad directory, never the repo |
 
 - Push to `main` ONLY when Ced says so, and he says so only when there are no open issues or bugs. A past "yes" to one push does not cover later ones. (Ced, 2026-10-15: "only push to main if i say so (meaning no more issues or bug)".)
+
+- Use ALL five pipeline agents (product-manager, ui-ux-designer, backend-devops-engineer, mobile-app-developer, qa-engineer) for every app change, not only the QA Engineer. (Ced, 2026-10-15: "why all QA. we have LOTS of agents in order bro.")
