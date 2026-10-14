@@ -20,10 +20,29 @@ export function createGeneration() {
 
 /** The "this account already has data: keep it or start fresh?" question. total = entries + budgets + goals (null when the counts could not be read).
  *  Never lost: kept pending when the counts are unknown; cleared once the account is known to be empty (a sign-up into a new account, or after Start fresh). */
-export function decideAsk(x: { wasSignUp: boolean; pending: boolean; total: number | null; fresh?: boolean; answered?: boolean }): { ask: boolean; write: 'clear' | null } {
+export function decideAsk(x: { wasSignUp: boolean; pending: boolean; total: number | null; fresh?: boolean; answered?: boolean }): {
+  ask: boolean;
+  write: 'clear' | null;
+} {
   if (x.fresh || x.answered) return { ask: false, write: null }; // answered already, or Start fresh is open: a reload must not raise it again
   const pending = x.pending || x.wasSignUp;
   if (!pending) return { ask: false, write: null };
   if (x.total === null) return { ask: true, write: null };
   return x.total > 0 ? { ask: true, write: null } : { ask: false, write: 'clear' };
+}
+
+/**
+ * "Seen" markers live on the phone, so a reinstall wipes them. An account that is already set up (nothing left to do except the example
+ * walkthrough, or nothing at all) and was NOT just created is a returning user: no walkthrough, no "Make it yours", no tour question.
+ * Decided once per app start; a real replay from Settings and a half-finished setup are never skipped.
+ */
+export function isReturningAccount(x: {
+  wasSignUp: boolean;
+  replaying: boolean;
+  firstLoad: boolean;
+  accountsCount: number;
+  gate: { show: boolean; step?: string };
+}): boolean {
+  if (x.wasSignUp || x.replaying || !x.firstLoad || x.accountsCount < 1) return false;
+  return !x.gate.show || x.gate.step === 'tour';
 }

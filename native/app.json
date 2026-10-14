@@ -2,14 +2,14 @@
   "expo": {
     "name": "Zovix",
     "slug": "zovix-native",
-    "version": "0.9.9",
+    "version": "0.9.10",
     "scheme": "zovix",
     "orientation": "portrait",
     "icon": "./assets/icons/grape/preview.png",
     "userInterfaceStyle": "dark",
     "android": {
       "package": "com.zovixhub.pera",
-      "versionCode": 20,
+      "versionCode": 21,
       "allowBackup": false,
       "adaptiveIcon": {
         "backgroundColor": "#4B27D6",
@@ -21,7 +21,10 @@
       "intentFilters": [
         {
           "action": "VIEW",
-          "category": ["DEFAULT", "BROWSABLE"],
+          "category": [
+            "DEFAULT",
+            "BROWSABLE"
+          ],
           "data": [
             {
               "scheme": "zovix"

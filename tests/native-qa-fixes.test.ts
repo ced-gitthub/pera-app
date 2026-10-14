@@ -387,3 +387,24 @@ test('mutation guards: each answer/settle call is inside the handler that must m
   const del = st.slice(st.indexOf('const deleteSamples'), st.indexOf('return (', st.indexOf('const deleteSamples')));
   assert.match(del, /recount\(\)/); // the count is refreshed after deleting
 });
+
+// ---- reinstall: an account that is already set up is NOT a new user (the "seen" flags live on the phone and a reinstall wipes them)
+import { isReturningAccount } from '../native/src/gateFlow.ts';
+const base = { wasSignUp: false, replaying: false, firstLoad: true, accountsCount: 2 };
+test('a returning account (set up, flags wiped by a reinstall) skips the walkthrough, Make it yours and the tour question', () => {
+  assert.equal(isReturningAccount({ ...base, gate: { show: true, step: 'tour' } }), true); // flags wiped, everything already set up
+  assert.equal(isReturningAccount({ ...base, gate: { show: false } }), true);
+});
+test('new users and real replays still get the tutorial', () => {
+  assert.equal(isReturningAccount({ ...base, wasSignUp: true, gate: { show: true, step: 'account' } }), false); // just signed up
+  assert.equal(isReturningAccount({ ...base, accountsCount: 0, gate: { show: true, step: 'account' } }), false); // nothing set up yet
+  assert.equal(isReturningAccount({ ...base, gate: { show: true, step: 'budget' } }), false); // unfinished setup continues
+  assert.equal(isReturningAccount({ ...base, replaying: true, gate: { show: true, step: 'tour' } }), false); // Settings > replay
+  assert.equal(isReturningAccount({ ...base, firstLoad: false, gate: { show: true, step: 'tour' } }), false); // only decided once per app start
+});
+test('the gate applies it before anything is shown', () => {
+  const g = fs.readFileSync('native/src/Gate.tsx', 'utf8');
+  assert.match(g, /isReturningAccount\(/);
+  assert.match(g, /markTabTourSeen\(id\)/);
+  assert.match(g, /markMakeItYoursSeen\(id\)/);
+});

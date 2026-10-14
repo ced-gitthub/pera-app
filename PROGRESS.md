@@ -141,3 +141,5 @@
   QA Engineer G5a round 1 (REJECT): F1 wizard chips under 48 px, F2 Settings name unsaved guard, F3 wizard actions not pinned, F4 changelog claimed Quick Add Save, F5 tour copy, F6 DeleteAccount armed on reopen, F7 spinners, F8 small targets, F9 this ledger, F10 text-match tests, F11 spreadsheet answer, F12 keyboard test. Routed to mobile-app-developer agents (F1-F3, F6, F8), orchestrator (F4, F5, F9, F10); F7, F11, F12 recorded as known limits.
 
   0.9.9 published: QA Engineer G5a APPROVE (verify 601/601, native tsc clean). APK 27984563 bytes uploaded to release native-0.3 as Zovix-native-latest.apk, size checked against the built file, bundle contains the new strings. G5b (phone) not run: nothing tested on a phone yet.
+
+  0.9.10 fix: reinstall showed the tutorial again because the "seen" markers live on the phone. An already-set-up account that was not just created is now treated as returning (isReturningAccount in gateFlow.ts, applied once per app start in Gate.tsx): no walkthrough, no Make it yours, no tour question. verify 608/608, native tsc clean. Not tested on a phone.

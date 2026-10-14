@@ -6,7 +6,7 @@ import { supabase } from './supabase';
 import { load, type Snapshot } from './data';
 import { loadCounts } from './wizardData';
 import { askPending, readFlags, setAskPending, setFlags, tabTourSeen, markTabTourSeen, samplePending, setSamplePending } from './flags';
-import { createGeneration, decideAsk, openSheet } from './gateFlow';
+import { createGeneration, decideAsk, isReturningAccount, openSheet } from './gateFlow';
 import { TabTour } from './TabTour';
 import { CoachProvider } from './Coach';
 import { TOUR } from './tourContent';
@@ -31,7 +31,7 @@ import { createGateMemo } from './gateMemo';
 import { startSamplesWith } from './sampleCore';
 import { canOfferSample } from './sampleLogic';
 import { MakeItYours } from './MakeItYours';
-import { makeItYoursSeen } from './profile';
+import { makeItYoursSeen, markMakeItYoursSeen } from './profile';
 import { shouldRunDue } from './recurringLogic';
 import { manilaToday } from '../../src/core/money';
 import { Activity, TabBar } from './Tabs';
@@ -115,14 +115,32 @@ export function Gate({ uid: sessionUid }: { uid: string }) {
         askPending(id),
       ]);
       if (reloads.isStale(my)) return ''; // a newer reload started while this one was waiting: it will apply its own answer
-      const d = decideGate(counts, sn.accounts, flags);
+      let d = decideGate(counts, sn.accounts, flags);
+      // A reinstall wipes the phone's "seen" markers: an account that is already set up is a returning user, not a new one.
+      const returning = isReturningAccount({
+        wasSignUp,
+        replaying: false,
+        firstLoad: !booted.current,
+        accountsCount: sn.accounts.length,
+        gate: d.gate,
+      });
+      if (returning) {
+        await Promise.all([markTabTourSeen(id), markMakeItYoursSeen(id)]);
+        d = { gate: { show: false, mark: false }, set: { onboarded: true, toured: true, wizard: false } };
+      }
       await setFlags(id, d.set);
-      const dec = decideAsk({ wasSignUp, pending: pendingAsk, fresh: freshOpen.current, answered: askAnswered.current, total: counts ? counts.totalEntries + counts.budgetsCount + counts.goalsCount : null });
+      const dec = decideAsk({
+        wasSignUp,
+        pending: pendingAsk,
+        fresh: freshOpen.current,
+        answered: askAnswered.current,
+        total: counts ? counts.totalEntries + counts.budgetsCount + counts.goalsCount : null,
+      });
       if (dec.write === 'clear') void setAskPending(id, false); // the account is known to be empty: nothing to ask
       if (dec.ask) setAsk(true);
       if (!booted.current) {
         booted.current = true;
-        setMine(!seenMine);
+        setMine(!seenMine && !returning);
         setSampleEnd(pendingSamples && tourSeen); // if the tour was not seen yet, the tour choice comes first and the Keep / Clear question follows the tour
       }
       setCanSample(canOfferSample(counts, sn.accounts.length));
@@ -209,7 +227,8 @@ export function Gate({ uid: sessionUid }: { uid: string }) {
         <TabBarSkeleton />
       </View>
     );
-  const startSamples = () => startSamplesWith({ setPending: (on) => setSamplePending(uid, on), add: () => addSamples(snap), remove: removeSamples });
+  const startSamples = () =>
+    startSamplesWith({ setPending: (on) => setSamplePending(uid, on), add: () => addSamples(snap), remove: removeSamples });
   const sheet = openSheet({ ask: ask && !mine, fresh, choose, end: sampleEnd, tour: tour !== null, mine });
   const keepExisting = () => {
     askAnswered.current = true;
