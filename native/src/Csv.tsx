@@ -1,3 +1,4 @@
+import { withExternal } from './externalActivity';
 import { useRef, useState } from 'react';
 import { Share, Text, TextInput, View } from 'react-native';
 import type { Snapshot } from './logic';
@@ -59,7 +60,7 @@ export function Csv({ snap, onClose, onChanged }: { snap: Snapshot; onClose: () 
           });
         const size = checkShareSize(out.text, out.count);
         if (!size.ok) return setExportMsg({ bad: true, t: size.message });
-        const res = await Share.share({ message: out.text, title: 'Zovix export' });
+        const res = await withExternal(() => Share.share({ message: out.text, title: 'Zovix export' }));
         if (res.action === Share.dismissedAction) return setExportMsg({ bad: true, t: 'Sharing was cancelled, so nothing was exported.' });
         setExportMsg({ bad: false, t: exportDoneMessage(out.count, r.range) });
       } catch (e) {

@@ -12,6 +12,8 @@ import {
   createAppIconApi,
   ICON_PENDING_TEXT,
   ICON_APPLY_NOW_WARNING,
+  APP_ICON_PENDING_KEY,
+  shouldApplyIconNow,
   type IconStore,
 } from '../native/src/appIcon.ts';
 
@@ -198,4 +200,65 @@ test('appicon: the launcher icon matches the website (violet tile) and the mark 
   assert.match(gen, /grape: \['#7A52FF', '#4B27D6', '#FFC53D'/); // the website's gradient and yellow badge
   const badge = Number(/const BADGE = (\d+)/.exec(gen)?.[1]);
   assert.ok(badge > 0 && badge <= 1024 * 0.45, 'the badge stays well inside the 66% adaptive-icon safe zone');
+});
+
+test('the icon is applied only when the person has really left: app in the background AND no in-app external screen (share sheet) open', () => {
+  assert.equal(shouldApplyIconNow('background', 0), true);
+  assert.equal(shouldApplyIconNow('active', 0), false);
+  assert.equal(shouldApplyIconNow('inactive', 0), false);
+  assert.equal(shouldApplyIconNow('background', 1), false); // Zovix itself opened the share sheet (Android reports "background")
+});
+
+test('external screens opened by the app are counted (nested ones too), and an error still closes the count', async () => {
+  const ext = await import('../native/src/externalActivity.ts');
+  assert.equal(ext.externalOpen(), 0);
+  await ext.withExternal(async () => {
+    assert.equal(ext.externalOpen(), 1);
+    await ext.withExternal(async () => assert.equal(ext.externalOpen(), 2));
+    assert.equal(ext.externalOpen(), 1);
+  });
+  assert.equal(ext.externalOpen(), 0);
+  await assert.rejects(ext.withExternal(async () => Promise.reject(new Error('x'))));
+  assert.equal(ext.externalOpen(), 0);
+  assert.match(fs.readFileSync('native/src/Csv.tsx', 'utf8'), /withExternal\(/); // the CSV share sheet is wrapped
+});
+
+test('Gate applies the queued icon only after a short delay and re-checks that the app is still in the background', () => {
+  const g = fs.readFileSync('native/src/Gate.tsx', 'utf8');
+  assert.match(g, /shouldApplyIconNow\(AppState\.currentState, externalOpen\(\)\)/);
+  assert.match(g, /setTimeout\(/);
+  assert.match(g, /clearTimeout\(/); // coming back cancels it
+});
+
+test('apply writes the new state BEFORE the native call (Android may close the app during it), and puts the queue back if the call fails', async () => {
+  const store = mem();
+  let release: () => void = () => {};
+  const api = createAppIconApi({
+    store,
+    supported: true,
+    setNative: () => new Promise<void>((res) => (release = res)),
+    getNative: () => null,
+  });
+  await api.queueAppIcon('Ocean');
+  const running = api.applyPendingAppIcon(); // never awaited: the app "dies" here
+  await new Promise((r) => setTimeout(r, 5));
+  assert.equal(store.data.get('zv_app_icon'), 'Ocean');
+  assert.equal(store.data.has(APP_ICON_PENDING_KEY), false);
+  release();
+  await running;
+  // failure: the earlier icon and the queued choice come back
+  const store2 = mem();
+  store2.data.set('zv_app_icon', 'Rose');
+  const bad = createAppIconApi({
+    store: store2,
+    supported: true,
+    setNative: async () => {
+      throw new Error('boom');
+    },
+    getNative: () => null,
+  });
+  await bad.queueAppIcon('Ocean');
+  assert.ok(await bad.applyPendingAppIcon());
+  assert.equal(store2.data.get('zv_app_icon'), 'Rose');
+  assert.equal(store2.data.get(APP_ICON_PENDING_KEY), 'Ocean');
 });

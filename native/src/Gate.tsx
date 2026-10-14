@@ -23,6 +23,8 @@ import { TourChoice, TourEnd } from './SampleSheets';
 import { addSamples, removeSamples } from './sampleApi';
 import { resetChoice } from './reset';
 import { applyPendingAppIcon } from './appIconApi';
+import { ICON_LEAVE_DELAY_MS, shouldApplyIconNow } from './appIcon';
+import { externalOpen } from './externalActivity';
 import { startSamplesWith } from './sampleCore';
 import { canOfferSample } from './sampleLogic';
 import { MakeItYours } from './MakeItYours';
@@ -136,10 +138,20 @@ export function Gate() {
   }, [uid]);
   useEffect(() => {
     // a queued launcher-icon change is applied when the person LEAVES the app (Android closes the app to switch icons, so never while it is in use)
+    let timer: ReturnType<typeof setTimeout> | null = null;
     const sub = AppState.addEventListener('change', (st) => {
-      if (st === 'background') void applyPendingAppIcon();
+      if (timer) clearTimeout(timer); // coming back cancels it
+      timer = null;
+      if (st === 'background')
+        timer = setTimeout(() => {
+          timer = null;
+          if (shouldApplyIconNow(AppState.currentState, externalOpen())) void applyPendingAppIcon();
+        }, ICON_LEAVE_DELAY_MS);
     });
-    return () => sub.remove();
+    return () => {
+      if (timer) clearTimeout(timer);
+      sub.remove();
+    };
   }, []);
   useEffect(() => {
     // coming back to the app on a new day runs the day's recurring entries and reloads the numbers

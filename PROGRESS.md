@@ -117,3 +117,5 @@
 
 - Pipeline gates (2026-10-14): added section 7 to docs/APP-DEV-PIPELINE.md: gates G1 to G4, G5a (before the push, stops to ask Ced) and G5b (after his yes) between stages with failure routing to planner / design skills / migrator / builder / tester / ci-watcher / judge, a verbatim Instruction ledger re-checked at every gate, max 3 rounds then ask Ced. Test: tests/pipeline-doc.test.ts.
 - 0.9.7 (light track, gates run): icon change queued and applied on leaving the app; profile unsaved-changes prompt, pinned Save, pop-out saved confirmation, cached profile (no flash), skeleton mirrors live Home. Lessons in docs/CORRECTIONS.md. Not tested on a phone.
+
+- 0.9.7 review round 1 (judge REJECT, 9 findings) fixed: icon applied only after a real leave (800 ms re-check, not while the in-app share sheet is open), new icon state written before the native call; pinned Save never a stuck spinner; a failed/offline load keeps the cached profile; form follows the account copy until edited; profile forgotten on every sign-out; Settings name change refreshes the cache; Save from the prompt switches to the Profile tab on error.

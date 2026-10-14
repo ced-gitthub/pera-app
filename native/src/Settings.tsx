@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Modal, Pressable, Text, TextInput, View } from 'react-native';
 import type { Snapshot } from './data';
 import { setAccountFlag, saveName } from './config';
+import { reloadProfile } from './profile';
 import { Page } from './Tabs';
 import { Sheet, ToggleRow } from './Sheet';
 import { confirmSignOut } from './signout';
@@ -99,6 +100,7 @@ export function Settings({
     if (m) setMsg({ bad: true, t: m });
     else {
       setMsg({ bad: false, t: 'Saved.' });
+      reloadProfile(); // the cached profile carries the name too
       await refresh();
     }
     setBusy(false);

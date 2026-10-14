@@ -8,6 +8,7 @@ import { AvatarPicker } from './AvatarPicker';
 import { AppIconSection } from './AppIconSection';
 import { commitTheme, setTheme } from './themeStore';
 import { saveName, saveProfile, useProfile } from './profile';
+import { adoptServerProfile, saveButtonBusy } from './profileFlow';
 import {
   PROFILE_SAVED_TOAST,
   STATUS_MAX,
@@ -88,14 +89,16 @@ function ProfileSection({ flair, onSaved, onEditor }: { flair?: Flair; onSaved: 
   const [busy, setBusy] = useState(false);
   const lock = useRef(false);
   const [err, setErr] = useState('');
+  const dirty = !!p && !!saved && isProfileDirty(saved, { name, status, profile: p });
   useEffect(() => {
-    if (!state || saved) return; // only the first load fills the form; later reloads never overwrite what the person is typing
+    // the form follows the account's copy until the person starts editing; then it is frozen (never overwritten while typing)
+    if (!state || !adoptServerProfile({ dirty, hasSaved: !!saved })) return;
     setP(state.profile);
     setName(state.name);
     setStatus(state.profile.status);
     setSaved({ name: state.name, profile: state.profile });
-  }, [state, saved]);
-  const dirty = !!p && !!saved && isProfileDirty(saved, { name, status, profile: p });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state]);
   const save = async (): Promise<boolean> => {
     if (lock.current || !p || !state) return false;
     const nm = cleanName(name);
@@ -192,7 +195,6 @@ export function Personalize({
   useEffect(() => {
     if (open) {
       setTab(initialTab);
-      setEditor(null);
       setToast(null);
       changed.current = { theme: false, profile: false };
     }
@@ -218,6 +220,7 @@ export function Personalize({
         text: UNSAVED_SAVE,
         onPress: async () => {
           if (await editor.save()) finish();
+          else setTab('profile'); // the problem is shown on the Profile tab
         },
       },
     ]);
@@ -235,7 +238,7 @@ export function Personalize({
       onClose={close}
       toast={toast}
       footer={
-        tab === 'profile' ? <Btn label="Save profile" busy={!editor || editor.busy} onPress={() => void editor?.save()} /> : undefined
+        tab === 'profile' ? <Btn label="Save profile" busy={saveButtonBusy(editor)} onPress={() => void editor?.save()} /> : undefined
       }
     >
       <View accessibilityRole="tablist" style={{ flexDirection: 'row', gap: sp.s, marginBottom: sp.m }}>

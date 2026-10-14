@@ -37,6 +37,9 @@ export type IconDeps = {
 // (they are not using it then), or sooner if they press "Apply now" and confirm. These words must stay true to that (tests check them).
 export const ICON_PENDING_TEXT = (name: string) =>
   `Your icon will change to ${name} when you leave Zovix (press Home). Android closes the app to switch icons, so open Zovix again from its new icon a few seconds later.`;
+export const ICON_LEAVE_DELAY_MS = 800; // after the app goes to the background, wait this long (and re-check) before applying
+// Android says "background" whenever another screen opens on top, including one the app opened itself (the share sheet): only a real leave counts.
+export const shouldApplyIconNow = (appState: string, externalOpenCount: number): boolean => appState === 'background' && externalOpenCount === 0;
 export const ICON_APPLY_NOW_WARNING = 'Zovix will close right now to switch the icon. Open Zovix again from its new icon a few seconds later.';
 
 const UNSUPPORTED = 'Changing the app icon is only available in the Android app.';
@@ -77,22 +80,32 @@ export function createAppIconApi(d: IconDeps) {
       } catch {
         /* unknown: go ahead */
       }
+      // Android may close the app DURING the native call, so the new state is written FIRST; if the call fails the old state comes back.
+      let before: string | null = null;
+      try {
+        before = await d.store.getItem(APP_ICON_KEY);
+      } catch {
+        /* unknown */
+      }
+      try {
+        await d.store.setItem(APP_ICON_KEY, name);
+        await d.store.removeItem(APP_ICON_PENDING_KEY);
+      } catch {
+        /* the memo only drives the checkmark; a failure here must not stop the change */
+      }
       if (inUse !== name) {
         try {
           await d.setNative(name);
         } catch {
-          return FAILED; // stays queued
+          try {
+            await d.store.setItem(APP_ICON_PENDING_KEY, name); // stays queued
+            if (before) await d.store.setItem(APP_ICON_KEY, before);
+            else await d.store.removeItem(APP_ICON_KEY);
+          } catch {
+            /* nothing more to do */
+          }
+          return FAILED;
         }
-      }
-      try {
-        await d.store.setItem(APP_ICON_KEY, name); // the phone's own value can be null after a cold start, so remember it too
-      } catch {
-        /* the icon did change; losing the memo only costs the checkmark after a restart */
-      }
-      try {
-        await d.store.removeItem(APP_ICON_PENDING_KEY);
-      } catch {
-        /* a leftover pending choice is harmless: it is recognised as already in use next time */
       }
       return null;
     },

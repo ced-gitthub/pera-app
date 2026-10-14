@@ -13,6 +13,7 @@ import {
   profileCacheKey,
   type Profile,
 } from '../native/src/profileLogic.ts';
+import { adoptServerProfile, nextProfileState, saveButtonBusy } from '../native/src/profileFlow.ts';
 
 const read = (f: string) => fs.readFileSync(`native/src/${f}`, 'utf8');
 const base: Profile = { avatar: '🦊', avatarColor: 'violet', frame: 'none', status: 'Saving' };
@@ -101,8 +102,8 @@ test('the app never shows a placeholder profile and then swaps it: the avatar wa
   assert.match(prof, /readCachedProfile/);
   assert.match(prof, /profileCacheKey/);
   assert.match(prof, /useState<ProfileState \| null>\(memo\)/); // within a session there is no flash at all
-  assert.match(prof, /clearProfileMemo/);
-  assert.match(read('signout.ts'), /clearProfileMemo/);
+  assert.match(prof, /forgetProfile/);
+  assert.match(read('signout.ts'), /forgetProfile/);
 });
 
 // ---- the skeleton matches the live Home
@@ -119,4 +120,55 @@ test('the loading skeleton mirrors the live Home (header with avatar and Edit, t
   assert.match(gate, /<HomeSkeleton \/>\s*<TabBarSkeleton \/>/);
   const list = sk.slice(sk.indexOf('export function ListSkeleton'));
   assert.match(list, /s\.row/); // list skeleton rows look like the real rows
+});
+
+// ---- profile flow rules (behavior, not text)
+test('the pinned Save button is never a stuck spinner: busy only while a save is really running', () => {
+  assert.equal(saveButtonBusy(null), false); // editor not reported yet
+  assert.equal(saveButtonBusy({ busy: false }), false);
+  assert.equal(saveButtonBusy({ busy: true }), true);
+  const src = read('Personalize.tsx');
+  assert.doesNotMatch(src, /busy=\{!editor \|\| editor\.busy\}/);
+  assert.doesNotMatch(src, /setEditor\(null\)/); // the child reports on mount; resetting here raced with it
+});
+
+test('offline or a failed load never throws away the profile that is already on screen; only a real sign-out empties it', () => {
+  const cached = { name: 'Ced' };
+  assert.deepEqual(nextProfileState(cached, { kind: 'error' }), { state: cached, failed: false });
+  assert.deepEqual(nextProfileState(null, { kind: 'error' }), { state: null, failed: true });
+  assert.deepEqual(nextProfileState(cached, { kind: 'signedOut' }), { state: null, failed: false });
+  assert.deepEqual(nextProfileState(cached, { kind: 'ok', value: { name: 'New' } }), { state: { name: 'New' }, failed: false });
+  const prof = read('profile.ts');
+  assert.match(prof, /getSession\(\)/); // local session: works offline
+  assert.match(prof, /throw /); // a failed names read is an error, not a null profile
+  assert.match(prof, /nextProfileState/);
+});
+
+test('the form adopts the account copy while the person has not edited anything (a stale cached copy can never be saved back over newer data)', () => {
+  assert.equal(adoptServerProfile({ dirty: false, hasSaved: true }), true);
+  assert.equal(adoptServerProfile({ dirty: true, hasSaved: true }), false);
+  assert.equal(adoptServerProfile({ dirty: true, hasSaved: false }), true); // the very first fill
+  assert.match(read('Personalize.tsx'), /adoptServerProfile\(/);
+});
+
+test('sign-out in every form (Log out, deletion, session expiry) forgets the profile in memory AND the copy on the phone', () => {
+  assert.match(read('profile.ts'), /export async function forgetProfile/);
+  assert.match(read('profile.ts'), /removeItem\(profileCacheKey/);
+  assert.match(read('signout.ts'), /forgetProfile\(\)/);
+  const app = read('App.tsx');
+  assert.match(app, /SIGNED_OUT/);
+  assert.match(app, /forgetProfile\(\)/);
+});
+
+test('changing the name in Settings refreshes the cached profile too', () => {
+  const st = read('Settings.tsx');
+  const save = st.slice(st.indexOf('const save = async'), st.indexOf('return (', st.indexOf('const save = async')));
+  assert.match(save, /reloadProfile\(\)/);
+  assert.match(read('profile.ts'), /export const reloadProfile/);
+});
+
+test('Save from the unsaved prompt on the Theme tab shows the problem: it switches to the Profile tab when saving fails', () => {
+  const src = read('Personalize.tsx');
+  const prompt = src.slice(src.indexOf('Alert.alert(UNSAVED_TITLE'), src.indexOf('const savedPopup'));
+  assert.match(prompt, /setTab\('profile'\)/);
 });
