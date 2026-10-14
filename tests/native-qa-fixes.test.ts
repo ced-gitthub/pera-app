@@ -448,5 +448,5 @@ test('QA 0.9.11: the server marker is written only when the intro is finished, n
   const g = fs.readFileSync('native/src/Gate.tsx', 'utf8');
   const from = g.indexOf('onSkip={');
   const skip = g.slice(from, g.indexOf('onFinish={', from));
-  assert.match(skip, /samplePending(uid)/); // Skip still asks Keep / Clear for sample entries
+  assert.match(skip, /samplePending\(uid\)/); // Skip still asks Keep / Clear for sample entries
 });
