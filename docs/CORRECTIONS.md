@@ -27,6 +27,11 @@ Every time Ced had to correct something, it is here, so he never has to say it t
 - **A removal option people asked for must stay reachable.** "Delete sample records" lives permanently in Settings > Help (shown while sample entries exist), not only in a prompt that appears once.
 - **Show the real app version** (from the app config), never a hard-coded number.
 
+- **Apply a rule everywhere, not on one screen.** The profile sheet got the unsaved prompt, pinned Save and pop-out; every other editable sheet did not (found by the independent QA, not by me). When Ced states a UI rule: list EVERY screen it applies to, change them all, and test each one. A screen that is shown inside a Modal must use a local pop-out (the app-wide card is drawn behind a Modal).
+- **Run the full independent QA (four agents: flows, UI, data/security, test audit) before calling a release final**, then fix every finding test-first and have the same reviewers confirm. It found two high-severity bugs the earlier reviews missed (a wrong balance after deleting samples; a lost "already has data" question).
+- **Setup data: sample entries never count as money the person logged** (balances typed in setup ignore them), and the copy says so while they exist.
+- **Never lose a question or a choice**: anything the app must ask (keep or start fresh) is saved on the phone until answered and cleared only when answered or no longer relevant.
+
 ## 2. UI and product rules
 - Uniform UI: the same floating button in the same place on every tab; the Done/Close button pinned in a header (never scrolled to the bottom where it is hard to tap); same card, button and spacing everywhere.
 - Skeletons, not "Loading" text. Always a loading, empty, error and success state.

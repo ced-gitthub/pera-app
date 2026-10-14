@@ -2,6 +2,10 @@
 
 One entry per release. "Rejected" lines are what independent review (the judge agent) found before it was allowed out. See [NATIVE.md](NATIVE.md) for how it works.
 
+## 0.9.9 (2026-10-14)
+- Result of a full independent QA (4 agents) and three review rounds. Money: setup balances ignore sample entries (typing 5,000 then deleting samples no longer leaves -17,671); a retry after a lost reply corrects the stored entry; two decimal points (1.2.3) are refused. Flows: the existing-data question is saved until answered, asked before setup, never lost or re-raised; tutorial replay is read-only with a Close; one sheet at a time; no flashing; newest reload wins; another account's data never shows after a theme redraw or sign-out. UI: every editable sheet (entry, Quick Add, budget, goal, Manage, recurring rule, CSV import) asks Save/Discard/Keep editing, has a pinned Save and a pop-out confirmation (local pop-out for screens inside a Modal); card-shaped skeletons that match the live screens; 48 px touch targets; stable theme redraw (keeps your tab); icon-leave logic tested with fake timers. Database: migration 0014 applied (undo copies are select/delete only for users). CI: native type-check job. Live tests: several steps that could never pass were repaired and new ones added (never run yet: they need a push).
+- Known limits: a user can still create many undo copies by adding and deleting entries within 30 days (bounded by the 30-day purge and the 50,000-entry cap); nothing run on a phone.
+
 ## 0.9.8 (2026-10-14)
 - Settings > Help has a permanent "Delete sample records" (with the count and a confirmation that only "Sample:" entries go) while sample entries exist; the Settings footer shows the real version (it said 0.9.0). The icon picker keeps a fixed 3-column order and tile size when you choose (the selected icon no longer jumps to the bottom), with a check badge instead of "(soon)".
 - Unverified: on a phone.
