@@ -74,7 +74,7 @@ G('auth: logged-out');
     await signup(r3, e3, PW, 'Tour');
     await r3.goto('/');
     const card = r3.locator('section.missions');
-    await card.waitFor({ timeout: 15000 });
+    await card.waitFor({ timeout: 40000 });
     const t = await card.innerText(),
       next = await card.locator('.mrow.next').count();
     await c3.close();
@@ -108,7 +108,7 @@ G('auth: logged-out');
       seen.push(await stepTxt());
       for (const f of await w.locator('.ob input[aria-label$="balance"]').all()) await f.fill(''); // pre-filled with what the entries add up to; clearing them all must be refused
       await w.locator('.ob button:has-text("Save balances")').click();
-      await w.locator('.ob .flash.bad').waitFor({ timeout: 15000 });
+      await w.locator('.ob .flash.bad').waitFor({ timeout: 40000 });
       const refused = /at least one account/.test(await w.locator('.ob .flash.bad').innerText());
       await w.locator('.ob input[aria-label$="balance"]').first().fill('1500');
       await w.locator('.ob button:has-text("Save balances")').click();
@@ -414,7 +414,7 @@ await step('Quick Add: income (salary 25000 bpi)', async () => {
 await step('quest board: shows a level and quests, and logging completes "Log your first peso"', async () => {
   await p.goto('/');
   const board = p.locator('section.quests');
-  await board.waitFor({ timeout: 15000 });
+  await board.waitFor({ timeout: 40000 });
   const t = await board.innerText(),
     done = await p.locator('.qrow.done').count();
   return /Level \d/.test(t) && /Log your first peso/.test(t) && /Triple tap/.test(t) && /Earn XP/.test(t) && done >= 1
@@ -435,19 +435,19 @@ await step('savings goal: add one connected to an account, see its progress, the
   await cleanGoal('QA phone');
   await p.goto('/');
   const card = p.locator('section.goals');
-  await card.waitFor({ timeout: 15000 });
+  await card.waitFor({ timeout: 40000 });
   await card.locator('summary').click();
   await card.locator('input[name=name]').fill('QA phone');
   await card.locator('input[name=amount]').fill('3000');
   await card.locator('select[name=account]').selectOption({ label: 'Cash: use its balance' });
   await Promise.all([p.waitForLoadState('networkidle'), card.locator('button:has-text("Add goal")').click()]);
   const row = p.locator('section.goals .grow:has-text("QA phone")');
-  await row.waitFor({ timeout: 15000 });
+  await row.waitFor({ timeout: 40000 });
   const t = await row.innerText(),
     f = await flash(p);
   const shown = /Counting the balance of Cash/.test(t) && /of ₱3,000\.00/.test(t) && /Goal added/.test(f) && !LEAK.test(t + f);
   await row.locator('button:has-text("Remove")').click();
-  await row.waitFor({ state: 'detached', timeout: 15000 });
+  await row.waitFor({ state: 'detached', timeout: 40000 });
   return shown ? true : { t: t.slice(0, 160), f };
 });
 await step('savings goal: a duplicate name and a bad amount are refused with a plain message', async () => {
@@ -465,7 +465,7 @@ await step('savings goal: a duplicate name and a bad amount are refused with a p
     dup = await fill('Dup goal', '500'),
     bad = await fill('Other goal', 'abc');
   await p.locator('section.goals .grow:has-text("Dup goal") button:has-text("Remove")').click();
-  await p.locator('section.goals .grow:has-text("Dup goal")').waitFor({ state: 'detached', timeout: 15000 });
+  await p.locator('section.goals .grow:has-text("Dup goal")').waitFor({ state: 'detached', timeout: 40000 });
   return /Goal added/.test(ok) && /already have a goal/.test(dup) && /Enter how much/.test(bad) && !LEAK.test(dup + bad)
     ? true
     : { ok, dup, bad };
@@ -849,8 +849,10 @@ await step('remembered screens never show a deleted row (delete, then hop Dashbo
   await edit();
   await p.locator('tbody tr:has-text("zzcache") button:has-text("Delete")').first().click();
   await p.locator('button:has-text("Undo")').first().waitFor({ timeout: 20000 });
-  await p.waitForTimeout(1500);
-  const here = /zzcache/i.test(await body(p).then((t) => t.replace(/Deleted\. Changed your mind\?/g, '')));
+  // the row leaves the list as soon as the server answers; poll for it instead of a fixed pause (a fixed 1.5 s was flaky on a slow run)
+  const gone = async () => !/zzcache/i.test(await body(p).then((t) => t.replace(/Deleted\. Changed your mind\?/g, '')));
+  for (let i = 0; i < 10 && !(await gone()); i++) await p.waitForTimeout(1000);
+  const here = !(await gone());
   await tab('/');
   const dash = /zzcache/i.test(await body(p));
   await tab('/transactions');

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import LiveDemo from '@/components/LiveDemo';
 import OkBanner from '@/components/OkBanner';
+import ScrollFx from '@/components/ScrollFx';
 import StickyCta from '@/components/StickyCta';
 import ZovixMark from '@/components/ZovixMark';
 import { APK_URL, webAppEnabled } from '@/lib/site';
@@ -35,8 +36,19 @@ export default function Landing() {
   const web = webAppEnabled();
   return (
     <main className="wl ld">
+      <div className="ld-progress" aria-hidden="true" />
+      <ScrollFx />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd() }} />
       <div className="ld-top">
+        <span className="ld-coin a" aria-hidden="true">
+          🪙
+        </span>
+        <span className="ld-coin b" aria-hidden="true">
+          ✨
+        </span>
+        <span className="ld-coin c" aria-hidden="true">
+          🪙
+        </span>
         <div className="ld-in">
           <header className="wl-top">
             <div className="brand">
@@ -237,6 +249,13 @@ export default function Landing() {
         <Install />
       </section>
       <section className="wl-final" id="join">
+        <div className="ld-rain" aria-hidden="true">
+          {Array.from({ length: 12 }, (_, k) => (
+            <s key={k} style={{ ['--k' as string]: k }}>
+              🪙
+            </s>
+          ))}
+        </div>
         <h2>{H.final}</h2>
         <p>Free forever. No ads. No bank login.</p>
         <div className="wl-cta">
