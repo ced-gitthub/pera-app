@@ -2,6 +2,8 @@
 
 Every time Ced had to correct something, it is here, so he never has to say it twice. Grouped by topic. Newest lessons are in section 1.
 
+> Process: every project runs through `docs/APP-DEV-PIPELINE.md` (5 stages). Stage 1 restates the request in Ced's words; Stage 5 checks against that restatement.
+
 ## 1. The rule behind most corrections: do what the words say, completely
 - **"Clear / delete all" means ALL.** "Delete ALL my records" removes entries, budgets, goals, recurring rules AND sets every starting balance to 0. Only the login, the (now empty) accounts and categories, and the profile/theme stay, and the screen says so. A "clear" that leaves some data behind is a bug. (0.9.5: the end-of-tutorial "Clear" had only removed the 6 sample entries and left the budget and goal; it was narrower than the sheet's words.)
 - **The words on a button or sheet must match what the code does.** If the copy says "empty app", the code must empty the app. Test the copy against the code (a test that reads both).

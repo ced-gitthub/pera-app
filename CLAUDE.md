@@ -5,6 +5,7 @@ Free-tier PHP money tracker. Next.js 15 + TypeScript + Tailwind 4, Supabase (pro
 ## Session rules
 - At the start of each session, read CLAUDE.md, `docs/CORRECTIONS.md` (everything Ced has already corrected: do not make him repeat it) and PROGRESS.md first.
 - After every fix or decision, update PROGRESS.md (fixed, open bugs, decisions, next steps).
+- Every app project, feature or fix follows `docs/APP-DEV-PIPELINE.md` (5 stages: PM, UI/UX, Backend & DevOps, Mobile Developer, QA). Full track for new apps/features (one stage per turn, stop for approval); light track for fixes (all stages in one turn, but always a Stage 1 restatement of the request in Ced's own words, a judge review for risky changes, and real test evidence).
 
 ## Non-negotiables
 - Cost stays $0. No paid services or keys.
