@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from './supabase';
 import { saveName } from './config';
 import { createProfileMemo, nextProfileState, type LoadResult } from './profileFlow';
+import { nameDrafts } from './settingsDirty';
 import { makeItYoursKey, parseCachedProfile, profileCacheKey, profileFromMeta, validateProfile, type Profile } from './profileLogic';
 
 export type ProfileState = { uid: string; name: string; email: string; profile: Profile };
@@ -12,6 +13,7 @@ const FAIL = 'Could not save right now. Check your connection and try again.';
 const store = createProfileMemo<ProfileState>();
 /** Forget the profile on this phone (memory and the saved copy): on every kind of sign-out and after account deletion. Loads still running become stale. */
 export async function forgetProfile(): Promise<void> {
+  nameDrafts.clearAll(); // one person's unsaved name never shows for the next account on this phone
   const uid = store.forget();
   if (!uid) return;
   try {

@@ -5,6 +5,7 @@ export type DraftStore = {
   get: (key: string) => string | undefined;
   set: (key: string, value: string) => void;
   clear: (key: string) => void;
+  clearAll: () => void;
 };
 
 /** A draft is remembered per saved value (the key), so a name saved elsewhere never gets an old draft pushed over it. */
@@ -17,6 +18,7 @@ export function createDraftStore(): DraftStore {
       else m.set(key, value);
     },
     clear: (key) => void m.delete(key),
+    clearAll: () => m.clear(),
   };
 }
 

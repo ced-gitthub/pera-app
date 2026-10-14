@@ -24,7 +24,7 @@ export function DeleteAccount({ open, onClose }: { open: boolean; onClose: () =>
     // a fresh sheet every time: the typed word and any old error never carry over, so the red button is never already armed
     setTyped('');
     setErr('');
-    unconfirmed.current = false;
+    // (unconfirmed is NOT reset: if the last answer was lost the account may already be gone, even after the sheet is closed and reopened)
   }, [open]);
 
   const go = async () => {

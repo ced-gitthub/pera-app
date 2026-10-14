@@ -41,7 +41,9 @@ test('Settings restores the draft, shows the unsaved line and clears it on save'
 test('DeleteAccount resets the typed word and error when the sheet opens or closes', () => {
   const a = src('DeleteAccount.tsx');
   assert.match(a, /useEffect\(\(\) => \{[\s\S]*setTyped\(''\)[\s\S]*setErr\(''\)[\s\S]*\}, \[open\]\)/);
-  assert.match(a, /unconfirmed\.current = false/);
+  // the lost-answer flag must SURVIVE closing and reopening the sheet (the account may already be gone)
+  const effect = a.slice(a.indexOf('useEffect(() => {'), a.indexOf('}, [open]);'));
+  assert.doesNotMatch(effect, /unconfirmed\.current = false/);
 });
 
 test('small targets are at least TOUCH, from the token', () => {
@@ -57,4 +59,14 @@ test('small targets are at least TOUCH, from the token', () => {
   const l = src('Login.tsx');
   assert.match(l, /<Pressable accessibilityRole="button" onPress=\{\(\) => setSent\(false\)\}[^>]*minHeight: TOUCH/);
   assert.match(l, /import \{[^}]*\bTOUCH\b[^}]*\} from '\.\/ui'/);
+});
+
+test("the name draft store can be emptied (sign-out and account deletion must not leave one person's unsaved name for the next)", () => {
+  const store = createDraftStore();
+  store.set('Ced', 'Ced R');
+  store.set('', 'Someone');
+  store.clearAll();
+  assert.equal(store.get('Ced'), undefined);
+  assert.equal(store.get(''), undefined);
+  assert.match(src('profile.ts'), /nameDrafts\.clearAll\(\)/); // forgetProfile runs on every sign-out and after deletion
 });
