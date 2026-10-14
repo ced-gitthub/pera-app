@@ -101,3 +101,9 @@
 - Fix needed from Ced (only he can see the value): Vercel project pera-app > Settings > Environment Variables > `SUPABASE_SECRET_KEY` (Production) = the secret key from Supabase > Project Settings > API Keys (starts with `sb_secret_`), then redeploy.
 - Same key powers `src/lib/backup.ts`; it is affected too.
 - Next: add a guard so `adminConfigured()` is false when the value starts with `sb_publishable_`; re-run prod-qa after the env var is fixed.
+
+## 2026-10-14: account deletion verified live
+- Ced replaced `SUPABASE_SECRET_KEY` in Vercel. prod-qa run 38490474140 on 917fb91: security 75/0 (all 9 "native app: delete account" steps pass), rls 57/0, responsive 242/0, db 15/0, qa 188/1.
+- qa failure: "remembered screens never show a deleted row (delete, then hop Dashboard <-> Transactions)" returned {here:true,dash:false,list:false}. It passed 189/0 on the previous run, so likely flaky; re-run once and investigate if it repeats.
+- Local commit 2fc3d93 (not pushed): `adminConfigured()` is false when the key starts with `sb_publishable_` (`src/lib/adminKey.ts`, test `tests/adminKey.test.ts`).
+- Open: confirm `src/lib/backup.ts` works with the real key (needs a live step).
