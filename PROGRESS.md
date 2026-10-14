@@ -88,6 +88,8 @@
 
 - 2026-10-14 owner correction: the Taglish pass had become near-pure Tagalog; Ced asked for MIXED. Landing copy is now mostly English with Tagalog words dropped in (src/lib/landingCopy.ts header documents the rule; the Sound familiar section stays as the model). Rule for future copy: English sentences, Tagalog words/phrases mixed in (sweldo, gastos, ipon, saan napunta, tuloy-tuloy), never whole paragraphs in Tagalog.
 
+- 2026-10-15 owner: the "Sound familiar?" section had turned pure Tagalog in the Taglish pass; restored to English sentences with Tagalog words (the version Ced liked). Ced also gave STANDING permission to push to main without asking first (2026-10-15).
+
 ## Next steps
 
 0. Owner: turn Supabase Confirm email back ON after any live-suite run. Provide the domain (with ending) to attach it in Vercel, then follow docs/play-store/PLAY_CONSOLE_GUIDE.md.

@@ -85,13 +85,9 @@ export const FAQ: [string, string][] = [
   ],
 ];
 export const PAIN: [string, string, string][] = [
-  ['😵', '"Saan napunta ang sweldo ko?"', 'Sumahod ka noong 15th, ubos na pagdating ng 20th, at hindi mo alam kung saan nagpunta.'],
-  [
-    '📝',
-    'Naaabandona ang Notes at sheets',
-    'Ang daming hakbang, kaya titigil ka rin sa isang linggo. Sa Zovix, isang linya lang kada entry.',
-  ],
-  ['🙈', 'Hindi pagtingin ≠ pag-iipon', 'Kapag nakita mo na, iba na ang paggastos mo. Budgets at goals na ang magpapaalala sa iyo.'],
+  ['😵', '"Saan napunta ang sweldo ko?"', 'Paid on the 15th, broke by the 20th, and no idea where it went.'],
+  ['📝', 'Notes and sheets get abandoned', 'Too many steps, so you quit in a week. Zovix is one line per entry.'],
+  ['🙈', 'Not looking is not saving', 'Once you can see it, iba na ang gastos mo. Budgets and goals do the nagging for you.'],
 ];
 export const COMPARE: [string, string, string][] = [
   ['Logging a purchase', 'Open the file, find the row, format it', 'One line lang: lunch 150 gcash'],
