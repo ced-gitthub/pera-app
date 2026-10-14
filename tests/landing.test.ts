@@ -77,12 +77,21 @@ test('free-plan usage: production deploys skip commits that change nothing deplo
     assert.ok(paths.includes(must), must + ' must trigger a deploy');
   for (const p of paths) assert.ok(!/^(tests|docs|native|\.github|supabase)/.test(p), p + ' must not trigger a deploy');
   const w = readFileSync('.github/workflows/prod-qa.yml', 'utf8');
-  assert.equal(
-    w.split('cat scripts/deployable-paths').length - 1,
-    2,
-    'both wait steps wait for the newest DEPLOYABLE commit, not the newest commit',
+  assert.equal(w.split('sh scripts/wait-for-deploy.sh').length - 1, 2, 'both jobs wait with the shared script');
+  const wait = readFileSync('scripts/wait-for-deploy.sh', 'utf8');
+  assert.ok(wait.includes('cat scripts/deployable-paths') && wait.includes('git fetch --unshallow'));
+  assert.ok(
+    wait.includes('merge-base --is-ancestor "$want" "$full"'),
+    'accept any production commit at or after the newest deployable commit',
   );
-  assert.equal(w.split('git fetch --unshallow').length - 1, 2);
+  assert.ok(wait.includes('merge-base --is-ancestor "$full" "$GITHUB_SHA"'), 'and not newer than the pushed commit');
+  assert.ok(wait.includes('exit 1'), 'never test stale code');
+  const filter = w.match(/paths: \[(.*)\]/)![1];
+  for (const line of paths)
+    assert.ok(
+      filter.includes("'" + line + "'") || filter.includes("'" + line + "/**'"),
+      line + ' changes production, so it must run the live suites',
+    );
 });
 test('free-plan usage: the live suites run one at a time and not for test-only or native-only commits', () => {
   const w = readFileSync('.github/workflows/prod-qa.yml', 'utf8');
