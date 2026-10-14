@@ -120,3 +120,4 @@
 
 - 0.9.7 review round 1 (judge REJECT, 9 findings) fixed: icon applied only after a real leave (800 ms re-check, not while the in-app share sheet is open), new icon state written before the native call; pinned Save never a stuck spinner; a failed/offline load keeps the cached profile; form follows the account copy until edited; profile forgotten on every sign-out; Settings name change refreshes the cache; Save from the prompt switches to the Profile tab on error.
 - 0.9.7 review round 2 (judge REJECT, 2 findings) fixed: the in-app share sheet mark now stays until the app is back in front (Share.share resolves before "background"), with an expiry if the app never goes to the background; a profile load running during sign-out can no longer restore the old profile (generation-guarded memo).
+- 0.9.8: permanent "Delete sample records" in Settings > Help, real version in Settings, stable icon picker grid (no "(soon)"). Not tested on a phone.

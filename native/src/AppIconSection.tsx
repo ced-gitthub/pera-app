@@ -57,7 +57,7 @@ export function AppIconSection() {
     <View style={{ marginTop: sp.xl }}>
       <Text style={s.h2}>App icon</Text>
       <Text style={[s.p, { marginBottom: sp.m }]}>Pick the colour of the Zovix icon on your phone.</Text>
-      <View accessibilityRole="radiogroup" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: sp.m, marginBottom: sp.m }}>
+      <View accessibilityRole="radiogroup" style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: sp.m }}>
         {APP_ICON_NAMES.map((name) => {
           const on = name === picked;
           const waiting = on && name === pending;
@@ -69,23 +69,40 @@ export function AppIconSection() {
               accessibilityLabel={`${name} app icon${on ? (waiting ? ', selected, changes when you leave the app' : ', selected') : ''}`}
               disabled={busy}
               onPress={() => choose(name)}
-              style={({ pressed }) => ({ alignItems: 'center', opacity: busy || pressed ? 0.6 : 1 })}
+              style={({ pressed }) => ({ width: '33%', alignItems: 'center', marginBottom: sp.m, opacity: busy || pressed ? 0.6 : 1 })}
             >
-              <Image
-                source={APP_ICON_PREVIEWS[name]}
-                accessibilityIgnoresInvertColors
-                style={{
-                  width: e.l,
-                  height: e.l,
-                  borderRadius: r.pill,
-                  borderWidth: on ? 3 : 1,
-                  borderColor: on ? c.primary : c.line,
-                }}
-              />
-              <Text style={{ color: on ? c.primary : c.mute, fontSize: t.caption, fontWeight: '800', marginTop: sp.xs }}>
-                {on ? '✓ ' : ''}
+              <View>
+                <Image
+                  source={APP_ICON_PREVIEWS[name]}
+                  accessibilityIgnoresInvertColors
+                  style={{
+                    width: e.l,
+                    height: e.l,
+                    borderRadius: r.pill,
+                    borderWidth: on ? 3 : 1,
+                    borderColor: on ? c.primary : c.line,
+                  }}
+                />
+                {on && (
+                  <View
+                    style={{
+                      position: 'absolute',
+                      right: 0,
+                      bottom: 0,
+                      width: sp.xl,
+                      height: sp.xl,
+                      borderRadius: r.pill,
+                      backgroundColor: c.primary,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Text style={{ color: c.onPrimary, fontSize: t.caption, fontWeight: '800' }}>✓</Text>
+                  </View>
+                )}
+              </View>
+              <Text numberOfLines={1} style={{ color: on ? c.primary : c.mute, fontSize: t.caption, fontWeight: '800', marginTop: sp.xs }}>
                 {name}
-                {waiting ? ' (soon)' : ''}
               </Text>
             </Pressable>
           );

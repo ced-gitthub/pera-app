@@ -22,6 +22,11 @@ Every time Ced had to correct something, it is here, so he never has to say it t
 - **Never flash a placeholder that then changes.** Avatar and name show a neutral disc until the real value is known; the last known profile is cached on the phone (and in memory) so a reopened app shows the right one immediately.
 - **The loading skeleton must be the same layout as the live screen** (header, cards, tiles, rows and the tab bar), so nothing jumps when the data arrives.
 
+- **Selecting something must never rearrange the screen.** Fixed-size cells in a fixed order; a selected state is a ring plus a badge, never extra words that change a tile's width or height (the icon picker jumped and wrapped when "(soon)" was added).
+- **No cryptic words on the screen.** If a label needs explaining ("soon"), it is the wrong label: put one plain sentence below instead.
+- **A removal option people asked for must stay reachable.** "Delete sample records" lives permanently in Settings > Help (shown while sample entries exist), not only in a prompt that appears once.
+- **Show the real app version** (from the app config), never a hard-coded number.
+
 ## 2. UI and product rules
 - Uniform UI: the same floating button in the same place on every tab; the Done/Close button pinned in a header (never scrolled to the bottom where it is hard to tap); same card, button and spacing everywhere.
 - Skeletons, not "Loading" text. Always a loading, empty, error and success state.

@@ -38,6 +38,22 @@ export async function removeSampleWith(db: Db, userId: string): Promise<string |
   }
 }
 
+// How many untouched sample entries this person still has (same filters as the delete). null when it could not be counted.
+export async function countSampleWith(db: Db, userId: string): Promise<number | null> {
+  try {
+    if (!userId) return null;
+    const { count, error } = await db
+      .from('transactions')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .in('request_id', SAMPLE_IDS)
+      .like('description', SAMPLE_LABEL + '%');
+    return error || typeof count !== 'number' ? null : count;
+  } catch {
+    return null;
+  }
+}
+
 // Starts sample entries safely. The "pending" flag is stored FIRST, so even if the app dies mid-way the Keep / Clear question still appears.
 // If adding fails part-way, the partial rows are removed; the flag is cleared only when that clean-up worked. Returns null on success.
 export async function startSamplesWith(p: {

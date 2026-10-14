@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { fakeDb } from './helpers/fakeDb.ts';
 import { SAMPLE_IDS, buildSampleRows, canOfferSample } from '../native/src/sampleLogic.ts';
-import { addSampleWith, removeSampleWith } from '../native/src/sampleCore.ts';
+import { addSampleWith, countSampleWith, removeSampleWith } from '../native/src/sampleCore.ts';
 import { withTimeout } from '../native/src/coachLogic.ts';
 
 const accounts = [
@@ -233,4 +233,40 @@ test('the sample writes use the local session (no extra network round trip for g
   const api = fs.readFileSync('native/src/sampleApi.ts', 'utf8');
   assert.doesNotMatch(api, /auth\.getUser\(/);
   assert.match(api, /auth\.getSession\(/);
+});
+
+test('counting samples: a head count with the same filters as the delete (only untouched sample rows of this user), null when unknown', async () => {
+  const db = fakeDb({ 'transactions.select': { count: 4, error: null } });
+  assert.equal(await countSampleWith(db, 'u1'), 4);
+  const sel = db.of('transactions', 'select');
+  assert.equal(sel.length, 1);
+  assert.deepEqual(sel[0].filters, [
+    ['user_id', 'u1'],
+    ['request_id in', SAMPLE_IDS],
+    ['description like', 'Sample:%'],
+  ]);
+  assert.equal(await countSampleWith(fakeDb({ 'transactions.select': { count: null, error: { message: 'x' } } }), 'u1'), null);
+  assert.equal(await countSampleWith(fakeDb({ 'transactions.select': 'throw' }), 'u1'), null);
+  assert.equal(await countSampleWith(db, ''), null);
+});
+
+test('Settings always offers "Delete sample records" (in the Help / tutorial card) while sample entries exist, with a confirmation that says only Sample: entries go', () => {
+  const st = fs.readFileSync('native/src/Settings.tsx', 'utf8');
+  assert.match(st, /Delete sample records/);
+  assert.match(st, /countSamples\(\)/);
+  assert.match(st, /removeSamples\(\)/);
+  assert.match(st, /sampleCount !== null && sampleCount > 0/); // shown only while there are sample entries
+  assert.match(st, /Alert\.alert\(/);
+  assert.match(st, /Sample:/);
+  const help = st.slice(st.indexOf('id="settings:help"'), st.indexOf('<Text style={s.h2}>Account</Text>'));
+  assert.match(help, /Delete sample records/); // inside the Help / tutorial card
+  const api = fs.readFileSync('native/src/sampleApi.ts', 'utf8');
+  assert.match(api, /countSamples/);
+  assert.match(api, /setSamplePending\(/); // deleting them also settles the Keep / Clear question
+});
+
+test('the version shown in Settings is the real app version, not a hard-coded old number', () => {
+  const st = fs.readFileSync('native/src/Settings.tsx', 'utf8');
+  assert.doesNotMatch(st, /APP_VERSION = '\d/);
+  assert.match(st, /Constants\.expoConfig\?\.version/);
 });

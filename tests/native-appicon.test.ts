@@ -298,3 +298,18 @@ test('Gate tells the external-activity tracker about background and active', () 
   assert.match(g, /noteBackground\(\)/);
   assert.match(g, /noteActive\(\)/);
 });
+
+test('the icon picker never rearranges when you choose: fixed three-column cells, a label that never changes, no "(soon)", the check is a badge on the icon', () => {
+  const src = fs.readFileSync('native/src/AppIconSection.tsx', 'utf8');
+  assert.doesNotMatch(src, /\(soon\)/);
+  const grid = src.slice(src.indexOf('APP_ICON_NAMES.map'), src.indexOf('Match my theme'));
+  assert.match(grid, /width: '33%'/); // every tile has the same fixed cell, so nothing wraps to another row
+  assert.match(grid, /numberOfLines=\{1\}/); // one line: the label can never change a tile's height
+  assert.doesNotMatch(grid, /\{on \? '✓ ' : ''\}/); // the old label prefix changed the tile's width
+  const label = grid.slice(grid.indexOf('<Text numberOfLines={1}'), grid.indexOf('</Text>', grid.indexOf('<Text numberOfLines={1}')));
+  assert.equal(label.slice(label.indexOf('>') + 1).trim(), '{name}'); // the visible label is the name and nothing else
+  assert.match(grid, /position: 'absolute'/); // the check mark is a badge on the icon, not part of the text
+  assert.match(grid, /\{name\}/);
+  // the order is the fixed list order, never sorted by selection
+  assert.doesNotMatch(grid, /\.sort\(|\.reverse\(|\.filter\(/);
+});

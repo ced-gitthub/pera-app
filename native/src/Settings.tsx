@@ -1,5 +1,7 @@
-import { useState } from 'react';
-import { Modal, Pressable, Text, TextInput, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { Alert, Modal, Pressable, Text, TextInput, View } from 'react-native';
+import Constants from 'expo-constants';
+import { countSamples, removeSamples } from './sampleApi';
 import type { Snapshot } from './data';
 import { setAccountFlag, saveName } from './config';
 import { reloadProfile } from './profile';
@@ -19,7 +21,7 @@ import { PersonalizeCard } from './PersonalizeCard';
 import { RECORDS_DELETE } from './deleteAccountLogic';
 import { c, s, sp, t } from './ui';
 
-export const APP_VERSION = '0.9.0';
+export const APP_VERSION = Constants.expoConfig?.version ?? '';
 
 // Which accounts are savings (they leave "You can spend") and which show as cards on Home. Both are saved on the account itself, so the website agrees.
 export function AccountsSheet({
@@ -90,6 +92,30 @@ export function Settings({
   const [accounts, setAccounts] = useState(false);
   const [reset, setReset] = useState(false);
   const [delAccount, setDelAccount] = useState(false);
+  const [sampleCount, setSampleCount] = useState<number | null>(null);
+  const [sampleMsg, setSampleMsg] = useState<{ bad: boolean; t: string } | null>(null);
+  const recount = useCallback(() => void countSamples().then(setSampleCount), []);
+  useEffect(() => {
+    recount();
+  }, [recount, snap.totalEntries]);
+  const deleteSamples = () =>
+    Alert.alert(
+      'Delete sample records?',
+      `This deletes the ${sampleCount} sample ${sampleCount === 1 ? 'entry' : 'entries'} (the ones labelled "Sample:"). Your own entries, budgets and goals stay.`,
+      [
+        { text: 'Keep them', style: 'cancel' },
+        {
+          text: 'Delete sample records',
+          style: 'destructive',
+          onPress: async () => {
+            const m = await removeSamples();
+            setSampleMsg(m ? { bad: true, t: m } : { bad: false, t: 'Sample records deleted.' });
+            recount();
+            if (!m) await refresh();
+          },
+        },
+      ],
+    );
   const [personalize, setPersonalize] = useState(false);
   const [pver, setPver] = useState(0);
   const [tool, setTool] = useState<'' | 'reports' | 'recurring' | 'manage' | 'csv'>('');
@@ -165,6 +191,19 @@ export function Settings({
             <Text style={s.h2}>Help</Text>
             <Btn label="🧭 Take the tour of the tabs" alt onPress={onTour} />
             <Btn label="Show the first-run tutorial again" alt onPress={onReplay} />
+            {sampleCount !== null && sampleCount > 0 && (
+              <>
+                <Text style={[s.p, { marginTop: sp.m }]}>
+                  {sampleCount} sample {sampleCount === 1 ? 'entry' : 'entries'} from the tour (labelled "Sample:") {sampleCount === 1 ? 'is' : 'are'} still in your account.
+                </Text>
+                <Btn label="🧹 Delete sample records" alt onPress={deleteSamples} />
+              </>
+            )}
+            {!!sampleMsg && (
+              <Text accessibilityLiveRegion="polite" style={sampleMsg.bad ? s.err : s.ok}>
+                {sampleMsg.t}
+              </Text>
+            )}
           </View>
         </CoachTarget>
         <View style={s.card}>
