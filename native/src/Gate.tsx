@@ -171,7 +171,11 @@ export function Gate() {
     void samplePending(uid).then((on) => on && setSampleEnd(true));
   };
   const onChoose = async (k: 'sample' | 'plain' | 'skip') => {
-    if (k === 'skip') return setChoose(false);
+    if (k === 'skip') {
+      setChoose(false);
+      void samplePending(uid).then((on) => on && setSampleEnd(true)); // samples added in the wizard still get their Keep / Clear question
+      return;
+    }
     if (k === 'sample') {
       const m = await startSamples();
       if (m) setNotice(m);

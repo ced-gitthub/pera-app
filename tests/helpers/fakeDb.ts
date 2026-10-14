@@ -59,6 +59,10 @@ export function fakeDb(results: Record<string, Setting> = {}) {
         call.filters.push([col, val]);
         return q;
       },
+      like: (col: string, val: unknown) => {
+        call.filters.push([col + ' like', val]);
+        return q;
+      },
       in: (col: string, val: unknown) => {
         call.filters.push([col + ' in', val]);
         return q;

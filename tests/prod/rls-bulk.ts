@@ -219,7 +219,7 @@ export async function bulkDeleteSteps({ A, B, step, cnt, other, d, mk }: Ctx): P
       category_id: cats[0].id,
       account_id: accts[0].id,
       amount_minor: 100 + n,
-      transaction_date: d,
+      transaction_date: d + '22',
       description: 'Sample: live test',
       request_id: rid,
       request_idx: 0,
@@ -234,7 +234,11 @@ export async function bulkDeleteSteps({ A, B, step, cnt, other, d, mk }: Ctx): P
       .from('transactions')
       .select('id')
       .in('request_id', [...ids, realId]);
-    const cleanup = await A.c.from('transactions').delete().eq('user_id', A.id).eq('request_id', realId);
+    const cleanup = await A.c
+      .from('transactions')
+      .delete()
+      .eq('user_id', A.id)
+      .in('request_id', [...ids, realId]);
     return !del.error && (del.data ?? []).length === 2 && !left.error && (left.data ?? []).length === 1 && !cleanup.error
       ? true
       : { del: del.error?.message ?? (del.data ?? []).length, left: left.error?.message ?? (left.data ?? []).length };

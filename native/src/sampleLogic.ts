@@ -6,6 +6,7 @@ import type { Account, Category, TxPatch } from './logic.ts';
 // transactions.request_id is a uuid column, so these are fixed, valid uuids (v4 shape). Real request ids are random, so they never collide.
 export const SAMPLE_IDS = [1, 2, 3, 4, 5, 6].map((n) => `5a3e0000-0000-4000-8000-00000000000${n}`);
 
+export const SAMPLE_LABEL = 'Sample:';
 type Seed = { n: number; type: 'income' | 'expense'; amount: number; ago: number; text: string; cat: RegExp };
 const SEEDS: Seed[] = [
   { n: 1, type: 'income', amount: 2_500_000, ago: 6, text: 'Sample: Salary', cat: /salary|income|allowance/i },

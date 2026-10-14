@@ -13,6 +13,7 @@ export interface Query extends PromiseLike<Res> {
   delete(): Query;
   eq(column: string, value: unknown): Query;
   in(column: string, values: unknown[]): Query;
+  like(column: string, pattern: string): Query;
   maybeSingle(): PromiseLike<Res>;
 }
 export interface Db {

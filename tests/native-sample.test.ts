@@ -67,19 +67,30 @@ test('adding samples: a refused write is reported, not hidden', async () => {
   assert.ok(await addSampleWith(fakeDb({ 'transactions.upsert': 'throw' }), 'u1', rows));
 });
 
-test('removing samples deletes ONLY the fixed sample request ids of this user, never anything else', async () => {
-  const db = fakeDb({ 'transactions.delete': { data: [{ id: 'x' }], error: null } });
+test('removing samples deletes ONLY the untouched sample rows (fixed ids AND the "Sample:" label), then confirms none are left', async () => {
+  const db = fakeDb({ 'transactions.delete': { data: [{ id: 'x' }], error: null }, 'transactions.select': { count: 0, error: null } });
   assert.equal(await removeSampleWith(db, 'u1'), null);
   const del = db.of('transactions', 'delete');
   assert.equal(del.length, 1);
   assert.deepEqual(del[0].filters, [
     ['user_id', 'u1'],
     ['request_id in', SAMPLE_IDS],
+    ['description like', 'Sample:%'], // an entry the person edited into a real one is never deleted
   ]);
   assert.ok(await removeSampleWith(fakeDb({ 'transactions.delete': { error: { message: 'nope' } } }), 'u1'));
   assert.ok(await removeSampleWith(fakeDb({ 'transactions.delete': 'throw' }), 'u1'));
   assert.ok(await removeSampleWith(db, '')); // no user id: refuse, delete nothing more
   assert.equal(db.of('transactions', 'delete').length, 1);
+});
+
+test('removing samples: a delete that RLS filtered to nothing is reported, not called success', async () => {
+  const left = fakeDb({ 'transactions.delete': { data: [], error: null }, 'transactions.select': { count: 3, error: null } });
+  assert.ok(await removeSampleWith(left, 'u1'));
+  const unknown = fakeDb({
+    'transactions.delete': { data: [], error: null },
+    'transactions.select': { count: null, error: { message: 'x' } },
+  });
+  assert.ok(await removeSampleWith(unknown, 'u1'));
 });
 
 test('withTimeout: a promise that never settles still resolves to the fallback', async () => {
@@ -142,4 +153,11 @@ test('the wizard offers samples only on its first step with no entries, and the 
   assert.match(w, /totalEntries === 0/);
   const t = fs.readFileSync('native/src/TabTour.tsx', 'utf8');
   assert.match(t, /DEADLINE_MS/);
+});
+
+test('choosing "Not now" on the tour sheet still asks Keep / Clear when samples came from the wizard', () => {
+  const g = fs.readFileSync('native/src/Gate.tsx', 'utf8');
+  const skip = g.slice(g.indexOf("if (k === 'skip')"), g.indexOf("if (k === 'sample')"));
+  assert.match(skip, /samplePending/);
+  assert.match(skip, /setSampleEnd\(true\)/);
 });
