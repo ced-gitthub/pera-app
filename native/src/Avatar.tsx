@@ -11,14 +11,24 @@ export function Avatar({
   email = '',
   meta,
   label,
+  loading = false,
 }: {
   size: number;
   name?: string;
   email?: string;
   meta?: ProfileMeta;
   label?: string;
+  loading?: boolean; // the real profile is not known yet: show a neutral disc, never a placeholder avatar that then changes
 }) {
   const p = meta ? profileFromMeta(meta, name, email) : { ...defaultAvatar(name, email), frame: 'none' as const };
+  if (loading)
+    return (
+      <View
+        accessible
+        accessibilityLabel="Loading your avatar"
+        style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: c.raised }}
+      />
+    );
   const ring = p.frame === 'ring';
   const glow = p.frame === 'glow';
   return (

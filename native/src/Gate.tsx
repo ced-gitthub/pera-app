@@ -22,6 +22,7 @@ import { ResetData } from './ResetData';
 import { TourChoice, TourEnd } from './SampleSheets';
 import { addSamples, removeSamples } from './sampleApi';
 import { resetChoice } from './reset';
+import { applyPendingAppIcon } from './appIconApi';
 import { startSamplesWith } from './sampleCore';
 import { canOfferSample } from './sampleLogic';
 import { MakeItYours } from './MakeItYours';
@@ -32,7 +33,7 @@ import { Activity, TabBar } from './Tabs';
 import { Budgets, Goals } from './Planning';
 import { Settings } from './Settings';
 import { AccountsTab } from './AccountsTab';
-import { HomeSkeleton } from './Skeleton';
+import { HomeSkeleton, TabBarSkeleton } from './Skeleton';
 import { Wizard } from './Wizard';
 import { Btn } from './Btn';
 import { c, s, sp, t } from './ui';
@@ -134,6 +135,13 @@ export function Gate() {
     if (uid) void samplePending(uid).then((on) => on && setSampleEnd(true));
   }, [uid]);
   useEffect(() => {
+    // a queued launcher-icon change is applied when the person LEAVES the app (Android closes the app to switch icons, so never while it is in use)
+    const sub = AppState.addEventListener('change', (st) => {
+      if (st === 'background') void applyPendingAppIcon();
+    });
+    return () => sub.remove();
+  }, []);
+  useEffect(() => {
     // coming back to the app on a new day runs the day's recurring entries and reloads the numbers
     const sub = AppState.addEventListener('change', (st) => {
       if (st === 'active' && shouldRunDue(lastDue.current, manilaToday())) void refresh();
@@ -149,7 +157,10 @@ export function Gate() {
         <Btn label="Try again" onPress={refresh} />
       </View>
     ) : (
-      <HomeSkeleton />
+      <View style={{ flex: 1 }}>
+        <HomeSkeleton />
+        <TabBarSkeleton />
+      </View>
     );
   const startSamples = () => startSamplesWith({ setPending: (on) => setSamplePending(uid, on), add: () => addSamples(snap), remove: removeSamples });
   if (gate.show)

@@ -98,3 +98,39 @@ export function validateProfile(p: {
 }
 
 export const avatarLabel = (name: string) => (name.trim() ? `${name.trim()}'s avatar` : 'Your avatar');
+
+// ---- unsaved changes
+export const UNSAVED_TITLE = 'Save your changes?';
+export const UNSAVED_TEXT = 'You changed your profile but have not saved it yet.';
+export const UNSAVED_KEEP = 'Keep editing';
+export const UNSAVED_DISCARD = 'Discard';
+export const UNSAVED_SAVE = 'Save';
+export const PROFILE_SAVED_TOAST = 'Profile saved';
+
+const tidy = (x: string) => x.replace(/\s+/g, ' ').trim();
+/** True when the draft differs from what is saved (spaces alone do not count). */
+export function isProfileDirty(
+  saved: { name: string; profile: Profile },
+  draft: { name: string; status: string; profile: Profile },
+): boolean {
+  return (
+    tidy(saved.name) !== tidy(draft.name) ||
+    tidy(saved.profile.status) !== tidy(draft.status) ||
+    saved.profile.avatar !== draft.profile.avatar ||
+    saved.profile.avatarColor !== draft.profile.avatarColor ||
+    saved.profile.frame !== draft.profile.frame
+  );
+}
+
+// ---- the last profile seen on this phone, so the app never shows a placeholder and then swaps it
+export const profileCacheKey = (uid: string) => `zv_profile:${uid}`;
+export type CachedProfile = { name: string; email: string; profile: Profile };
+export function parseCachedProfile(raw: string | null | undefined): CachedProfile | null {
+  try {
+    const o = JSON.parse(raw ?? '') as { name?: unknown; email?: unknown; profile?: ProfileMeta };
+    if (!o || typeof o.name !== 'string' || typeof o.email !== 'string') return null;
+    return { name: o.name, email: o.email, profile: profileFromMeta(o.profile, o.name, o.email) };
+  } catch {
+    return null;
+  }
+}

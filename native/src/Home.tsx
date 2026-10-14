@@ -57,7 +57,13 @@ export function Home({
         {!!err && <Text style={s.err}>{err}</Text>}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: sp.m }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: sp.m, flexShrink: 1 }}>
-            <Avatar size={44} name={prof.state?.name ?? name} email={prof.state?.email} meta={prof.state?.profile} />
+            <Avatar
+              size={44}
+              loading={!prof.state && !prof.failed}
+              name={prof.state?.name ?? name}
+              email={prof.state?.email}
+              meta={prof.state?.profile}
+            />
             <Text style={[s.h1, { flexShrink: 1 }]} numberOfLines={1}>
               {name ? `Hi, ${name}` : 'Hi there'}
             </Text>

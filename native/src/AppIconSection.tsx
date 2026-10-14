@@ -1,42 +1,58 @@
 import { useEffect, useRef, useState } from 'react';
-import { Image, Pressable, Text, View } from 'react-native';
+import { Alert, Image, Pressable, Text, View } from 'react-native';
 import { c, e, r, s, sp, t, themeState } from './ui';
 import { Btn } from './Btn';
-import { APP_ICON_NAMES, iconForTheme, type AppIconName } from './appIcon';
+import { APP_ICON_NAMES, ICON_APPLY_NOW_WARNING, ICON_PENDING_TEXT, iconForTheme, type AppIconName } from './appIcon';
 import { APP_ICON_PREVIEWS } from './appIconAssets';
-import { canChangeAppIcon, currentAppIcon, setAppIcon } from './appIconApi';
+import { applyPendingAppIcon, canChangeAppIcon, currentAppIcon, pendingAppIcon, queueAppIcon } from './appIconApi';
 
 // "App icon" under Theme: pick the launcher icon colour. Only shown where the phone can do it (the Android app).
 export function AppIconSection() {
-  const [picked, setPicked] = useState<AppIconName | null>(null);
+  const [current, setCurrent] = useState<AppIconName | null>(null);
+  const [pending, setPending] = useState<AppIconName | null>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
-  const lock = useRef(false);
   const live = useRef(true);
   useEffect(() => {
     live.current = true;
-    currentAppIcon().then((n) => live.current && setPicked(n));
+    Promise.all([currentAppIcon(), pendingAppIcon()]).then(([c0, p0]) => {
+      if (!live.current) return;
+      setCurrent(c0);
+      setPending(p0 && p0 !== c0 ? p0 : null); // a queued choice equal to the icon in use is not pending
+    });
     return () => {
       live.current = false;
     };
   }, []);
   if (!canChangeAppIcon) return null;
+  const picked = pending ?? current;
+  // Picking only QUEUES the icon: nothing closes now. It changes when the person leaves the app (Gate applies it), or on "Apply now".
   const choose = async (name: AppIconName) => {
-    if (lock.current) return;
-    if (name === picked) return setMsg(`Icon is already ${name}`);
-    lock.current = true;
-    setBusy(true);
     setErr('');
-    setMsg('');
-    const problem = await setAppIcon(name);
-    lock.current = false;
+    if (name === current && !pending) return setMsg(`Icon is already ${name}`);
+    const problem = await queueAppIcon(name);
     if (!live.current) return;
-    setBusy(false);
     if (problem) return setErr(problem);
-    setPicked(name);
-    setMsg(`Icon set to ${name}`);
+    setPending(name === current ? null : name);
+    setMsg(name === current ? `Icon stays ${name}` : ICON_PENDING_TEXT(name));
   };
+  const applyNow = () =>
+    Alert.alert('Change the icon now?', ICON_APPLY_NOW_WARNING, [
+      { text: 'Not now', style: 'cancel' },
+      {
+        text: 'Apply and close',
+        style: 'destructive',
+        onPress: async () => {
+          setBusy(true);
+          const problem = await applyPendingAppIcon();
+          if (live.current) {
+            setBusy(false);
+            if (problem) setErr(problem);
+          }
+        },
+      },
+    ]);
   return (
     <View style={{ marginTop: sp.xl }}>
       <Text style={s.h2}>App icon</Text>
@@ -44,12 +60,13 @@ export function AppIconSection() {
       <View accessibilityRole="radiogroup" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: sp.m, marginBottom: sp.m }}>
         {APP_ICON_NAMES.map((name) => {
           const on = name === picked;
+          const waiting = on && name === pending;
           return (
             <Pressable
               key={name}
               accessibilityRole="radio"
               accessibilityState={{ selected: on, disabled: busy }}
-              accessibilityLabel={`${name} app icon${on ? ', selected' : ''}`}
+              accessibilityLabel={`${name} app icon${on ? (waiting ? ', selected, changes when you leave the app' : ', selected') : ''}`}
               disabled={busy}
               onPress={() => choose(name)}
               style={({ pressed }) => ({ alignItems: 'center', opacity: busy || pressed ? 0.6 : 1 })}
@@ -68,13 +85,15 @@ export function AppIconSection() {
               <Text style={{ color: on ? c.primary : c.mute, fontSize: t.caption, fontWeight: '800', marginTop: sp.xs }}>
                 {on ? '✓ ' : ''}
                 {name}
+                {waiting ? ' (soon)' : ''}
               </Text>
             </Pressable>
           );
         })}
       </View>
       <Btn label="Match my theme" alt busy={busy} onPress={() => choose(iconForTheme(themeState.id))} />
-      <Text style={[s.p, { marginTop: sp.s }]}>The launcher may take a few seconds to update, and your home screen may flicker once.</Text>
+      {!!pending && <Btn label="Apply now (closes Zovix)" alt busy={busy} onPress={applyNow} />}
+      <Text style={[s.p, { marginTop: sp.s }]}>The icon changes when you leave Zovix. The launcher may take a few seconds to update, and your home screen may flicker once.</Text>
       {!!msg && (
         <Text accessibilityLiveRegion="polite" style={s.ok}>
           {msg}

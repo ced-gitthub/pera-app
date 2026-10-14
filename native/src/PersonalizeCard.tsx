@@ -8,7 +8,7 @@ import { useProfile } from './profile';
 // A tappable card for Settings: shows who you are (avatar, name, status) and your theme, and opens the Personalize sheet.
 // Change `version` (any new number) after the sheet closes to reload the avatar and name.
 export function PersonalizeCard({ onOpen, version = 0 }: { onOpen: () => void; version?: number }) {
-  const { state, reload } = useProfile();
+  const { state, failed, reload } = useProfile();
   useEffect(() => {
     if (version) reload();
   }, [version, reload]);
@@ -20,7 +20,7 @@ export function PersonalizeCard({ onOpen, version = 0 }: { onOpen: () => void; v
       onPress={onOpen}
       style={({ pressed }) => [s.card, { flexDirection: 'row', alignItems: 'center', minHeight: 64, opacity: pressed ? 0.8 : 1 }]}
     >
-      <Avatar size={e.m} name={name} email={state?.email} meta={state?.profile} />
+      <Avatar size={e.m} loading={!state && !failed} name={name} email={state?.email} meta={state?.profile} />
       <View style={{ flex: 1, marginLeft: sp.m }}>
         <Text numberOfLines={1} style={{ color: c.ink, fontSize: t.lead, fontWeight: '800' }}>
           {name || 'Make it yours'}

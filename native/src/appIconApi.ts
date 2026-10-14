@@ -22,5 +22,7 @@ const api = createAppIconApi({
 });
 
 export const canChangeAppIcon = api.supported;
-export const setAppIcon = api.setAppIcon;
+export const queueAppIcon = api.queueAppIcon;
+export const applyPendingAppIcon = api.applyPendingAppIcon;
+export const pendingAppIcon = api.pendingAppIcon;
 export const currentAppIcon = api.currentAppIcon;

@@ -2,6 +2,10 @@
 
 One entry per release. "Rejected" lines are what independent review (the judge agent) found before it was allowed out. See [NATIVE.md](NATIVE.md) for how it works.
 
+## 0.9.7 (2026-10-14)
+- App icon: picking an icon only queues it (with a plain warning), applied when you leave the app or on "Apply now" after a confirmation; repeat picks are never blocked. Profile: Done asks Save / Discard / Keep editing when there are unsaved changes; "Save profile" is pinned and always visible; saving shows a centred pop-out confirmation; the last profile is cached so reopening never flashes the default avatar. Loading skeleton now mirrors the live Home and tab bar. Ced: "how did this pass QA?" (the rule was tested, the experience was not).
+- Unverified: all of it on a phone (icon switching and the app closing are Android launcher behavior).
+
 ## 0.9.6 (2026-10-14)
 - Sample entries: one request writes all six (was 12+ in a row) and the local session is used; "Clear everything" after the tour no longer restarts the first-run tutorial, it shows the empty app. Ced: "TOO LONG" and "wtf is happening".
 

@@ -116,3 +116,4 @@
 - Process (2026-10-14): Ced supplied a 5-stage app development pipeline; saved as `docs/APP-DEV-PIPELINE.md`, adapted to this repo (agent mapping, full track vs light track) and referenced from CLAUDE.md. All future work follows it.
 
 - Pipeline gates (2026-10-14): added section 7 to docs/APP-DEV-PIPELINE.md: gates G1 to G4, G5a (before the push, stops to ask Ced) and G5b (after his yes) between stages with failure routing to planner / design skills / migrator / builder / tester / ci-watcher / judge, a verbatim Instruction ledger re-checked at every gate, max 3 rounds then ask Ced. Test: tests/pipeline-doc.test.ts.
+- 0.9.7 (light track, gates run): icon change queued and applied on leaving the app; profile unsaved-changes prompt, pinned Save, pop-out saved confirmation, cached profile (no flash), skeleton mirrors live Home. Lessons in docs/CORRECTIONS.md. Not tested on a phone.

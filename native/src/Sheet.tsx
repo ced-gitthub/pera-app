@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { KeyboardAvoidingView, Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import { useEffect, useRef } from 'react';
+import { Animated, KeyboardAvoidingView, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { c, r, s, sp, t } from './ui';
 
@@ -23,8 +24,28 @@ export function HeaderClose({ label = 'Done', onPress }: { label?: string; onPre
 
 // A bottom sheet that rises above the keyboard. The title and a "Done" button sit in a header that is always visible;
 // only the content scrolls (it shrinks to fit), so Done is never pushed off-screen. Tapping outside also closes it.
-export function Sheet({ open, title, onClose, children }: { open: boolean; title: string; onClose: () => void; children: ReactNode }) {
+export function Sheet({
+  open,
+  title,
+  onClose,
+  children,
+  footer,
+  toast,
+}: {
+  open: boolean;
+  title: string;
+  onClose: () => void;
+  children: ReactNode;
+  footer?: ReactNode; // pinned below the scrolling content: always on screen
+  toast?: string | null; // a centred card that pops out over the sheet (for example 'Profile saved')
+}) {
   const { bottom } = useSafeAreaInsets();
+  const pop = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (!toast) return;
+    pop.setValue(0);
+    Animated.spring(pop, { toValue: 1, useNativeDriver: true, friction: 6 }).start();
+  }, [toast, pop]);
   return (
     <Modal visible={open} transparent statusBarTranslucent navigationBarTranslucent animationType="slide" onRequestClose={onClose}>
       <KeyboardAvoidingView behavior="padding" style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: c.overlay }}>
@@ -50,7 +71,30 @@ export function Sheet({ open, title, onClose, children }: { open: boolean; title
           <ScrollView style={{ flexShrink: 1 }} keyboardShouldPersistTaps="handled">
             {children}
           </ScrollView>
+          {!!footer && <View style={{ paddingTop: sp.m }}>{footer}</View>}
         </View>
+        {!!toast && (
+          <View pointerEvents="none" style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center' }]}>
+            <Animated.View
+              accessibilityRole="alert"
+              accessibilityLiveRegion="assertive"
+              style={{
+                backgroundColor: c.card,
+                borderColor: c.up,
+                borderWidth: 2,
+                borderRadius: r.l,
+                paddingVertical: sp.l,
+                paddingHorizontal: sp.xl,
+                alignItems: 'center',
+                opacity: pop,
+                transform: [{ scale: pop.interpolate({ inputRange: [0, 1], outputRange: [0.8, 1] }) }],
+              }}
+            >
+              <Text style={{ color: c.up, fontSize: t.head, fontWeight: '800' }}>✓</Text>
+              <Text style={{ color: c.ink, fontSize: t.title, fontWeight: '800', marginTop: sp.xs }}>{toast}</Text>
+            </Animated.View>
+          </View>
+        )}
       </KeyboardAvoidingView>
     </Modal>
   );

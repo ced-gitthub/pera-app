@@ -10,6 +10,8 @@ import {
   resolveAppIcon,
   iconForTheme,
   createAppIconApi,
+  ICON_PENDING_TEXT,
+  ICON_APPLY_NOW_WARNING,
   type IconStore,
 } from '../native/src/appIcon.ts';
 
@@ -24,6 +26,10 @@ const mem = (fail = false): IconStore & { data: Map<string, string> } => {
     setItem: async (k, v) => {
       if (fail) throw new Error('disk');
       data.set(k, v);
+    },
+    removeItem: async (k) => {
+      if (fail) throw new Error('disk');
+      data.delete(k);
     },
   };
 };
@@ -51,28 +57,36 @@ test('appicon: every theme maps to a valid icon; colour themes match by name, th
   assert.equal(iconForTheme('bogus'), 'Grape');
 });
 
-test('appicon api: set calls the phone, remembers the choice and returns null', async () => {
+test('icon change is QUEUED, never applied while the person is using the app (Android closes the app to switch icons)', async () => {
   const store = mem();
   const calls: unknown[] = [];
   const api = createAppIconApi({ store, supported: true, setNative: async (n) => void calls.push(n), getNative: () => null });
-  assert.equal(await api.setAppIcon('Sunset'), null);
-  assert.deepEqual(calls, ['Sunset']);
-  assert.equal(store.data.get('zv_app_icon'), 'Sunset');
+  assert.equal(await api.queueAppIcon('Sunset'), null);
+  assert.deepEqual(calls, [], 'nothing native yet');
+  assert.equal(store.data.get('zv_app_icon_pending'), 'Sunset');
+  assert.equal(await api.pendingAppIcon(), 'Sunset');
+  // picking again just replaces the pending choice: nothing is ever "stuck"
+  assert.equal(await api.queueAppIcon('Ocean'), null);
+  assert.equal(await api.queueAppIcon('Rose'), null);
+  assert.equal(await api.pendingAppIcon(), 'Rose');
+  assert.deepEqual(calls, []);
 });
 
-test('appicon api: invalid name is refused with a message and nothing is called', async () => {
+test('apply: when the app is left, the pending icon is applied once, remembered, and the pending choice cleared', async () => {
   const store = mem();
-  let n = 0;
-  const api = createAppIconApi({ store, supported: true, setNative: async () => void n++, getNative: () => null });
-  const msg = await api.setAppIcon('Purple');
-  assert.ok(msg && msg.length > 5);
-  assert.equal(n, 0);
-  assert.equal(store.data.size, 0);
+  const calls: unknown[] = [];
+  const api = createAppIconApi({ store, supported: true, setNative: async (n) => void calls.push(n), getNative: () => null });
+  await api.queueAppIcon('Ocean');
+  assert.equal(await api.applyPendingAppIcon(), null);
+  assert.deepEqual(calls, ['Ocean']);
+  assert.equal(store.data.get('zv_app_icon'), 'Ocean');
+  assert.equal(store.data.has('zv_app_icon_pending'), false);
+  assert.equal(await api.applyPendingAppIcon(), null);
+  assert.deepEqual(calls, ['Ocean'], 'a second apply with nothing pending does nothing');
 });
 
-test('appicon api: a native failure returns a friendly string, never throws, and keeps the old choice', async () => {
+test('apply: a native failure keeps the choice pending, gives a friendly message and never throws', async () => {
   const store = mem();
-  store.data.set('zv_app_icon', 'Rose');
   const api = createAppIconApi({
     store,
     supported: true,
@@ -81,15 +95,61 @@ test('appicon api: a native failure returns a friendly string, never throws, and
     },
     getNative: () => null,
   });
-  const msg = await api.setAppIcon('Ocean');
+  await api.queueAppIcon('Ocean');
+  const msg = await api.applyPendingAppIcon();
   assert.ok(msg && !msg.includes('E_NATIVE'));
-  assert.equal(store.data.get('zv_app_icon'), 'Rose');
+  assert.equal(store.data.get('zv_app_icon_pending'), 'Ocean');
 });
 
-test('appicon api: storage failure does not fail a change that worked', async () => {
-  const api = createAppIconApi({ store: mem(true), supported: true, setNative: async () => {}, getNative: () => null });
-  assert.equal(await api.setAppIcon('Mint'), null);
-  assert.equal(await api.currentAppIcon(), null); // nothing readable, nothing reported
+test('apply: the icon already in use is not set again (no needless app close), and the pending choice is cleared', async () => {
+  const store = mem();
+  let n = 0;
+  const api = createAppIconApi({ store, supported: true, setNative: async () => void n++, getNative: () => 'Ocean' });
+  await api.queueAppIcon('Ocean');
+  assert.equal(await api.applyPendingAppIcon(), null);
+  assert.equal(n, 0);
+  assert.equal(store.data.has('zv_app_icon_pending'), false);
+});
+
+test('queue: an invalid name is refused with a message, and an unsupported platform is a safe no-op with a message', async () => {
+  const store = mem();
+  const api = createAppIconApi({ store, supported: true, setNative: async () => {}, getNative: () => null });
+  const msg = await api.queueAppIcon('Purple');
+  assert.ok(msg && msg.length > 5);
+  assert.equal(store.data.size, 0);
+  let n = 0;
+  const off = createAppIconApi({ store: mem(), supported: false, setNative: async () => void n++, getNative: () => 'Mint' });
+  assert.equal(off.supported, false);
+  assert.ok((await off.queueAppIcon('Ocean')) !== null);
+  assert.equal(await off.applyPendingAppIcon(), null);
+  assert.equal(await off.currentAppIcon(), null);
+  assert.equal(n, 0);
+  assert.ok(
+    (await createAppIconApi({ store: mem(true), supported: true, setNative: async () => {}, getNative: () => null }).queueAppIcon(
+      'Mint',
+    )) !== null,
+  );
+});
+
+test('the warning words say WHEN it changes and that the app closes', () => {
+  assert.match(ICON_PENDING_TEXT('Ocean'), /Ocean/);
+  assert.match(ICON_PENDING_TEXT('Ocean'), /leave Zovix|press Home/i);
+  assert.match(ICON_PENDING_TEXT('Ocean'), /close/i);
+  assert.match(ICON_PENDING_TEXT('Ocean'), /open Zovix again/i);
+  assert.match(ICON_APPLY_NOW_WARNING, /close/i);
+  assert.match(ICON_APPLY_NOW_WARNING, /open Zovix again/i);
+});
+
+test('the icon section queues and warns (it never changes the icon on tap), and offers Apply now only behind a confirmation', () => {
+  const src = fs.readFileSync('native/src/AppIconSection.tsx', 'utf8');
+  assert.match(src, /queueAppIcon/);
+  assert.doesNotMatch(src, /setAppIcon/);
+  assert.match(src, /Alert\.alert/);
+  assert.match(src, /Apply now/);
+  assert.match(src, /ICON_PENDING_TEXT/);
+  const gate = fs.readFileSync('native/src/Gate.tsx', 'utf8');
+  assert.match(gate, /applyPendingAppIcon/);
+  assert.match(gate, /'background'/); // applied when the person leaves the app
 });
 
 test('appicon api: current prefers the phone value, falls back to the stored choice, ignores junk', async () => {
@@ -113,15 +173,6 @@ test('appicon api: current prefers the phone value, falls back to the stored cho
   assert.equal(await thrower.currentAppIcon(), null);
 });
 
-test('appicon api: unsupported platform is a safe no-op with a message', async () => {
-  let n = 0;
-  const api = createAppIconApi({ store: mem(), supported: false, setNative: async () => void n++, getNative: () => 'Mint' });
-  assert.equal(api.supported, false);
-  assert.ok((await api.setAppIcon('Ocean')) !== null);
-  assert.equal(await api.currentAppIcon(), null);
-  assert.equal(n, 0);
-});
-
 test('appicon: assets map covers every icon with a static require, and app.json keeps the zovix deep link on every alias', () => {
   const assets = fs.readFileSync('native/src/appIconAssets.ts', 'utf8');
   for (const n of APP_ICON_NAMES) assert.ok(assets.includes(`assets/icons/${n.toLowerCase()}/preview.png`), n);
@@ -136,34 +187,6 @@ test('appicon: assets map covers every icon with a static require, and app.json 
   for (const i of plugin[1])
     for (const k of ['foregroundImage', 'backgroundImage', 'monochromeImage'])
       assert.ok(fs.existsSync('native/' + i.android[k]), i.android[k]);
-});
-
-test('the icon can be changed once per app session: a second change before a restart is refused (two launcher icons otherwise)', async () => {
-  const calls: string[] = [];
-  const api = createAppIconApi({
-    supported: true,
-    store: { getItem: async () => null, setItem: async () => {} },
-    setNative: async (n: string) => void calls.push(n),
-    getNative: () => null,
-  } as never);
-  assert.equal(await api.setAppIcon('Ocean'), null);
-  const second = await api.setAppIcon('Sunset');
-  assert.match(second ?? '', /restart/i);
-  assert.deepEqual(calls, ['Ocean']);
-});
-
-test('a failed change does not use up the one change', async () => {
-  let n = 0;
-  const api = createAppIconApi({
-    supported: true,
-    store: { getItem: async () => null, setItem: async () => {} },
-    setNative: async () => {
-      if (n++ === 0) throw new Error('boom');
-    },
-    getNative: () => null,
-  } as never);
-  assert.ok(await api.setAppIcon('Ocean'));
-  assert.equal(await api.setAppIcon('Ocean'), null);
 });
 
 test('appicon: the launcher icon matches the website (violet tile) and the mark is compact', () => {

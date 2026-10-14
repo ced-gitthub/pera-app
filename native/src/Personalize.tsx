@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, Text, TextInput, View } from 'react-native';
 import { c, s, sp, t, themeState } from './ui';
 import { Sheet } from './Sheet';
 import { Btn } from './Btn';
@@ -8,12 +8,25 @@ import { AvatarPicker } from './AvatarPicker';
 import { AppIconSection } from './AppIconSection';
 import { commitTheme, setTheme } from './themeStore';
 import { saveName, saveProfile, useProfile } from './profile';
-import { STATUS_MAX, cleanStatus, type Profile } from './profileLogic';
+import {
+  PROFILE_SAVED_TOAST,
+  STATUS_MAX,
+  UNSAVED_DISCARD,
+  UNSAVED_KEEP,
+  UNSAVED_SAVE,
+  UNSAVED_TEXT,
+  UNSAVED_TITLE,
+  cleanStatus,
+  isProfileDirty,
+  type Profile,
+} from './profileLogic';
 import { cleanName } from './logic';
 import type { ThemeId } from './themeLogic';
 
 export type Flair = { level: number; streak: number };
 type Tab = 'theme' | 'profile';
+// What the profile editor tells the sheet: are there unsaved changes, is a save running, and a way to save (true when it worked).
+type Editor = { dirty: boolean; busy: boolean; save: () => Promise<boolean> };
 
 function TabChip({ label, on, onPress }: { label: string; on: boolean; onPress: () => void }) {
   return (
@@ -66,41 +79,54 @@ function ThemeSection({ onChanged }: { onChanged: () => void }) {
   );
 }
 
-function ProfileSection({ flair, onChanged }: { flair?: Flair; onChanged: () => void }) {
+function ProfileSection({ flair, onSaved, onEditor }: { flair?: Flair; onSaved: () => void; onEditor: (e: Editor) => void }) {
   const { state, failed, reload } = useProfile();
   const [p, setP] = useState<Profile | null>(null);
   const [name, setName] = useState('');
   const [status, setStatus] = useState('');
+  const [saved, setSaved] = useState<{ name: string; profile: Profile } | null>(null); // what is stored right now
   const [busy, setBusy] = useState(false);
   const lock = useRef(false);
   const [err, setErr] = useState('');
-  const [ok, setOk] = useState('');
   useEffect(() => {
-    if (!state) return;
+    if (!state || saved) return; // only the first load fills the form; later reloads never overwrite what the person is typing
     setP(state.profile);
     setName(state.name);
     setStatus(state.profile.status);
-  }, [state]);
-  if (failed) return <Text style={s.err}>Could not load your profile. Check your connection.</Text>;
-  if (!state || !p) return <ActivityIndicator color={c.primary} />;
-  const save = async () => {
-    if (lock.current) return;
+    setSaved({ name: state.name, profile: state.profile });
+  }, [state, saved]);
+  const dirty = !!p && !!saved && isProfileDirty(saved, { name, status, profile: p });
+  const save = async (): Promise<boolean> => {
+    if (lock.current || !p || !state) return false;
     const nm = cleanName(name);
-    if (!nm.ok) return setErr(nm.message);
+    if (!nm.ok) return setErr(nm.message), false;
     const st = cleanStatus(status);
-    if (!st.ok) return setErr(st.message);
+    if (!st.ok) return setErr(st.message), false;
     lock.current = true;
     setBusy(true);
     setErr('');
-    setOk('');
-    const problem = (nm.name !== state.name ? await saveName(nm.name) : null) ?? (await saveProfile({ ...p, status: st.status }));
+    const problem = (nm.name !== (saved?.name ?? state.name) ? await saveName(nm.name) : null) ?? (await saveProfile({ ...p, status: st.status }));
     lock.current = false;
     setBusy(false);
-    if (problem) return setErr(problem);
-    setOk('Saved');
-    onChanged();
+    if (problem) return setErr(problem), false;
+    const next = { ...p, status: st.status };
+    setP(next);
+    setName(nm.name);
+    setStatus(st.status);
+    setSaved({ name: nm.name, profile: next });
+    onSaved();
     reload();
+    return true;
   };
+  // keep the sheet informed (it owns the pinned Save button and the Done check)
+  const saveRef = useRef(save);
+  saveRef.current = save;
+  useEffect(() => {
+    onEditor({ dirty, busy, save: () => saveRef.current() });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dirty, busy]);
+  if (failed && !state) return <Text style={s.err}>Could not load your profile. Check your connection.</Text>;
+  if (!state || !p) return <ActivityIndicator color={c.primary} />;
   return (
     <View>
       <AvatarPicker value={p} name={name || state.email} onChange={setP} />
@@ -137,12 +163,6 @@ function ProfileSection({ flair, onChanged }: { flair?: Flair; onChanged: () => 
           {err}
         </Text>
       )}
-      {!!ok && (
-        <Text accessibilityLiveRegion="polite" style={s.ok}>
-          {ok}
-        </Text>
-      )}
-      <Btn label="Save profile" busy={busy} onPress={save} />
     </View>
   );
 }
@@ -165,9 +185,15 @@ export function Personalize({
   const [tab, setTab] = useState<Tab>(initialTab);
   const [, force] = useState(0);
   const changed = useRef({ theme: false, profile: false });
+  const [editor, setEditor] = useState<Editor | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => void (toastTimer.current && clearTimeout(toastTimer.current)), []);
   useEffect(() => {
     if (open) {
       setTab(initialTab);
+      setEditor(null);
+      setToast(null);
       changed.current = { theme: false, profile: false };
     }
   }, [open, initialTab]);
@@ -175,24 +201,54 @@ export function Personalize({
     changed.current[kind] = true;
     force((n) => n + 1); // repaint this sheet in the new colours
   };
-  const close = () => {
+  const finish = () => {
     onClose();
     const { theme, profile } = changed.current;
     changed.current = { theme: false, profile: false };
     if (theme) commitTheme();
     if (theme || profile) onChanged?.();
   };
+  // Done: if the profile has unsaved changes, ask first (Save, Discard or Keep editing)
+  const close = () => {
+    if (!editor?.dirty) return finish();
+    Alert.alert(UNSAVED_TITLE, UNSAVED_TEXT, [
+      { text: UNSAVED_KEEP, style: 'cancel' },
+      { text: UNSAVED_DISCARD, style: 'destructive', onPress: finish },
+      {
+        text: UNSAVED_SAVE,
+        onPress: async () => {
+          if (await editor.save()) finish();
+        },
+      },
+    ]);
+  };
+  const savedPopup = () => {
+    touched('profile');
+    setToast(PROFILE_SAVED_TOAST);
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(null), 2200);
+  };
   return (
-    <Sheet open={open} title="Make it yours" onClose={close}>
+    <Sheet
+      open={open}
+      title="Make it yours"
+      onClose={close}
+      toast={toast}
+      footer={
+        tab === 'profile' ? <Btn label="Save profile" busy={!editor || editor.busy} onPress={() => void editor?.save()} /> : undefined
+      }
+    >
       <View accessibilityRole="tablist" style={{ flexDirection: 'row', gap: sp.s, marginBottom: sp.m }}>
         <TabChip label="Theme" on={tab === 'theme'} onPress={() => setTab('theme')} />
         <TabChip label="Profile" on={tab === 'profile'} onPress={() => setTab('profile')} />
       </View>
-      {tab === 'theme' ? (
+      {/* both tabs stay mounted, so unsaved profile edits are never lost by looking at the Theme tab */}
+      <View style={{ display: tab === 'theme' ? 'flex' : 'none' }}>
         <ThemeSection onChanged={() => touched('theme')} />
-      ) : (
-        <ProfileSection flair={flair} onChanged={() => touched('profile')} />
-      )}
+      </View>
+      <View style={{ display: tab === 'profile' ? 'flex' : 'none' }}>
+        <ProfileSection flair={flair} onSaved={savedPopup} onEditor={setEditor} />
+      </View>
     </Sheet>
   );
 }

@@ -15,6 +15,13 @@ Every time Ced had to correct something, it is here, so he never has to say it t
 - **Clearing data never sends the person back into the first-run tutorial.** After "Clear everything" they land on the empty app (the mandatory wizard is a first-run step only; the "onboarded" flag stays). I once read "reset and start all over again" as "restart the tutorial", and Ced: "wtf is happening?". When a phrase can mean two things, pick the one with the least surprise, and say what will happen in the button text.
 - **Every action he taps must feel instant.** Count the network round trips of a tap (one request for all rows, not one per row; local session instead of getUser; reads in parallel). "Try sample entries" took 12+ sequential requests; it is now 2.
 
+- **Warn before anything the system does to the person's app.** Android closes the app when the launcher icon changes, so picking an icon only queues it, says plainly when it will change ("when you leave Zovix; open it again from the new icon"), and applies it when the app goes to the background, or on "Apply now" behind a confirmation. Never close or restart the app on a plain tap. Never block a repeat action ("stuck"): picking again just replaces the queued choice.
+- **Unsaved changes are never lost silently.** Done / Close / Back on anything editable asks Save, Discard or Keep editing when there are changes. Switching tabs inside a sheet keeps the edits (keep every tab mounted).
+- **The primary action is pinned, never scrolled away.** "Save profile" (and similar) lives in a footer that is always on screen.
+- **A save must be unmistakable.** A small line of text above a button is not enough: show a centred pop-out card with a check (and announce it to screen readers).
+- **Never flash a placeholder that then changes.** Avatar and name show a neutral disc until the real value is known; the last known profile is cached on the phone (and in memory) so a reopened app shows the right one immediately.
+- **The loading skeleton must be the same layout as the live screen** (header, cards, tiles, rows and the tab bar), so nothing jumps when the data arrives.
+
 ## 2. UI and product rules
 - Uniform UI: the same floating button in the same place on every tab; the Done/Close button pinned in a header (never scrolled to the bottom where it is hard to tap); same card, button and spacing everywhere.
 - Skeletons, not "Loading" text. Always a loading, empty, error and success state.
@@ -57,6 +64,7 @@ Every time Ced had to correct something, it is here, so he never has to say it t
 | Published before the re-review | Judge approves first, then publish |
 | Narrow reading of "the data from the tutorial" | List every thing the tutorial creates; the clear option removes all of it |
 | Copy that promised more than the code | Test the copy against the code |
+| Unit-tested the RULE (one icon change per session) but never the EXPERIENCE (the app closes, a repeat tap does nothing, no warning) | For every action ask: what does the person see and feel, in order? Write that as the Stage 1 checklist and test each line; say "not tested on a phone" |
 | Looping a network call per row | One batched request; count round trips before shipping any button |
 | Test regexes with unescaped `(`, `)` written through shell heredocs | Write scripts with the Write tool, or use Edit; shells mangle quotes and backslashes |
 | Long measuring waits before showing a tooltip | Show text first, move the highlight when ready; hard deadline |
