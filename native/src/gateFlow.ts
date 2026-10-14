@@ -41,8 +41,10 @@ export function isReturningAccount(x: {
   replaying: boolean;
   firstLoad: boolean;
   accountsCount: number;
+  hasActivity?: boolean; // the account already has entries, budgets or goals
   gate: { show: boolean; step?: string };
 }): boolean {
   if (x.wasSignUp || x.replaying || !x.firstLoad || x.accountsCount < 1) return false;
-  return x.gate.show && x.gate.step === 'tour'; // never when nothing is shown: that is also what a failed read looks like, and a new user who left the tour question open
+  // 'balance' only counts when the account clearly has history: all-zero opening balances look unfinished after a reinstall (the phone's balances flag is gone)
+  return x.gate.show && (x.gate.step === 'tour' || (x.gate.step === 'balance' && !!x.hasActivity)); // never when nothing is shown: that is also what a failed read looks like, and a new user who left the tour question open
 }

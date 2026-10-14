@@ -122,6 +122,7 @@ export function Gate({ uid: sessionUid }: { uid: string }) {
         replaying: false,
         firstLoad: !booted.current,
         accountsCount: sn.accounts.length,
+        hasActivity: !!counts && counts.totalEntries + counts.budgetsCount + counts.goalsCount > 0,
         gate: d.gate,
       });
       if (returning) {
