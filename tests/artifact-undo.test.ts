@@ -222,7 +222,12 @@ test('screen words match what the code does', () => {
   assert.match(HTML, /UNDODAYS=30/);
   assert.match(HTML, /UNDOMAX=3/);
   assert.match(rest, /Stays: accounts, categories, renames, view settings and Recently deleted\./);
-  assert.doesNotMatch(rest, /tour/i);
+  const noTour = rest
+    .replace(slice('INTROCORE'), '')
+    .split('\n')
+    .filter((l) => !/INTRO|TOUR|tourDraw|tourGo|tourEnd|introCard|#tour|tourhl|data-a=.t(st|no|n|b|x0)./.test(l))
+    .join('\n');
+  assert.doesNotMatch(noTour, /tour/i);
   assert.match(rest, /Sample records are not restored\./);
   assert.doesNotMatch(HTML, /Reset everything|Delete everything\?|>demo</);
   assert.match(HTML, /class="tag[^"]*">Sample</);

@@ -36,3 +36,9 @@ Say "not tested on a phone" in reports. Final reports: Problem / Solution / Outc
 UNSAVEDCORE + guard wiring (v, cx, ed, em-Done, Esc, beforeunload) + sheet #us. Tests: tests/artifact-unsaved.test.ts (19), artifact-unsaved-ui.test.ts (9). Mutants 31/32 killed (1 equivalent). 375px browser check: sheet, Keep editing, Discard OK.
 Decisions: Done asks when dirty; add-forms (#na, #nc-*) are not dirty-tracked.
 Next: item 5 (INTROCORE, offer card, tour, hide Keep/Clear while offer shows), then item 6.
+
+## Status (6): item 5 done (tour offer)
+INTROCORE (mt1tour, introState, 7 steps, next/back/skip, flag) + offer card on Home + tour bar #tour (Back/Next-Done/Skip, Esc ends, highlights the tab) + Keep/Clear hidden while the offer shows. tests/artifact-intro.test.ts (13). Mutants 35/35. 375px browser check OK, no horizontal overflow.
+Decisions: Home/Add/Transactions/Accounts step texts adapted from native to what the artifact really has (no Spendable/Savings, no Manage/FAB); documented for the copy test (ARTIFACT-ONLY).
+Old undo test "no tour in Clear/Undo screens" narrowed to exclude the tour code.
+Next: item 6 (LIMITSCORE, toasts, parseFloat removal, tests/artifact-copy.test.ts).
