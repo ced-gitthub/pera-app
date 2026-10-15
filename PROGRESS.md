@@ -185,3 +185,6 @@ QA-approved cc6f415 published as artifact Version 29. Open: item 7 (native look)
 
 ## Artifact item 7: native look built (2026-10-15, branch only)
 Fixed: artifact now uses native tokens and layout (see docs/artifact-parity/NEXT.md status 6). Tests: tests/artifact-look.test.ts. Decisions: kept 7 tabs; banners inside tab cards; no banners on Reports/Ask. Next: QA Engineer review, then Ced's yes before republish. Not published, not pushed.
+
+## Artifact item 7: QA rejection fixed (2026-10-15, branch only)
+Fixed: banner overlap, mid-word row breaks, dead Recent arrow, old header, banners on every tab, two Add buttons. Decision: quick-add box moved below each tab (fab jumps to it). Next: QA Engineer re-review, then Ced's yes before republish.
