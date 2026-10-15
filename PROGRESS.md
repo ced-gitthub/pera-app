@@ -163,3 +163,5 @@
 - Not verified: real 5 MB device quota, phone, two-device sync. No short-key compaction (restore/CSV rely on the plain shape).
 
 ## Status 2026-10-15 (2): QA reject of 135fec9 fixed on branch: clear of 8,000 entries now works on a real 5,242,880-char store (oldest rotating backups trimmed one at a time, only when the copy fits afterwards, put back on failure); both refusal messages now say what to do; tests kill the typing-handler, panel-alert and UNDOONE mutants. Awaiting QA re-review. Not published, not pushed.
+
+## Status 2026-10-15 (3): QA reject of bb3c401 fixed on branch. `plan()` now checks the real free space (5,242,880 minus other keys): older undo copies that do not fit are listed as replaced, `mayTrim` only when the new copy alone is too big and backups exist, a clear that will be refused shows the reason up front with DELETE off. Clear success message says how many older undo copies were replaced / that backups were trimmed. Tests: `tests/artifact-undo-room.test.ts` (9, mutants killed). Awaiting QA re-review. Not published, not pushed.

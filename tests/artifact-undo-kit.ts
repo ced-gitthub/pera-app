@@ -30,6 +30,7 @@ export type Un = {
   plan(c: Record<string, number>): {
     tooBig: boolean;
     mayTrim: boolean;
+    refuse: boolean;
     n: number;
     replaced: { id: string; at: number; counts: Record<string, number> }[];
   };

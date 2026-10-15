@@ -269,8 +269,12 @@ function UNDOCORE(env){
  const bkRaw=()=>{try{return env.store.getItem(UNDOBK)||'[]'}catch(e){return'[]'}};
  // Shown in the panel before DELETE is accepted: would the copy be too big, and which kept copies would be replaced.
  function plan(c){const S=env.S(),rec=build(S,c,env.now()),L=list(),sz=len(rec),tooBig=sz>UNDOONE;
-  const keep=tooBig?[]:fit(L,sz),free=room(),mayTrim=!tooBig&&free!=null&&len([rec,...keep])>free&&bkRaw().length>2;
-  return{tooBig,mayTrim,n:c.tx,replaced:tooBig?[]:L.filter(r=>!keep.includes(r)).map(r=>({id:r.id,at:r.at,counts:r.counts}))}}
+  if(tooBig)return{tooBig,mayTrim:false,refuse:false,n:c.tx,replaced:[]};
+  const keep=fit(L,sz),free=room(),hasBk=bkRaw().length>2;let mayTrim=false,refuse=false;
+  if(free!=null){while(keep.length&&len([rec,...keep])>free)keep.pop();
+   if(sz>free){if(hasBk){mayTrim=true;refuse=sz>free+bkRaw().length+UNDOBK.length}else refuse=true}}
+  const replaced=refuse?[]:L.filter(r=>!keep.includes(r)).map(r=>({id:r.id,at:r.at,counts:r.counts}));
+  return{tooBig,mayTrim:mayTrim&&!refuse,refuse,n:c.tx,replaced}}
  // Never evicts for a copy that is too big. Otherwise evicts oldest first; a quota failure evicts the next-oldest and retries.
  function write(rec){const L=list();if(len(rec)>UNDOONE)return{ok:false,kind:'toobig'};
   const keep=fit(L,len(rec));
@@ -295,7 +299,8 @@ function UNDOCORE(env){
    const old={tx:S.tx,rec:S.rec,bud:S.bud,open:S.open,fresh:S.fresh};
    S.rec=[];S.tx=[];S.bud={};S.open={};S.fresh=0;
    if(!env.save()){S.tx=old.tx;S.rec=old.rec;S.bud=old.bud;S.open=old.open;S.fresh=old.fresh;drop(rec.id);return{ok:false,kind:'save',message:'Nothing was deleted. Your data could not be saved on this device. Try again.'}}
-   return{ok:true,kind:'cleared',counts:c,id:rec.id,message:`Cleared ${summary(c)}. Undo is kept for ${UNDODAYS} days in Settings.`}
+   const ev=w.evicted||0;
+   return{ok:true,kind:'cleared',counts:c,id:rec.id,message:`Cleared ${summary(c)}. Undo is kept for ${UNDODAYS} days in Settings.${ev?` ${nf(ev)} older undo ${ev==1?'copy was':'copies were'} replaced to make room.`:''}${w.trimmed?' Older automatic backups were removed to make room.':''}`}
   }finally{busy=false}}
  function restore(id){
   if(busy)return{ok:false,message:'Already working. Wait a moment.'};busy=true;
@@ -392,9 +397,9 @@ function clrSync(){return DBS=='none'?'Cleared on this device only. Sync is unav
 function clrPanel(){const c=UN.counts(),pn=UN.plan(c);
  if(!UN.total(c))return`<div class="pend" role="status"><b>Nothing to clear</b><div class="m">There are no transactions, budgets, recurring rules or starting balances.</div><div class="acts" style="margin-top:8px"><button data-a="cfx">Close</button></div></div>`;
  return`<div class="pend exp"><b>Clear everything?</b><div class="m">This will clear ${plu(c.tx,'transaction')} (${c.sample} sample), ${plu(c.bud,'budget')}, ${plu(c.rec,'recurring rule')} and ${plu(c.open,'starting balance')}.</div>
- <div class="m" style="margin-top:6px">Cleared: every transaction (sample ones too), every budget, every recurring rule and every starting balance (back to 0). Stays: accounts, categories, renames, view settings and Recently deleted. Your other devices clear the next time they open. An undo copy is kept on this device only, for ${UN.DAYS} days.</div>${pn.tooBig?`<div class="pend exp" role="alert" style="margin-top:8px">${c.tx.toLocaleString('en-US')} entries is more than this browser can keep an undo copy of. Export a CSV first, delete some entries by hand, then try Clear everything again.</div>`:''}${pn.mayTrim?`<div class="m" id="clrtrim" style="margin-top:6px">Older automatic backups may be removed to make room for the undo copy.</div>`:''}${pn.replaced.map(r=>`<div class="m" style="margin-top:6px">This will replace your undo copy from ${E(new Date(r.at).toLocaleDateString())} (${UN.total(r.counts).toLocaleString('en-US')} entries).</div>`).join('')}
+ <div class="m" style="margin-top:6px">Cleared: every transaction (sample ones too), every budget, every recurring rule and every starting balance (back to 0). Stays: accounts, categories, renames, view settings and Recently deleted. Your other devices clear the next time they open. An undo copy is kept on this device only, for ${UN.DAYS} days.</div>${pn.tooBig?`<div class="pend exp" role="alert" style="margin-top:8px">${c.tx.toLocaleString('en-US')} entries is more than this browser can keep an undo copy of. Export a CSV first, delete some entries by hand, then try Clear everything again.</div>`:''}${pn.refuse?`<div class="pend exp" role="alert" id="clrno" style="margin-top:8px">Nothing can be deleted yet. This browser has no room to keep an undo copy. Export a CSV, delete some older entries by hand, then try again.</div>`:''}${pn.mayTrim?`<div class="m" id="clrtrim" style="margin-top:6px">Older automatic backups may be removed to make room for the undo copy.</div>`:''}${pn.replaced.map(r=>`<div class="m" style="margin-top:6px">This will replace your undo copy from ${E(new Date(r.at).toLocaleDateString())} (${UN.total(r.counts).toLocaleString('en-US')} entries).</div>`).join('')}
  <label class="lb" style="margin-top:8px">Type DELETE to confirm<input id="clrt" autocomplete="off" autocapitalize="characters" aria-label="Type DELETE to confirm clearing everything" value="${E(CLRT)}"></label><div class="m" id="clrh">The button turns on when the box says DELETE.</div>
- <div class="acts" style="margin-top:8px"><button class="dz" id="clrc" data-a="clrc" aria-label="Clear everything now" ${pn.tooBig?'data-big="1" ':''}${CLRT.trim().toUpperCase()=='DELETE'&&!pn.tooBig?'':'disabled'}>Clear everything</button><button data-a="cfx">Cancel</button></div></div>`}
+ <div class="acts" style="margin-top:8px"><button class="dz" id="clrc" data-a="clrc" aria-label="Clear everything now" ${pn.tooBig||pn.refuse?'data-big="1" ':''}${CLRT.trim().toUpperCase()=='DELETE'&&!pn.tooBig&&!pn.refuse?'':'disabled'}>Clear everything</button><button data-a="cfx">Cancel</button></div></div>`}
 const clrRes=()=>!CLRRES?'':CLRRES.ok?`<div class="pend" style="border-color:var(--inc)" role="status">${E(CLRRES.m)}${CLRRES.sync?`<div class="m" id="clrsync">${E(clrSync())}</div>`:''}</div>`:res(CLRRES);
 function dataCard(){const smp=S.tx.filter(x=>x.demo).length;
  return`<div class="card"><h2>Data</h2><p class="m" id="syncst">${syText()}</p>${DB?'<div class="row"><button data-a="sy">Sync now</button></div>':''}

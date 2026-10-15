@@ -231,7 +231,7 @@ test('screen words match what the code does', () => {
 test('screen controls: DELETE gate, labels, and live-region roles', () => {
   assert.match(
     HTML,
-    /id="clrc"[^>]*aria-label="Clear everything now"[^>]*\$\{CLRT\.trim\(\)\.toUpperCase\(\)=='DELETE'&&!pn\.tooBig\?'':'disabled'\}/,
+    /id="clrc"[^>]*aria-label="Clear everything now"[^>]*\$\{CLRT\.trim\(\)\.toUpperCase\(\)=='DELETE'&&!pn\.tooBig&&!pn\.refuse\?'':'disabled'\}/,
   );
   assert.match(HTML, /id="clrt"[^>]*aria-label="Type DELETE to confirm clearing everything"/);
   assert.match(HTML, /aria-label="CSV text to import"/);

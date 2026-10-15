@@ -27,3 +27,5 @@ Say "not tested on a phone" in reports. Final reports: Problem / Solution / Outc
 ## Status 2026-10-15: QA reject of a55d454 fixed on branch (undo limits, plan text, kept flag, tour text, test gaps). Awaiting QA Engineer re-review. Not published, not pushed.
 
 ## Status 2026-10-15 (2): second QA reject of the undo copy fixed on branch (backup trimming, new refusal texts, mutant-killing tests in tests/artifact-undo-quota.test.ts). Awaiting QA Engineer re-review.
+
+## Status 2026-10-15 (3): QA reject of bb3c401 fixed (plan() uses real free space, up-front refusal text, replaced-copy note in the clear message, tests/artifact-undo-room.test.ts). Awaiting QA Engineer re-review.

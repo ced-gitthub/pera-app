@@ -136,7 +136,7 @@ test('storage full for good: the clear stops with the storage text, nothing dele
 
 test('plan: says which copies a new clear would replace, and when it is too big', () => {
   const d = device();
-  assert.deepEqual(J(d.U.plan(d.U.counts())), { tooBig: false, mayTrim: false, n: 3, replaced: [] });
+  assert.deepEqual(J(d.U.plan(d.U.counts())), { tooBig: false, mayTrim: false, refuse: false, n: 3, replaced: [] });
   const ids: string[] = [];
   for (let i = 0; i < 3; i++) {
     d.S.tx.push(entry(600 + i));
