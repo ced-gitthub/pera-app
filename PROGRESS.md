@@ -179,3 +179,6 @@
 Fixed: tour step and Keep/Clear lost the screen because sync() restored the saved one (now kept in sync()); clear result and Undo card visible; #na/#nc-* guarded and kept; tour prompts only on tab change; quick-add delete clears ED. Tests: tests/artifact-wiring.test.ts, 34/34 mutants killed. Not published, not pushed.
 
 - 2026-10-15 artifact parity: QA reject of f7ed2b4 fixed with vm-run tests (tests/artifact-wiring2.test.ts), no new `any`. Awaiting QA re-review; not republished.
+
+## Artifact parity items 1-6 live (2026-10-15)
+QA-approved cc6f415 published as artifact Version 29. Open: item 7 (native look). Details in docs/artifact-parity/NEXT.md.

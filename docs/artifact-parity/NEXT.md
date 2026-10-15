@@ -60,3 +60,6 @@ Update: items 3-6 QA reject 2 fixed (redraw guard via KEEPCORE, budget/account s
 
 - New tests/artifact-wiring2.test.ts (10 vm-run tests): tourStep(-1)/Done, tourStep guard via gnav, tourGo screen change + redraw, addAcct force and failed-save rollback, addPending keyword-only, kcc resets Edit mode. 8/8 mutants killed. `any` removed from artifact-wiring.test.ts (uses St).
 - Not done (optional): guard-Save toast "Account saved" for a new account; the guard Save does not toast today.
+
+## Status 2026-10-15 (5): items 1-6 LIVE
+QA APPROVE at cc6f415, artifact republished as Version 29 (id 1792041783-286e). Not tested on a phone or the claude.ai iframe sync. Next: item 7 (look like the native app) through the 5-agent pipeline.
