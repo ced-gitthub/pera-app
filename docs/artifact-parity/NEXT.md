@@ -31,3 +31,8 @@ Say "not tested on a phone" in reports. Final reports: Problem / Solution / Outc
 ## Status 2026-10-15 (3): QA reject of bb3c401 fixed (plan() uses real free space, up-front refusal text, replaced-copy note in the clear message, tests/artifact-undo-room.test.ts). Awaiting QA Engineer re-review.
 
 ## Status 2026-10-15 (4): items 3-6 in progress (Mobile Developer). Item 3 DONE: SAMPLECORE + tests/artifact-samples.test.ts (14 tests, 25/25 live mutants killed); Home Keep/Clear card (kck/kcc), Settings Delete-sample panel, Sample tag with aria-label, starting-balance note. Mutation script pattern: mutate operators in the marker block, run the test file, restore the HTML. Next: item 4 UNSAVEDCORE, 5 INTROCORE, 6 LIMITSCORE + TOAST. Keep each tests file under 400 lines; add every new test file to package.json "test".
+
+## Status (5): item 4 done (unsaved prompt)
+UNSAVEDCORE + guard wiring (v, cx, ed, em-Done, Esc, beforeunload) + sheet #us. Tests: tests/artifact-unsaved.test.ts (19), artifact-unsaved-ui.test.ts (9). Mutants 31/32 killed (1 equivalent). 375px browser check: sheet, Keep editing, Discard OK.
+Decisions: Done asks when dirty; add-forms (#na, #nc-*) are not dirty-tracked.
+Next: item 5 (INTROCORE, offer card, tour, hide Keep/Clear while offer shows), then item 6.

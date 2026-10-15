@@ -21,6 +21,8 @@ table{width:100%;border-collapse:collapse}td,th{padding:6px 4px;border-bottom:1p
  nav button{flex:1;min-width:0;border:0;background:none;border-radius:10px;padding:6px 0;font-size:11px;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--mut);min-height:52px}
  nav button.on{background:none;color:var(--acc);font-weight:700}.ic{display:block;width:22px;height:22px}.lf{display:none}.ls{display:inline}.acts button{min-height:40px}}
 .tag{font-size:11px;background:var(--line);border-radius:4px;padding:1px 5px}
+#us{position:fixed;inset:0;z-index:30;display:flex;align-items:flex-end;justify-content:center}.usb{position:absolute;inset:0;background:rgba(0,0,0,.45)}.uss{position:relative;background:var(--card);border:1px solid var(--line);border-radius:14px 14px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));width:100%;max-width:480px}.usbt{display:flex;flex-direction:column;gap:8px;margin-top:12px}.usbt button{width:100%;min-height:44px}
+@media(min-width:641px){#us{align-items:center}.uss{border-radius:14px}.usbt{flex-direction:row}.usbt button{flex:1}}
 button:disabled{opacity:.5;cursor:not-allowed}.dz{background:var(--exp);border-color:var(--exp);color:var(--bg);font-weight:600;min-height:48px}.pend .lb input{width:100%}
 </style></head><body><div class="w">
 <h1>Pera — tell it what happened</h1>
@@ -145,7 +147,7 @@ function run(text){sync();const t=text.trim().toLowerCase(),o={add:[],pend:[],sa
   if(fm){const fc=ensureCat(feeC);o.add.push(add({type:'expense',amount:fee,cat:fc,desc:fc,date:todayS(),acct:f}))}return o}
  for(const s of text.split(/,(?!\d{3}(?!\d))|[;\n]/).slice(0,50)){if(!s.trim())continue;const r=seg(s);if(r.err){o.say+=E(r.err)+'. ';continue}
   if(r.q||r.conf)o.pend.push(r);else o.add.push(add(r))}return o}
-let CF='',EM=0;
+let CF='',EM=0,IIMP=false;
 const parseKw=k=>[...new Set(String(k).toLowerCase().split(/[,\s]+/).map(x=>x.trim()).filter(Boolean))].slice(0,30);
 const names=()=>[...EXP,...INC];
 function acctRename(o,n){n=n.trim().slice(0,40);if(!n)return'Enter a name.';if(n==o)return'';if(S.accts.some(a=>a!=o&&a.toLowerCase()==n.toLowerCase()))return'That name is already used.';
@@ -338,6 +340,25 @@ const SAMPLE=(()=>{const KEY='mt1sq',isS=x=>!!(x&&x.demo),
  answer={read:st=>{try{return st.getItem(KEY)==='1'}catch(e){return true}},write:st=>{try{st.setItem(KEY,'1');return true}catch(e){return false}}};
  return{KEY,TITLE,KEEP,DELETE,OK,NONE,FAIL,NOTE,RECORD,KC_TITLE,KC_KEEP,KC_CLEAR,KC_BODY,count,text,tag,remove,showKeepClear,answer}})();
 /*SAMPLECORE:END*/
+/*UNSAVEDCORE:BEGIN*/
+const UNSAVED=(()=>{const TITLE='Save your changes?',TEXT='You changed something but have not saved it yet.',KEEP='Keep editing',DISCARD='Discard',SAVE='Save',
+ buttons=()=>[KEEP,DISCARD,SAVE],
+ normMoney=s=>{const t=String(s).trim();if(!/^-?[\d,]*\.?\d*$/.test(t)||!/\d/.test(t))return t;const m=/^(-?)([\d,]*)\.?(\d*)$/.exec(t);if(m[3].length>2)return t;
+  const i=m[2].replace(/,/g,'').replace(/^0+(?=\d)/,'')||'0',fr=(m[3]+'00').slice(0,2);return(m[1]&&(i!='0'||fr!='00')?'-':'')+i+'.'+fr},
+ snap=(f,money)=>{const o={};for(const k of Object.keys(f)){const v=f[k];o[k]=typeof v=='string'?(money&&money.includes(k)?normMoney(v):v.trim()):v}return o},
+ isDirty=(a,b)=>{const ks=new Set([...Object.keys(a),...Object.keys(b)]);for(const k of ks)if(!Object.is(a[k],b[k]))return true;return false},
+ onClose=d=>d?'ask':'close',
+ guard=env=>{let pend=null,cur=null,asking=false;
+  const done=()=>{asking=false;pend=null;cur=null;try{env.close()}catch(e){}};
+  return{open:()=>asking,
+   nav:fn=>{if(asking)return'ask';let f=null,d=false;try{f=env.form();d=!!f&&isDirty(f.initial,f.current)}catch(e){d=false}
+    if(!d){fn();return'run'}cur=f;pend=fn;asking=true;try{env.ask()}catch(e){done();fn();return'run'}return'ask'},
+   choose:c=>{if(!asking)return'none';const f=cur,fn=pend;
+    if(c==='discard'){try{f.discard()}catch(e){}done();fn();return'discard'}
+    if(c==='save'){let ok=false;try{ok=!!f.save()}catch(e){}done();if(ok){fn();return'saved'}return'failed'}
+    done();return'keep'}}};
+ return{TITLE,TEXT,KEEP,DISCARD,SAVE,buttons,normMoney,snap,isDirty,onClose,guard}})();
+/*UNSAVEDCORE:END*/
 function showMsg(){$('#msg').innerHTML=MSG+P.map((p,i)=>p.q?`<div class="pend">Not sure what “${E(p.label)}” ${M(p.amount)} means. Received it or spent it?<div class="row"><button data-a="pt" data-i="${i}" data-t="income">Received ${M(p.amount)}</button><button data-a="pt" data-i="${i}" data-t="expense">Spent ${M(p.amount)}</button><button data-a="pd" data-i="${i}">Discard</button></div></div>`:
  `<div class="pend">${p.type=='income'?'Income':'Expense'} ${M(p.amount)} — please confirm the category<div class="row"><select data-a="pc" data-i="${i}">${allCats().map(c=>`<option ${c==p.cat?'selected':''}>${c}</option>`).join('')}</select><button class="p" data-a="ps" data-i="${i}">Save</button><button data-a="pd" data-i="${i}">Discard</button></div></div>`).join('')}
 function submit(){const v=$('#q').value;if(!v.trim())return;if(/^(how|what|which|am i|are|do i|when|who|show)\b/i.test(v.trim())||v.trim().endsWith('?')){S.v='ask';$('#q').value='';draw();$('#ai').value=v;doAsk();return}
@@ -408,6 +429,9 @@ function commitAcc(){const plan=[];
   if(p.aaCh){const al=fin[p.o];if(al.length)S.alias[nn]=al;else delete S.alias[nn];p.aa.defaultValue=p.aa.value}
   p.r.dataset.acct=nn}
  save();return err}
+function addRule(){const n=Math.round(parseFloat($('#r-a').value)*100)/100,d=$('#r-d').value,ty=$('#r-t').value;let c=$('#r-c').value;if(!(n>=0.01&&n<=MAXA)||!isD(d)){MSG='<div class="pend exp">Enter an amount of at least 0.01 and a valid start date.</div>';showMsg();return false}
+  if(INC.includes(c)!=(ty=='income'))c=ty=='income'?'Other Income':'Other';S.rec.push({id:uid('r'),desc:$('#r-s').value.trim().slice(0,120),amount:n,type:ty,cat:c,acct:$('#r-ac').value,every:$('#r-e').value,start:d,next:d});MSG='';showMsg();save();draw();return true}
+function saveEntry(id){const x=S.tx.find(y=>y.id==id);if(!x)return false;const n=Math.round(parseFloat($('#e-a').value)*100)/100;if(!(n>=0.01&&n<=MAXA)){eerr('Enter an amount between 0.01 and '+MAXA);return false}const d=$('#e-d').value;if(d&&isD(d))x.date=d;x.amount=n;if(x.type!='transfer'){const ty=$('#e-t').value;let c=$('#e-c').value;if(INC.includes(c)!=(ty=='income'))c=ty=='income'?'Other Income':'Other';x.type=ty;x.cat=c}x.acct=$('#e-ac').value;x.desc=$('#e-s').value.slice(0,120);x.notes=$('#e-n').value.slice(0,500);x.updated=todayS();if(!save()&&STORE_OK){eerr('Could not save');return false}ED=0;lst();return true}
 function commitTab(){if(!EM)return'';return S.v=='bud'?commitBud():S.v=='acc'?commitAcc():''}
 function bkCard(){const L=bkList();return`<div class="card"><h2>Backups</h2><p class="m">Saved on this device before a restore, and daily. Restoring merges back through sync.</p>${L.map((b,i)=>`<div class="tx"><span>${E(new Date(b.at).toLocaleString())} <span class="m">${b.n} tx · ${E(b.why)}</span></span><span class="row">${CF=='bk:'+i?`<button class="p" data-a="bkc" data-i="${i}">Confirm restore</button><button data-a="cfx">Cancel</button>`:`<button data-a="bkr" data-i="${i}">Restore</button>`}</span></div>`).join('')||'<p class="m">No backups yet.</p>'}</div>`}
 const plu=(n,w)=>n+' '+w+(n==1?'':'s'),res=(r,id)=>r?`<div ${id?`id="${id}" `:''}class="pend${r.ok?'':' exp'}" role="${r.ok?'status':'alert'}">${E(r.m)}</div>`:'',csvCtx=()=>({accts:S.accts,alias:S.alias||{},inc:INC,exp:EXP});
@@ -443,23 +467,23 @@ ${bkCard()}
 <div class="card"><h2>Recently deleted</h2><p class="m">Kept for 30 days. Type “undo last” to restore the newest one.</p>${[...S.trash].sort((a,b)=>b.at-a.at).slice(0,20).map(x=>`<div class="tx"><span>${E(x.desc||x.cat)} <span class="m">${x.date}</span></span><span class="row"><b>${M(x.amount)}</b><button data-a="rest" data-id="${x.id}">Restore</button></span></div>`).join('')||'<p class="m">Nothing deleted.</p>'}</div>
 <div class="card"><h2>Settings</h2><p class="m">Currency: PHP (₱). Timezone: Asia/Manila. Data is saved on this device and synced to your other devices. No AI provider is connected; all parsing runs locally.</p></div>`}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b||b.tagName=='SELECT'||b.tagName=='INPUT')return;sync();const a=b.dataset.a,id=b.dataset.id,i=+b.dataset.i,x=S.tx.find(y=>y.id==id);
+ if(a.slice(0,3)=='us-'){GU.choose(a.slice(3));return}
  if(EM&&['cm','cdr','cdc','ca','am','adr','adc','na','cfx'].includes(a)){const er=commitTab();if(er){eerr(er);return}}
- if(a=='v'){const er=commitTab();if(er){eerr(er);return}EM=0;ED=0;S.v=b.dataset.k;CF='';CLRRES=URRES=null;CLRT='';save();draw();window.scrollTo(0,0)}
+ if(a=='v'){gnav(()=>{const er=commitTab();if(er){eerr(er);return}EM=0;ED=0;S.v=b.dataset.k;CF='';CLRRES=URRES=null;CLRT='';save();draw();window.scrollTo(0,0)})}
  else if(a=='del'){if(x){S.tx=S.tx.filter(y=>y.id!=id);toTrash(x);save()}lst()}
  else if(a=='more'){F.n=(F.n||50)+50;lst()}
  else if(a=='dup'){if(x){const{id:_,n:_n,...r}=x;add({...r,demo:0})}lst()}
- else if(a=='ed'){ED=id;lst()}else if(a=='cx'){ED=0;lst()}
- else if(a=='ok'){const n=Math.round(parseFloat($('#e-a').value)*100)/100;if(!x)return;if(!(n>=0.01&&n<=MAXA)){eerr('Enter an amount between 0.01 and '+MAXA);return}const d=$('#e-d').value;if(d&&isD(d))x.date=d;x.amount=n;if(x.type!='transfer'){const ty=$('#e-t').value;let c=$('#e-c').value;if(INC.includes(c)!=(ty=='income'))c=ty=='income'?'Other Income':'Other';x.type=ty;x.cat=c}x.acct=$('#e-ac').value;x.desc=$('#e-s').value.slice(0,120);x.notes=$('#e-n').value.slice(0,500);x.updated=todayS();if(!save()&&STORE_OK){eerr('Could not save');return}ED=0;lst()}
+ else if(a=='ed'){gnav(()=>{ED=id;lst()})}else if(a=='cx'){gnav(()=>{ED=0;lst()})}
+ else if(a=='ok'){saveEntry(id)}
  else if(a=='pt'){const r=seg(P[i].raw,b.dataset.t);P.splice(i,1,r);if(!r.conf){add(r);MSG=`<div class="pend" style="border-color:var(--inc)">Added: ${L(r)}</div>`;P.splice(i,1)}showMsg();draw()}
  else if(a=='ps'){const p=P[i];add(p);MSG=`<div class="pend" style="border-color:var(--inc)">Added: ${L(p)}</div>`;P.splice(i,1);showMsg();draw()}
  else if(a=='pd'){P.splice(i,1);showMsg()}
  else if(a=='rrd'){S.rec=S.rec.filter(r=>r.id!=id);save();draw()}
  else if(a=='rest'){try{restore(id)}catch(err){}draw()}
- else if(a=='rra'){const n=Math.round(parseFloat($('#r-a').value)*100)/100,d=$('#r-d').value,ty=$('#r-t').value;let c=$('#r-c').value;if(!(n>=0.01&&n<=MAXA)||!isD(d)){MSG='<div class="pend exp">Enter an amount of at least 0.01 and a valid start date.</div>';showMsg();return}
-  if(INC.includes(c)!=(ty=='income'))c=ty=='income'?'Other Income':'Other';S.rec.push({id:uid('r'),desc:$('#r-s').value.trim().slice(0,120),amount:n,type:ty,cat:c,acct:$('#r-ac').value,every:$('#r-e').value,start:d,next:d});MSG='';showMsg();save();draw()}
+ else if(a=='rra'){addRule()}
 
  else if(a=='cfx'){CF='';draw()}
- else if(a=='em'){if(EM){const er=commitTab();if(er){eerr(er);return}EM=0;ED=0;CF=''}else EM=1;draw()}
+ else if(a=='em'){if(EM){gnav(()=>{const er=commitTab();if(er){eerr(er);return}EM=0;ED=0;CF='';draw()})}else{EM=1;draw()}}
  else if(a=='neg'){const r=b.closest('[data-acct]'),i=r&&r.querySelector('.ao'),n=i?parseFloat(i.value):NaN;if(!isNaN(n))i.value=String(Math.round(-n*100)/100);else eerr('Type the amount first, then tap ±.')}
  else if(a=='am'){acctMove(S.accts[i],+b.dataset.d);draw()}
  else if(a=='adr'){CF='a:'+i;draw()}
@@ -477,7 +501,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b
  else if(a=='exp'){XF=$('#xf').value;XT=$('#xt').value;const r=CSV.exportRun(S.tx,XF,XT,todayS());XRES={ok:r.ok,m:r.message};XBOX=r.ok?r.text:'';draw();const bx=$('#xbox');if(bx){bx.focus();bx.select()}}
  else if(a=='chk'){IBOX=$('#csv').value;const p=CSV.plan(IBOX,csvCtx(),new Set(S.tx.map(x=>x.ih).filter(Boolean).map(CSV.ihNorm)),todayS()),rm=p.blocked?null:CSV.roomMsg(S.tx.length,p.rows.length);
   IRES=p.blocked||rm?res({ok:false,m:p.blocked||rm}):`<div class="pend" role="status">${E(CSV.checkSummary(p))}${CSV.problemLines(p.problems).map(l=>`<div class="m">${E(l)}</div>`).join('')}</div>`+(p.rows.length?`<div class="row" style="margin-top:8px"><button class="p" data-a="impgo">Import ${plu(p.rows.length,'row')}</button></div>`:'');$('#ires').innerHTML=IRES}
- else if(a=='impgo'){const r=commitImport();IRES=res(r);$('#ires').innerHTML=IRES}
+ else if(a=='impgo'){const r=commitImport();IIMP=r.ok;IRES=res(r);$('#ires').innerHTML=IRES}
  else if(a=='sd'){CF='sd';draw()}
  else if(a=='sdc'){const r=SAMPLE.remove({S:()=>S,save:()=>save()||!STORE_OK,storeOk:()=>STORE_OK});CLRRES={ok:r.ok,m:r.message};CF='';draw()}
  else if(a=='kck'){SAMPLE.answer.write(localStorage);draw()}
@@ -490,7 +514,22 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b
 document.addEventListener('change',e=>{const t=e.target,a=t.dataset.a;if(t.dataset.f)return;sync();
  if(a=='per'){S.per=t.value;save();draw()}else if(a=='cf'||a=='ct'){S[a]=t.value;save();draw()}else if(a=='rm'){S.rm=t.value;draw()}
  else if(a=='pc'){const p=P[+t.dataset.i];p.cat=t.value;p.type=INC.includes(t.value)?'income':'expense'}});
-document.addEventListener('input',e=>{const id=e.target.id;if(id=='clrt'){CLRT=e.target.value;const b=$('#clrc');if(b)b.disabled=CLRT.trim().toUpperCase()!='DELETE'||b.dataset.big=='1';return}if(id=='csv'){IBOX=e.target.value;IRES='';const r=$('#ires');if(r)r.innerHTML='';return}if(id=='xf'||id=='xt'){XF=$('#xf').value;XT=$('#xt').value;return}const f=e.target.dataset.f;if(f){F[f]=e.target.value;F.n=50;lst()}});
+document.addEventListener('input',e=>{const id=e.target.id;if(id=='clrt'){CLRT=e.target.value;const b=$('#clrc');if(b)b.disabled=CLRT.trim().toUpperCase()!='DELETE'||b.dataset.big=='1';return}if(id=='csv'){IBOX=e.target.value;IIMP=false;IRES='';const r=$('#ires');if(r)r.innerHTML='';return}if(id=='xf'||id=='xt'){XF=$('#xf').value;XT=$('#xt').value;return}const f=e.target.dataset.f;if(f){F[f]=e.target.value;F.n=50;lst()}});
+const MONEYSEL='#e-a,#r-a,.ao,.cb',EDSEL='.an,.ao,.aa,.cn,.cb,.ck,#r-s,#r-a,#r-t,#r-c,#r-ac,#r-e,#r-d';
+function scopeSnap(els){const ini={},cur={},mon=[];els.forEach((el,i)=>{const k=(el.id||el.className||el.tagName)+'#'+i;let d,c;if(el.tagName=='SELECT'){const o=[...el.options];d=(o.find(x=>x.defaultSelected)||o[0]||{}).value||'';c=el.value}else{d=el.defaultValue;c=el.value}if(el.matches(MONEYSEL))mon.push(k);ini[k]=d;cur[k]=c});return{initial:UNSAVED.snap(ini,mon),current:UNSAVED.snap(cur,mon)}}
+function curForm(){const parts=[];
+ if(ED&&$('#e-a')){const s=scopeSnap([...$('#e-a').closest('.ed').querySelectorAll('input,select')]);parts.push({...s,save:()=>saveEntry(ED),discard:()=>{ED=0;lst()}})}
+ if(EM){const s=scopeSnap([...$('#view').querySelectorAll(EDSEL)]);parts.push({...s,save:()=>{if(S.v=='set'&&($('#r-a').value||$('#r-s').value))return addRule();const er=commitTab();if(er){eerr(er);return false}return true},discard:()=>draw()})}
+ if(S.v=='set'&&$('#csv')&&IBOX.trim()&&!IIMP)parts.push({initial:{csv:''},current:{csv:IBOX},save:()=>{const r=commitImport();IIMP=r.ok;IRES=res(r);return r.ok},discard:()=>{IBOX='';IRES='';IIMP=false;draw()}});
+ if(!parts.length)return null;const initial={},current={};parts.forEach((p,n)=>{for(const k in p.initial)initial[n+':'+k]=p.initial[k];for(const k in p.current)current[n+':'+k]=p.current[k]});
+ return{initial,current,save:()=>{let ok=true;for(const p of parts)if(!p.save())ok=false;return ok},discard:()=>{for(const p of parts)try{p.discard()}catch(e){}}}}
+let USF=null;
+function showUS(){USF=document.activeElement;let e=$('#us');if(!e){e=document.createElement('div');e.id='us';document.body.appendChild(e)}
+ e.innerHTML='<div class="usb" data-a="us-keep"></div><div class="uss" role="alertdialog" aria-modal="true" aria-labelledby="us-t" aria-describedby="us-d"><b id="us-t">'+UNSAVED.TITLE+'</b><p id="us-d" class="m">'+UNSAVED.TEXT+'</p><div class="usbt"><button data-a="us-keep" id="us-k">'+UNSAVED.KEEP+'</button><button data-a="us-discard" class="dz">'+UNSAVED.DISCARD+'</button><button data-a="us-save" class="p">'+UNSAVED.SAVE+'</button></div></div>';$('#us-k').focus()}
+function hideUS(){const e=$('#us');if(e)e.remove();if(USF&&USF.isConnected&&USF.focus)try{USF.focus()}catch(x){}USF=null}
+const GU=UNSAVED.guard({form:curForm,ask:showUS,close:hideUS}),gnav=fn=>GU.nav(fn);
+document.addEventListener('keydown',e=>{if(e.key=='Escape'){if(GU.open()){GU.choose('keep');return}if(ED)GU.nav(()=>{ED=0;lst()})}else if(e.key=='Tab'&&GU.open()){const bs=[...document.querySelectorAll('#us button')],i=bs.indexOf(document.activeElement);if(bs.length){e.preventDefault();bs[(i+(e.shiftKey?-1:1)+bs.length)%bs.length].focus()}}});
+window.addEventListener('beforeunload',e=>{let d=false;try{const f=curForm();d=!!f&&UNSAVED.isDirty(f.initial,f.current)}catch(x){}if(d){e.preventDefault();e.returnValue=''}});
 $('#go').onclick=submit;$('#q').addEventListener('keydown',e=>{if(e.key=='Enter')submit()});
 document.addEventListener('keydown',e=>{if(e.key=='Enter'&&e.target.id=='ai')doAsk()});
 const DEV=Math.random().toString(36).slice(2,8),MK='mt1sy',EN=new Map(),VAL=new Map();
