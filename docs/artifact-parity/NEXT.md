@@ -55,3 +55,8 @@ Next: item 6 (LIMITSCORE, toasts, parseFloat removal, tests/artifact-copy.test.t
 Update: items 3-6 QA reject 2 fixed (redraw guard via KEEPCORE, budget/account save rollback, mutant-killing tests). Awaiting QA re-review; do not republish until APPROVE and Ced's yes.
 
 ## Status 2026-10-15 (3): QA reject of 82679b5 (6 defects) fixed on branch. Root cause of 1+2: sync() reloaded the saved screen on every click; sync() now keeps the in-memory screen, kcc and the question path save first. Tour tn/tb prompt only when the tab changes; #na and #nc-* guarded and kept; quick-add delete clears ED. New tests/artifact-wiring.test.ts (real-run tests). Awaiting QA Engineer re-review. Not published, not pushed.
+
+## Status 2026-10-15 (4): QA reject of f7ed2b4 (missing tests) fixed
+
+- New tests/artifact-wiring2.test.ts (10 vm-run tests): tourStep(-1)/Done, tourStep guard via gnav, tourGo screen change + redraw, addAcct force and failed-save rollback, addPending keyword-only, kcc resets Edit mode. 8/8 mutants killed. `any` removed from artifact-wiring.test.ts (uses St).
+- Not done (optional): guard-Save toast "Account saved" for a new account; the guard Save does not toast today.

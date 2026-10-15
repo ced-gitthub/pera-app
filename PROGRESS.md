@@ -177,3 +177,5 @@
 
 ## 2026-10-15: artifact QA reject of 82679b5 fixed (branch only)
 Fixed: tour step and Keep/Clear lost the screen because sync() restored the saved one (now kept in sync()); clear result and Undo card visible; #na/#nc-* guarded and kept; tour prompts only on tab change; quick-add delete clears ED. Tests: tests/artifact-wiring.test.ts, 34/34 mutants killed. Not published, not pushed.
+
+- 2026-10-15 artifact parity: QA reject of f7ed2b4 fixed with vm-run tests (tests/artifact-wiring2.test.ts), no new `any`. Awaiting QA re-review; not republished.

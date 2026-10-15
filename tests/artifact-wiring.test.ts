@@ -3,9 +3,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
-import { HTML, slice } from './artifact-undo-kit.ts';
+import { HTML, slice, type St } from './artifact-undo-kit.ts';
 
-type Obj = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
+type Obj = St;
 const handler = (a: string) => HTML.match(new RegExp(`else if\\(a=='${a}'\\)[^\\n]*`))?.[0] ?? '';
 const fnSrc = (name: string) => {
   const a = HTML.indexOf(`function ${name}(`);
