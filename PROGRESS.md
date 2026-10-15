@@ -190,3 +190,6 @@ Fixed: artifact now uses native tokens and layout (see docs/artifact-parity/NEXT
 Fixed: banner overlap, mid-word row breaks, dead Recent arrow, old header, banners on every tab, two Add buttons. Decision: quick-add box moved below each tab (fab jumps to it). Next: QA Engineer re-review, then Ced's yes before republish.
 
 - Item 7 round 3 (QA fix): tour now scrolls the highlighted target to centre (not tab-bar buttons); extra bottom padding while the tour is open; quick-add button is "Add" again; tests for fab and tour scroll. Not tested on a phone.
+
+## 2026-10-15: artifact item 7 live
+Artifact "Pera — money tracker" now has the native look (Lime Night / Daylight, emoji tab bar, banners, Home hero, floating Add). QA APPROVE at 869f470, published as Version 30. Data format untouched. Verify: npm test 833/833, artifact tests 218/218, lint 285 warnings (ratchet). Not tested on a phone. Next: native-app improvement program.
