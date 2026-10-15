@@ -182,3 +182,6 @@ Fixed: tour step and Keep/Clear lost the screen because sync() restored the save
 
 ## Artifact parity items 1-6 live (2026-10-15)
 QA-approved cc6f415 published as artifact Version 29. Open: item 7 (native look). Details in docs/artifact-parity/NEXT.md.
+
+## Artifact item 7: native look built (2026-10-15, branch only)
+Fixed: artifact now uses native tokens and layout (see docs/artifact-parity/NEXT.md status 6). Tests: tests/artifact-look.test.ts. Decisions: kept 7 tabs; banners inside tab cards; no banners on Reports/Ask. Next: QA Engineer review, then Ced's yes before republish. Not published, not pushed.

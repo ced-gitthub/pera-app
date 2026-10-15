@@ -63,3 +63,7 @@ Update: items 3-6 QA reject 2 fixed (redraw guard via KEEPCORE, budget/account s
 
 ## Status 2026-10-15 (5): items 1-6 LIVE
 QA APPROVE at cc6f415, artifact republished as Version 29 (id 1792041783-286e). Not tested on a phone or the claude.ai iframe sync. Next: item 7 (look like the native app) through the 5-agent pipeline.
+
+## Status 2026-10-15 (6): item 7 built on branch (Stage 4), awaiting QA Engineer
+Artifact restyled in the native look (Lime Night dark / Daylight light, tokens, emoji tab bar at all widths, banners via eh(), Home hero/tiles/Recent, floating Add `data-a="fab"` focusing #q, centred toast card, sheet and tour bar). New tests/artifact-look.test.ts (6 tests, 18/18 mutants killed). Browser check at 375 and 980 px, dark and light, all 7 tabs: no sideways scroll, every button/select/input/link >= 44 px. Not tested on a phone.
+Deviations from ITEM7-DESIGN.md (static markup was off-limits): banners sit as rounded tinted blocks inside the tab card (not full-bleed); Reports and Ask have no banner (no eh() call there); Home has no Edit chip; the old h1 and "Full app" line stay at the top, styled quiet. Not republished, not pushed.
