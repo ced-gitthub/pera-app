@@ -174,3 +174,6 @@
 - Fixed: unsaved edits survive any same-screen redraw (KEEPCORE: quick add, History filter, Show more, Settings actions, rule form); a filter can no longer hide the open editor; question from quick add and the tour go through the unsaved prompt; deleting the edited entry closes its editor; failed save rolls back Budgets and Accounts. New tests close the LIMITSCORE and INTROCORE survivors.
 - Evidence: 175/175 artifact tests, verify green, lint 285 (cap), real-browser check of quick add, filter, nav and question prompt.
 - Open: QA re-review, then republish (needs Ced's yes). Not tested on a phone.
+
+## 2026-10-15: artifact QA reject of 82679b5 fixed (branch only)
+Fixed: tour step and Keep/Clear lost the screen because sync() restored the saved one (now kept in sync()); clear result and Undo card visible; #na/#nc-* guarded and kept; tour prompts only on tab change; quick-add delete clears ED. Tests: tests/artifact-wiring.test.ts, 34/34 mutants killed. Not published, not pushed.

@@ -95,7 +95,8 @@ test('only an explicit reset may redraw fresh: discard of the Edit-mode form and
 });
 
 test('the tour cannot swap the screen under a changed form', () => {
-  for (const a of ['tst', 'tn', 'tb']) assert.ok(handler(a).includes('gnav('), a);
+  for (const a of ['tst', 'tn', 'tb']) assert.ok(handler(a).includes('tourStep('), a);
+  assert.match(fn('tourStep'), /gnav\(\(\)=>tourGo/);
 });
 
 test('deleting the entry being edited closes its editor', () => {
@@ -125,4 +126,14 @@ test('a filter that would hide the entry being edited still shows its editor', (
   assert.ok(s.includes('ex=ED&&!rows0.some(x=>x.id==ED)'), 'pins the edited entry');
   assert.ok(s.includes('rows=ex?[ex,...rows0]:rows0'));
   assert.ok(s.includes('a.length||ex?'), 'also when nothing else matches');
+});
+
+test('KEEP leaves a field alone when the user had not typed in it', () => {
+  const h = KEEP.hold([f('e-s', 'Dinner', 'Lunch')], 'tx|7|0');
+  const fresh = [f('e-s', 'Lunch', 'Lunch'), f('e-n', 'saved note', 'saved note')];
+  assert.equal(KEEP.restore(h, fresh, 'tx|7|0', apply(fresh)), 1);
+  assert.deepEqual(
+    fresh.map((x) => x.value),
+    ['Dinner', 'saved note'],
+  );
 });

@@ -82,7 +82,7 @@ if(!S.v2){try{localStorage.setItem('mt1_legacy',localStorage.getItem('mt1')||'')
 cats();S.trash=S.trash.filter(t=>Date.now()-t.at<30*864e5);
 let STORE_OK=true;try{localStorage.setItem('mt_t','1');localStorage.removeItem('mt_t')}catch(e){STORE_OK=false}
 const save=()=>{try{localStorage.setItem('mt1',JSON.stringify(S))}catch(e){return false}try{syLocal()}catch(e){}return true};
-function sync(){try{const j=localStorage.getItem('mt1');if(j){const n=JSON.parse(j);if(n&&Array.isArray(n.tx)){S=n;S.rec=S.rec||[];S.trash=S.trash||[];cats()}}}catch(e){}}
+function sync(){try{const j=localStorage.getItem('mt1');if(j){const n=JSON.parse(j);if(n&&Array.isArray(n.tx)){const v=S&&S.v;S=n;if(v)S.v=v;S.rec=S.rec||[];S.trash=S.trash||[];cats()}}}catch(e){}}
 const add=o=>{const t=todayS(),x={id:uid('t'),n:nextN(),notes:'',desc:'',acct:'',created:t,updated:t,...o};S.fresh=0;S.tx.push(x);if(!save()&&STORE_OK){S.tx.pop();throw new Error('could not write to this device. Try again.')}return x};
 const toTrash=x=>{S.trash.push({...x,at:Date.now()})};
 function restore(id){let k=-1;S.trash.forEach((t,i)=>{if(t.id==id)k=i});if(k<0)return null;const{at,...x}=S.trash[k];S.trash.splice(k,1);S.tx.push(x);if(!save()&&STORE_OK){S.tx.pop();S.trash.splice(k,0,{...x,at});throw new Error('could not write to this device. Try again.')}return x}
@@ -417,12 +417,12 @@ const KEEP=(()=>{const hold=(fields,ctx)=>{const m=new Map();for(const f of fiel
 const TO=TOAST.make({set:t=>{const e=$('#toast');if(e)e.textContent=t},later:(fn,ms)=>setTimeout(fn,ms),clear:id=>clearTimeout(id)}),toast=k=>{try{TO.show(k)}catch(e){}},failLine=()=>{MSG='<div class="pend exp">'+E(TOAST.FAIL)+'</div>';showMsg()};
 function showMsg(){$('#msg').innerHTML=MSG+P.map((p,i)=>p.q?`<div class="pend">Not sure what “${E(p.label)}” ${M(p.amount)} means. Received it or spent it?<div class="row"><button data-a="pt" data-i="${i}" data-t="income">Received ${M(p.amount)}</button><button data-a="pt" data-i="${i}" data-t="expense">Spent ${M(p.amount)}</button><button data-a="pd" data-i="${i}">Discard</button></div></div>`:
  `<div class="pend">${p.type=='income'?'Income':'Expense'} ${M(p.amount)} — please confirm the category<div class="row"><select data-a="pc" data-i="${i}">${allCats().map(c=>`<option ${c==p.cat?'selected':''}>${c}</option>`).join('')}</select><button class="p" data-a="ps" data-i="${i}">Save</button><button data-a="pd" data-i="${i}">Discard</button></div></div>`).join('')}
-function submit(){const v=LIM.clip($('#q').value,LIM.LIMITS.QUICK);if(!v.trim())return;if(/^(how|what|which|am i|are|do i|when|who|show)\b/i.test(v.trim())||v.trim().endsWith('?')){gnav(()=>{EM=0;ED=0;CF='';S.v='ask';$('#q').value='';draw();$('#ai').value=v;doAsk()});return}
- let o;try{o=run(v)}catch(err){MSG='<div class="pend exp">Not saved: '+E(err.message)+'</div>';showMsg();return}P=P.concat(o.pend);MSG=(o.add.length?`<div class="pend" style="border-color:var(--inc)"><b>Added ${o.add.length} ${o.add.length>1?'transactions':'transaction'}</b>${o.add.map(x=>'<div>'+L(x)+'</div>').join('')}</div>`:'')+(o.say?`<div class="pend">${o.say}</div>`:'')+(o.undo?'<div class="pend"><button data-a="undo">Undo delete</button></div>':'');UNDO=o.undo||null;$('#q').value='';showMsg();draw();if(o.add.length)toast('entrySaved')}
+function submit(){const v=LIM.clip($('#q').value,LIM.LIMITS.QUICK);if(!v.trim())return;if(/^(how|what|which|am i|are|do i|when|who|show)\b/i.test(v.trim())||v.trim().endsWith('?')){gnav(()=>{EM=0;ED=0;CF='';S.v='ask';save();$('#q').value='';draw();$('#ai').value=v;doAsk()});return}
+ let o;try{o=run(v)}catch(err){MSG='<div class="pend exp">Not saved: '+E(err.message)+'</div>';showMsg();return}if(ED&&!S.tx.some(y=>y.id==ED))ED=0;P=P.concat(o.pend);MSG=(o.add.length?`<div class="pend" style="border-color:var(--inc)"><b>Added ${o.add.length} ${o.add.length>1?'transactions':'transaction'}</b>${o.add.map(x=>'<div>'+L(x)+'</div>').join('')}</div>`:'')+(o.say?`<div class="pend">${o.say}</div>`:'')+(o.undo?'<div class="pend"><button data-a="undo">Undo delete</button></div>':'');UNDO=o.undo||null;$('#q').value='';showMsg();draw();if(o.add.length)toast('entrySaved')}
 let VCTX='';
 const undoMarks=d=>{for(let i=d.length-1;i>=0;i--){const[el,v]=d[i];if(el.tagName=='DIV')el.dataset[el.dataset.acct!==undefined?'acct':'cat']=v;else el.defaultValue=v}};
 const vctx=()=>S.v+'|'+ED+'|'+EM,KEEPCLS=['an','ao','aa','cn','cb','ck'];
-function fkey(el){if(/^(e|r)-/.test(el.id))return el.id;const c=KEEPCLS.find(k=>el.classList.contains(k)),r=c&&el.closest('[data-acct],[data-cat]');if(!r)return'';return(r.dataset.acct!==undefined?'a:'+r.dataset.acct:'c:'+r.dataset.cat)+'.'+c}
+function fkey(el){if(/^(e|r|nc)-/.test(el.id)||el.id=='na')return el.id;const c=KEEPCLS.find(k=>el.classList.contains(k)),r=c&&el.closest('[data-acct],[data-cat]');if(!r)return'';return(r.dataset.acct!==undefined?'a:'+r.dataset.acct:'c:'+r.dataset.cat)+'.'+c}
 function fdef(el){if(el.tagName=='SELECT'){const o=[...el.options];return(o.find(x=>x.defaultSelected)||o[0]||{}).value||''}return el.defaultValue}
 const hfields=()=>[...document.querySelectorAll('#view input,#view select')].map(el=>({el,key:fkey(el),value:el.value,def:fdef(el)}));
 function holdForm(){const h=KEEP.hold(hfields(),VCTX);return()=>{KEEP.restore(h,hfields(),vctx(),(f,v)=>{f.el.value=v})}}
@@ -502,8 +502,11 @@ function addRule(){const pa=LIM.parseAmount($('#r-a').value),pd=LIM.parseDate($(
 function tourDraw(){let e=$('#tour');document.querySelectorAll('.tourhl').forEach(x=>x.classList.remove('tourhl'));if(TOUR<0){if(e)e.remove();return}const s=INTRO.steps()[TOUR];if(!e){e=document.createElement('div');e.id='tour';e.setAttribute('role','region');e.setAttribute('aria-label','Tour');document.body.appendChild(e)}
  e.innerHTML='<div class="tc"><div class="tt"><b>'+E(s.title)+'</b><span class="m">'+INTRO.counter(TOUR)+'</span></div><p>'+E(s.text)+'</p><div class="tb"><button data-a="tx0" aria-label="'+INTRO.SKIP_LABEL+'">Skip</button><span class="sp"></span>'+(TOUR>0?'<button data-a="tb">'+INTRO.BACK+'</button>':'')+'<button class="p" data-a="tn" id="tn">'+INTRO.label(TOUR)+'</button></div></div>';const t=document.querySelector(s.target);if(t)t.classList.add('tourhl');const b=$('#tn');if(b)try{b.focus({preventScroll:true})}catch(x){}}
 function tourGo(i){if(i<0){tourEnd();return}TOUR=i;const k=INTRO.steps()[i].tab;if(S.v!=k){S.v=k;EM=0;ED=0;CF='';draw()}tourDraw()}
+function tourStep(i){if(i>=0&&INTRO.steps()[i].tab!==S.v)gnav(()=>tourGo(i));else tourGo(i)}
 function tourEnd(){TOUR=-1;try{INTRO.flag.write(localStorage)}catch(e){}tourDraw();draw()}
 function saveEntry(id){const x=S.tx.find(y=>y.id==id);if(!x)return false;const a=LIM.parseAmount($('#e-a').value);if(!a.ok){eerr(a.message);return false}const dt=LIM.parseDate($('#e-d').value,todayS());if(!dt.ok){eerr(dt.message);return false}const old={...x};x.date=dt.date;x.amount=a.pesos;if(x.type!='transfer'){const ty=$('#e-t').value;let c=$('#e-c').value;if(INC.includes(c)!=(ty=='income'))c=ty=='income'?'Other Income':'Other';x.type=ty;x.cat=c}x.acct=$('#e-ac').value;x.desc=LIM.clip($('#e-s').value,LIM.LIMITS.DESC);x.notes=LIM.clip($('#e-n').value,LIM.LIMITS.NOTES);x.updated=todayS();if(!save()&&STORE_OK){Object.assign(x,old);eerr(TOAST.FAIL);return false}ED=0;lst();toast('entrySaved');return true}
+function addAcct(force){const e=$('#na'),v=LIM.clip(e?e.value.trim():'',LIM.LIMITS.ACCT);if(!v)return force?'Enter a name.':'';if(S.accts.some(y=>y.toLowerCase()==v.toLowerCase()))return'That name is already used.';S.accts.push(v);if(!save()&&STORE_OK){S.accts.pop();return TOAST.FAIL}e.value='';return''}
+function addPending(){const er=addAcct();if(er)return er;for(const t of['income','expense']){const n=$('#nc-n-'+t),k=$('#nc-k-'+t);if(n&&(n.value.trim()||k.value.trim())){const r=catAdd(n.value,t,k.value);if(r)return r;n.value='';k.value=''}}return''}
 function commitTab(){if(!EM)return'';return S.v=='bud'?commitBud():S.v=='acc'?commitAcc():''}
 function bkCard(){const L=bkList();return`<div class="card"><h2>Backups</h2><p class="m">Saved on this device before a restore, and daily. Restoring merges back through sync.</p>${L.map((b,i)=>`<div class="tx"><span>${E(new Date(b.at).toLocaleString())} <span class="m">${b.n} tx · ${E(b.why)}</span></span><span class="row">${CF=='bk:'+i?`<button class="p" data-a="bkc" data-i="${i}">Confirm restore</button><button data-a="cfx">Cancel</button>`:`<button data-a="bkr" data-i="${i}">Restore</button>`}</span></div>`).join('')||'<p class="m">No backups yet.</p>'}</div>`}
 const plu=(n,w)=>n+' '+w+(n==1?'':'s'),res=(r,id)=>r?`<div ${id?`id="${id}" `:''}class="pend${r.ok?'':' exp'}" role="${r.ok?'status':'alert'}">${E(r.m)}</div>`:'',csvCtx=()=>({accts:S.accts,alias:S.alias||{},inc:INC,exp:EXP});
@@ -563,8 +566,8 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b
  else if(a=='cm'){const L=b.dataset.t=='income'?INC:EXP;catMove(L[i],+b.dataset.d);draw()}
  else if(a=='cdr'){CF='c:'+b.dataset.t+':'+i;draw()}
  else if(a=='cdc'){const L=b.dataset.t=='income'?INC:EXP,r=catDelete(L[i]);CF='';draw();if(r)eerr(r)}
- else if(a=='ca'){const t=b.dataset.t,r=catAdd($('#nc-n-'+t).value,t,$('#nc-k-'+t).value);if(r){eerr(r);return}draw()}
- else if(a=='na'){const v=LIM.clip($('#na').value.trim(),LIM.LIMITS.ACCT);if(!v){eerr('Enter a name.');return}if(S.accts.some(y=>y.toLowerCase()==v.toLowerCase())){eerr('That name is already used.');return}S.accts.push(v);if(!save()&&STORE_OK){S.accts.pop();eerr(TOAST.FAIL);return}draw();toast('accountSaved')}
+ else if(a=='ca'){const t=b.dataset.t,r=catAdd($('#nc-n-'+t).value,t,$('#nc-k-'+t).value);if(r){eerr(r);return}$('#nc-n-'+t).value='';$('#nc-k-'+t).value='';draw()}
+ else if(a=='na'){const er=addAcct(1);if(er){eerr(er);return}draw();toast('accountSaved')}
  else if(a=='sy'){syNow()}
  else if(a=='bkr'){CF='bk:'+i;draw()}
  else if(a=='bkc'){const B=bkList()[i];if(B){const d=JSON.parse(JSON.stringify(B.d));bkAdd('before restore');S.tx=d.tx;S.trash=d.trash||[];S.rec=d.rec||[];S.bud=d.bud||{};S.open=d.open||{};S.alias=d.alias||{};S.kw=d.kw||{};S.ren=d.ren||{};S.accts=d.accts||[...DEFA];S.cats=d.cats||{inc:[...DINC],exp:[...DEXP]};S.fresh=0;cats();CF='';save();MSG='<div class="pend">Backup restored.</div>';showMsg()}draw()}
@@ -576,13 +579,13 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b
  else if(a=='impgo'){const r=commitImport();IIMP=r.ok;IRES=res(r);$('#ires').innerHTML=IRES}
  else if(a=='sd'){CF='sd';draw()}
  else if(a=='sdc'){const r=SAMPLE.remove({S:()=>S,save:()=>save()||!STORE_OK,storeOk:()=>STORE_OK});CLRRES={ok:r.ok,m:r.message};CF='';draw()}
- else if(a=='tst'){gnav(()=>tourGo(0))}
+ else if(a=='tst'){tourStep(0)}
  else if(a=='tno'){INTRO.flag.write(localStorage);draw()}
- else if(a=='tn'){gnav(()=>tourGo(INTRO.next(TOUR)))}
- else if(a=='tb'){gnav(()=>tourGo(INTRO.back(TOUR)))}
+ else if(a=='tn'){tourStep(INTRO.next(TOUR))}
+ else if(a=='tb'){tourStep(INTRO.back(TOUR))}
  else if(a=='tx0'){tourEnd()}
  else if(a=='kck'){SAMPLE.answer.write(localStorage);draw()}
- else if(a=='kcc'){S.v='set';CF='clr';CLRT='';CLRRES=null;draw();const e=$('#clrt');if(e)e.focus()}
+ else if(a=='kcc'){S.v='set';save();EM=0;ED=0;CF='clr';CLRT='';CLRRES=null;draw();const e=$('#clrt');if(e)e.focus()}
  else if(a=='clr'){CF='clr';CLRT='';CLRRES=null;draw();const e=$('#clrt');if(e)e.focus()}
  else if(a=='clrc'){b.disabled=true;b.textContent='Clearing...';const r=UN.clearAll($('#clrt')?$('#clrt').value:CLRT);CLRRES={ok:r.ok,m:r.message,sync:r.ok};if(r.ok){CF='';CLRT='';P=[];URRES=null}draw()}
  else if(a=='urr'){CF='ur:'+id;draw()}
@@ -592,11 +595,11 @@ document.addEventListener('change',e=>{const t=e.target,a=t.dataset.a;if(t.datas
  if(a=='per'){S.per=t.value;save();draw()}else if(a=='cf'||a=='ct'){S[a]=t.value;save();draw()}else if(a=='rm'){S.rm=t.value;draw()}
  else if(a=='pc'){const p=P[+t.dataset.i];p.cat=t.value;p.type=INC.includes(t.value)?'income':'expense'}});
 document.addEventListener('input',e=>{const id=e.target.id;if(id=='clrt'){CLRT=e.target.value;const b=$('#clrc');if(b)b.disabled=CLRT.trim().toUpperCase()!='DELETE'||b.dataset.big=='1';return}if(id=='csv'){IBOX=e.target.value;IIMP=false;IRES='';const r=$('#ires');if(r)r.innerHTML='';return}if(id=='xf'||id=='xt'){XF=$('#xf').value;XT=$('#xt').value;return}const f=e.target.dataset.f;if(f){F[f]=e.target.value;F.n=50;lst()}});
-const MONEYSEL='#e-a,#r-a,.ao,.cb',EDSEL='.an,.ao,.aa,.cn,.cb,.ck,#r-s,#r-a,#r-t,#r-c,#r-ac,#r-e,#r-d';
+const MONEYSEL='#e-a,#r-a,.ao,.cb',EDSEL='.an,.ao,.aa,.cn,.cb,.ck,#na,#nc-n-income,#nc-n-expense,#nc-k-income,#nc-k-expense,#r-s,#r-a,#r-t,#r-c,#r-ac,#r-e,#r-d';
 function scopeSnap(els){const ini={},cur={},mon=[];els.forEach((el,i)=>{const k=(el.id||el.className||el.tagName)+'#'+i;let d,c;if(el.tagName=='SELECT'){const o=[...el.options];d=(o.find(x=>x.defaultSelected)||o[0]||{}).value||'';c=el.value}else{d=el.defaultValue;c=el.value}if(el.matches(MONEYSEL))mon.push(k);ini[k]=d;cur[k]=c});return{initial:UNSAVED.snap(ini,mon),current:UNSAVED.snap(cur,mon)}}
 function curForm(){const parts=[];
  if(ED&&$('#e-a')){const s=scopeSnap([...$('#e-a').closest('.ed').querySelectorAll('input,select')]);parts.push({...s,save:()=>saveEntry(ED),discard:()=>{ED=0;lst()}})}
- if(EM){const s=scopeSnap([...$('#view').querySelectorAll(EDSEL)]);parts.push({...s,save:()=>{if(S.v=='set'&&($('#r-a').value||$('#r-s').value))return addRule();const er=commitTab();if(er){eerr(er);return false}return true},discard:()=>draw(1)})}
+ if(EM){const s=scopeSnap([...$('#view').querySelectorAll(EDSEL)]);parts.push({...s,save:()=>{if(S.v=='set'&&($('#r-a').value||$('#r-s').value))return addRule();const er=commitTab()||addPending();if(er){eerr(er);return false}return true},discard:()=>draw(1)})}
  if(S.v=='set'&&$('#csv')&&IBOX.trim()&&!IIMP)parts.push({initial:{csv:''},current:{csv:IBOX},save:()=>{const r=commitImport();IIMP=r.ok;IRES=res(r);return r.ok},discard:()=>{IBOX='';IRES='';IIMP=false;draw()}});
  if(!parts.length)return null;const initial={},current={};parts.forEach((p,n)=>{for(const k in p.initial)initial[n+':'+k]=p.initial[k];for(const k in p.current)current[n+':'+k]=p.current[k]});
  return{initial,current,save:()=>{let ok=true;for(const p of parts)if(!p.save())ok=false;return ok},discard:()=>{for(const p of parts)try{p.discard()}catch(e){}}}}

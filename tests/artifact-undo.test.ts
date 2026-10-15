@@ -225,7 +225,7 @@ test('screen words match what the code does', () => {
   const noTour = rest
     .replace(slice('INTROCORE'), '')
     .split('\n')
-    .filter((l) => !/INTRO|TOUR|tourDraw|tourGo|tourEnd|introCard|#tour|tourhl|data-a=.t(st|no|n|b|x0)./.test(l))
+    .filter((l) => !/INTRO|TOUR|tourDraw|tourGo|tourStep|tourEnd|introCard|#tour|tourhl|data-a=.t(st|no|n|b|x0)./.test(l))
     .join('\n');
   assert.doesNotMatch(noTour, /tour/i);
   assert.match(rest, /Sample records are not restored\./);

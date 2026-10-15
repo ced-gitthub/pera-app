@@ -53,3 +53,5 @@ Next: item 6 (LIMITSCORE, toasts, parseFloat removal, tests/artifact-copy.test.t
 - All items 1-6 done. Remaining for a successor: QA Engineer review, then republish (Ced's yes).
 
 Update: items 3-6 QA reject 2 fixed (redraw guard via KEEPCORE, budget/account save rollback, mutant-killing tests). Awaiting QA re-review; do not republish until APPROVE and Ced's yes.
+
+## Status 2026-10-15 (3): QA reject of 82679b5 (6 defects) fixed on branch. Root cause of 1+2: sync() reloaded the saved screen on every click; sync() now keeps the in-memory screen, kcc and the question path save first. Tour tn/tb prompt only when the tab changes; #na and #nc-* guarded and kept; quick-add delete clears ED. New tests/artifact-wiring.test.ts (real-run tests). Awaiting QA Engineer re-review. Not published, not pushed.

@@ -152,7 +152,7 @@ test('AC-50 wiring: the offer is one card on Home, not a modal; Start does not w
       /\$\{introCard\(\)\}\$\{kcCard\(\)\}|\$\{kcCard\(\)\}\$\{introCard\(\)\}/.test(HTML),
     'on Home',
   );
-  assert.ok(handler('tst').includes('tourGo(0)') && !handler('tst').includes('flag.write'), 'Start');
+  assert.ok(handler('tst').includes('tourStep(0)') && !handler('tst').includes('flag.write'), 'Start');
   assert.ok(handler('tno').includes('INTRO.flag.write('), 'Not now');
 });
 
@@ -184,5 +184,5 @@ test('Back never ends the tour: from step 0 (and any bad index) it stays on a re
   for (let i = -1; i < 8; i++) assert.ok(INTRO.back(i) >= 0, 'tourGo(back) must not hit its end branch: ' + i);
   assert.ok(HTML.includes("(TOUR>0?'<button data-a=\"tb\">'+INTRO.BACK+'</button>':'')"), 'Back is hidden on the first step');
   assert.ok(HTML.includes('function tourGo(i){if(i<0){tourEnd();return}'));
-  assert.ok(HTML.includes("else if(a=='tb'){gnav(()=>tourGo(INTRO.back(TOUR)))}"), 'Back goes through the guard');
+  assert.ok(HTML.includes("else if(a=='tb'){tourStep(INTRO.back(TOUR))}"), 'Back goes through the tab-change guard');
 });
