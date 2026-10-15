@@ -156,3 +156,8 @@
 - Tests: `tests/artifact-csv.test.ts`, `artifact-export.test.ts`, `artifact-undo.test.ts` (+ `artifact-core.ts`, 14 fixtures in `tests/fixtures/csv`) added to `npm test`. The tests slice the CSVCORE/UNDOCORE blocks out of the HTML and compare with `native/src/csvLogic.ts`.
 - Decisions (Ced): Stage 2 D1-D5 accepted; undo does not restore sample records. Restore: current data wins; a deleted account/category is skipped.
 - Not verified: two-device sync, 50,000-entry storage quota, real phone, offline resurrection under last-writer-wins.
+
+### 2026-10-15: artifact undo copy, QA reject fixes (branch only, NOT published, NOT pushed)
+- Fixed (QA a55d454): undo copy limit was a guess (2,000,000 chars total), so big data or 3 kept copies blocked Clear with the wrong "storage" text. Now `UNDOONE`=`UNDOTOTAL`=2,500,000 (real entry is ~250 chars, 8,000 = ~2.1M); too big = `toobig` message with entry count, nothing deleted or evicted; otherwise oldest copies are evicted first and a quota failure evicts the next-oldest and retries; only then the storage text. `UN.plan(counts)` shows in the Clear panel which copies would be replaced and disables Clear when too big. Restore no longer claims "The copy was removed" unless drop succeeded (else `kept:true` and "stays in the list"). Cryptic tour sentence removed from the panel.
+- Tests: `tests/artifact-undo-limits.test.ts` (new, shared `artifact-undo-kit.ts`); mutants removing `env.sync` and the busy flag now each fail one test.
+- Not verified: real 5 MB device quota, phone, two-device sync. No short-key compaction (restore/CSV rely on the plain shape).

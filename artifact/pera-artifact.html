@@ -249,7 +249,7 @@ return{parse,cell,unguard,amtMinor,fmtMinor,exportRange,exportRun,exportText,nor
 /*UNDOCORE:BEGIN*/
 // Clear everything + its undo copy. No DOM. env = {S():live state, sync():re-read state, save():bool, now():ms, store:{getItem,setItem}, uid(prefix)}.
 // The undo copy lives under its own key, is never synced and is separate from the rotating backups.
-const UNDOKEY='mt1undo',UNDOMAX=3,UNDODAYS=30,UNDOCAP=2000000;
+const UNDOKEY='mt1undo',UNDOMAX=3,UNDODAYS=30,UNDOONE=2500000,UNDOTOTAL=2500000;
 function UNDOCORE(env){
  const nf=x=>x.toLocaleString('en-US'),pl=(n,w)=>`${nf(n)} ${w}${n==1?'':'s'}`;let busy=false;
  const nz=o=>Object.keys(o||{}).filter(k=>Number(o[k])!==0).length;
@@ -257,18 +257,30 @@ function UNDOCORE(env){
  const total=c=>c.tx+c.bud+c.rec+c.open;
  function list(){let L=[];try{const v=JSON.parse(env.store.getItem(UNDOKEY)||'[]');if(Array.isArray(v))L=v}catch(e){}
   return L.filter(r=>r&&r.v===1&&r.id&&r.payload&&r.counts&&r.expiresAt>env.now()).slice(0,UNDOMAX)}
- function put(L){try{const js=JSON.stringify(L);if(js.length>UNDOCAP)return false;env.store.setItem(UNDOKEY,js);return env.store.getItem(UNDOKEY)===js}catch(e){return false}}
+ function put(L){try{const js=JSON.stringify(L);env.store.setItem(UNDOKEY,js);return env.store.getItem(UNDOKEY)===js}catch(e){return false}}
  function drop(id){return put(list().filter(r=>r.id!==id))}
- function write(rec){return put([rec,...list()].slice(0,UNDOMAX))}
+ const len=x=>JSON.stringify(x).length;
+ // Which existing copies survive next to a new one of size sz: newest first, at most MAX-1, all together inside UNDOTOTAL.
+ function fit(L,sz){const keep=[];let used=sz;for(const r of L){const n=len(r);if(keep.length<UNDOMAX-1&&used+n<=UNDOTOTAL){keep.push(r);used+=n}else break}return keep}
+ function build(S,c,at){const open={};for(const a in S.open||{})if(Number(S.open[a])!==0)open[a]=S.open[a];
+  return{v:1,id:env.uid('u'),at,expiresAt:at+UNDODAYS*864e5,counts:c,payload:{tx:(S.tx||[]).filter(x=>!x.demo),bud:S.bud||{},rec:S.rec||[],open}}}
+ // Shown in the panel before DELETE is accepted: would the copy be too big, and which kept copies would be replaced.
+ function plan(c){const S=env.S(),rec=build(S,c,env.now()),L=list(),sz=len(rec),tooBig=sz>UNDOONE;
+  return{tooBig,n:c.tx,replaced:tooBig?[]:L.filter(r=>!fit(L,sz).includes(r)).map(r=>({id:r.id,at:r.at,counts:r.counts}))}}
+ // Never evicts for a copy that is too big. Otherwise evicts oldest first; a quota failure evicts the next-oldest and retries.
+ function write(rec){const L=list();if(len(rec)>UNDOONE)return{ok:false,kind:'toobig'};
+  const keep=fit(L,len(rec));
+  for(;;){if(put([rec,...keep]))return{ok:true,evicted:L.length-keep.length};if(!keep.length)break;keep.pop()}
+  put(L);return{ok:false,kind:'undo'}}
  const summary=c=>`${pl(c.tx,'transaction')}, ${pl(c.bud,'budget')}, ${pl(c.rec,'recurring rule')} and ${pl(c.open,'starting balance')}`;
  function clearAll(typed){
   if(busy)return{ok:false,kind:'busy',message:'Already clearing. Wait a moment.'};busy=true;
   try{env.sync();const S=env.S();
    if(String(typed==null?'':typed).trim().toUpperCase()!=='DELETE')return{ok:false,kind:'typed',message:'Type DELETE to confirm.'};
    const c=counts();if(!total(c))return{ok:false,kind:'none',message:'Nothing to clear. There are no transactions, budgets, recurring rules or starting balances.'};
-   const at=env.now(),open={};for(const a in S.open||{})if(Number(S.open[a])!==0)open[a]=S.open[a];
-   const rec={v:1,id:env.uid('u'),at,expiresAt:at+UNDODAYS*864e5,counts:c,payload:{tx:(S.tx||[]).filter(x=>!x.demo),bud:S.bud||{},rec:S.rec||[],open}};
-   if(!write(JSON.parse(JSON.stringify(rec))))return{ok:false,kind:'undo',message:'Nothing was deleted. The undo copy could not be saved on this device, so the clear was stopped. Export a CSV first or free some browser storage, then try again.'};
+   const rec=JSON.parse(JSON.stringify(build(S,c,env.now()))),w=write(rec);
+   if(w.kind=='toobig')return{ok:false,kind:'toobig',message:`Nothing was deleted. This is too many entries (${nf(c.tx)}) for an undo copy on this device. Export a CSV first, then clear again.`};
+   if(!w.ok)return{ok:false,kind:'undo',message:'Nothing was deleted. This device has no room to keep an undo copy. Free browser storage or export a CSV first.'};
    const old={tx:S.tx,rec:S.rec,bud:S.bud,open:S.open,fresh:S.fresh};
    S.rec=[];S.tx=[];S.bud={};S.open={};S.fresh=0;
    if(!env.save()){S.tx=old.tx;S.rec=old.rec;S.bud=old.bud;S.open=old.open;S.fresh=old.fresh;drop(rec.id);return{ok:false,kind:'save',message:'Nothing was deleted. Your data could not be saved on this device. Try again.'}}
@@ -287,10 +299,10 @@ function UNDOCORE(env){
    for(const a in r.payload.open||{})if(!Number(S.open[a])&&(S.accts||[]).includes(a)){S.open[a]=r.payload.open[a];got.open++}else skipped++;
    S.fresh=0;
    if(!env.save()){S.tx=old.tx;S.rec=old.rec;S.bud=old.bud;S.open=old.open;S.fresh=old.fresh;return{ok:false,message:'Nothing was restored. Your data could not be saved on this device. The undo copy is kept. Try again.'}}
-   drop(id);const sm=r.counts.sample||0;
-   return{ok:true,got,skipped,message:`Restored ${summary(got)}.${skipped?` ${nf(skipped)} skipped because ${skipped==1?'it already exists or no longer applies':'they already exist or no longer apply'}.`:''}${sm?` ${nf(sm)} sample ${sm==1?'record was':'records were'} not restored.`:''} The copy was removed.`}
+   const gone=drop(id),sm=r.counts.sample||0;
+   return{ok:true,got,skipped,kept:!gone,message:`Restored ${summary(got)}.${skipped?` ${nf(skipped)} skipped because ${skipped==1?'it already exists or no longer applies':'they already exist or no longer apply'}.`:''}${sm?` ${nf(sm)} sample ${sm==1?'record was':'records were'} not restored.`:''} ${gone?'The copy was removed.':'The undo copy could not be removed and stays in the list. Do not restore it twice.'}`}
   }finally{busy=false}}
- return{counts,total,list,write,drop,clearAll,restore,summary,KEY:UNDOKEY,MAX:UNDOMAX,DAYS:UNDODAYS}}
+ return{counts,total,list,plan,write,drop,clearAll,restore,summary,KEY:UNDOKEY,MAX:UNDOMAX,DAYS:UNDODAYS}}
 /*UNDOCORE:END*/
 const UN=UNDOCORE({S:()=>S,sync,save:()=>save(),now:()=>Date.now(),store:localStorage,uid});
 function showMsg(){$('#msg').innerHTML=MSG+P.map((p,i)=>p.q?`<div class="pend">Not sure what “${E(p.label)}” ${M(p.amount)} means. Received it or spent it?<div class="row"><button data-a="pt" data-i="${i}" data-t="income">Received ${M(p.amount)}</button><button data-a="pt" data-i="${i}" data-t="expense">Spent ${M(p.amount)}</button><button data-a="pd" data-i="${i}">Discard</button></div></div>`:
@@ -366,12 +378,12 @@ function commitTab(){if(!EM)return'';return S.v=='bud'?commitBud():S.v=='acc'?co
 function bkCard(){const L=bkList();return`<div class="card"><h2>Backups</h2><p class="m">Saved on this device before a restore, and daily. Restoring merges back through sync.</p>${L.map((b,i)=>`<div class="tx"><span>${E(new Date(b.at).toLocaleString())} <span class="m">${b.n} tx · ${E(b.why)}</span></span><span class="row">${CF=='bk:'+i?`<button class="p" data-a="bkc" data-i="${i}">Confirm restore</button><button data-a="cfx">Cancel</button>`:`<button data-a="bkr" data-i="${i}">Restore</button>`}</span></div>`).join('')||'<p class="m">No backups yet.</p>'}</div>`}
 const plu=(n,w)=>n+' '+w+(n==1?'':'s'),res=(r,id)=>r?`<div ${id?`id="${id}" `:''}class="pend${r.ok?'':' exp'}" role="${r.ok?'status':'alert'}">${E(r.m)}</div>`:'',csvCtx=()=>({accts:S.accts,alias:S.alias||{},inc:INC,exp:EXP});
 function clrSync(){return DBS=='none'?'Cleared on this device only. Sync is unavailable here.':!SUB?'Cleared here. Other devices clear when this one reconnects.':ST=='error'?'Sync paused, retrying.':(ST=='pending'||[...EN.values()].some(e=>e.p))?'Cleared here. Sending to your other devices...':'Sent to your other devices. They clear the next time they open.'}
-function clrPanel(){const c=UN.counts();
+function clrPanel(){const c=UN.counts(),pn=UN.plan(c);
  if(!UN.total(c))return`<div class="pend" role="status"><b>Nothing to clear</b><div class="m">There are no transactions, budgets, recurring rules or starting balances.</div><div class="acts" style="margin-top:8px"><button data-a="cfx">Close</button></div></div>`;
  return`<div class="pend exp"><b>Clear everything?</b><div class="m">This will clear ${plu(c.tx,'transaction')} (${c.sample} sample), ${plu(c.bud,'budget')}, ${plu(c.rec,'recurring rule')} and ${plu(c.open,'starting balance')}.</div>
- <div class="m" style="margin-top:6px">Cleared: every transaction (sample ones too), every budget, every recurring rule and every starting balance (back to 0). Stays: accounts, categories, renames, view settings and Recently deleted. This never opens the tour. Your other devices clear the next time they open. An undo copy is kept on this device only, for ${UN.DAYS} days.${UN.list().length>=UN.MAX?' You already have '+UN.MAX+' undo copies; the oldest one will be replaced.':''}</div>
+ <div class="m" style="margin-top:6px">Cleared: every transaction (sample ones too), every budget, every recurring rule and every starting balance (back to 0). Stays: accounts, categories, renames, view settings and Recently deleted. Your other devices clear the next time they open. An undo copy is kept on this device only, for ${UN.DAYS} days.</div>${pn.tooBig?`<div class="pend exp" role="alert" style="margin-top:8px">This is too many entries (${c.tx.toLocaleString('en-US')}) for an undo copy on this device. Export a CSV first, then clear again.</div>`:''}${pn.replaced.map(r=>`<div class="m" style="margin-top:6px">This will replace your undo copy from ${E(new Date(r.at).toLocaleDateString())} (${UN.total(r.counts).toLocaleString('en-US')} entries).</div>`).join('')}
  <label class="lb" style="margin-top:8px">Type DELETE to confirm<input id="clrt" autocomplete="off" autocapitalize="characters" aria-label="Type DELETE to confirm clearing everything" value="${E(CLRT)}"></label><div class="m" id="clrh">The button turns on when the box says DELETE.</div>
- <div class="acts" style="margin-top:8px"><button class="dz" id="clrc" data-a="clrc" aria-label="Clear everything now" ${CLRT.trim().toUpperCase()=='DELETE'?'':'disabled'}>Clear everything</button><button data-a="cfx">Cancel</button></div></div>`}
+ <div class="acts" style="margin-top:8px"><button class="dz" id="clrc" data-a="clrc" aria-label="Clear everything now" ${pn.tooBig?'data-big="1" ':''}${CLRT.trim().toUpperCase()=='DELETE'&&!pn.tooBig?'':'disabled'}>Clear everything</button><button data-a="cfx">Cancel</button></div></div>`}
 const clrRes=()=>!CLRRES?'':CLRRES.ok?`<div class="pend" style="border-color:var(--inc)" role="status">${E(CLRRES.m)}${CLRRES.sync?`<div class="m" id="clrsync">${E(clrSync())}</div>`:''}</div>`:res(CLRRES);
 function dataCard(){const smp=S.tx.filter(x=>x.demo).length;
  return`<div class="card"><h2>Data</h2><p class="m" id="syncst">${syText()}</p>${DB?'<div class="row"><button data-a="sy">Sync now</button></div>':''}
@@ -442,7 +454,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b
 document.addEventListener('change',e=>{const t=e.target,a=t.dataset.a;if(t.dataset.f)return;sync();
  if(a=='per'){S.per=t.value;save();draw()}else if(a=='cf'||a=='ct'){S[a]=t.value;save();draw()}else if(a=='rm'){S.rm=t.value;draw()}
  else if(a=='pc'){const p=P[+t.dataset.i];p.cat=t.value;p.type=INC.includes(t.value)?'income':'expense'}});
-document.addEventListener('input',e=>{const id=e.target.id;if(id=='clrt'){CLRT=e.target.value;const b=$('#clrc');if(b)b.disabled=CLRT.trim().toUpperCase()!='DELETE';return}if(id=='csv'){IBOX=e.target.value;IRES='';const r=$('#ires');if(r)r.innerHTML='';return}if(id=='xf'||id=='xt'){XF=$('#xf').value;XT=$('#xt').value;return}const f=e.target.dataset.f;if(f){F[f]=e.target.value;F.n=50;lst()}});
+document.addEventListener('input',e=>{const id=e.target.id;if(id=='clrt'){CLRT=e.target.value;const b=$('#clrc');if(b)b.disabled=CLRT.trim().toUpperCase()!='DELETE'||b.dataset.big=='1';return}if(id=='csv'){IBOX=e.target.value;IRES='';const r=$('#ires');if(r)r.innerHTML='';return}if(id=='xf'||id=='xt'){XF=$('#xf').value;XT=$('#xt').value;return}const f=e.target.dataset.f;if(f){F[f]=e.target.value;F.n=50;lst()}});
 $('#go').onclick=submit;$('#q').addEventListener('keydown',e=>{if(e.key=='Enter')submit()});
 document.addEventListener('keydown',e=>{if(e.key=='Enter'&&e.target.id=='ai')doAsk()});
 const DEV=Math.random().toString(36).slice(2,8),MK='mt1sy',EN=new Map(),VAL=new Map();

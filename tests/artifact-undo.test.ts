@@ -2,83 +2,8 @@
 // Also checks that the words on screen match what the code does (Ced: the copy must match the code).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
 import vm from 'node:vm';
-
-const HTML = fs.readFileSync('artifact/pera-artifact.html', 'utf8');
-const slice = (name: string) => {
-  const a = HTML.indexOf(`/*${name}:BEGIN*/`);
-  const b = HTML.indexOf(`/*${name}:END*/`);
-  assert.ok(a >= 0 && b > a, `${name} markers missing`);
-  return HTML.slice(a, b);
-};
-type St = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
-type Res = {
-  ok: boolean;
-  kind?: string;
-  message: string;
-  counts?: Record<string, number>;
-  id?: string;
-  got?: Record<string, number>;
-  skipped?: number;
-};
-type Un = {
-  counts(): Record<string, number>;
-  total(c: Record<string, number>): number;
-  list(): { id: string; at: number; expiresAt: number; counts: Record<string, number>; payload: St }[];
-  write(r: unknown): boolean;
-  drop(id: string): boolean;
-  clearAll(typed: string): Res;
-  restore(id: string): Res;
-  summary(c: Record<string, number>): string;
-  KEY: string;
-  MAX: number;
-  DAYS: number;
-};
-const factory = vm.runInNewContext(`${slice('UNDOCORE')};UNDOCORE`) as (env: unknown) => Un;
-const J = <T>(x: T): T => JSON.parse(JSON.stringify(x));
-
-function device(over: { saveOk?: () => boolean; storeFail?: (k: string, v: string) => boolean; now?: () => number; state?: St } = {}) {
-  const mem = new Map<string, string>();
-  let clock = 1_800_000_000_000;
-  let n = 0;
-  const S: St = over.state ?? {
-    tx: [
-      { id: 't1', n: 1, date: '2026-10-01', type: 'expense', amount: 10, cat: 'Food', acct: 'Cash' },
-      { id: 't2', n: 2, date: '2026-10-02', type: 'income', amount: 20, cat: 'Salary', acct: 'Cash' },
-      { id: 'd1', n: 3, date: '2026-10-03', type: 'expense', amount: 5, cat: 'Food', acct: 'Cash', demo: true },
-    ],
-    trash: [{ id: 'tr1', date: '2026-09-01', type: 'expense', amount: 1, cat: 'Food', acct: 'Cash' }],
-    bud: { Food: 3000, Transportation: 1000 },
-    rec: [{ id: 'r1', next: '2026-11-01', amount: 5, type: 'expense', cat: 'Food', acct: 'Cash' }],
-    open: { Cash: 500, GCash: 0 },
-    accts: ['Cash', 'GCash'],
-    cats: { inc: ['Salary'], exp: ['Food', 'Transportation'] },
-    alias: { GCash: ['gc'] },
-    fresh: 0,
-  };
-  let saves = 0;
-  const env = {
-    S: () => S,
-    sync: () => {},
-    save: () => {
-      saves++;
-      return over.saveOk ? over.saveOk() : true;
-    },
-    now: over.now ?? (() => clock),
-    store: {
-      getItem: (k: string) => mem.get(k) ?? null,
-      setItem: (k: string, v: string) => {
-        if (over.storeFail?.(k, v)) throw new Error('quota');
-        mem.set(k, v);
-      },
-    },
-    uid: (p: string) => `${p}_${++n}`,
-  };
-  const U = factory(env);
-  return { U, S, mem, saves: () => saves, tick: (ms: number) => (clock += ms) };
-}
-const DAY = 864e5;
+import { HTML, slice, device, J, DAY, type St } from './artifact-undo-kit.ts';
 
 test('counts: transactions (with the sample ones), budgets, rules and non-zero starting balances', () => {
   const { U } = device();
@@ -137,7 +62,7 @@ test('undo copy cannot be saved: nothing is deleted', () => {
   const r = U.clearAll('DELETE');
   assert.equal(r.ok, false);
   assert.equal(r.kind, 'undo');
-  assert.match(r.message, /^Nothing was deleted\. The undo copy could not be saved/);
+  assert.match(r.message, /^Nothing was deleted\. This device has no room to keep an undo copy./);
   assert.equal(S.tx.length, 3);
   assert.equal(Object.keys(S.bud).length, 2);
   assert.equal(S.rec.length, 1);
@@ -151,26 +76,6 @@ test('undo copy that reads back different (silent storage fault): nothing is del
   assert.equal(r.ok, false);
   assert.equal(r.kind, 'undo');
   assert.equal(S.tx.length, 3);
-});
-
-test('undo copy over the size cap: nothing is deleted', () => {
-  const big = Array.from({ length: 20000 }, (_, i) => ({
-    id: 'b' + i,
-    n: i,
-    date: '2026-10-01',
-    type: 'expense',
-    amount: 1,
-    cat: 'Food',
-    acct: 'Cash',
-    desc: 'x'.repeat(100),
-  }));
-  const { U, S } = device({
-    state: { tx: big, trash: [], bud: {}, rec: [], open: {}, accts: ['Cash'], cats: { inc: [], exp: ['Food'] }, fresh: 0 },
-  });
-  const r = U.clearAll('DELETE');
-  assert.equal(r.ok, false);
-  assert.equal(r.kind, 'undo');
-  assert.equal(S.tx.length, 20000);
 });
 
 test('save fails after the copy was written: everything is put back and the copy is dropped', () => {
@@ -199,6 +104,7 @@ test('clear then restore gives back exactly the counts, sample records are not r
   assert.match(r.message, /^Restored 2 transactions, 2 budgets, 1 recurring rule and 1 starting balance\./);
   assert.match(r.message, /1 sample record was not restored\./);
   assert.match(r.message, /The copy was removed\.$/);
+  assert.notEqual(r.kept, true);
   assert.equal(U.list().length, 0);
 });
 
@@ -313,14 +219,17 @@ test('screen words match what the code does', () => {
   assert.match(HTML, /UNDODAYS=30/);
   assert.match(HTML, /UNDOMAX=3/);
   assert.match(rest, /Stays: accounts, categories, renames, view settings and Recently deleted\./);
-  assert.match(rest, /This never opens the tour\./);
+  assert.doesNotMatch(rest, /tour/i);
   assert.match(rest, /Sample records are not restored\./);
   assert.doesNotMatch(HTML, /Reset everything|Delete everything\?|>demo</);
   assert.match(HTML, /class="tag[^"]*">Sample</);
 });
 
 test('screen controls: DELETE gate, labels, and live-region roles', () => {
-  assert.match(HTML, /id="clrc"[^>]*aria-label="Clear everything now"[^>]*\$\{CLRT\.trim\(\)\.toUpperCase\(\)=='DELETE'\?'':'disabled'\}/);
+  assert.match(
+    HTML,
+    /id="clrc"[^>]*aria-label="Clear everything now"[^>]*\$\{CLRT\.trim\(\)\.toUpperCase\(\)=='DELETE'&&!pn\.tooBig\?'':'disabled'\}/,
+  );
   assert.match(HTML, /id="clrt"[^>]*aria-label="Type DELETE to confirm clearing everything"/);
   assert.match(HTML, /aria-label="CSV text to import"/);
   assert.match(HTML, /role="\$\{r\.ok\?'status':'alert'\}"/);
