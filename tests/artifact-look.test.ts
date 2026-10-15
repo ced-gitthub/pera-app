@@ -237,7 +237,7 @@ const zOf = (sel: string) => {
 test('QA fixes: no old header, Home starts with Hi + hero, quick-add below, one Add on Home', () => {
   assert.ok(!HTML.includes('tell it what happened'), 'old header gone');
   assert.match(HTML, /<div class="w">\s*<div id="warn"><\/div><div id="view"><\/div>\s*<div class="say">/);
-  assert.ok(!/<button class="p" id="go">Add<\/button>/.test(HTML), 'quick-add button is not also called Add');
+  assert.ok(/<button class="p" id="go">Add<\/button>/.test(HTML), 'quick-add button says Add, as the tour text and empty state do');
   const home = slice2('function home()', '\nfunction summ');
   const iHi = home.indexOf('class="hi">Hi');
   assert.ok(iHi > 0, 'greeting Hi on Home');
@@ -282,4 +282,14 @@ test('QA fixes: tab bar is fixed, fab hidden on Settings and Ask, stacking order
   const bar = Math.max(zOf('#nav'), zOf('.fab'));
   for (const s of ['#tour', '.toast', '#us']) assert.ok(zOf(s) > bar, s + ' is above the tab bar and fab');
   assert.ok(zOf('#us') > zOf('.toast') && zOf('.toast') > zOf('#tour'));
+});
+
+test('tour and fab scroll the quick-add box into view', () => {
+  const fab = slice2("else if(a=='fab')", '\n');
+  assert.ok(fab.includes('scrollIntoView') && fab.includes('focus()'), 'fab focuses and scrolls to #q');
+  const td = slice2('function tourDraw()', '\nfunction ');
+  const iHl = td.indexOf("classList.add('tourhl')");
+  assert.ok(iHl > 0 && td.indexOf("scrollIntoView({block:'center'})") > iHl, 'tourDraw scrolls the highlighted target to the centre');
+  assert.ok(td.includes("closest('#nav')"), 'tab-bar targets are not scrolled');
+  assert.match(CSS, /body:has\(#tour\) \.w\{padding-bottom:\d+vh\}/, 'room to scroll the target above the tour card');
 });

@@ -188,3 +188,5 @@ Fixed: artifact now uses native tokens and layout (see docs/artifact-parity/NEXT
 
 ## Artifact item 7: QA rejection fixed (2026-10-15, branch only)
 Fixed: banner overlap, mid-word row breaks, dead Recent arrow, old header, banners on every tab, two Add buttons. Decision: quick-add box moved below each tab (fab jumps to it). Next: QA Engineer re-review, then Ced's yes before republish.
+
+- Item 7 round 3 (QA fix): tour now scrolls the highlighted target to centre (not tab-bar buttons); extra bottom padding while the tour is open; quick-add button is "Add" again; tests for fab and tour scroll. Not tested on a phone.
