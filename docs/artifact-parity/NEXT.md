@@ -51,3 +51,5 @@ Next: item 6 (LIMITSCORE, toasts, parseFloat removal, tests/artifact-copy.test.t
 - Money text inputs are now `type=text inputmode=decimal` (e-a, r-a, .ao, .cb). No CSV-import toast (spec says none).
 - Tests: tests/artifact-limits.test.ts, artifact-toast.test.ts, artifact-copy.test.ts (native word-for-word, ARTIFACT-ONLY allow-list). Mutants: TOASTCORE 7/7, LIMITSCORE 29/32 (3 equivalent: redundant length guard, trim before sane).
 - All items 1-6 done. Remaining for a successor: QA Engineer review, then republish (Ced's yes).
+
+Update: items 3-6 QA reject 2 fixed (redraw guard via KEEPCORE, budget/account save rollback, mutant-killing tests). Awaiting QA re-review; do not republish until APPROVE and Ced's yes.

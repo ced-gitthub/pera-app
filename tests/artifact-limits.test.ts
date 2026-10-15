@@ -111,3 +111,51 @@ test('quickAmount edge cases: trailing zeros, leading zeros, huge, junk, padded 
   assert.equal(LIM.parseDate(' 2026-10-14 ', TODAY).date, '2026-10-14');
   assert.equal(LIM.parseDate('x', TODAY).ok, false);
 });
+
+test('boundaries: 0.01 is the smallest amount, 0.009 and 0 are not', () => {
+  assert.equal(LIM.quickAmount('0.01').minor, 1);
+  assert.equal(LIM.quickAmount('0.01').ok, true);
+  assert.equal(LIM.quickAmount('0.1').minor, 10);
+  assert.equal(LIM.quickAmount('0.009').why, 'dec');
+  assert.equal(LIM.quickAmount('0').why, 'low');
+  assert.equal(LIM.quickAmount('0.001', 'k').minor, 100);
+  assert.equal(LIM.quickAmount('0.000', 'k').why, 'low');
+  assert.equal(LIM.quickAmount('999999999.99').ok, true);
+  assert.equal(LIM.quickAmount('1000000000').ok, false);
+});
+
+test('ok flags: every success says ok true, every failure says ok false', () => {
+  assert.equal(LIM.parseDate('2026-10-14', TODAY).ok, true);
+  assert.equal(LIM.parseDate('nope', TODAY).ok, false);
+  assert.equal(LIM.parseAmount('5').ok, true);
+  assert.equal(LIM.parseAmount('x').ok, false);
+  assert.equal(LIM.quickAmount('x').ok, false);
+  assert.equal(LIM.quickAmount('0').ok, false);
+  assert.equal(LIM.parseBudget('abc').ok, false);
+  assert.equal(LIM.parseOpening('abc').ok, false);
+  assert.equal(LIM.parseOpening('').ok, true);
+});
+
+test('budget zero in every spelling removes the budget; near-zero and bigger amounts do not', () => {
+  for (const z of ['0', '00', '0.0', '0.00', '.0', '0,000', ' 0 ']) {
+    const r = LIM.parseBudget(z);
+    assert.deepEqual(J(r), { ok: true, minor: 0, pesos: 0, empty: true }, JSON.stringify(z));
+  }
+  assert.deepEqual(J(LIM.parseBudget('')), { ok: true, minor: 0, pesos: 0, empty: true });
+  for (const [t, minor] of [
+    ['0.01', 1],
+    ['0.5', 50],
+    ['10', 1000],
+    ['100', 10000],
+    ['1.00', 100],
+    ['00100', 10000],
+  ] as const) {
+    const r = LIM.parseBudget(t);
+    assert.equal(r.minor, minor, t);
+    assert.equal(r.empty, undefined, t);
+  }
+  assert.equal(LIM.parseBudget('0.001').ok, false);
+  assert.equal(LIM.parseOpening('0.00').minor, 0);
+  assert.equal(LIM.parseOpening('10').minor, 1000);
+  assert.equal(LIM.parseOpening('-10').minor, -1000);
+});

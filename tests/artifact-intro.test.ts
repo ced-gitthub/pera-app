@@ -177,3 +177,12 @@ test('AC-50 wiring: the tour switches tabs without data changes and the flag is 
   const toRecs = HTML.slice(HTML.indexOf('function toRecs()'), HTML.indexOf('function rebuild()'));
   assert.ok(!toRecs.includes('mt1tour') && !toRecs.includes('INTRO'), 'never synced');
 });
+
+test('Back never ends the tour: from step 0 (and any bad index) it stays on a real step; the button only shows after step 0', () => {
+  for (const i of [-5, -1, 0]) assert.equal(INTRO.back(i), 0, String(i));
+  for (let i = 1; i < 7; i++) assert.equal(INTRO.back(i), i - 1, String(i));
+  for (let i = -1; i < 8; i++) assert.ok(INTRO.back(i) >= 0, 'tourGo(back) must not hit its end branch: ' + i);
+  assert.ok(HTML.includes("(TOUR>0?'<button data-a=\"tb\">'+INTRO.BACK+'</button>':'')"), 'Back is hidden on the first step');
+  assert.ok(HTML.includes('function tourGo(i){if(i<0){tourEnd();return}'));
+  assert.ok(HTML.includes("else if(a=='tb'){gnav(()=>tourGo(INTRO.back(TOUR)))}"), 'Back goes through the guard');
+});

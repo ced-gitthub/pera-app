@@ -79,6 +79,6 @@ test('wiring: live region, reduced motion, no toast before a save', () => {
   for (const k of ['entrySaved', 'entryDeleted', 'budgetSaved', 'budgetDeleted', 'balances', 'accountSaved', 'ruleSaved', 'ruleDeleted'])
     assert.ok(HTML.includes(`toast('${k}')`), k);
   // a failed save returns before any toast
-  assert.match(HTML, /if\(!save\(\)&&STORE_OK\)\{S\.rec\.pop\(\);failLine\(\);return false\}draw\(\);toast\('ruleSaved'\)/);
+  assert.match(HTML, /if\(!save\(\)&&STORE_OK\)\{S\.rec\.pop\(\);failLine\(\);return false\}draw\(1\);toast\('ruleSaved'\)/);
   assert.match(HTML, /Object\.assign\(x,old\);eerr\(TOAST\.FAIL\);return false\}ED=0;lst\(\);toast\('entrySaved'\)/);
 });

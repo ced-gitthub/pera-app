@@ -169,3 +169,8 @@
 ## Artifact parity items 3-6 (branch claude/musing-mclean-26141c)
 - Fixed/added: sample records Keep/Clear, unsaved-changes prompt, optional first-run tour, toasts and limits (exact centavo parsing, no parseFloat, rollback on failed save). See docs/artifact-parity/NEXT.md.
 - Open: QA Engineer approval, then republish (needs Ced's yes). Not tested on a phone.
+
+## QA reject of items 3-6 fixed (branch claude/musing-mclean-26141c)
+- Fixed: unsaved edits survive any same-screen redraw (KEEPCORE: quick add, History filter, Show more, Settings actions, rule form); a filter can no longer hide the open editor; question from quick add and the tour go through the unsaved prompt; deleting the edited entry closes its editor; failed save rolls back Budgets and Accounts. New tests close the LIMITSCORE and INTROCORE survivors.
+- Evidence: 175/175 artifact tests, verify green, lint 285 (cap), real-browser check of quick add, filter, nav and question prompt.
+- Open: QA re-review, then republish (needs Ced's yes). Not tested on a phone.
