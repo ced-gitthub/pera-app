@@ -27,7 +27,12 @@ export type Un = {
   write(r: unknown): { ok: boolean; kind?: string };
   drop(id: string): boolean;
   clearAll(typed: string): Res;
-  plan(c: Record<string, number>): { tooBig: boolean; n: number; replaced: { id: string; at: number; counts: Record<string, number> }[] };
+  plan(c: Record<string, number>): {
+    tooBig: boolean;
+    mayTrim: boolean;
+    n: number;
+    replaced: { id: string; at: number; counts: Record<string, number> }[];
+  };
   restore(id: string): Res;
   summary(c: Record<string, number>): string;
   KEY: string;
@@ -45,6 +50,8 @@ export function device(
     storeFail?: (k: string, v: string) => boolean;
     now?: () => number;
     state?: St;
+    limit?: number;
+    preload?: Record<string, string>;
   } = {},
 ) {
   const mem = new Map<string, string>();
@@ -66,6 +73,8 @@ export function device(
     fresh: 0,
   };
   let saves = 0;
+  const used = () => [...mem].reduce((t, [k, v]) => t + k.length + v.length, 0);
+  for (const [k, v] of Object.entries(over.preload ?? {})) mem.set(k, v);
   const env = {
     S: () => S,
     sync: over.sync ?? (() => {}),
@@ -76,8 +85,15 @@ export function device(
     now: over.now ?? (() => clock),
     store: {
       getItem: (k: string) => mem.get(k) ?? null,
+      get length() {
+        return mem.size;
+      },
+      key: (i: number) => [...mem.keys()][i] ?? null,
+      removeItem: (k: string) => void mem.delete(k),
       setItem: (k: string, v: string) => {
         if (over.storeFail?.(k, v)) throw new Error('quota');
+        if (over.limit != null && used() - (mem.has(k) ? k.length + (mem.get(k) as string).length : 0) + k.length + v.length > over.limit)
+          throw new Error('quota');
         mem.set(k, v);
       },
     },

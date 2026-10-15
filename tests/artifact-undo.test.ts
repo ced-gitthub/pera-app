@@ -62,7 +62,10 @@ test('undo copy cannot be saved: nothing is deleted', () => {
   const r = U.clearAll('DELETE');
   assert.equal(r.ok, false);
   assert.equal(r.kind, 'undo');
-  assert.match(r.message, /^Nothing was deleted\. This device has no room to keep an undo copy./);
+  assert.match(
+    r.message,
+    /^Nothing was deleted\. This browser has no room to keep an undo copy\. Export a CSV, delete some older entries by hand, then try again\.$/,
+  );
   assert.equal(S.tx.length, 3);
   assert.equal(Object.keys(S.bud).length, 2);
   assert.equal(S.rec.length, 1);

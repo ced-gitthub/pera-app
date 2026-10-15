@@ -81,7 +81,7 @@ test('a copy over the one-copy limit is refused with the too-many-entries text; 
   assert.equal(r.kind, 'toobig');
   assert.equal(
     r.message,
-    'Nothing was deleted. This is too many entries (12,000) for an undo copy on this device. Export a CSV first, then clear again.',
+    'Nothing was deleted. 12,000 entries is more than this browser can keep an undo copy of. Export a CSV first, delete some entries by hand, then try Clear everything again.',
   );
   assert.doesNotMatch(r.message, /storage/);
   assert.equal(d.S.tx.length, 12000);
@@ -125,7 +125,10 @@ test('storage full for good: the clear stops with the storage text, nothing dele
   const r = d.U.clearAll('DELETE');
   assert.equal(r.ok, false);
   assert.equal(r.kind, 'undo');
-  assert.equal(r.message, 'Nothing was deleted. This device has no room to keep an undo copy. Free browser storage or export a CSV first.');
+  assert.equal(
+    r.message,
+    'Nothing was deleted. This browser has no room to keep an undo copy. Export a CSV, delete some older entries by hand, then try again.',
+  );
   assert.equal(d.S.tx.length, 3);
   assert.equal(d.mem.get('mt1undo'), seeded);
   assert.equal(d.U.list()[0].id, old.id);
@@ -133,7 +136,7 @@ test('storage full for good: the clear stops with the storage text, nothing dele
 
 test('plan: says which copies a new clear would replace, and when it is too big', () => {
   const d = device();
-  assert.deepEqual(J(d.U.plan(d.U.counts())), { tooBig: false, n: 3, replaced: [] });
+  assert.deepEqual(J(d.U.plan(d.U.counts())), { tooBig: false, mayTrim: false, n: 3, replaced: [] });
   const ids: string[] = [];
   for (let i = 0; i < 3; i++) {
     d.S.tx.push(entry(600 + i));
@@ -203,7 +206,7 @@ test('a second clearAll while the first is still running is refused as busy', ()
 test('panel: the plan text and the too-big text are on screen and the button honours them', () => {
   const rest = HTML.replace(slice('CSVCORE'), '').replace(slice('UNDOCORE'), '');
   assert.match(rest, /This will replace your undo copy from/);
-  assert.match(rest, /too many entries/);
+  assert.match(rest, /is more than this browser can keep an undo copy of/);
   assert.match(rest, /UN\.plan\(/);
   assert.match(rest, /data-big/);
 });

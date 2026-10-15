@@ -25,3 +25,5 @@ Ced has bypass-permission mode and wants NO approval prompts; full permission fo
 Say "not tested on a phone" in reports. Final reports: Problem / Solution / Outcome with real pass counts.
 
 ## Status 2026-10-15: QA reject of a55d454 fixed on branch (undo limits, plan text, kept flag, tour text, test gaps). Awaiting QA Engineer re-review. Not published, not pushed.
+
+## Status 2026-10-15 (2): second QA reject of the undo copy fixed on branch (backup trimming, new refusal texts, mutant-killing tests in tests/artifact-undo-quota.test.ts). Awaiting QA Engineer re-review.
