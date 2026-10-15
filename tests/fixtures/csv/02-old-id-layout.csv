@@ -1,0 +1,5 @@
+id,date,type,amount,category,description,notes,account,to
+"tabc12","2026-09-01","expense","120.00","Food","Lunch","","Cash",""
+"tabc13","2026-09-02","transfer","500.00","Transfer","","","Cash","gc"
+"tabc14","2026-09-03","expense","45.5","Nope","Mystery","","GCash",""
+"tabc15","2026-09-04","income","300","Salary","Pay","","BDO Savings",""

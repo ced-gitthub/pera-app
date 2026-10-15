@@ -1,0 +1,10 @@
+date,type,amount,category,description,notes,account,to_account
+2026-10-01,expense,1.00,Food,unknown account,,Maya,
+2026-10-01,transfer,1.00,,same account,,Cash,Cash
+2026-10-01,expense,1.00,Food,blank account,,,
+2026-10-01,expense,1.00,Food,alias,,GC,
+2026-10-01,expense,1.00,Food,upper name,,BDO SAVINGS,
+2026-10-01,transfer,1.00,,no to account,,Cash,
+2026-10-01,transfer,1.00,,unknown to,,Cash,Maya
+2026-10-01,transfer,1.00,,blank from,,,gcash
+2026-10-01,transfer,1.00,,alias both,,gc,Cash

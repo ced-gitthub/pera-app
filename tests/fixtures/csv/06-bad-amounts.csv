@@ -1,0 +1,11 @@
+date,type,amount,category,description,notes,account,to_account
+2026-10-01,expense,0,Food,zero,,Cash,
+2026-10-01,expense,0.001,Food,three decimals,,Cash,
+2026-10-01,expense,-5,Food,negative,,Cash,
+2026-10-01,expense,abc,Food,text,,Cash,
+2026-10-01,expense,1.2.3,Food,two points,,Cash,
+2026-10-01,expense,1e3,Food,exponent,,Cash,
+2026-10-01,expense,1000000000,Food,one billion,,Cash,
+2026-10-01,expense,999999999.99,Food,max ok,,Cash,
+2026-10-01,expense, 5,Food,leading space,,Cash,
+2026-10-01,expense,0.01,Food,min ok,,Cash,

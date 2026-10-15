@@ -1,0 +1,7 @@
+date,type,amount,category,description,notes,account,to_account
+"2026-10-01","income","25000.00","Salary","Salary","","Cash",""
+"2026-10-02","expense","150.50","Food","Lunch, with team","said ""hi""","GCash",""
+"2026-10-03","transfer","1000.00","Transfer","Top up","","Cash","GCash"
+"2026-10-04","expense","12.00","Transportation","Jeep","line one
+line two","BDO Savings",""
+"2026-10-05","income","0.01","Gift","","","",""

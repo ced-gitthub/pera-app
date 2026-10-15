@@ -1,0 +1,8 @@
+date,type,amount,category,description,notes,account,to_account
+2026-10-01,expense,120.00,Food,Lunch,,Cash,
+2026-10-01,expense,120.00,Food,Lunch,,Cash,
+2026-10-01,expense,120.00,Food,LUNCH ,,Cash,
+2026-10-01,expense,120.00,Food,Lunch,,gc,
+2026-10-01,expense,120.00,Food,Lunch,,GCash,
+2026-10-02,expense,120.00,Food,Lunch,,Cash,
+2026-10-01,expense,abc,Food,Lunch,,Cash,

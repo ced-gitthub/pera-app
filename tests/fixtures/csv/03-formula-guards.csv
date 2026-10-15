@@ -1,0 +1,5 @@
+date,type,amount,category,description,notes,account,to_account
+"2026-10-01","expense","10.00","Food","'=SUM(A1)","'+1 note","Cash",""
+"2026-10-02","expense","20.00","Food","'-2 off","'@home","Cash",""
+"2026-10-03","expense","30.00","Food","'	Tab start","plain","Cash",""
+"2026-10-04","expense","40.00","Food","It's fine","'normal quote","Cash",""

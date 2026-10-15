@@ -1,0 +1,4 @@
+date,type,amount,category,description,notes,account,to_account
+
+2026-10-01,expense,5.00,Food,After blank,,Cash,
+,,,,,,,

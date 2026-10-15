@@ -149,3 +149,10 @@
   0.9.11 published: QA Engineer APPROVE on f75cb99 after two REJECT rounds (old account arrives via the sign-up button; marker was written too early; walkthrough had no Skip). APK 27988059 bytes on native-0.3. Server marker zv_intro_done in auth user_metadata, accounts older than 24h always treated as introduced, Skip setup on every step. Residual: sign-up of an old account with data still asks Keep / Start fresh. Not tested on a phone.
   0.9.12 fix: the web artifact exports "id,date,type,amount,category,description,notes,account,to" (extra id column, "to" header); the native import read the id as the date ("Date must be a real date"). normalizeArtifactCsv in csvLogic.ts drops the id column and renames to to to_account before checking. Accounts/categories that do not exist in the app still need to be added first. verify 615/615.
   0.9.12 published: QA Engineer APPROVE on 9bf013b. APK 27988735 bytes on native-0.3. Website importer (src/core/io.ts fromCsv) has the same artifact-format gap; fixing it deploys the website, needs Ced yes.
+
+## 2026-10-15: artifact parity (Stage 4 built, awaiting Stage 5 QA; NOT published, NOT pushed)
+
+- Fixed/added in `artifact/pera-artifact.html`: CSV export (From/To) and import (Check, then Import) matching native/web rules (centavos, 120/500/40 limits, 5,000 rows, 900,000 chars, 50,000 entries, formula guards, old id layout, old keys still dedupe); Clear everything with typed DELETE, 30-day Undo card (own key `mt1undo`, 3 copies, never synced); Delete sample records with confirm; "demo" tag renamed "Sample"; sync status line after clear.
+- Tests: `tests/artifact-csv.test.ts`, `artifact-export.test.ts`, `artifact-undo.test.ts` (+ `artifact-core.ts`, 14 fixtures in `tests/fixtures/csv`) added to `npm test`. The tests slice the CSVCORE/UNDOCORE blocks out of the HTML and compare with `native/src/csvLogic.ts`.
+- Decisions (Ced): Stage 2 D1-D5 accepted; undo does not restore sample records. Restore: current data wins; a deleted account/category is skipped.
+- Not verified: two-device sync, 50,000-entry storage quota, real phone, offline resurrection under last-writer-wins.

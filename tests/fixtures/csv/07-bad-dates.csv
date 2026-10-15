@@ -1,0 +1,8 @@
+date,type,amount,category,description,notes,account,to_account
+2026-02-30,expense,1.00,Food,not a day,,Cash,
+26-10-01,expense,1.00,Food,short year,,Cash,
+1999-12-31,expense,1.00,Food,too old,,Cash,
+2000-01-01,expense,1.00,Food,oldest ok,,Cash,
+2031-12-31,expense,1.00,Food,newest ok,,Cash,
+2032-01-01,expense,1.00,Food,too far,,Cash,
+2026-10-01,spend,1.00,Food,bad type,,Cash,

@@ -1,0 +1,7 @@
+date,type,amount,category,description,notes,account,to_account
+2026-10-01,expense,1.00,Pets,unknown expense cat,,Cash,
+2026-10-01,income,1.00,Pets,unknown income cat,,Cash,
+2026-10-01,expense,1.00,food,lowercase cat,,Cash,
+2026-10-01,expense,1.00,Salary,income cat on expense,,Cash,
+2026-10-01,transfer,1.00,Food,any cat on transfer,,Cash,GCash
+2026-10-01,income,1.00,Gift,known income cat,,Cash,

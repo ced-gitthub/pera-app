@@ -1,0 +1,3 @@
+﻿date,type,amount,category,description,notes,account,to_account
+2026-10-01,expense,10.00,Food,A,,Cash,
+2026-10-02,income,20.00,Salary,B,,GCash,
