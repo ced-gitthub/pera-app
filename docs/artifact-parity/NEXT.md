@@ -42,3 +42,12 @@ INTROCORE (mt1tour, introState, 7 steps, next/back/skip, flag) + offer card on H
 Decisions: Home/Add/Transactions/Accounts step texts adapted from native to what the artifact really has (no Spendable/Savings, no Manage/FAB); documented for the copy test (ARTIFACT-ONLY).
 Old undo test "no tour in Clear/Undo screens" narrowed to exclude the tour code.
 Next: item 6 (LIMITSCORE, toasts, parseFloat removal, tests/artifact-copy.test.ts).
+
+## Status (7): item 6 done (toasts and limits)
+
+- LIMITSCORE (limits, exact amount/date/budget/opening parsing in integer centavos, quick-add `k` by string), TOASTCORE (8 toasts, 2200 ms, replace-old, `role=status`, no animation under reduced motion). `parseFloat` is gone from the file (test-enforced).
+- Failure line `Not saved: could not write to this device. Try again.`; saveEntry, addRule, del, rrd, na, dup roll back on a failed save.
+- commitBud / commitAcc validate everything before changing anything; a bad value returns the Budget / Opening message. Budget empty or 0 still deletes the budget.
+- Money text inputs are now `type=text inputmode=decimal` (e-a, r-a, .ao, .cb). No CSV-import toast (spec says none).
+- Tests: tests/artifact-limits.test.ts, artifact-toast.test.ts, artifact-copy.test.ts (native word-for-word, ARTIFACT-ONLY allow-list). Mutants: TOASTCORE 7/7, LIMITSCORE 29/32 (3 equivalent: redundant length guard, trim before sane).
+- All items 1-6 done. Remaining for a successor: QA Engineer review, then republish (Ced's yes).
