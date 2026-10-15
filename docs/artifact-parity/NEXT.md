@@ -29,3 +29,5 @@ Say "not tested on a phone" in reports. Final reports: Problem / Solution / Outc
 ## Status 2026-10-15 (2): second QA reject of the undo copy fixed on branch (backup trimming, new refusal texts, mutant-killing tests in tests/artifact-undo-quota.test.ts). Awaiting QA Engineer re-review.
 
 ## Status 2026-10-15 (3): QA reject of bb3c401 fixed (plan() uses real free space, up-front refusal text, replaced-copy note in the clear message, tests/artifact-undo-room.test.ts). Awaiting QA Engineer re-review.
+
+## Status 2026-10-15 (4): items 3-6 in progress (Mobile Developer). Item 3 DONE: SAMPLECORE + tests/artifact-samples.test.ts (14 tests, 25/25 live mutants killed); Home Keep/Clear card (kck/kcc), Settings Delete-sample panel, Sample tag with aria-label, starting-balance note. Mutation script pattern: mutate operators in the marker block, run the test file, restore the HTML. Next: item 4 UNSAVEDCORE, 5 INTROCORE, 6 LIMITSCORE + TOAST. Keep each tests file under 400 lines; add every new test file to package.json "test".
