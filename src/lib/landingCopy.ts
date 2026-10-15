@@ -107,6 +107,10 @@ export const FAQ_MORE: [string, string][] = [
     'What if mawala o magpalit ako ng phone?',
     'Your entries live in your account, not on the phone. Install Zovix on the new one, sign in, and nandoon na lahat.',
   ],
+  [
+    'Can I export my data?',
+    'Yes. Export everything as a CSV file anytime, and import it back later. Your data, hindi nakakulong sa app. If you clear everything by mistake, you have 30 days to undo it.',
+  ],
 ];
 export const SITE_NAME = 'Zovix Pera Tracker';
 export const TAGLINE = 'Type what you spent. Zovix does the rest.';

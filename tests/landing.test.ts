@@ -119,6 +119,10 @@ test('free-plan usage: the landing page is static (no searchParams or cookies) a
     'the /welcome rule must come after the no-store rule so it wins',
   );
 });
+test('the FAQ tells people they can export and re-import their data as CSV (native 0.9.12 has both)', async () => {
+  const { FAQ_MORE } = await import('../src/lib/landingCopy.ts');
+  assert.ok(FAQ_MORE.some(([q, a]) => /export/i.test(q) && /CSV/.test(a) && /import/i.test(a)));
+});
 test('scroll motion is progressive: calm for reduce-motion, never hides what is already on screen, no horizontal overflow tricks', () => {
   const js = readFileSync('src/components/ScrollFx.tsx', 'utf8');
   assert.ok(js.includes('prefers-reduced-motion: reduce'), 'reduce-motion users get a still page');
