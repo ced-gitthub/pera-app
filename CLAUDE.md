@@ -1,77 +1,51 @@
-# Zovix — working rules for Claude
+# Zovix (Pera app) — rules for Claude
 
-Free-tier PHP money tracker. Next.js 15 + TypeScript + Tailwind 4, Supabase (project `vxhgkkzbmrhxayzryake`), Vercel Hobby. Production: https://pera-app-beta.vercel.app. Read README.md for architecture.
+Reply in caveman style (caveman skill). Final report only: `Problem:` / `Solution:` / `Outcome:`, one line each, real pass counts. Ask at most one short question, only if blocked. User = Ced.
 
-## Session rules
-- At the start of each session, read CLAUDE.md, `docs/CORRECTIONS.md` (everything Ced has already corrected: do not make him repeat it) and PROGRESS.md first.
-- After every fix or decision, update PROGRESS.md (fixed, open bugs, decisions, next steps).
-- Every app project, feature or fix follows `docs/APP-DEV-PIPELINE.md` (5 stages: PM, UI/UX, Backend & DevOps, Mobile Developer, QA, with gates G1 to G4, G5a and G5b between stages: a failed gate is routed to the right specialist agent and the whole gate re-run before moving on; an Instruction ledger of Ced's verbatim words is re-checked at every gate). Full track for new apps/features (one stage per turn, stop for approval); light track for fixes (all stages in one turn, but always a Stage 1 restatement of the request in Ced's own words, a QA Engineer review for risky changes, and real test evidence).
+## Stack
+Next.js 15 + TypeScript + Tailwind 4, Supabase (project `vxhgkkzbmrhxayzryake`), Vercel Hobby, GitHub `ced-gitthub/pera-app`. Prod: https://pera-app-beta.vercel.app. Native app: `native/` (Expo Android). Architecture: README.md.
+
+## Session start
+Read this file, `docs/CORRECTIONS.md`, PROGRESS.md. After every fix or decision, update PROGRESS.md.
+
+## Commands
+- `npm run verify` = safety self-test, typecheck, unit tests, lint. Must pass. Pre-push hook blocks `main` otherwise.
+- `npm test` unit. `npm run format` before commit. CI also runs e2e, build, `format:check`.
+- Native: `cd native && npx tsc --noEmit` (verify does not cover it). Handbook: `docs/native-app/NATIVE.md`.
+- Lint warnings ratchet: `--max-warnings` in package.json only goes down. No `any`. Files <= 400 lines.
 
 ## Non-negotiables
-- Cost stays $0. No paid services or keys.
-- Money is integer centavos. Dates are Asia/Manila. Never use floats for money.
-- Never print or store secrets. Never edit `.env*`.
-- Database changes: additive SQL in `supabase/migrations/NNNN_name.sql`. Apply to Supabase BEFORE merging code that needs it. Never edit an applied migration.
-- Security boundary is Postgres RLS. Every new table needs RLS + tests in `tests/prod/rls-suite.ts`.
-- Don't ask the user to run anything locally. Do it, or say exactly what is blocked.
+- Cost $0. No paid services or keys. Never print/store secrets. Never edit `.env*`.
+- Money = integer centavos, never floats/`parseFloat`. Dates Asia/Manila.
+- DB changes: additive SQL in `supabase/migrations/NNNN_name.sql`; apply to Supabase BEFORE merging code that needs it; never edit an applied migration.
+- Security boundary = Postgres RLS. New table: owner policy + MFA restrictive policy + per-user row cap + tests in `tests/prod/rls-suite.ts`.
+- Do the work; do not ask Ced to run things. Say exactly what is blocked.
+- No push to `main` without Ced's yes, each time (it deploys; 100/day Vercel limit). Batch; `[skip ci]` for docs/config-only commits.
 
-## Feature checklist (every feature, no exceptions)
-- Every form that creates something: a one-time request id (or a database unique key) so a double-tap or retry saves once, and `<Btn>` (disables while saving).
-- Every delete: confirm (`<Btn confirm=...>`) or Undo. Never silently drop data; delete a trash/backup copy only after the restore succeeded.
-- Every input: server-side limits (length, amount, plausible date via `isSaneDate`), a visible label or `aria-label`, and an error message that says what to fix.
-- Every new table: RLS owner policy + the MFA restrictive policy + a per-user row cap + RLS tests in `tests/prod/rls-suite.ts`.
-- Anything that can run unbounded (imports, recurring rules, exports, search): a hard cap and a clear message when it is reached.
-- Loading, empty, error and success states for every new screen; keyboard and mobile (375px) usable.
-- Rules enforced in the database beat rules only in app code. Add both.
-
-## Quality gates
-- `npm run verify` (safety self-test, typecheck, unit tests, lint) must pass. A git pre-push hook blocks pushing `main` otherwise; CI also runs the app tests, the build and `npm run format:check`.
-- `npm run selftest` proves the guard hook and tool-name rules still work. Run it after any change to `.claude/` or `.mcp.json`.
-- Lint warnings are a ratchet: the count in `package.json` (`--max-warnings`) may only go down. Do not add `any`; do not grow files past 400 lines; split by topic.
-- Format with `npm run format` before committing. Money never goes through `parseFloat`.
-- Work on a branch, then merge to `main` only when the gates are green. Weekly health check: `.github/workflows/weekly-health.yml`.
-
-## Team (use subagents; keep the main thread short)
-The five pipeline roles (docs/APP-DEV-PIPELINE.md), each a real agent in `.claude/agents/`, plus two cheap helpers:
-| Agent | Model | Stage / use for |
-|---|---|---|
-| `product-manager` | Sonnet | Stage 1: Product Specification Blueprint + the Instruction ledger. Always before building anything bigger than one file. |
-| `ui-ux-designer` | Sonnet | Stage 2: Design Handoff Specification (screens, states, copy, tokens). |
-| `backend-devops-engineer` | Sonnet | Stage 3: Backend & API Contract, migrations (read skill `pera-migration`). Never applies a migration before the QA Engineer approves it. |
-| `mobile-app-developer` | Sonnet | Stage 4: implement + unit/e2e tests, test first. |
-| `qa-engineer` | Opus | Stage 5 and the independent reviewer at every gate: returns APPROVE/REJECT with evidence. REQUIRED before shipping migrations, RLS, money math, auth, deploy config or any APK. If it rejects, fix and re-submit. |
-| `explorer` | Haiku | Find code, trace flows, answer "where is X". |
-| `tester` | Sonnet | Live tests in `tests/prod` for the QA Engineer (read skill `pera-live-qa`). |
-| `ci-watcher` | Haiku | Wait for deploy/CI/prod-qa and return pass counts. Never poll in the main thread. |
-
-Slash commands: `/plan`, `/migrate`, `/qa`, `/review`, `/ship`, `/status`.
-Hooks (`.claude/hooks`): `guard.mjs` blocks secret-looking writes, edits to committed migrations, and destructive SQL (drop table/column, truncate, delete/update without where); `tests.sh` blocks finishing while unit tests fail; `status.sh` prints repo/CI state at session start.
-Prefer available process skills (test-driven-development, systematic-debugging, verification-before-completion) over improvising.
+## Feature checklist
+- Create forms: one-time request id or DB unique key, `<Btn>` disables while saving.
+- Deletes: confirm (`<Btn confirm=...>`) or Undo. Never silently drop data.
+- Inputs: server-side limits, `isSaneDate`, label/`aria-label`, error says what to fix.
+- Unbounded work (imports, exports, search): hard cap + clear message.
+- Loading/empty/error/success states; keyboard + 375px usable. DB rules beat app-only rules.
+- Behaviour change needs unit/e2e test; user-visible feature needs live step in `tests/prod/` (click Edit first: controls hidden until Edit).
 
 ## Workflow
-1. `/plan` (product-manager). 2. Build (mobile-app-developer; backend-devops-engineer for schema; tester for live steps). 3. QA Engineer if risky. 4. `/ship` (ci-watcher reports results).
-Local checks: `npm test` (unit). Typecheck/build/e2e run in CI (`ci`). Live checks: `prod-qa`; results are published to branches `qa-qa`, `qa-rls`, `qa-responsive`, `qa-security`, `qa-db` (runner logs are not readable; fetch those branches with a forced `+refs/heads/...` refspec).
-Pushing to `main` deploys to Vercel (100/day limit). Batch changes; put `[skip ci]` in the message for docs/config-only commits.
+Follow `docs/APP-DEV-PIPELINE.md` (5 stages, gates, Instruction ledger of Ced's words). Fixes: light track, restate request first. Review required before migrations, RLS, money math, auth, deploy config, any APK. Use superpowers skills (TDD, systematic-debugging, verification-before-completion).
 
-## Tests
-Any behaviour change needs: a unit/e2e test, and a live step in `tests/prod/` for user-visible features. The UI uses per-tab Edit mode: controls are hidden until Edit is pressed, so live tests must click Edit first.
+## Team (real subagents in `.claude/agents/`, keep main thread short)
+- Pipeline roles: `product-manager` (Stage 1 spec + Instruction ledger), `ui-ux-designer` (2), `backend-devops-engineer` (3, migrations, skill `pera-migration`), `mobile-app-developer` (4, tests first), `qa-engineer` (5 + every gate).
+- `qa-engineer` APPROVE is REQUIRED before shipping migrations, RLS, money math, auth, deploy config or any APK. On REJECT: fix, re-submit.
+- Helpers: `explorer` (find code), `tester` (live tests, skill `pera-live-qa`), `ci-watcher` (wait for CI, return pass counts; never poll in main thread), `judge` (required for middleware/redirect/deploy-config).
+- Slash commands: `/plan` `/migrate` `/qa` `/review` `/ship` `/status`.
 
-## Website team (website and landing page ONLY; never for `native/`)
-Read `docs/WEBSITE-TEAM.md` before any website work: scope boundary, 4 failure protocols (F1-F4), 4-stage pipeline with gates, coordination rules. Six agents in `.claude/agents/`, run as real subagents (never personas):
-| Agent | Use for |
-|---|---|
-| `web-seo-architect` | structure, metadata, canonicals, robots/sitemap, structured data, Core Web Vitals risks |
-| `web-aeo-engineer` | user-question map, question headings, concise answers, FAQs (read-only) |
-| `web-geo-architect` | entity map, consistent terminology, claim evidence (read-only) |
-| `web-copywriter` | all visible copy and CTAs (mostly English, Tagalog mixed in, never pure Tagalog; calm CTAs) |
-| `web-ux-designer` | layout, accessibility, responsive at 360px, interaction states |
-| `web-qa-auditor` | independent defect audit and PASS / FAIL / NOT VERIFIED report (read-only) |
-The native app keeps its own separate team and rules (next section). The older shared agents above (`explorer`, `planner`, `builder`, `tester`, `migrator`, `ci-watcher`, `judge`) stay available for app, database and CI work; `judge` is still required for middleware/redirect/deploy-config changes on the website.
+## Website team (website/landing page ONLY, never `native/`)
+Read `docs/WEBSITE-TEAM.md` first. Agents: `web-seo-architect`, `web-aeo-engineer`, `web-geo-architect`, `web-copywriter`, `web-ux-designer`, `web-qa-auditor` (independent PASS/FAIL audit). Copy: mostly English, Tagalog mixed in, never pure Tagalog.
 
-## Native app (`native/`, Expo Android)
-- Read `docs/native-app/NATIVE.md` before touching it (map, rules, build recipe, open items). History in `CHANGELOG.md`, roadmap in `PLAN.md`.
-- Screens use only design tokens (`native/src/uiTokens.ts`); `tests/native-design.test.ts` enforces it. `npm run verify` does not type-check `native/`: also run `cd native && npx tsc --noEmit`.
-- Release: replace `Zovix-native-latest.apk` on the existing GitHub release `native-0.3` (Ced has that page saved); never make per-version releases. Publish ONLY after the QA Engineer approves. Never push to `main` without Ced's yes (it deploys the website).
+## Native (Expo) rules
+- Expo APIs change every SDK. Before touching Expo/EAS/RN code: read `expo` major in `native/package.json`, check `https://docs.expo.dev/versions/v<major>.0.0/` (index: https://docs.expo.dev/llms.txt). Never answer from memory.
+- Add packages with `npx expo install <pkg>`, not npm add. Routing = Expo Router (`src/app/` screens only; other code outside). Lint (`npx expo lint`) + `npx tsc --noEmit` before done.
+- No `ios/`/`android/` in repo: generated (prebuild). Never hand-edit; configure in `app.json`/config plugins. Native-code libs need a dev build, not Expo Go. Prefer Expo modules over third-party.
 
-## Reporting (user preference)
-Final message only: `Problem:` / `Solution:` / `Outcome:` — one line each, with pass counts. No process narration, no recaps, no restating the request. Ask at most one short question, only if truly blocked. User goes by Ced.
+## Native release
+Replace `Zovix-native-latest.apk` on existing GitHub release `native-0.3`; never per-version releases. Publish only after review approves. Theme: design tokens only (`native/src/uiTokens.ts`).
