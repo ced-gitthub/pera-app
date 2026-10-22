@@ -1,8 +1,8 @@
-import ZovixMark from '@/components/ZovixMark';
+import ZovixMark from '@/components/ui/ZovixMark';
 import Link from 'next/link';
 import { requestReset, requestResetViaBackup } from '@/app/actions';
-import { backupConfigured } from '@/lib/backup';
-import { Flash, type SP } from '@/components/ui';
+import { backupConfigured } from '@/lib/data/backup';
+import { Flash, type SP } from '@/components/ui/ui';
 export default async function Page({ searchParams }: { searchParams: SP }) {
   return (
     <main className="auth">

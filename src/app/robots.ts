@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next';
-import { SITE_URL } from '@/lib/siteUrl';
+import { SITE_URL } from '@/lib/landing/siteUrl';
 // Search engines may index the landing page and the privacy policy; everything else is the app or login.
 export default function robots(): MetadataRoute.Robots {
   return {

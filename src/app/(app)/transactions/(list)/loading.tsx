@@ -1,1 +1,1 @@
-export { TransactionsSk as default } from '@/components/Skeleton';
+export { TransactionsSk as default } from '@/components/ui/Skeleton';

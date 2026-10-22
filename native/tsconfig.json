@@ -1,6 +1,6 @@
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": { "strict": true, "allowImportingTsExtensions": true, "noEmit": true },
-  "include": ["**/*.ts", "**/*.tsx", "../src/core/*.ts", "../src/lib/validate.ts"],
+  "include": ["**/*.ts", "**/*.tsx", "../src/core/*.ts", "../src/lib/common/validate.ts"],
   "exclude": ["node_modules"]
 }

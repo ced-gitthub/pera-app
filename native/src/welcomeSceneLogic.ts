@@ -1,6 +1,6 @@
 // Pure helpers for the welcome screen's living backdrop, header and level badge (no react-native here, so they are unit-tested). Nothing random.
 import { c } from './uiTokens.ts';
-import { levelInfo } from '../../src/lib/quests.ts';
+import { levelInfo } from '../../src/lib/progress/quests.ts';
 
 export type Step = 1 | 2 | 3;
 export const MAX_FLOATERS = 10;

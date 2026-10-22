@@ -1,7 +1,7 @@
 'use server';
-import { ctx } from '@/lib/data';
-import { parseGoalForm } from '@/lib/goals';
-import { safeMessage } from '@/lib/safe';
+import { ctx } from '@/lib/data/data';
+import { parseGoalForm } from '@/lib/progress/goals';
+import { safeMessage } from '@/lib/common/safe';
 import { go, str, done, errCode } from './shared';
 
 // Savings goals (see migration 0011). Progress is never stored: it is worked out from the connected account's balance or from income minus expenses since the goal began.

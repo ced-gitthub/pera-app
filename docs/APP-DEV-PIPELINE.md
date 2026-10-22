@@ -8,7 +8,7 @@ Act as **Principal Product Architect and Development Pipeline Orchestrator**. Tu
 ## 2. Who plays each stage (real subagents where this environment has them)
 | Stage | Specialist | In this repo (Zovix Pera) | Deliverable |
 |---|---|---|---|
-| 1 | Product Manager | `product-manager` agent (plus the orchestrator). Reads CORRECTIONS.md and PROGRESS.md. | Product Specification Blueprint |
+| 1 | Product Manager | `product-manager` agent (plus the orchestrator). Reads CORRECTIONS.md and docs/PROGRESS.md. | Product Specification Blueprint |
 | 2 | UI/UX Designer | `ui-ux-designer` agent (may use the design skills `design:design-critique`, `design:ux-copy`, `frontend-design`), tokens in `native/src/uiTokens.ts` | Design Handoff Specification |
 | 3 | Backend & DevOps Engineer | `backend-devops-engineer` (schema, RLS), `qa-engineer` reviews it | Backend & API Contract |
 | 4 | Mobile App Developer | `mobile-app-developer` agent (parallel mobile-app-developers on disjoint files) | Functional Codebase |
@@ -61,7 +61,7 @@ Nothing moves to the next stage on trust. Between every pair of stages sits a ga
 **Instruction ledger.** Stage 1 starts it: a table with one row per thing Ced asked for. Columns: ID (IL-1...), his words **verbatim**, the meaning chosen (the least surprising one, said in plain words), and what he will SEE on screen. Standing rules from `docs/CORRECTIONS.md` that apply are added as rows. Every gate re-checks that each row is still covered by something in the stage's deliverable, and Gate G5a proves each row with evidence, or lists it as deferred to the live run, and Gate G5b proves every deferred row with live evidence. A row with no coverage is a failure, however good the rest looks.
 
 **How a gate works.**
-1. Run every check of the gate. Write the result as a **Gate record**: check, PASS or FAIL, evidence, round number, who it was routed to. On the full track it goes in the stage deliverable file. On the light track the Gate records are appended to the task's entry in `PROGRESS.md` so the `qa-engineer` can read them.
+1. Run every check of the gate. Write the result as a **Gate record**: check, PASS or FAIL, evidence, round number, who it was routed to. On the full track it goes in the stage deliverable file. On the light track the Gate records are appended to the task's entry in `docs/PROGRESS.md` so the `qa-engineer` can read them.
 2. On any FAIL: route to the specialist named in the gate (not to whoever is convenient), give them the failing check and the ledger rows it touches, and let them fix it.
 3. Then **re-run the full gate, not only the failed check**, because a fix can break something that passed.
 4. Only when every check passes does the stage hand off. A fix routed into an earlier stage **re-opens** that stage's gate and every later gate that the changed requirement touches.
@@ -91,7 +91,7 @@ If it fails: a code defect goes to `mobile-app-developer` · a schema or RLS def
 Checks: the deploy is live on the pushed commit · CI is green · the live run (`prod-qa`) is green, with the pass counts of every suite · each live step written in G5a passed · every Instruction ledger row deferred from G5a now has live PASS evidence · the asset size of an APK uploaded to the saved release `native-0.3` matches the file built (that check itself runs right after any upload to `native-0.3`, whether or not anything was pushed to `main`, and does not wait for this gate) · the Release Readiness Matrix has no NOT RUN for a Must-have, and the recommendation is READY or READY WITH KNOWN LIMITATIONS with the limits listed.
 If it fails: `ci-watcher` waits for and reports the CI and live results (never poll in the main thread) · a failing step goes to its owner (code to `mobile-app-developer`, schema or RLS to `backend-devops-engineer`, test to `tester`) and then G4 and G5a run again before the next push.
 
-**Light track.** Gates G1 to G5a run in the same turn and the light track then stops at G5a: it never pushes to `main` without Ced's yes. G5b runs after Ced's yes and the push. Only a failure is mentioned in the report, in one line (what failed, who fixed it, the re-run result), and the full Gate records are in `PROGRESS.md`.
+**Light track.** Gates G1 to G5a run in the same turn and the light track then stops at G5a: it never pushes to `main` without Ced's yes. G5b runs after Ced's yes and the push. Only a failure is mentioned in the report, in one line (what failed, who fixed it, the re-run result), and the full Gate records are in `docs/PROGRESS.md`.
 
 ## 8. Universal handoff format
 Every stage ends with a separated, copy-ready prompt that names the next stage and role, its objective and deliverable, all upstream specs and decisions, traceability IDs and acceptance criteria, dependencies, assumptions and open issues, project paths and test evidence, and the instruction to execute only that stage and stop. It must work in a new conversation with no hidden context. If a change is needed, name the affected requirements, say why and record the revised decision.

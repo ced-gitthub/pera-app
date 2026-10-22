@@ -10,11 +10,11 @@ import {
   findVerified,
   emailOf,
   recoveryToken,
-} from '@/lib/backup';
-import { sendMail } from '@/lib/mail';
-import { newCode, hashCode, checkCode, nextSend, cooldownPassed, CODE_TTL_MS, MAX_ATTEMPTS } from '@/lib/backupcode';
-import { isEmail } from '@/lib/password';
-import { safeMessage, authMessage, logErr } from '@/lib/safe';
+} from '@/lib/data/backup';
+import { sendMail } from '@/lib/auth/mail';
+import { newCode, hashCode, checkCode, nextSend, cooldownPassed, CODE_TTL_MS, MAX_ATTEMPTS } from '@/lib/auth/backupcode';
+import { isEmail } from '@/lib/auth/password';
+import { safeMessage, authMessage, logErr } from '@/lib/common/safe';
 import { go, str, siteUrl, errCode, code6, authed, done } from './shared';
 
 // ---- backup email (recovery when the login inbox is lost). Needs SUPABASE_SECRET_KEY + SMTP_* on the server; hidden otherwise.

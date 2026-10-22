@@ -1,8 +1,8 @@
 import { notFound } from 'next/navigation';
-import { ctx } from '@/lib/data';
+import { ctx } from '@/lib/data/data';
 import { updateTx } from '@/app/actions';
 import { fmt } from '@/core/io';
-import { Flash, type SP } from '@/components/ui';
+import { Flash, type SP } from '@/components/ui/ui';
 export default async function Edit({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: SP }) {
   const { id } = await params,
     sp = await searchParams,

@@ -1,11 +1,11 @@
 // Pure logic (no React Native, no network) so the website's `npm test` can run it.
 import { parseInput, FEE_CATS, type Item, type Parsed } from '../../src/core/parser.ts';
 import { manilaToday, parseAmountMinor, isSaneDate } from '../../src/core/money.ts';
-import { parseOptionalMinor } from '../../src/lib/validate.ts';
+import { parseOptionalMinor } from '../../src/lib/common/validate.ts';
 import { budgetStatus } from '../../src/core/aggregate.ts';
-import { streak } from '../../src/lib/vibe.ts';
-import { xpFor, levelInfo, buildQuests } from '../../src/lib/quests.ts';
-import { openingFromToday, gateFor, type Gate } from '../../src/lib/onboarding.ts';
+import { streak } from '../../src/lib/common/vibe.ts';
+import { xpFor, levelInfo, buildQuests } from '../../src/lib/progress/quests.ts';
+import { openingFromToday, gateFor, type Gate } from '../../src/lib/onboarding/onboarding.ts';
 
 export type Account = {
   id: string;

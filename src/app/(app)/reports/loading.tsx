@@ -1,1 +1,1 @@
-export { ReportsSk as default } from '@/components/Skeleton';
+export { ReportsSk as default } from '@/components/ui/Skeleton';

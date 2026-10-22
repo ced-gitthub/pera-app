@@ -1,8 +1,8 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import type { EmailOtpType } from '@supabase/supabase-js';
 import { supabaseServer } from '@/lib/supabase/server';
-import { logErr } from '@/lib/safe';
-import { CONFIRMED } from '@/lib/okMessage'; // the landing page shows exactly this message
+import { logErr } from '@/lib/common/safe';
+import { CONFIRMED } from '@/lib/landing/okMessage'; // the landing page shows exactly this message
 // Email links land here: password reset (next=/reset) and email confirmation (welcome=1). Accepts the PKCE `code` flow and the `token_hash` flow. Only whitelisted in-app destinations are allowed.
 const NEXT = new Set(['/reset', '/']),
   OTP = new Set(['recovery', 'signup', 'email']);

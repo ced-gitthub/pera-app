@@ -1,8 +1,8 @@
 'use server';
 import { redirect } from 'next/navigation';
 import { supabaseServer } from '@/lib/supabase/server';
-import { isEmail } from '@/lib/password';
-import { authMessage, logErr } from '@/lib/safe';
+import { isEmail } from '@/lib/auth/password';
+import { authMessage, logErr } from '@/lib/common/safe';
 import { go, str, errCode, code6, needsSecondStep, done } from './shared';
 
 const codeUrl = (email: string) => '/code' + (isEmail(email) ? `?email=${encodeURIComponent(email)}` : '');

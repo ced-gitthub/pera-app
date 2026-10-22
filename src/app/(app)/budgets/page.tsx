@@ -1,15 +1,15 @@
 import Link from 'next/link';
-import { Btn } from '@/components/Btn';
-import { ctx } from '@/lib/data';
-import { dbError } from '@/lib/safe';
+import { Btn } from '@/components/ui/Btn';
+import { ctx } from '@/lib/data/data';
+import { dbError } from '@/lib/common/safe';
 import { saveBudgetRow, deleteCategory, moveCategory, createCategory } from '@/app/actions';
-import { isYm, monthRange, shiftYm } from '@/lib/range';
+import { isYm, monthRange, shiftYm } from '@/lib/data/range';
 import { manilaToday, formatMinor } from '@/core/money';
 import { budgetStatus, pctLabel } from '@/core/aggregate';
-import { minorToInput } from '@/lib/validate';
-import Tab from '@/components/Tab';
-import { Flash, type SP } from '@/components/ui';
-import { emojiFor } from '@/lib/vibe';
+import { minorToInput } from '@/lib/common/validate';
+import Tab from '@/components/ui/Tab';
+import { Flash, type SP } from '@/components/ui/ui';
+import { emojiFor } from '@/lib/common/vibe';
 export default async function Budgets({ searchParams }: { searchParams: SP }) {
   const sp = await searchParams,
     ym = isYm(sp.ym) ? sp.ym : manilaToday().slice(0, 7),

@@ -1,49 +1,55 @@
 {
- "name": "pera",
- "version": "0.1.0",
- "private": true,
- "scripts": {
-  "dev": "next dev",
-  "build": "next build",
-  "start": "next start",
-  "typecheck": "tsc --noEmit",
-  "test": "node --experimental-strip-types --test tests/core.test.ts tests/app.test.ts tests/auth.test.ts tests/cache.test.ts tests/welcome.test.ts tests/quests.test.ts tests/goals.test.ts tests/missions.test.ts tests/onboarding.test.ts tests/deleteAccount.test.ts tests/adminKey.test.ts tests/native-sample.test.ts tests/pipeline-doc.test.ts tests/native-polish.test.ts tests/native-qa-fixes.test.ts tests/native-ui-infra.test.ts tests/native-ui-entry.test.ts tests/native-ui-planning.test.ts tests/native-ui-manage.test.ts tests/native-ui-csv-mine.test.ts tests/native-ui-polish2.test.ts tests/native-ui-polish3.test.ts tests/native-ui-wizard.test.ts tests/native-appicon.test.ts tests/native-coach.test.ts tests/native-csv.test.ts tests/native-csv2.test.ts tests/native-delete-account.test.ts tests/native-design.test.ts tests/native-entries.test.ts tests/native-entries2.test.ts tests/native-entries3.test.ts tests/native-entries4.test.ts tests/native-fresh.test.ts tests/native-home.test.ts tests/native-manage.test.ts tests/native-profile.test.ts tests/native-recurring-resume.test.ts tests/native-recurring.test.ts tests/native-recurring2.test.ts tests/native-recurring3.test.ts tests/native-reports.test.ts tests/native-reset.test.ts tests/native-themes.test.ts tests/native-tour.test.ts tests/native-uniform-ui.test.ts tests/native-welcome-motion.test.ts tests/native-welcome-scene.test.ts tests/native.test.ts tests/landing.test.ts",
-  "test:app": "tsx --tsconfig tests/e2e/tsconfig.json tests/e2e/app.e2e.tsx",
-  "test:browser": "node tests/browser/build.cjs && python3 tests/browser/quickadd.py",
-  "test:prod": "echo 'Production suites run in GitHub Actions: .github/workflows/prod-qa.yml'",
-  "lint": "eslint src tests scripts --max-warnings=285",
-  "format": "prettier --write src tests scripts",
-  "format:check": "prettier --check src tests scripts",
-  "selftest": "node --experimental-strip-types scripts/selftest.mjs",
-  "verify": "npm run selftest && npm run typecheck && npm test && npm run lint",
-  "prepare": "git config core.hooksPath .githooks || exit 0"
- },
- "dependencies": {
-  "@supabase/ssr": "^0.6.1",
-  "@supabase/supabase-js": "^2.50.0",
-  "next": "^15.3.0",
-  "nodemailer": "^10.0.16",
-  "react": "^19.0.0",
-  "react-dom": "^19.0.0"
- },
- "devDependencies": {
-  "@eslint/js": "^10.0.1",
-  "@tailwindcss/postcss": "^4.1.0",
-  "@types/node": "^22.0.0",
-  "@types/nodemailer": "^6.4.17",
-  "@types/react": "^19.0.0",
-  "@types/react-dom": "^19.0.0",
-  "esbuild": "^0.25.0",
-  "eslint": "^10.12.0",
-  "eslint-plugin-react-hooks": "^7.1.1",
-  "postcss": "^8.5.0",
-  "prettier": "^3.9.10",
-  "tailwindcss": "^4.1.0",
-  "tsx": "^4.19.0",
-  "typescript": "^5.6.0",
-  "typescript-eslint": "^8.71.1"
- },
- "overrides": {
-  "postcss": "$postcss"
- }
+  "name": "pera",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test tests/unit/core.test.ts tests/unit/app.test.ts tests/unit/auth.test.ts tests/unit/cache.test.ts tests/unit/welcome.test.ts tests/unit/quests.test.ts tests/unit/goals.test.ts tests/unit/missions.test.ts tests/unit/onboarding.test.ts tests/unit/deleteAccount.test.ts tests/unit/adminKey.test.ts tests/native/native-sample.test.ts tests/unit/pipeline-doc.test.ts tests/native/native-polish.test.ts tests/native/native-qa-fixes.test.ts tests/native/native-ui-infra.test.ts tests/native/native-ui-entry.test.ts tests/native/native-ui-planning.test.ts tests/native/native-ui-manage.test.ts tests/native/native-ui-csv-mine.test.ts tests/native/native-ui-polish2.test.ts tests/native/native-ui-polish3.test.ts tests/native/native-ui-wizard.test.ts tests/native/native-appicon.test.ts tests/native/native-coach.test.ts tests/native/native-csv.test.ts tests/native/native-csv2.test.ts tests/native/native-delete-account.test.ts tests/native/native-design.test.ts tests/native/native-entries.test.ts tests/native/native-entries2.test.ts tests/native/native-entries3.test.ts tests/native/native-entries4.test.ts tests/native/native-fresh.test.ts tests/native/native-home.test.ts tests/native/native-manage.test.ts tests/native/native-profile.test.ts tests/native/native-recurring-resume.test.ts tests/native/native-recurring.test.ts tests/native/native-recurring2.test.ts tests/native/native-recurring3.test.ts tests/native/native-reports.test.ts tests/native/native-reset.test.ts tests/native/native-themes.test.ts tests/native/native-tour.test.ts tests/native/native-uniform-ui.test.ts tests/native/native-welcome-motion.test.ts tests/native/native-welcome-scene.test.ts tests/native/native.test.ts tests/landing/landing.test.ts",
+    "test:app": "tsx --tsconfig tests/e2e/tsconfig.json tests/e2e/app.e2e.tsx",
+    "test:browser": "node tests/browser/build.cjs && python3 tests/browser/quickadd.py",
+    "test:prod": "echo 'Production suites run in GitHub Actions: .github/workflows/prod-qa.yml'",
+    "lint": "eslint -c config/eslint.config.mjs src tests scripts --max-warnings=285",
+    "format": "prettier --write src tests scripts",
+    "format:check": "prettier --check src tests scripts",
+    "selftest": "node --experimental-strip-types scripts/selftest.mjs",
+    "verify": "npm run selftest && npm run typecheck && npm test && npm run lint",
+    "prepare": "git config core.hooksPath .githooks || exit 0"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.6.1",
+    "@supabase/supabase-js": "^2.50.0",
+    "next": "^15.3.0",
+    "nodemailer": "^10.0.16",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@tailwindcss/postcss": "^4.1.0",
+    "@types/node": "^22.0.0",
+    "@types/nodemailer": "^6.4.17",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "esbuild": "^0.25.0",
+    "eslint": "^10.12.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "postcss": "^8.5.0",
+    "prettier": "^3.9.10",
+    "tailwindcss": "^4.1.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "typescript-eslint": "^8.71.1"
+  },
+  "overrides": {
+    "postcss": "$postcss"
+  },
+  "prettier": {
+    "singleQuote": true,
+    "printWidth": 140,
+    "endOfLine": "lf",
+    "trailingComma": "all"
+  }
 }

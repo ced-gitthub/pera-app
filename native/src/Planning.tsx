@@ -1,8 +1,8 @@
 import { useRef, useState } from 'react';
 import { Alert, Pressable, Text, TextInput, View } from 'react-native';
 import { formatMinor } from '../../src/core/money';
-import { GOAL_EMOJIS } from '../../src/lib/goals';
-import { minorToInput } from '../../src/lib/validate';
+import { GOAL_EMOJIS } from '../../src/lib/progress/goals';
+import { minorToInput } from '../../src/lib/common/validate';
 import type { Snapshot } from './data';
 import { loadBudgets, loadGoals, type BudgetRow, type GoalRow } from './extra';
 import { saveBudget, saveGoal, updateGoal } from './wizardData';

@@ -1,9 +1,9 @@
 import { useState, type ReactElement } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 import { formatMinor } from '../../src/core/money';
-import { minorToInput } from '../../src/lib/validate';
-import { GOAL_EMOJIS } from '../../src/lib/goals';
-import type { GateStep } from '../../src/lib/onboarding';
+import { minorToInput } from '../../src/lib/common/validate';
+import { GOAL_EMOJIS } from '../../src/lib/progress/goals';
+import type { GateStep } from '../../src/lib/onboarding/onboarding';
 import type { Snapshot } from './data';
 import { balancePrefill } from './logic';
 import { BALANCE_SAMPLE_NOTE } from './sampleLogic';

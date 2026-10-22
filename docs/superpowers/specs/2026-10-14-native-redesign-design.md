@@ -14,7 +14,7 @@ Owner feedback on native 0.5.1 (2026-10-14), in short: the welcome is boring and
 3. No screen ever shows bare "Loading": shaped skeletons appear instantly.
 4. Every tab has its own configuration; Settings holds real settings and the tutorial replay is a small "Help" row, not a highlighted block.
 5. Logging an entry feels rewarding (balance counts down, XP pop, streak).
-6. The look is dark-first and consistent; no screen uses a colour outside the tokens (already enforced by `tests/native-design.test.ts`).
+6. The look is dark-first and consistent; no screen uses a colour outside the tokens (already enforced by `tests/native/native-design.test.ts`).
 
 ## Constraints (unchanged)
 
@@ -43,9 +43,9 @@ One `Skeleton` component (rounded blocks with a slow shimmer using `Animated`, r
 ### Home (approach A)
 Top to bottom:
 1. Greeting + streak chip.
-2. **Spendable** hero: big number = sum of balances of accounts not flagged "counts as savings"; under it `Savings` and `Total`. Uses `homeNumbers` from `src/lib/balances.ts` (one rule for web and native). Until at least one account is flagged or the wizard's spend/save question is answered, show **Total** as the hero (never a misleading Spendable).
+2. **Spendable** hero: big number = sum of balances of accounts not flagged "counts as savings"; under it `Savings` and `Total`. Uses `homeNumbers` from `src/lib/data/balances.ts` (one rule for web and native). Until at least one account is flagged or the wizard's spend/save question is answered, show **Total** as the hero (never a misleading Spendable).
 3. Account cards: horizontally swipeable, next card peeks, page dots, "See all" opens the full list. Each card: name, balance, a small spend/save tag.
-4. One-line game strip: level, XP bar, today's quest (from `src/lib/quests.ts`); tap opens a sheet.
+4. One-line game strip: level, XP bar, today's quest (from `src/lib/progress/quests.ts`); tap opens a sheet.
 5. Recent entries (latest 5) with "See all" to Activity.
 6. **Add** floating button bottom-right above the tab bar (not a pinned input): opens a bottom sheet with the Quick Add field focused, keyboard-safe. Preview card shows amount, category chip, account chip; one tap Save.
 
@@ -68,7 +68,7 @@ Replaces the four slides. Pre-account sandbox with sample accounts Cash, GCash, 
 2. "Move money to savings": the user types `move 500 to savings`; Spendable drops, Savings rises.
 3. "Watch a goal fill": a sample goal fills as savings grow; shows level/XP and streak.
 4. Closing line answers the spreadsheet question ("No formulas. Type a line, see what's left.") and offers "Create my account".
-The create-account button appears only after step 2, not from the first screen. The wizard gains one question per account: "Is this money you spend, or save?" (sets `counts_as_savings`), which feeds Spendable. Pure demo logic reuses `src/lib/welcomeDemo.ts`.
+The create-account button appears only after step 2, not from the first screen. The wizard gains one question per account: "Is this money you spend, or save?" (sets `counts_as_savings`), which feeds Spendable. Pure demo logic reuses `src/lib/landing/welcomeDemo.ts`.
 
 ## SP3: Per-tab configuration + Settings (outline)
 

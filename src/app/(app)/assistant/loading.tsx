@@ -1,1 +1,1 @@
-export { AssistantSk as default } from '@/components/Skeleton';
+export { AssistantSk as default } from '@/components/ui/Skeleton';

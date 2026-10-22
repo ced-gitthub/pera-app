@@ -1,11 +1,11 @@
 'use server';
-import { ctx, aliasMap, balanceMap } from '@/lib/data';
+import { ctx, aliasMap, balanceMap } from '@/lib/data/data';
 import { manilaToday, parseAmountMinor, isDate, isSaneDate, formatMinor } from '@/core/money';
 import { categoryFor, FEE_CATS, type Parsed } from '@/core/parser';
 import { parseWithFallback, getProvider } from '@/ai/provider';
-import { validateItems } from '@/lib/validate';
-import { safeMessage, logErr } from '@/lib/safe';
-import { commandOf, NOTHING_TO_UNDO } from '@/lib/commands';
+import { validateItems } from '@/lib/common/validate';
+import { safeMessage, logErr } from '@/lib/common/safe';
+import { commandOf, NOTHING_TO_UNDO } from '@/lib/data/commands';
 import { go, str, done, addCategory, type Sb } from './shared';
 
 // ---- quick add (writes only after server-side validation; success is reported only after the rows are re-counted)

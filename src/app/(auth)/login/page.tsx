@@ -1,11 +1,11 @@
 import { cookies } from 'next/headers';
-import AuthBrand from '@/components/AuthBrand';
-import InstallApp from '@/components/InstallApp';
-import { loginCaption } from '@/lib/welcomeDemo';
+import AuthBrand from '@/components/auth/AuthBrand';
+import InstallApp from '@/components/app/InstallApp';
+import { loginCaption } from '@/lib/landing/welcomeDemo';
 import Link from 'next/link';
 import { signIn } from '@/app/actions';
-import GoogleButton from '@/components/GoogleButton';
-import { Flash, type SP } from '@/components/ui';
+import GoogleButton from '@/components/auth/GoogleButton';
+import { Flash, type SP } from '@/components/ui/ui';
 export default async function Page({ searchParams }: { searchParams: SP }) {
   const returning = !!(await cookies()).get('zovix_seen'); // set by the app once this device has been logged in
   return (

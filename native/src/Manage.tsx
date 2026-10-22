@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { formatMinor } from '../../src/core/money';
-import { minorToInput } from '../../src/lib/validate';
+import { minorToInput } from '../../src/lib/common/validate';
 import type { Snapshot, Category } from './logic';
 import { Btn } from './Btn';
 import { HeaderClose, Sheet } from './Sheet';

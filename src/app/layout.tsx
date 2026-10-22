@@ -2,11 +2,11 @@ import './globals.css';
 import './polish.css'; // in-app look (hero, cards, buttons, tabs); must load after globals.css
 import './joy.css'; // the shared joyful look (sign-in screens, page banners, buttons)
 import './system.css'; // spacing/radius scale, colour tokens and pairing rules; loads last
-import RegisterSW from '@/components/RegisterSW';
+import RegisterSW from '@/components/app/RegisterSW';
 import { Bricolage_Grotesque, Figtree } from 'next/font/google';
 const display = Bricolage_Grotesque({ subsets: ['latin'], variable: '--font-display', display: 'swap' });
 const body = Figtree({ subsets: ['latin'], variable: '--font-body', display: 'swap' });
-import { SITE_URL } from '@/lib/siteUrl';
+import { SITE_URL } from '@/lib/landing/siteUrl';
 export const metadata = {
   metadataBase: new URL(SITE_URL),
   title: 'Zovix — budget & money tracker',

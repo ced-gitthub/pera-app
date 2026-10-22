@@ -1,15 +1,15 @@
 'use server';
 import { cookies } from 'next/headers';
-import { ONBOARDING_COOKIE, WIZARD_COOKIE, BAL_COOKIE, TOUR_COOKIE } from '@/lib/onboarding';
+import { ONBOARDING_COOKIE, WIZARD_COOKIE, BAL_COOKIE, TOUR_COOKIE } from '@/lib/onboarding/onboarding';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { supabaseServer } from '@/lib/supabase/server';
 import { supabaseProbe } from '@/lib/supabase/probe';
-import { passwordProblem, isPwned, isEmail, safeNext, PWNED } from '@/lib/password';
-import { authMessage, logErr } from '@/lib/safe';
-import { admin, adminConfigured } from '@/lib/admin';
-import { recentSignIn, sessionSignInAt } from '@/lib/session';
-import { deleteViaRpc } from '@/lib/deleteAccount';
+import { passwordProblem, isPwned, isEmail, safeNext, PWNED } from '@/lib/auth/password';
+import { authMessage, logErr } from '@/lib/common/safe';
+import { admin, adminConfigured } from '@/lib/admin/admin';
+import { recentSignIn, sessionSignInAt } from '@/lib/auth/session';
+import { deleteViaRpc } from '@/lib/auth/deleteAccount';
 import { go, str, siteUrl, verifyUrl, errCode, code6, authed, needsSecondStep, done } from './shared';
 
 // Google sign-in: Supabase sends the user to Google, then back to /auth/callback (PKCE). Google has already verified the address, so no confirmation email is needed.

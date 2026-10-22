@@ -1,9 +1,9 @@
 import Link from 'next/link';
 import { signUp } from '@/app/actions';
-import AuthBrand from '@/components/AuthBrand';
-import InstallApp from '@/components/InstallApp';
-import GoogleButton from '@/components/GoogleButton';
-import { Flash, type SP } from '@/components/ui';
+import AuthBrand from '@/components/auth/AuthBrand';
+import InstallApp from '@/components/app/InstallApp';
+import GoogleButton from '@/components/auth/GoogleButton';
+import { Flash, type SP } from '@/components/ui/ui';
 // Same joyful look as the welcome page: a headline that sells the first day, perks, a chunky yellow button, and a "ready for you" checklist (all true: the sign-up trigger seeds accounts and categories).
 export default async function Page({ searchParams }: { searchParams: SP }) {
   return (

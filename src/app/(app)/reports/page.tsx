@@ -1,11 +1,11 @@
 import Link from 'next/link';
-import { ctx, loadLayout } from '@/lib/data';
-import { dbError } from '@/lib/safe';
-import { periodFor } from '@/lib/range';
+import { ctx, loadLayout } from '@/lib/data/data';
+import { dbError } from '@/lib/common/safe';
+import { periodFor } from '@/lib/data/range';
 import { manilaToday, formatMinor } from '@/core/money';
 import { totals, byCategory, type Tx } from '@/core/aggregate';
-import Tab from '@/components/Tab';
-import type { SP } from '@/components/ui';
+import Tab from '@/components/ui/Tab';
+import type { SP } from '@/components/ui/ui';
 const P = [
   ['month', 'This month'],
   ['prev', 'Last month'],

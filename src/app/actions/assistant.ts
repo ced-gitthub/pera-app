@@ -1,11 +1,11 @@
 'use server';
-import { ctx } from '@/lib/data';
+import { ctx } from '@/lib/data/data';
 import { manilaToday, formatMinor } from '@/core/money';
 import { totals, type Tx } from '@/core/aggregate';
 import { getProvider } from '@/ai/provider';
-import { parseQuestion } from '@/lib/assistant';
-import { safeMessage } from '@/lib/safe';
-import { periodFor, shiftYm, monthRange } from '@/lib/range';
+import { parseQuestion } from '@/lib/data/assistant';
+import { safeMessage } from '@/lib/common/safe';
+import { periodFor, shiftYm, monthRange } from '@/lib/data/range';
 
 // ---- assistant: fixed read-only queries -> numbers computed by SQL -> text. A provider (if any) may only reword the numbers.
 export async function askAssistant(q: string): Promise<{ ok: boolean; answer: string }> {

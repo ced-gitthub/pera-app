@@ -1,13 +1,13 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { ctx, loadLayout } from '@/lib/data';
-import { dbError, logErr } from '@/lib/safe';
+import { ctx, loadLayout } from '@/lib/data/data';
+import { dbError, logErr } from '@/lib/common/safe';
 import { parseAmountMinor } from '@/core/money';
-import { mapRows } from '@/lib/rows';
-import Quick from '@/components/Quick';
-import Tab from '@/components/Tab';
-import TxRow from '@/components/TxRow';
-import { Flash, type SP } from '@/components/ui';
+import { mapRows } from '@/lib/data/rows';
+import Quick from '@/components/entries/Quick';
+import Tab from '@/components/ui/Tab';
+import TxRow from '@/components/entries/TxRow';
+import { Flash, type SP } from '@/components/ui/ui';
 const SIZE = 25;
 export default async function Tx({ searchParams }: { searchParams: SP }) {
   const raw = await searchParams,

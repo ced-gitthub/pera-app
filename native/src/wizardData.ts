@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { parseGoalForm, type GoalInput } from '../../src/lib/goals';
+import { parseGoalForm, type GoalInput } from '../../src/lib/progress/goals';
 import { load } from './data';
 import { planBalances, planBudget, writeError, type Snapshot } from './logic';
 

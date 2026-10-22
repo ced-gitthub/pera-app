@@ -1,5 +1,5 @@
-import Ask from '@/components/Ask';
-import PageBanner from '@/components/PageBanner';
+import Ask from '@/components/entries/Ask';
+import PageBanner from '@/components/ui/PageBanner';
 export default function Assistant() {
   return (
     <>

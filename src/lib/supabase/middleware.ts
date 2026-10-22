@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
-import { webAppEnabled } from '@/lib/site';
-import { landingOnlyRoute } from '@/lib/webRoutes';
+import { webAppEnabled } from '@/lib/landing/site';
+import { landingOnlyRoute } from '@/lib/landing/webRoutes';
 export async function updateSession(request: NextRequest) {
   if (/^\/api\/health(\/|$)/.test(request.nextUrl.pathname)) return NextResponse.next(); // public health check, no session needed
   if (request.nextUrl.pathname.startsWith('/api/native/')) return NextResponse.next(); // the native app sends its own bearer token; each route checks it itself

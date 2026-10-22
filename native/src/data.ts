@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { validateItems } from '../../src/lib/validate';
+import { validateItems } from '../../src/lib/common/validate';
 import type { Item } from '../../src/core/parser';
 import { addDays, manilaToday } from '../../src/core/money';
 import { missingFeeCategories, type Account, type Category, type Tx, type Snapshot } from './logic';

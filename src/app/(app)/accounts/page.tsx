@@ -1,14 +1,14 @@
-import { ctx, loadLayout, balanceMap } from '@/lib/data';
+import { ctx, loadLayout, balanceMap } from '@/lib/data/data';
 import { randomUUID } from 'node:crypto';
-import { Btn } from '@/components/Btn';
-import { dbError } from '@/lib/safe';
+import { Btn } from '@/components/ui/Btn';
+import { dbError } from '@/lib/common/safe';
 import { createAccount, updateAccount, deleteAccount, moveAccount, transfer } from '@/app/actions';
 import { formatMinor, manilaToday } from '@/core/money';
-import { minorToInput } from '@/lib/validate';
-import { homeNumbers } from '@/lib/balances';
-import Tab from '@/components/Tab';
-import MoneyInput from '@/components/MoneyInput';
-import { Flash, type SP } from '@/components/ui';
+import { minorToInput } from '@/lib/common/validate';
+import { homeNumbers } from '@/lib/data/balances';
+import Tab from '@/components/ui/Tab';
+import MoneyInput from '@/components/ui/MoneyInput';
+import { Flash, type SP } from '@/components/ui/ui';
 const TYPES = ['cash', 'ewallet', 'bank', 'credit_card', 'savings', 'other'];
 export default async function Accounts({ searchParams }: { searchParams: SP }) {
   const sp = await searchParams,

@@ -1,5 +1,5 @@
 // Pure helpers for the entry sheet (no React Native, no network) so `npm test` can run them.
-import { minorToInput } from '../../src/lib/validate.ts';
+import { minorToInput } from '../../src/lib/common/validate.ts';
 import type { Category, Tx, TxEdit } from './logic.ts';
 
 export const UNDO_MS = 8000;

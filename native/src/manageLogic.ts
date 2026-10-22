@@ -1,6 +1,6 @@
 // Pure rules for adding, renaming and deleting accounts and categories (no React Native, no network). Same rules as the website's
 // src/app/actions/accounts.ts and budgets.ts, so both apps agree. Money is integer centavos.
-import { parseOptionalMinor } from '../../src/lib/validate.ts';
+import { parseOptionalMinor } from '../../src/lib/common/validate.ts';
 
 export const ACCOUNT_TYPES = [
   { id: 'cash', label: 'Cash' },

@@ -1,1 +1,1 @@
-export { AccountsSk as default } from '@/components/Skeleton';
+export { AccountsSk as default } from '@/components/ui/Skeleton';

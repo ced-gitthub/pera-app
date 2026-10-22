@@ -2,8 +2,8 @@ import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import { supabaseServer } from '@/lib/supabase/server';
-import { isEmail } from '@/lib/password';
-import { ctx } from '@/lib/data';
+import { isEmail } from '@/lib/auth/password';
+import { ctx } from '@/lib/data/data';
 
 export function go(path: string, k: 'err' | 'ok', m: string): never {
   redirect(`${path}${path.includes('?') ? '&' : '?'}${k}=${encodeURIComponent(m.slice(0, 200))}`);

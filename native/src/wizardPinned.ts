@@ -1,4 +1,4 @@
-import type { GateStep } from '../../src/lib/onboarding';
+import type { GateStep } from '../../src/lib/onboarding/onboarding';
 
 // Which button the Wizard pins in its footer (outside the scrolling area) for a step. null = nothing pinned.
 // 'first' has the QuickAdd form with its own Save; the read-only tour has only Next / Back.

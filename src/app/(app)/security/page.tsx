@@ -10,12 +10,12 @@ import {
   backupRemove,
   deleteMyAccount,
 } from '@/app/actions';
-import { Btn } from '@/components/Btn';
-import { backupConfigured, getBackup } from '@/lib/backup';
-import { maskEmail } from '@/lib/backupcode';
-import MfaSetup from '@/components/MfaSetup';
-import OtpField from '@/components/OtpField';
-import { Flash, type SP } from '@/components/ui';
+import { Btn } from '@/components/ui/Btn';
+import { backupConfigured, getBackup } from '@/lib/data/backup';
+import { maskEmail } from '@/lib/auth/backupcode';
+import MfaSetup from '@/components/auth/MfaSetup';
+import OtpField from '@/components/auth/OtpField';
+import { Flash, type SP } from '@/components/ui/ui';
 export default async function Security({ searchParams }: { searchParams: SP }) {
   const sp = await searchParams,
     sb = await supabaseServer(),

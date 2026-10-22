@@ -1,10 +1,10 @@
 # Zovix — working rules for Claude
 
-Free-tier PHP money tracker. Next.js 15 + TypeScript + Tailwind 4, Supabase (project `vxhgkkzbmrhxayzryake`), Vercel Hobby. Production: https://pera-app-beta.vercel.app. Read README.md for architecture.
+Free-tier PHP money tracker. Next.js 15 + TypeScript + Tailwind 4, Supabase (project `vxhgkkzbmrhxayzryake`), Vercel Hobby. Production: https://pera-app-beta.vercel.app. Read docs/README.md for architecture.
 
 ## Session rules
-- At the start of each session, read CLAUDE.md, `docs/CORRECTIONS.md` (everything Ced has already corrected: do not make him repeat it) and PROGRESS.md first.
-- After every fix or decision, update PROGRESS.md (fixed, open bugs, decisions, next steps).
+- At the start of each session, read CLAUDE.md, `docs/CORRECTIONS.md` (everything Ced has already corrected: do not make him repeat it) and docs/PROGRESS.md first.
+- After every fix or decision, update docs/PROGRESS.md (fixed, open bugs, decisions, next steps).
 - Every app project, feature or fix follows `docs/APP-DEV-PIPELINE.md` (5 stages: PM, UI/UX, Backend & DevOps, Mobile Developer, QA, with gates G1 to G4, G5a and G5b between stages: a failed gate is routed to the right specialist agent and the whole gate re-run before moving on; an Instruction ledger of Ced's verbatim words is re-checked at every gate). Full track for new apps/features (one stage per turn, stop for approval); light track for fixes (all stages in one turn, but always a Stage 1 restatement of the request in Ced's own words, a QA Engineer review for risky changes, and real test evidence).
 
 ## Non-negotiables
@@ -70,7 +70,7 @@ The native app keeps its own separate team and rules (next section). The older s
 
 ## Native app (`native/`, Expo Android)
 - Read `docs/native-app/NATIVE.md` before touching it (map, rules, build recipe, open items). History in `CHANGELOG.md`, roadmap in `PLAN.md`.
-- Screens use only design tokens (`native/src/uiTokens.ts`); `tests/native-design.test.ts` enforces it. `npm run verify` does not type-check `native/`: also run `cd native && npx tsc --noEmit`.
+- Screens use only design tokens (`native/src/uiTokens.ts`); `tests/native/native-design.test.ts` enforces it. `npm run verify` does not type-check `native/`: also run `cd native && npx tsc --noEmit`.
 - Release: replace `Zovix-native-latest.apk` on the existing GitHub release `native-0.3` (Ced has that page saved); never make per-version releases. Publish ONLY after the QA Engineer approves. Never push to `main` without Ced's yes (it deploys the website).
 
 ## Reporting (user preference)

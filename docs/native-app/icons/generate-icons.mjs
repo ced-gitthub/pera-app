@@ -1,5 +1,5 @@
 // Generates the 6 launcher-icon colour variants (adaptive foreground + background + monochrome, 1024x1024), in the website's style:
-// a gradient tile with a rounded badge holding the Zovix Z (see src/app/pwa-icon/[size]/route.tsx and src/components/ZovixMark.tsx).
+// a gradient tile with a rounded badge holding the Zovix Z (see src/app/pwa-icon/[size]/route.tsx and src/components/ui/ZovixMark.tsx).
 // The badge is ~40% of the canvas, well inside the 66% adaptive-icon safe zone, so no launcher mask crops it and it is not oversized.
 // Usage (from the repo root): node docs/native-app/icons/generate-icons.mjs [outDir]
 import { createRequire } from 'node:module';

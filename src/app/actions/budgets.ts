@@ -1,8 +1,8 @@
 'use server';
-import { ctx } from '@/lib/data';
+import { ctx } from '@/lib/data/data';
 import { manilaToday, parseAmountMinor, isDate, addDays } from '@/core/money';
-import { parseOptionalMinor, minorToInput } from '@/lib/validate';
-import { safeMessage } from '@/lib/safe';
+import { parseOptionalMinor, minorToInput } from '@/lib/common/validate';
+import { safeMessage } from '@/lib/common/safe';
 import { go, str, done, addCategory, swapOrder } from './shared';
 
 const backTo = (fd: FormData, d: string) => (['/settings', '/budgets'].includes(str(fd, 'back')) ? str(fd, 'back') : d);

@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
-import { admin, adminConfigured } from '@/lib/admin';
-import { bearerToken, checkDeleteRequest, deleteViaRpc, hasVerifiedFactor, tokenAal } from '@/lib/deleteAccount';
-import { sessionSignInAt } from '@/lib/session';
-import { logErr } from '@/lib/safe';
+import { admin, adminConfigured } from '@/lib/admin/admin';
+import { bearerToken, checkDeleteRequest, deleteViaRpc, hasVerifiedFactor, tokenAal } from '@/lib/auth/deleteAccount';
+import { sessionSignInAt } from '@/lib/auth/session';
+import { logErr } from '@/lib/common/safe';
 
 // Lets the native app delete the signed-in person's account (required by Google Play / App Store). The secret key lives only on the server, so the app cannot do this itself.
-// Auth is the person's own access token in the Authorization header (no cookies). Rules live in lib/deleteAccount.ts: typed DELETE, a session that signed in within 10 minutes,
+// Auth is the person's own access token in the Authorization header (no cookies). Rules live in lib/auth/deleteAccount.ts: typed DELETE, a session that signed in within 10 minutes,
 // and a two-step session for accounts that use two-step verification. All data goes with the user through the database's cascade rules.
 export const dynamic = 'force-dynamic';
 

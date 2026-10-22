@@ -1,13 +1,13 @@
-import { ctx } from '@/lib/data';
-import { Btn } from '@/components/Btn';
+import { ctx } from '@/lib/data/data';
+import { Btn } from '@/components/ui/Btn';
 import { updateProfile, createCategory, deleteCategory, createRecurring, deleteRecurring } from '@/app/actions';
 import { manilaToday, formatMinor } from '@/core/money';
-import ImportForm from '@/components/ImportForm';
-import InstallApp from '@/components/InstallApp';
-import PageBanner from '@/components/PageBanner';
-import ReplayTour from '@/components/ReplayTour';
+import ImportForm from '@/components/entries/ImportForm';
+import InstallApp from '@/components/app/InstallApp';
+import PageBanner from '@/components/ui/PageBanner';
+import ReplayTour from '@/components/onboarding/ReplayTour';
 import Link from 'next/link';
-import { Flash, type SP } from '@/components/ui';
+import { Flash, type SP } from '@/components/ui/ui';
 export default async function Settings({ searchParams }: { searchParams: SP }) {
   const sp = await searchParams,
     { sb, user, categories, accounts } = await ctx();

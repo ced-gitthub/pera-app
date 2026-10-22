@@ -1,10 +1,10 @@
 'use server';
-import { ctx, balanceMap } from '@/lib/data';
+import { ctx, balanceMap } from '@/lib/data/data';
 import { cookies } from 'next/headers';
-import { openingFromToday, BAL_COOKIE } from '@/lib/onboarding';
+import { openingFromToday, BAL_COOKIE } from '@/lib/onboarding/onboarding';
 import { manilaToday } from '@/core/money';
-import { parseOptionalMinor } from '@/lib/validate';
-import { safeMessage } from '@/lib/safe';
+import { parseOptionalMinor } from '@/lib/common/validate';
+import { safeMessage } from '@/lib/common/safe';
 import { go, str, done } from './shared';
 
 // First-run wizard actions. Both return to "/" (the wizard covers whatever page the person is on) and say what to fix when something is wrong.

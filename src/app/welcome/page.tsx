@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import './welcome.css'; // shared landing styles
 import './landing.css';
 import './motion.css';
-import Landing from '@/components/Landing';
-import { landingPath } from '@/lib/site';
+import Landing from '@/components/landing/Landing';
+import { landingPath } from '@/lib/landing/site';
 export const metadata: Metadata = {
   title: 'Zovix Pera Tracker: know where every peso goes',
   description: 'Free money tracker for Filipinos. Type "lunch 150 gcash" and Zovix sorts it. Download for Android. No ads, no bank login.',

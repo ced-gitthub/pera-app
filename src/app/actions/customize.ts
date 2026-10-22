@@ -1,7 +1,7 @@
 'use server';
 import { supabaseServer } from '@/lib/supabase/server';
-import { TABS, normalizeLayout, normalizeTab, type TabId } from '@/lib/layout';
-import { logErr } from '@/lib/safe';
+import { TABS, normalizeLayout, normalizeTab, type TabId } from '@/lib/common/layout';
+import { logErr } from '@/lib/common/safe';
 import { done } from './shared';
 
 // ---- per-user layout (Customize). One tab at a time is merged into the stored row, so two tabs never overwrite each other.

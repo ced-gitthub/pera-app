@@ -1,10 +1,10 @@
-import ZovixMark from '@/components/ZovixMark';
+import ZovixMark from '@/components/ui/ZovixMark';
 import { redirect } from 'next/navigation';
 import { supabaseServer } from '@/lib/supabase/server';
 import { verifyMfa, signOut } from '@/app/actions';
-import { safeNext } from '@/lib/password';
-import OtpField from '@/components/OtpField';
-import { Flash, type SP } from '@/components/ui';
+import { safeNext } from '@/lib/auth/password';
+import OtpField from '@/components/auth/OtpField';
+import { Flash, type SP } from '@/components/ui/ui';
 export default async function Page({ searchParams }: { searchParams: SP }) {
   const sp = await searchParams,
     next = safeNext(sp.next),

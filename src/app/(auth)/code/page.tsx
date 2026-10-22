@@ -1,8 +1,8 @@
-import ZovixMark from '@/components/ZovixMark';
+import ZovixMark from '@/components/ui/ZovixMark';
 import Link from 'next/link';
 import { sendLoginCode, verifyLoginCode } from '@/app/actions';
-import { isEmail } from '@/lib/password';
-import { Flash, type SP } from '@/components/ui';
+import { isEmail } from '@/lib/auth/password';
+import { Flash, type SP } from '@/components/ui/ui';
 export default async function Page({ searchParams }: { searchParams: SP }) {
   const sp = await searchParams,
     email = isEmail(sp.email ?? '') ? sp.email! : '';

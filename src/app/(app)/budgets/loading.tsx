@@ -1,1 +1,1 @@
-export { BudgetsSk as default } from '@/components/Skeleton';
+export { BudgetsSk as default } from '@/components/ui/Skeleton';

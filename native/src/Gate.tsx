@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState, BackHandler } from 'react-native';
 import { Text, View } from 'react-native';
-import type { Gate as GateResult } from '../../src/lib/onboarding';
+import type { Gate as GateResult } from '../../src/lib/onboarding/onboarding';
 import { supabase } from './supabase';
 import { load, type Snapshot } from './data';
 import { loadCounts } from './wizardData';

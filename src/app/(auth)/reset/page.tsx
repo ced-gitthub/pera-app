@@ -1,8 +1,8 @@
-import ZovixMark from '@/components/ZovixMark';
+import ZovixMark from '@/components/ui/ZovixMark';
 import { redirect } from 'next/navigation';
 import { supabaseServer } from '@/lib/supabase/server';
 import { updatePassword } from '@/app/actions';
-import { Flash, type SP } from '@/components/ui';
+import { Flash, type SP } from '@/components/ui/ui';
 export default async function Page({ searchParams }: { searchParams: SP }) {
   const sb = await supabaseServer(),
     {

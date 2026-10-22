@@ -1,11 +1,11 @@
 'use server';
-import { ctx } from '@/lib/data';
+import { ctx } from '@/lib/data/data';
 import { formatMinor } from '@/core/money';
 import { totals, type Tx } from '@/core/aggregate';
 import { fromCsv, mapLegacy, type Row } from '@/core/io';
-import { defaultAccount } from '@/lib/validate';
-import { safeMessage } from '@/lib/safe';
-import { MAX_CSV_BYTES, MAX_CSV_LABEL } from '@/lib/limits';
+import { defaultAccount } from '@/lib/common/validate';
+import { safeMessage } from '@/lib/common/safe';
+import { MAX_CSV_BYTES, MAX_CSV_LABEL } from '@/lib/common/limits';
 import { go, str, done } from './shared';
 
 // ---- CSV import + localStorage migration

@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Animated, ScrollView, Text, View } from 'react-native';
-import { COPY, SAMPLES } from '../../src/lib/onboardingCopy';
-import { GATE_STEPS, WIZARD_TOTAL, type GateStep } from '../../src/lib/onboarding';
+import { COPY, SAMPLES } from '../../src/lib/onboarding/onboardingCopy';
+import { GATE_STEPS, WIZARD_TOTAL, type GateStep } from '../../src/lib/onboarding/onboarding';
 import type { Snapshot } from './data';
 import { HeaderClose } from './Sheet';
 import { Btn } from './Btn';

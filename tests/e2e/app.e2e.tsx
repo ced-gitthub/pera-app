@@ -25,7 +25,7 @@ import { updateSession } from '@/lib/supabase/middleware';
 import { GET as callback } from '@/app/auth/callback/route';
 import { parseInput } from '@/core/parser';
 import { manilaToday } from '@/core/money';
-import { shiftYm } from '@/lib/range';
+import { shiftYm } from '@/lib/data/range';
 import Err from '@/app/error';
 import Dashboard from '@/app/(app)/(dash)/page';
 import Txs from '@/app/(app)/transactions/(list)/page';
@@ -156,7 +156,7 @@ const count = (h: string, s: string) => h.split(s).length - 1;
   );
   // ---- landing page promotes the app
   {
-    const L = (await import('@/components/Landing')).default,
+    const L = (await import('@/components/landing/Landing')).default,
       lh = await html(<L />);
     T(
       'landing: Get Zovix free links to the APK as a download (header, hero, final CTA, sticky bar)',
@@ -209,7 +209,7 @@ const count = (h: string, s: string) => h.split(s).length - 1;
           !('review' in j),
         ld.slice(0, 120),
       );
-      const { escapeJsonForHtml } = await import('@/lib/jsonLd'),
+      const { escapeJsonForHtml } = await import('@/lib/landing/jsonLd'),
         hostile = { t: '</script><script>alert(1)</script> & ' + String.fromCharCode(0x2028) },
         esc = escapeJsonForHtml(JSON.stringify(hostile));
       T(
@@ -240,7 +240,7 @@ const count = (h: string, s: string) => h.split(s).length - 1;
   }
   // ---- required first-run wizard
   {
-    const OV = (await import('@/components/OnboardingView')).default,
+    const OV = (await import('@/components/onboarding/OnboardingView')).default,
       mine = D.t.accounts.filter((a: { user_id: string }) => a.user_id === D.cur),
       cats = D.t.categories.filter((c: { user_id: string; type: string }) => c.user_id === D.cur && c.type === 'expense'),
       view = (step: string, n: number, done: string[] = []) =>
@@ -281,7 +281,7 @@ const count = (h: string, s: string) => h.split(s).length - 1;
       v5.includes('Step 5 of 5') && v5.includes('Open my Zovix') && v5.includes('3 days in a row'),
     );
     {
-      const TV = (await import('@/components/TourView')).default,
+      const TV = (await import('@/components/onboarding/TourView')).default,
         th = await html(<TV />);
       T(
         'tour: slide 1 of 5 has an example (you type -> result), Next, and no skip',
@@ -316,7 +316,7 @@ const count = (h: string, s: string) => h.split(s).length - 1;
         .filter((a: { id: string }) => a.id !== cash.id)
         .map((a: { opening_balance_minor: number }) => a.opening_balance_minor),
       sb1 = await red(() => A.saveOpeningBalances(fd({ [`open_${cash.id}`]: '123.50' })));
-    const { ctx: ctx0, balanceMap: bm0 } = await import('@/lib/data');
+    const { ctx: ctx0, balanceMap: bm0 } = await import('@/lib/data/data');
     T(
       'wizard: typed balance is what the account shows afterwards (logged entries are accounted for), other accounts untouched',
       sb1.startsWith('/?ok=Balances saved') &&
@@ -1393,7 +1393,7 @@ const count = (h: string, s: string) => h.split(s).length - 1;
     );
     login('a@x.com');
     // loading skeletons
-    const sk = await import('@/components/Skeleton');
+    const sk = await import('@/components/ui/Skeleton');
     for (const [n, C] of Object.entries(sk) as [string, any][]) {
       const k = renderToStaticMarkup(React.createElement(C));
       T(
@@ -2103,13 +2103,13 @@ const count = (h: string, s: string) => h.split(s).length - 1;
       );
       T(
         "RLS: G cannot read F's settings row",
-        (await (await import('@/lib/data')).ctx().then((c) => c.sb.from('user_settings').select('layout').eq('user_id', F_ID))).data
+        (await (await import('@/lib/data/data')).ctx().then((c) => c.sb.from('user_settings').select('layout').eq('user_id', F_ID))).data
           .length === 0,
       );
       T(
         "RLS: G cannot write F's settings row",
         await (async () => {
-          const c = await (await import('@/lib/data')).ctx();
+          const c = await (await import('@/lib/data/data')).ctx();
           const r = await c.sb.from('user_settings').upsert({ user_id: F_ID, layout: {} }, { onConflict: 'user_id' });
           return !!r.error;
         })(),

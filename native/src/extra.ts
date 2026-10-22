@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 import { manilaToday } from '../../src/core/money';
-import { goalProgress } from '../../src/lib/goals';
+import { goalProgress } from '../../src/lib/progress/goals';
 import { monthRange, budgetProgress, netFromSummary, type Snapshot, type Tx } from './logic';
 
 export async function loadActivity(): Promise<Tx[]> {

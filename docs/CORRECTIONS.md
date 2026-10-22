@@ -56,7 +56,7 @@ Every time Ced had to correct something, it is here, so he never has to say it t
 - Final report format: `Problem:` / `Solution:` / `Outcome:`, one line each, with pass counts. No process narration. Ced goes by "Ced".
 - Do it, don't ask him to run things. If blocked, say exactly which click and give the direct links.
 - Cost stays $0. No paid services.
-- Update PROGRESS.md after every fix or decision. Save lessons here and in memory.
+- Update docs/PROGRESS.md after every fix or decision. Save lessons here and in memory.
 - Ask before pushing to `main` (it deploys the website). Everything else on the branch is mine to do.
 - Permission prompts: the session can be in bypass mode and still prompt, because the project's `.claude/settings.json` ask/deny rules and the guard hook apply. Do not loosen them; tell him once.
 - Be honest about what is unverified: nothing native has ever run on a phone from my side. Say "not tested on a phone" every time, and say what the test did prove.

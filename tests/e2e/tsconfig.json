@@ -13,7 +13,7 @@
       "next/link": ["./mocks/next-link.tsx"],
       "@supabase/ssr": ["./mocks/supabase-ssr.ts"],
       "nodemailer": ["./mocks/nodemailer.ts"],
-      "@/lib/admin": ["./mocks/admin.ts"]
+      "@/lib/admin/admin": ["./mocks/admin.ts"]
     }
   }
 }
